@@ -1,5 +1,6 @@
 <?php
 $translations = array(
+	'Home' => null,
 	'Login' => 'შესვლა',
 	'Logout successful.' => 'გამოხვედით სისტემიდან.',
 	'Invalid server or credentials.' => null,
@@ -187,6 +188,7 @@ $translations = array(
 	'Tables have been dropped.' => 'ცხრილები წაიშალა.',
 	'Clone' => 'კლონირება',
 	'Partition by' => 'დაყოფა',
+	'Partition' => null,
 	'Partitions' => 'დანაყოფები',
 	'Partition name' => 'დანაყოფის სახელი',
 	'Values' => 'პარამეტრები',
@@ -220,6 +222,7 @@ $translations = array(
 	'Permanent login' => 'სისტემაში დარჩენა',
 	'Databases have been dropped.' => 'ბაზა წაიშალა.',
 	'Search data in tables' => 'ცხრილებში ძებნა',
+	'as a regular expression' => null,
 	'Schema' => 'სქემა',
 	'Alter schema' => 'სქემის შეცვლა',
 	'Create schema' => 'ახალი სქემა',

@@ -1,6 +1,7 @@
 <?php
 $translations = array(
 	// label for database system selection (MySQL, SQLite, ...)
+	'Home' => null,
 	'System' => '資料庫系統',
 	'Server' => '伺服器',
 	'Username' => '帳號',
@@ -190,6 +191,7 @@ $translations = array(
 	'Maximum number of allowed fields exceeded. Please increase %s.' => '超過允許的字段數量的最大值。請增加 %s。',
 
 	'Partition by' => '分區類型',
+	'Partition' => null,
 	'Partitions' => '分區',
 	'Partition name' => '分區名稱',
 	'Values' => '值',
@@ -244,6 +246,7 @@ $translations = array(
 	'Search' => '搜尋',
 	'anywhere' => '任意位置',
 	'Search data in tables' => '在資料庫搜尋',
+	'as a regular expression' => null,
 	'Sort' => '排序',
 	'descending' => '降冪 (遞減)',
 	'Limit' => '限定',

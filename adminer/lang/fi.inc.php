@@ -1,6 +1,7 @@
 <?php
 $translations = array(
 	// label for database system selection (MySQL, SQLite, ...)
+	'Home' => null,
 	'System' => 'Järjestelmä',
 	'Server' => 'Palvelin',
 	'Username' => 'Käyttäjänimi',
@@ -177,6 +178,7 @@ $translations = array(
 	'Maximum number of allowed fields exceeded. Please increase %s.' => 'Kenttien sallittu enimmäismäärä ylitetty. Kasvata arvoa %s.',
 
 	'Partition by' => 'Osioi arvolla',
+	'Partition' => null,
 	'Partitions' => 'Osiot',
 	'Partition name' => 'Osion nimi',
 	'Values' => 'Arvot',
@@ -231,6 +233,7 @@ $translations = array(
 	'Search' => 'Hae',
 	'anywhere' => 'kaikkialta',
 	'Search data in tables' => 'Hae dataa tauluista',
+	'as a regular expression' => null,
 	'Sort' => 'Lajittele',
 	'descending' => 'alenevasti',
 	'Limit' => 'Raja',

@@ -1,6 +1,7 @@
 <?php
 $translations = array(
 	// label for database system selection (MySQL, SQLite, ...)
+	'Home' => null,
 	'System' => 'Систем',
 	'Server' => 'Сервер',
 	'Username' => 'Корисничко име',
@@ -167,6 +168,7 @@ $translations = array(
 	'Maximum number of allowed fields exceeded. Please increase %s.' => 'Премашен је максимални број дозвољених поља. Молим увећајте %s.',
 
 	'Partition by' => 'Подели по',
+	'Partition' => null,
 	'Partitions' => 'Поделе',
 	'Partition name' => 'Име поделе',
 	'Values' => 'Вредности',
@@ -220,6 +222,7 @@ $translations = array(
 	'Search' => 'Претрага',
 	'anywhere' => 'било где',
 	'Search data in tables' => 'Претражи податке у табелама',
+	'as a regular expression' => null,
 	'Sort' => 'Поређај',
 	'descending' => 'опадајуће',
 	'Limit' => 'Граница',

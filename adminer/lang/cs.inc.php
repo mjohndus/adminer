@@ -1,6 +1,7 @@
 <?php
 $translations = array(
 	// label for database system selection (MySQL, SQLite, ...)
+	'Home' => 'Domů',
 	'System' => 'Systém',
 	'Server' => 'Server',
 	'Username' => 'Uživatel',
@@ -189,6 +190,7 @@ $translations = array(
 	'Maximum number of allowed fields exceeded. Please increase %s.' => 'Byl překročen maximální povolený počet polí. Zvyšte prosím %s.',
 
 	'Partition by' => 'Rozdělit podle',
+	'Partition' => 'Oddíl',
 	'Partitions' => 'Oddíly',
 	'Partition name' => 'Název oddílu',
 	'Values' => 'Hodnoty',
@@ -243,6 +245,7 @@ $translations = array(
 	'Search' => 'Vyhledat',
 	'anywhere' => 'kdekoliv',
 	'Search data in tables' => 'Vyhledat data v tabulkách',
+	'as a regular expression' => 'jako regulární výraz',
 	'Sort' => 'Seřadit',
 	'descending' => 'sestupně',
 	'Limit' => 'Limit',

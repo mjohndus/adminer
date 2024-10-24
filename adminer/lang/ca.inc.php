@@ -1,5 +1,6 @@
 <?php
 $translations = array(
+	'Home' => null,
 	'Login' => 'Inicia la sessió',
 	'Logout successful.' => 'Desconnexió correcta.',
 	'Invalid server or credentials.' => null,
@@ -189,6 +190,7 @@ $translations = array(
 	'Tables have been dropped.' => 'S\'han suprimit les taules.',
 	'Clone' => 'Clona',
 	'Partition by' => 'Fes particions segons',
+	'Partition' => null,
 	'Partitions' => 'Particions',
 	'Partition name' => 'Nom de la partició',
 	'Values' => 'Valors',
@@ -251,6 +253,7 @@ $translations = array(
 	'Type has been created.' => 'S\'ha creat el tipus.',
 	'Alter type' => 'Modifica el tipus',
 	'Search data in tables' => 'Cerca dades en les taules',
+	'as a regular expression' => null,
 	'From server' => 'En el servidor',
 	'empty' => 'buit',
 	'now' => 'ara',

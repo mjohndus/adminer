@@ -1,8 +1,7 @@
 /** @author Ondrej Valka, http://valka.info */
 body { color: #000; background: #fff; font: 90%/1.25 Verdana, Arial, Helvetica, sans-serif; margin: 0; width: -moz-fit-content; width: fit-content; }
 a { color: blue; text-decoration: none; }
-a:visited { color: navy; }
-a:link:hover, a:visited:hover { color: red; text-decoration: underline; }
+a:hover { color: red; text-decoration: underline; }
 a.text:hover { text-decoration: none; }
 a.jush-help:hover { color: inherit; }
 h1 { font-size: 150%; margin: 0; padding: .8em 1em; border-bottom: 1px solid #999; font-weight: normal; color: #777; background: #eee; }
@@ -11,7 +10,7 @@ h3 { font-weight: normal; font-size: 130%; margin: 1em 0 0; }
 form { margin: 0; }
 td table { width: 100%; margin: 0; }
 table { margin: 1em 20px 0 0; border-collapse: collapse; font-size: 90%; }
-td, th { border: 1px solid #999; padding: .2em .3em; }
+td, th { box-sizing: border-box; border: 1px solid #999; padding: .2em .3em; }
 th { background: #eee; text-align: left; }
 thead th { text-align: center; padding: .2em .5em; }
 thead td, thead th { background: #ddf; } /* position: sticky; causes Firefox to lose borders */
@@ -25,18 +24,22 @@ pre { margin: 1em 0 0; }
 pre code { display: block; font-size: 100%; }
 pre, textarea { font: 110%/1.25 monospace; }
 pre.jush { background: #fff; }
-input, textarea { box-sizing: border-box; }
-input, select { vertical-align: middle; }
+input, textarea, select { box-sizing: border-box; }
+input[type="image"] { vertical-align: middle; margin-top: -3px; }
+input[type="number"] { -moz-appearance: textfield; }
+input::-webkit-inner-spin-button { -webkit-appearance: none; }
 input.default { box-shadow: 1px 1px 1px #777; }
 input.required { box-shadow: 1px 1px 1px red; }
 input.maxlength { box-shadow: 1px 1px 1px red; }
 input.wayoff { left: -1000px; position: absolute; }
+input::placeholder { color: #000; opacity: 0.4; }
 .center { text-align: center; }
 .block { display: block; }
-.version { color: #777; font-size: 67%; }
+.version { color: #777; font-size: 62%; }
 .js .hidden, .nojs .jsonly { display: none; }
 .js .column { position: absolute; background: #ddf; padding: .27em 1ex .3em 0; margin-top: -.27em; }
-.nowrap td, .nowrap th, td.nowrap, p.nowrap { white-space: pre; }
+.nowrap { white-space: nowrap; }
+p.nowrap { white-space: pre; }
 .wrap td { white-space: normal; }
 .error { color: red; background: #fee; }
 .error b { background: #fff; font-weight: normal; }
@@ -66,8 +69,19 @@ input.wayoff { left: -1000px; position: absolute; }
 .footer > div { background: #fff; padding: 0 0 .5em; }
 .footer fieldset { margin-top: 0; }
 .links a { white-space: nowrap; margin-right: 20px; }
-.logout { margin-top: .5em; position: absolute; top: 0; right: 0; }
+.logout { margin: .5em 20px 0 0; position: absolute; top: 0; right: 0; }
 .loadmore { margin-left: 1ex; }
+.tables-filter { padding: .8em 1em 0; }
+.handle { cursor: grab; vertical-align: middle; }
+.handle:before { content: "="; display: inline-block; width: 18px; height: 18px; overflow: hidden; font-size: 130%; text-align: center; line-height: 16px; opacity: 0.2; }
+span.handle { display: inline-block; width: 18px; height: 18px; padding-right: .3em; }
+th.handle:before { vertical-align: middle; }
+.no-sort .handle { cursor: default; }
+.no-sort .handle:before { content: "•"; font-size: 100%; }
+.placeholder { opacity: 0; }
+.dragging { position: absolute; margin: 0; background: #fff; }
+.dragging * { cursor: grabbing; }
+table.dragging { background: #eee; }
 /* .edit used in designs */
 #menu { position: absolute; margin: 10px 0 0; padding: 0 0 30px 0; top: 2em; left: 0; width: 19em; }
 #menu p, #logins, #tables { padding: .8em 1em; margin: 0; border-bottom: 1px solid #ccc; }
@@ -79,11 +93,13 @@ input.wayoff { left: -1000px; position: absolute; }
 #lang { position: absolute; top: 0; left: 0; line-height: 1.8em; padding: .3em 1em; }
 #breadcrumb { white-space: nowrap; position: absolute; top: 0; left: 21em; background: #eee; height: 2em; line-height: 1.8em; padding: 0 1em; margin: 0 0 0 -18px; }
 #h1 { color: #777; text-decoration: none; font-style: italic; }
-#version { font-size: 67%; color: red; }
+#version { color: red; }
 #schema { margin-left: 60px; position: relative; -moz-user-select: none; -webkit-user-select: none; }
 #schema .table { border: 1px solid silver; padding: 0 2px; cursor: move; position: absolute; }
 #schema .references { position: absolute; }
+#tables-filter, #database-select, #scheme-select { width: 100%; }
 #help { position: absolute; border: 1px solid #999; background: #eee; padding: 5px; font-family: monospace; z-index: 1; }
+#fieldset-select div:last-child > .remove, #fieldset-search div:last-child > .remove, #fieldset-sort div:last-child > .remove { display: none; }
 
 .rtl h2 { margin: 0 -18px 20px 0; }
 .rtl p, .rtl table, .rtl .error, .rtl .message { margin: 1em 0 0 20px; }

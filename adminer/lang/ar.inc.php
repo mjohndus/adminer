@@ -1,5 +1,6 @@
 <?php
 $translations = array(
+	'Home' => null,
 	'Login' => 'تسجيل الدخول',
 	'Logout successful.' => 'تم تسجيل الخروج بنجاح.',
 	'Invalid server or credentials.' => null,
@@ -188,6 +189,7 @@ $translations = array(
 	'Clone' => 'نسخ',
 	'Maximum number of allowed fields exceeded. Please increase %s.' => 'لقد تجاوزت العدد الأقصى للحقول. يرجى الرفع من %s.',
 	'Partition by' => 'مقسم بواسطة',
+	'Partition' => null,
 	'Partitions' => 'التقسيمات',
 	'Partition name' => 'اسم التقسيم',
 	'Values' => 'القيم',
@@ -223,6 +225,7 @@ $translations = array(
 	'Databases have been dropped.' => 'تم حذف قواعد البيانات.',
 	'Database has been dropped.' => 'تم حذف قاعدة البيانات.',
 	'Search data in tables' => 'بحث في الجداول',
+	'as a regular expression' => null,
 	'Schema' => 'المخطط',
 	'Alter schema' => 'تعديل المخطط',
 	'Create schema' => 'إنشاء مخطط',

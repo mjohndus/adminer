@@ -3,7 +3,11 @@
 
 class Adminer {
 	/** @var array operators used in select, null for all operators */
-	var $operators;
+	var $operators = null;
+	/** @var string operator for LIKE condition */
+	var $operator_like = null;
+	/** @var string operator for regular expression condition */
+	var $operator_regexp = null;
 
 	/** Name in title and navigation
 	* @return string HTML code
@@ -245,7 +249,7 @@ class Adminer {
 
 		if (!$failed && ($warnings = $driver->warnings())) {
 			$id = "warnings";
-			$result = ($supportSql ? "," : "")
+			$result .= ($supportSql ? "," : "")
                 . " <a href='#$id'>" . lang('Warnings') . "</a>" . script("qsl('a').onclick = partial(toggle, '$id');", "")
                 . "</p>\n"
                 . "<div id='$id' class='hidden'>\n$warnings</div>\n";
@@ -314,6 +318,11 @@ class Adminer {
 	* @return string
 	*/
 	function editVal($val, $field) {
+		// Format Elasticsearch boolean value, but do not touch PostgreSQL boolean that use string value 't' or 'f'.
+		if ($field["type"] == "boolean" && is_bool($val)) {
+			return $val ? "true" : "false";
+		}
+
 		return $val;
 	}
 
@@ -338,15 +347,40 @@ class Adminer {
 		echo "</div>\n";
 	}
 
+	function tablePartitionsPrint($partition_info) {
+		$showList = $partition_info["partition_by"] == "RANGE" || $partition_info["partition_by"] == "LIST";
+
+		echo "<p>";
+		echo "<code>{$partition_info["partition_by"]} ({$partition_info["partition"]})</code>";
+		if (!$showList) {
+			echo " " . lang('Partitions') . ": " . h($partition_info["partitions"]);
+		}
+		echo "</p>";
+
+		if ($showList) {
+			echo "<table>\n";
+			echo "<thead><tr><th>" . lang('Partition') . "</th><td>" . lang('Values') . "</td></tr></thead>\n";
+
+			foreach ($partition_info["partition_names"] as $key => $name) {
+				echo "<tr><th>" . h($name) . "</th><td>" . h($partition_info["partition_values"][$key]) . "\n";
+			}
+
+			echo "</table>\n";
+		}
+	}
+
 	/** Print list of indexes on table in tabular format
 	* @param array data about all indexes on a table
 	* @return null
 	*/
 	function tableIndexesPrint($indexes) {
-		echo "<table cellspacing='0'>\n";
+		echo "<table>\n";
+		echo "<thead><tr><th>" . lang('Type') . "</th><td>" . lang('Column (length)') . "</td></tr></thead>\n";
+
 		foreach ($indexes as $name => $index) {
 			ksort($index["columns"]); // enforce correct columns order
-			$print = array();
+			$print = [];
+
 			foreach ($index["columns"] as $key => $val) {
 				$print[] = "<i>" . h($val) . "</i>"
 					. ($index["lengths"][$key] ? "(" . $index["lengths"][$key] . ")" : "")
@@ -355,92 +389,127 @@ class Adminer {
 			}
 			echo "<tr title='" . h($name) . "'><th>$index[type]<td>" . implode(", ", $print) . "\n";
 		}
+
 		echo "</table>\n";
 	}
 
-	/** Print columns box in select
-	* @param array result of selectColumnsProcess()[0]
-	* @param array selectable columns
-	* @return null
-	*/
+	/**
+	 * Prints columns box in select filter.
+	 *
+	 * @param array $select result of selectColumnsProcess()[0]
+	 * @param array $columns selectable columns
+	 */
 	function selectColumnsPrint($select, $columns) {
 		global $functions, $grouping;
-		print_fieldset("select", lang('Select'), $select);
+
+		print_fieldset("select", lang('Select'), $select, true);
+
+		$_GET["columns"][""] = [];
 		$i = 0;
-		$select[""] = array();
-		foreach ($select as $key => $val) {
-			$val = $_GET["columns"][$key];
+
+		foreach ($_GET["columns"] as $key => $val) {
+			if ($key != "" && $val["col"] == "") continue;
+
 			$column = select_input(
-				" name='columns[$i][col]'",
+				"name='columns[$i][col]'",
 				$columns,
 				$val["col"],
-				($key !== "" ? "selectFieldChange" : "selectAddRow")
+				$key !== "" ? "selectFieldChange" : "selectAddRow"
 			);
-			echo "<div>" . ($functions || $grouping ? "<select name='columns[$i][fun]'>"
-				. optionlist(array(-1 => "") + array_filter(array(lang('Functions') => $functions, lang('Aggregation') => $grouping)), $val["fun"]) . "</select>"
-				. on_help("getTarget(event).value && getTarget(event).value.replace(/ |\$/, '(') + ')'", 1)
-				. script("qsl('select').onchange = function () { helpClose();" . ($key !== "" ? "" : " qsl('select, input', this.parentNode).onchange();") . " };", "")
-				. "($column)" : $column) . "</div>\n";
+
+			echo "<div ", ($key != "" ? "" : "class='no-sort'"), ">",
+				"<span class='jsonly handle'></span>";
+
+			if ($functions || $grouping) {
+				echo "<select name='columns[$i][fun]'>",
+					optionlist([-1 => ""] + array_filter([lang('Functions') => $functions, lang('Aggregation') => $grouping]), $val["fun"]),
+					"</select>",
+					on_help("getTarget(event).value && getTarget(event).value.replace(/ |\$/, '(') + ')'", 1),
+					script("qsl('select').onchange = (event) => { helpClose();" . ($key !== "" ? "" : " qsl('select, input:not(.remove)', event.target.parentNode).onchange();") . " };", ""),
+					"($column)";
+			} else {
+				echo $column;
+			}
+
+			echo " <input type='image' src='../adminer/static/cross.gif' class='jsonly icon remove' title='" . h(lang('Remove')) . "' alt='x'>",
+				script("qsl('#fieldset-select .remove').onclick = selectRemoveRow;", ""),
+				"</div>\n";
+
 			$i++;
 		}
-		echo "</div></fieldset>\n";
+
+		echo "</div>", script("initSortable('#fieldset-select');"), "</fieldset>\n";
 	}
 
-	/** Print search box in select
-	* @param array result of selectSearchProcess()
-	* @param array selectable columns
-	* @param array
-	* @return null
-	*/
+	/**
+	 * Prints search box in select.
+	 *
+	 * @param array $where result of selectSearchProcess()
+	 * @param array $columns selectable columns
+	 */
 	function selectSearchPrint($where, $columns, $indexes) {
 		print_fieldset("search", lang('Search'), $where);
+
 		foreach ($indexes as $i => $index) {
 			if ($index["type"] == "FULLTEXT") {
-				echo "<div>(<i>" . implode("</i>, <i>", array_map('h', $index["columns"])) . "</i>) AGAINST";
-				echo " <input type='search' name='fulltext[$i]' value='" . h($_GET["fulltext"][$i]) . "'>";
-				echo script("qsl('input').oninput = selectFieldChange;", "");
-				echo checkbox("boolean[$i]", 1, isset($_GET["boolean"][$i]), "BOOL");
-				echo "</div>\n";
+				echo "<div>(<i>" . implode("</i>, <i>", array_map('h', $index["columns"])) . "</i>) AGAINST",
+					" <input type='search' name='fulltext[$i]' value='" . h($_GET["fulltext"][$i]) . "'>",
+					script("qsl('input').oninput = selectFieldChange;", ""),
+					checkbox("boolean[$i]", 1, isset($_GET["boolean"][$i]), "BOOL"),
+					"</div>\n";
 			}
 		}
+
 		$change_next = "this.parentNode.firstChild.onchange();";
 		foreach (array_merge((array) $_GET["where"], array(array())) as $i => $val) {
 			if (!$val || ("$val[col]$val[val]" != "" && in_array($val["op"], $this->operators))) {
-				echo "<div>" . select_input(
-					" name='where[$i][col]'",
-					$columns,
-					$val["col"],
-					($val ? "selectFieldChange" : "selectAddRow"),
-					"(" . lang('anywhere') . ")"
-				);
-				echo html_select("where[$i][op]", $this->operators, $val["op"], $change_next);
-				echo "<input type='search' name='where[$i][val]' value='" . h($val["val"]) . "'>";
-				echo script("mixin(qsl('input'), {oninput: function () { $change_next }, onkeydown: selectSearchKeydown, onsearch: selectSearchSearch});", "");
-				echo "</div>\n";
+				echo "<div>",
+					select_input(
+						" name='where[$i][col]'",
+						$columns,
+						$val["col"],
+						($val ? "selectFieldChange" : "selectAddRow"),
+						"(" . lang('anywhere') . ")"
+					),
+					html_select("where[$i][op]", $this->operators, $val["op"], $change_next),
+					"<input type='search' name='where[$i][val]' value='" . h($val["val"]) . "'>",
+					script("mixin(qsl('input'), {oninput: function () { $change_next }, onkeydown: selectSearchKeydown, onsearch: selectSearchSearch});", ""),
+					" <input type='image' src='../adminer/static/cross.gif' class='jsonly icon remove' title='" . h(lang('Remove')) . "' alt='x'>",
+					script('qsl("#fieldset-search .remove").onclick = selectRemoveRow;', ""),
+					"</div>\n";
 			}
 		}
+
 		echo "</div></fieldset>\n";
 	}
 
-	/** Print order box in select
-	* @param array result of selectOrderProcess()
-	* @param array selectable columns
-	* @param array
-	* @return null
-	*/
+	/**
+	 * Prints order box in select filter.
+	 *
+	 * @param array $order result of selectOrderProcess()
+	 * @param array $columns selectable columns
+	 */
 	function selectOrderPrint($order, $columns, $indexes) {
-		print_fieldset("sort", lang('Sort'), $order);
+		print_fieldset("sort", lang('Sort'), $order, true);
+
+		$_GET["order"][""] = "";
 		$i = 0;
+
 		foreach ((array) $_GET["order"] as $key => $val) {
-			if ($val != "") {
-				echo "<div>" . select_input(" name='order[$i]'", $columns, $val, "selectFieldChange");
-				echo checkbox("desc[$i]", 1, isset($_GET["desc"][$key]), lang('descending')) . "</div>\n";
-				$i++;
-			}
+			if ($key != "" && $val == "") continue;
+
+			echo "<div ", ($key != "" ? "" : "class='no-sort'"), ">",
+				"<span class='jsonly handle'></span>",
+				select_input("name='order[$i]'", $columns, $val, $key !== "" ? "selectFieldChange" : "selectAddRow"),
+				checkbox("desc[$i]", 1, isset($_GET["desc"][$key]), lang('descending')),
+				" <input type='image' src='../adminer/static/cross.gif' class='jsonly icon remove' title='" . h(lang('Remove')) . "' alt='x'>",
+				script('qsl("#fieldset-sort .remove").onclick = selectRemoveRow;', ""),
+				"</div>\n";
+
+			$i++;
 		}
-		echo "<div>" . select_input(" name='order[$i]'", $columns, "", "selectAddRow");
-		echo checkbox("desc[$i]", 1, false, lang('descending')) . "</div>\n";
-		echo "</div></fieldset>\n";
+
+		echo "</div>", script("initSortable('#fieldset-sort');"), "</fieldset>\n";
 	}
 
 	/** Print limit box in select
@@ -586,6 +655,8 @@ class Adminer {
                             && (preg_match('~^[-\d.' . (preg_match('~IN$~', $op) ? ',' : '') . ']+$~', $val) || !preg_match('~' . number_type() . '|bit~', $field["type"]))
 							&& (!preg_match("~[\x80-\xFF]~", $val) || preg_match('~char|text|enum|set~', $field["type"]))
 							&& (!preg_match('~date|timestamp~', $field["type"]) || preg_match('~^\d+-\d+-\d+~', $val))
+							&& (!preg_match('~^elastic~', DRIVER) || $field["type"] != "boolean" || preg_match('~true|false~', $val)) // Elasticsearch needs boolean value properly formatted.
+							&& (!preg_match('~^elastic~', DRIVER) || strpos($op, "regexp") === false || preg_match('~text|keyword~', $field["type"])) // Elasticsearch can use regexp only on text and keyword fields.
 						) {
 							$cols[] = $prefix . $driver->convertSearch(idf_escape($name), $where, $field) . $cond;
 						}
@@ -725,7 +796,7 @@ class Adminer {
 	* @param string
 	* @return string custom input field or empty string for default
 	*/
-	function editInput($table, $field, $attrs, $value) {
+	function editInput($table, $field, $attrs, $value, $function) {
 		if ($field["type"] == "enum") {
 			return (isset($_GET["select"]) ? "<label><input type='radio'$attrs value='-1' checked><i>" . lang('original') . "</i></label> " : "")
 				. ($field["null"] ? "<label><input type='radio'$attrs value=''" . ($value !== null || isset($_GET["select"]) ? "" : " checked") . "><i>NULL</i></label> " : "")
@@ -971,8 +1042,12 @@ class Adminer {
 <h1>
     <?php echo $this->name(); ?>
     <?php if ($missing != "auth"): ?>
-    <span class="version"><?php echo $VERSION; ?></span>
-    <a href="https://www.adminer.org/#download"<?php echo target_blank(); ?> id="version"><?php echo (version_compare($VERSION, $_COOKIE["adminer_version"]) < 0 ? h($_COOKIE["adminer_version"]) : ""); ?></a>
+	<span class="version">
+		<?php echo $VERSION; ?>
+		<a href="https://github.com/pematon/adminer/releases"<?php echo target_blank(); ?> id="version">
+			<?php echo (version_compare($VERSION, $_COOKIE["adminer_version"]) < 0 ? h($_COOKIE["adminer_version"]) : ""); ?>
+		</a>
+	</span>
     <?php endif; ?>
 </h1>
 <?php
@@ -984,7 +1059,14 @@ class Adminer {
 						if ($password !== null) {
 							$dbs = $_SESSION["db"][$vendor][$server][$username];
 							foreach (($dbs ? array_keys($dbs) : array("")) as $db) {
-								$output .= "<li><a href='" . h(auth_url($vendor, $server, $username, $db)) . "'>($drivers[$vendor]) " . h($username . ($server != "" ? "@" . $this->serverName($server) : "") . ($db != "" ? " - $db" : "")) . "</a>\n";
+								$output .= "<li><a href='" . h(auth_url($vendor, $server, $username, $db)) . "'>"
+									. h($drivers[$vendor])
+									. ($username != "" || $server != "" ? " - " : "")
+									. h($username)
+									. ($username != "" && $server != "" ? "@" : "")
+									. ($server != "" ? h($this->serverName($server)) : "")
+									. ($db != "" ? h(" - $db") : "")
+									. "</a></li>\n";
 							}
 						}
 					}
@@ -1024,84 +1106,128 @@ bodyLoad('<?php echo (is_object($connection) ? preg_replace('~^(\d\.?\d).*~s', '
 </script>
 <?php
 			}
+
 			$this->databasesPrint($missing);
+
+			$actions = [];
 			if (DB == "" || !$missing) {
-				echo "<p class='links'>" . (support("sql") ? "<a href='" . h(ME) . "sql='" . bold(isset($_GET["sql"]) && !isset($_GET["import"])) . ">" . lang('SQL command') . "</a>\n<a href='" . h(ME) . "import='" . bold(isset($_GET["import"])) . ">" . lang('Import') . "</a>\n" : "") . "";
+				if (support("sql")) {
+					$actions[] = "<a href='" . h(ME) . "sql='" . bold(isset($_GET["sql"]) && !isset($_GET["import"])) . ">" . lang('SQL command') . "</a>";
+					$actions[] = "<a href='" . h(ME) . "import='" . bold(isset($_GET["import"])) . ">" . lang('Import') . "</a>";
+				}
 				if (support("dump")) {
-					echo "<a href='" . h(ME) . "dump=" . urlencode(isset($_GET["table"]) ? $_GET["table"] : $_GET["select"]) . "' id='dump'" . bold(isset($_GET["dump"])) . ">" . lang('Export') . "</a>\n";
+					$actions[] = "<a href='" . h(ME) . "dump=" . urlencode(isset($_GET["table"]) ? $_GET["table"] : $_GET["select"]) . "' id='dump'" . bold(isset($_GET["dump"])) . ">" . lang('Export') . "</a>";
 				}
 			}
 			if ($_GET["ns"] !== "" && !$missing && DB != "") {
-				echo '<a href="' . h(ME) . 'create="' . bold($_GET["create"] === "") . ">" . lang('Create table') . "</a>\n";
-				if (!$tables) {
-					echo "<p class='message'>" . lang('No tables.') . "\n";
-				} else {
+				$actions[] = '<a href="' . h(ME) . 'create="' . bold($_GET["create"] === "") . ">" . lang('Create table') . "</a>\n";
+			}
+			if ($actions) {
+				echo "<p class='links'>" . implode("\n", $actions) . "</p>";
+			}
+
+			if ($_GET["ns"] !== "" && !$missing && DB != "") {
+				if ($tables) {
+					$this->printTablesFilter();
 					$this->tablesPrint($tables);
+				} else {
+					echo "<p class='message'>" . lang('No tables.') . "</p>\n";
 				}
 			}
 		}
 	}
 
-	/** Prints databases list in menu
-	* @param string
-	* @return null
-	*/
+	/**
+	 * Prints databases select in menu.
+	 *
+	 * @param $missing string
+	 * @return null
+	 */
 	function databasesPrint($missing) {
 		global $adminer, $connection;
+
 		$databases = $this->databases();
 		if (DB && $databases && !in_array(DB, $databases)) {
 			array_unshift($databases, DB);
 		}
-		?>
-<form action="">
-<p id="dbs">
-<?php
+
+		echo "<form action=''><p id='dbs'>";
 		hidden_fields_get();
-		$db_events = script("mixin(qsl('select'), {onmousedown: dbMouseDown, onchange: dbChange});");
-		echo "<span title='" . lang('database') . "'>" . lang('DB') . "</span>: " . ($databases
-			? "<select name='db'>" . optionlist(array("" => "") + $databases, DB) . "</select>$db_events"
-			: "<input name='db' value='" . h(DB) . "' autocapitalize='off'>\n"
-		);
+
+		if ($databases) {
+			echo "<select id='database-select' name='db'>" . optionlist(["" => lang('Database')] + $databases, DB) . "</select>"
+				. script("mixin(qs('#database-select'), {onmousedown: dbMouseDown, onchange: dbChange});");
+		} else {
+			echo "<input id='database-select' name='db' value='" . h(DB) . "' autocapitalize='off'>\n";
+		}
 		echo "<input type='submit' value='" . lang('Use') . "'" . ($databases ? " class='hidden'" : "") . ">\n";
-		if (support("scheme")) {
-			if ($missing != "db" && DB != "" && $connection->select_db(DB)) {
-				echo "<br>" . lang('Schema') . ": <select name='ns'>" . optionlist(array("" => "") + $adminer->schemas(), $_GET["ns"]) . "</select>$db_events";
-				if ($_GET["ns"] != "") {
-					set_schema($_GET["ns"]);
-				}
+
+		if (support("scheme") && $missing != "db" && DB != "" && $connection->select_db(DB)) {
+			echo "<br><select id='scheme-select' name='ns'>" . optionlist(["" => lang('Schema')] + $adminer->schemas(), $_GET["ns"]) . "</select>"
+				. script("mixin(qs('#scheme-select'), {onmousedown: dbMouseDown, onchange: dbChange});");
+
+			if ($_GET["ns"] != "") {
+				set_schema($_GET["ns"]);
 			}
 		}
-		foreach (array("import", "sql", "schema", "dump", "privileges") as $val) {
+
+		foreach (["import", "sql", "schema", "dump", "privileges"] as $val) {
 			if (isset($_GET[$val])) {
 				echo "<input type='hidden' name='$val' value=''>";
 				break;
 			}
 		}
+
 		echo "</p></form>\n";
+
+		return null;
 	}
 
-	/** Prints table list in menu
-	* @param array result of table_status('', true)
-	* @return null
-	*/
+	function printTablesFilter()
+	{
+		global $adminer;
+
+		echo "<div class='tables-filter jsonly'>"
+			. "<input id='tables-filter' autocomplete='off' placeholder='" . lang('Table') . "'>"
+			. script("initTablesFilter(" . json_encode($adminer->database()) . ");")
+			. "</div>\n";
+	}
+
+	/**
+	 * Prints table list in menu.
+	 *
+	 * @param array $tables Result of table_status('', true)
+	 * @return null
+	 */
 	function tablesPrint($tables) {
 		echo "<ul id='tables'>" . script("mixin(qs('#tables'), {onmouseover: menuOver, onmouseout: menuOut});");
+
 		foreach ($tables as $table => $status) {
 			$name = $this->tableName($status);
 			if ($name != "") {
+				$active = $table == $_GET["select"] || $table == $_GET["edit"];
+
 				echo '<li><a href="' . h(ME) . 'select=' . urlencode($table) . '"'
-					. bold($_GET["select"] == $table || $_GET["edit"] == $table, "select")
-					. " title='" . lang('Select data') . "'>" . lang('select') . "</a> "
-				;
-				echo (support("table") || support("indexes")
-					? '<a href="' . h(ME) . 'table=' . urlencode($table) . '"'
-						. bold(in_array($table, array($_GET["table"], $_GET["create"], $_GET["indexes"], $_GET["foreign"], $_GET["trigger"])), (is_view($status) ? "view" : "structure"))
-						. " title='" . lang('Show structure') . "'>$name</a>"
-					: "<span>$name</span>"
-				) . "\n";
+					. bold($active, "select")
+					. " title='" . lang('Select data') . "'>" . lang('select') . "</a> ";
+
+				if (support("table") || support("indexes")) {
+					$active = in_array($table, [$_GET["table"], $_GET["create"], $_GET["indexes"], $_GET["foreign"], $_GET["trigger"]]);
+					$class = is_view($status) ? "view" : "structure";
+
+					echo '<a href="' . h(ME) . 'table=' . urlencode($table) . '"' . bold($active, $class)
+						. " title='" . lang('Show structure') . "' data-main='true'>$name</a>";
+				} else {
+					echo "<span data-main='true'>$name</span>";
+				}
+
+				echo "</li>\n";
 			}
 		}
+
 		echo "</ul>\n";
+
+		return null;
 	}
 
 }

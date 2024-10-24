@@ -1,5 +1,6 @@
 <?php
 $translations = array(
+	'Home' => null,
 	'Login' => 'Logi sisse',
 	'Logout successful.' => 'Väljalogimine õnnestus.',
 	'Invalid server or credentials.' => null,
@@ -190,6 +191,7 @@ $translations = array(
 	'Clone' => 'Kloon',
 	'Maximum number of allowed fields exceeded. Please increase %s.' => 'Maksimaalne väljade arv ületatud. Palun suurendage %s.',
 	'Partition by' => 'Partitsiooni',
+	'Partition' => null,
 	'Partitions' => 'Partitsioonid',
 	'Partition name' => 'Partitsiooni nimi',
 	'Values' => 'Väärtused',
@@ -224,6 +226,7 @@ $translations = array(
 	'Permanent login' => 'Jäta mind meelde',
 	'Databases have been dropped.' => 'Andmebaasid on edukalt kustutatud.',
 	'Search data in tables' => 'Otsi kogu andmebaasist',
+	'as a regular expression' => null,
 	'Schema' => 'Struktuur',
 	'Alter schema' => 'Muuda struktuuri',
 	'Create schema' => 'Loo struktuur',

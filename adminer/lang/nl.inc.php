@@ -1,5 +1,6 @@
 <?php
 $translations = array(
+	'Home' => null,
 	'Login' => 'Aanmelden',
 	'Logout successful.' => 'Successvol afgemeld.',
 	'Invalid server or credentials.' => null,
@@ -191,6 +192,7 @@ $translations = array(
 	'Clone' => 'Dupliceer',
 	'Maximum number of allowed fields exceeded. Please increase %s.' => 'Maximum aantal velden bereikt. Verhoog %s.',
 	'Partition by' => 'Partitioneren op',
+	'Partition' => null,
 	'Partitions' => 'Partities',
 	'Partition name' => 'Partitie naam',
 	'Values' => 'Waarden',
@@ -224,6 +226,7 @@ $translations = array(
 	'%d in total' => '%d in totaal',
 	'Permanent login' => 'Blijf aangemeld',
 	'Search data in tables' => 'Zoeken in database',
+	'as a regular expression' => 'als een regular expression',
 	'Schema' => 'Schema',
 	'Alter schema' => 'Schema wijzigen',
 	'Create schema' => 'Schema maken',

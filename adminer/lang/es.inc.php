@@ -1,5 +1,6 @@
 <?php
 $translations = array(
+	'Home' => null,
 	'Login' => 'Login',
 	'Logout successful.' => 'Sesión finalizada con éxito.',
 	'Invalid server or credentials.' => null,
@@ -190,6 +191,7 @@ $translations = array(
 	'Clone' => 'Clonar',
 	'Maximum number of allowed fields exceeded. Please increase %s.' => 'Excedida la cantidad máxima de campos permitidos. Por favor aumente %s.',
 	'Partition by' => 'Particionar por',
+	'Partition' => null,
 	'Partitions' => 'Particiones',
 	'Partition name' => 'Nombre de partición',
 	'Values' => 'Valores',
@@ -224,6 +226,7 @@ $translations = array(
 	'Permanent login' => 'Guardar contraseña',
 	'Databases have been dropped.' => 'Bases de datos eliminadas.',
 	'Search data in tables' => 'Buscar datos en tablas',
+	'as a regular expression' => null,
 	'Schema' => 'Esquema',
 	'Alter schema' => 'Modificar esquema',
 	'Create schema' => 'Crear esquema',

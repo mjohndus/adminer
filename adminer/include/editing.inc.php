@@ -274,65 +274,106 @@ function type_class($type) {
 	}
 }
 
-/** Print table interior for fields editing
-* @param array
-* @param array
-* @param string TABLE or PROCEDURE
-* @param array returned by referencable_primary()
-* @return null
-*/
-function edit_fields($fields, $collations, $type = "TABLE", $foreign_keys = array()) {
+/**
+ * Prints table interior for fields editing.
+ *
+ * @param string $type TABLE, FUNCTION or PROCEDURE
+ * @param array $foreign_keys returned by referencable_primary()
+ */
+function edit_fields(array $fields, array $collations, $type = "TABLE", $foreign_keys = []) {
 	global $inout;
+
 	$fields = array_values($fields);
-	$default_class = (($_POST ? $_POST["defaults"] : adminer_setting("defaults")) ? "" : " class='hidden'");
-	$comment_class = (($_POST ? $_POST["comments"] : adminer_setting("comments")) ? "" : " class='hidden'");
+	$comment_class = ($_POST ? $_POST["comments"] : adminer_setting("comments")) ? "" : "class='hidden'";
 	?>
+
 <thead><tr>
-<?php if ($type == "PROCEDURE") { ?><td><?php } ?>
-<th id="label-name"><?php echo ($type == "TABLE" ? lang('Column name') : lang('Parameter name')); ?>
-<td id="label-type"><?php echo lang('Type'); ?><textarea id="enum-edit" rows="4" cols="12" wrap="off" style="display: none;"></textarea><?php echo script("qs('#enum-edit').onblur = editingLengthBlur;"); ?>
-<td id="label-length"><?php echo lang('Length'); ?>
-<td><?php echo lang('Options'); /* no label required, options have their own label */ ?>
-<?php if ($type == "TABLE") { ?>
-<td id="label-null">NULL
-<td><input type="radio" name="auto_increment_col" value=""><abbr id="label-ai" title="<?php echo lang('Auto Increment'); ?>">AI</abbr><?php echo doc_link(array(
-	'sql' => "example-auto-increment.html",
-	'mariadb' => "auto_increment/",
-	'sqlite' => "autoinc.html",
-	'pgsql' => "datatype-numeric.html#DATATYPE-SERIAL",
-	'mssql' => "ms186775.aspx",
-)); ?>
-<td id="label-default"<?php echo $default_class; ?>><?php echo lang('Default value'); ?>
-<?php echo (support("comment") ? "<td id='label-comment'$comment_class>" . lang('Comment') : ""); ?>
-<?php } ?>
-<td><?php echo "<input type='image' class='icon' name='add[" . (support("move_col") ? 0 : count($fields)) . "]' src='../adminer/static/plus.gif' alt='+' title='" . lang('Add next') . "'>" . script("row_count = " . count($fields) . ";"); ?>
-</thead>
-<tbody>
+	<?php
+		if (support("move_col")) {
+			echo "<td class='jsonly'></td>";
+		}
+		if ($type == "PROCEDURE") {
+			echo "<td></td>";
+		}
+	?>
+	<th id="label-name"><?php echo ($type == "TABLE" ? lang('Column name') : lang('Parameter name')); ?></th>
+	<td id="label-type"><?php echo lang('Type'); ?><textarea id="enum-edit" rows="4" cols="12" wrap="off" style="display: none;"></textarea><?php echo script("qs('#enum-edit').onblur = editingLengthBlur;"); ?></td>
+	<td id="label-length"><?php echo lang('Length'); ?></td>
+	<td><?php echo lang('Options'); /* no label required, options have their own label */ ?></td>
+	<?php if ($type == "TABLE") { ?>
+		<td id="label-null">NULL</td>
+		<td><input type="radio" name="auto_increment_col" value=""><abbr id="label-ai" title="<?php echo lang('Auto Increment'); ?>">AI</abbr><?php echo doc_link([
+			'sql' => "example-auto-increment.html",
+			'mariadb' => "auto_increment/",
+			'sqlite' => "autoinc.html",
+			'pgsql' => "datatype-numeric.html#DATATYPE-SERIAL",
+			'mssql' => "ms186775.aspx",
+		]); ?>
+		</td>
+		<td id="label-default"><?php echo lang('Default value'); ?></td>
+		<?php echo (support("comment") ? "<td id='label-comment' $comment_class>" . lang('Comment') . "</td>" : ""); ?>
+	<?php } ?>
+	<td><?php echo "<input type='image' class='icon' name='add[" . (support("move_col") ? 0 : count($fields)) . "]' src='../adminer/static/plus.gif' alt='+' title='" . lang('Add next') . "'>" . script("row_count = " . count($fields) . ";"); ?></td>
+</tr></thead>
 <?php
-	echo script("mixin(qsl('tbody'), {onclick: editingClick, onkeydown: editingKeydown, oninput: editingInput});");
+	echo "<tbody>\n";
+
 	foreach ($fields as $i => $field) {
 		$i++;
 		$orig = $field[($_POST ? "orig" : "field")];
 		$display = (isset($_POST["add"][$i-1]) || (isset($field["field"]) && !$_POST["drop_col"][$i])) && (support("drop_col") || $orig == "");
-		?>
-<tr<?php echo ($display ? "" : " style='display: none;'"); ?>>
-<?php echo ($type == "PROCEDURE" ? "<td>" . html_select("fields[$i][inout]", explode("|", $inout), $field["inout"]) : ""); ?>
-<th><?php if ($display) { ?><input name="fields[<?php echo $i; ?>][field]" value="<?php echo h($field["field"]); ?>" data-maxlength="64" autocapitalize="off" aria-labelledby="label-name"><?php } ?>
-<input type="hidden" name="fields[<?php echo $i; ?>][orig]" value="<?php echo h($orig); ?>"><?php edit_type("fields[$i]", $field, $collations, $foreign_keys); ?>
-<?php if ($type == "TABLE") { ?>
-<td><?php echo checkbox("fields[$i][null]", 1, $field["null"], "", "", "block", "label-null"); ?>
-<td><label class="block"><input type="radio" name="auto_increment_col" value="<?php echo $i; ?>"<?php if ($field["auto_increment"]) { ?> checked<?php } ?> aria-labelledby="label-ai"></label><td<?php echo $default_class; ?>><?php
-			echo checkbox("fields[$i][has_default]", 1, $field["has_default"], "", "", "", "label-default"); ?><input name="fields[<?php echo $i; ?>][default]" value="<?php echo h($field["default"]); ?>" aria-labelledby="label-default"><?php
-			echo (support("comment") ? "<td$comment_class><input name='fields[$i][comment]' value='" . h($field["comment"]) . "' data-maxlength='" . (min_version(5.5) ? 1024 : 255) . "' aria-labelledby='label-comment'>" : "");
+
+		$style = $display ? "" : "style='display: none;'";
+		echo "<tr $style>\n";
+
+		if (support("move_col")) {
+			echo "<th class='handle jsonly'></th>";
 		}
+		if ($type == "PROCEDURE") {
+			echo "<td>", html_select("fields[$i][inout]", explode("|", $inout), $field["inout"]), "</td>\n";
+		}
+
+		echo "<th>";
+		if ($display) {
+			echo "<input name='fields[$i][field]' value='", h($field["field"]), "' data-maxlength='64' autocapitalize='off' aria-labelledby='label-name'>";
+		}
+		echo "<input type='hidden' name='fields[$i][orig]' value='",  h($orig), "'>";
+		edit_type("fields[$i]", $field, $collations, $foreign_keys);
+		echo "</th>\n";
+
+		if ($type == "TABLE") {
+			echo "<td>", checkbox("fields[$i][null]", 1, $field["null"], "", "", "block", "label-null"), "</td>\n";
+
+			$checked = $field["auto_increment"] ? "checked" : "";
+			echo "<td><label class='block'><input type='radio' name='auto_increment_col' value='$i' $checked aria-labelledby='label-ai'></label></td>\n";
+
+			echo "<td>",
+				checkbox("fields[$i][has_default]", 1, $field["has_default"], "", "", "", "label-default"),
+				"<input name='fields[$i][default]' value='", h($field["default"]), "' aria-labelledby='label-default'>",
+				"</td>\n";
+
+			if (support("comment")) {
+				$max_length = min_version(5.5) ? 1024 : 255;
+				echo "<td $comment_class>",
+					"<input name='fields[$i][comment]' value='", h($field["comment"]), "' data-maxlength='$max_length' aria-labelledby='label-comment'>",
+					"</td>\n";
+			}
+		}
+
 		echo "<td>";
-		echo (support("move_col") ?
-			"<input type='image' class='icon' name='add[$i]' src='../adminer/static/plus.gif' alt='+' title='" . lang('Add next') . "'> "
-			. "<input type='image' class='icon' name='up[$i]' src='../adminer/static/up.gif' alt='↑' title='" . lang('Move up') . "'> "
-			. "<input type='image' class='icon' name='down[$i]' src='../adminer/static/down.gif' alt='↓' title='" . lang('Move down') . "'> "
-		: "");
-		echo ($orig == "" || support("drop_col") ? "<input type='image' class='icon' name='drop_col[$i]' src='../adminer/static/cross.gif' alt='x' title='" . lang('Remove') . "'>" : "");
+		if (support("move_col")) {
+			echo "<input type='image' class='icon' name='add[$i]' src='../adminer/static/plus.gif' alt='+' title='" . lang('Add next') . "'> ",
+				"<input type='image' class='icon hidden' name='up[$i]' src='../adminer/static/up.gif' alt='↑' title='" . lang('Move up') . "'> ",
+				"<input type='image' class='icon hidden' name='down[$i]' src='../adminer/static/down.gif' alt='↓' title='" . lang('Move down') . "'> ";
+		}
+		if ($orig == "" || support("drop_col")) {
+			echo "<input type='image' class='icon' name='drop_col[$i]' src='../adminer/static/cross.gif' alt='x' title='" . lang('Remove') . "'>";
+		}
+		echo "</td>\n</tr>\n";
 	}
+
+	echo "</tbody>";
+	echo script("mixin(qs('#edit-fields tbody'), {onclick: editingClick, onkeydown: editingKeydown, oninput: editingInput}); initSortable('#edit-fields tbody');");
 }
 
 /** Move fields up and down or add field
@@ -556,27 +597,39 @@ function ini_bytes($ini) {
 	return $val;
 }
 
-/** Create link to database documentation
-* @param array $jush => $path
-* @param string HTML code
-* @return string HTML code
-*/
-function doc_link($paths, $text = "<sup>?</sup>") {
+/**
+ * Creates link to database documentation.
+ *
+ * @param array $paths $jush => $path
+ * @param string $text HTML code
+ *
+ * @return string HTML code
+ */
+function doc_link(array $paths, $text = "<sup>?</sup>") {
 	global $jush, $connection;
+
 	$server_info = $connection->server_info;
 	$version = preg_replace('~^(\d\.?\d).*~s', '\1', $server_info); // two most significant digits
-	$urls = array(
+
+	$urls = [
 		'sql' => "https://dev.mysql.com/doc/refman/$version/en/",
 		'sqlite' => "https://www.sqlite.org/",
 		'pgsql' => "https://www.postgresql.org/docs/$version/",
 		'mssql' => "https://msdn.microsoft.com/library/",
 		'oracle' => "https://www.oracle.com/pls/topic/lookup?ctx=db" . preg_replace('~^.* (\d+)\.(\d+)\.\d+\.\d+\.\d+.*~s', '\1\2', $server_info) . "&id=",
-	);
+		'elastic' => "https://www.elastic.co/guide/en/elasticsearch/reference/$version/",
+	];
+
 	if (preg_match('~MariaDB~', $server_info)) {
-		$urls['sql'] = "https://mariadb.com/kb/en/library/";
+		$urls['sql'] = "https://mariadb.com/kb/en/";
 		$paths['sql'] = (isset($paths['mariadb']) ? $paths['mariadb'] : str_replace(".html", "/", $paths['sql']));
 	}
-	return ($paths[$jush] ? "<a href='" . h($urls[$jush] . $paths[$jush]) . "'" . target_blank() . ">$text</a>" : "");
+
+	if (!isset($paths[$jush]) || !$paths[$jush] ) {
+		return "";
+	}
+
+	return "<a href='" . h($urls[$jush] . $paths[$jush]) . "'" . target_blank() . ">$text</a>";
 }
 
 /** Wrap gzencode() for usage in ob_start()

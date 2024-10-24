@@ -1,5 +1,6 @@
 <?php
 $translations = array(
+	'Home' => null,
 	'System' => 'System',
 	'Server' => 'Server',
 	'Username' => 'Brugernavn',
@@ -151,6 +152,7 @@ $translations = array(
 	'Remove' => 'Fjern',
 	'Maximum number of allowed fields exceeded. Please increase %s.' => 'Maksimum antal feltnavne overskredet - øg venligst %s.',
 	'Partition by' => 'Partition ved',
+	'Partition' => null,
 	'Partitions' => 'Partitioner',
 	'Partition name' => 'Partitionsnavn',
 	'Values' => 'Værdier',
@@ -199,6 +201,7 @@ $translations = array(
 	'Search' => 'Søg',
 	'anywhere' => 'hvorsomhelst',
 	'Search data in tables' => 'Søg data i tabeller',
+	'as a regular expression' => null,
 	'Sort' => 'Sorter',
 	'descending' => 'faldende',
 	'Limit' => 'Limit',

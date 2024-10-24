@@ -1,6 +1,7 @@
 <?php
 $translations = array(
 	// label for database system selection (MySQL, SQLite, ...)
+	'Home' => null,
 	'System' => 'سیستم',
 	'Server' => 'سرور',
 	'Username' => 'نام کاربری',
@@ -175,6 +176,7 @@ $translations = array(
 	'Maximum number of allowed fields exceeded. Please increase %s.' => 'حداکثر تعداد فیلدهای مجاز اشباع شد. لطفا %s را افزایش دهید.',
 
 	'Partition by' => 'بخشبندی توسط',
+	'Partition' => null,
 	'Partitions' => 'بخشبندیها',
 	'Partition name' => 'نام بخش',
 	'Values' => 'مقادیر',
@@ -229,6 +231,7 @@ $translations = array(
 	'Search' => 'جستجو',
 	'anywhere' => 'هرکجا',
 	'Search data in tables' => 'جستجوی داده در جدول',
+	'as a regular expression' => null,
 	'Sort' => 'مرتب کردن',
 	'descending' => 'نزولی',
 	'Limit' => 'محدودیت',

@@ -1,5 +1,6 @@
 <?php
 $translations = array(
+	'Home' => null,
 	'Login' => 'Belépés',
 	'Logout successful.' => 'Sikeres kilépés.',
 	'Invalid server or credentials.' => null,
@@ -189,6 +190,7 @@ $translations = array(
 	'Tables have been dropped.' => 'Táblák eldobva.',
 	'Clone' => 'Klónoz',
 	'Partition by' => 'Particionálás ezzel',
+	'Partition' => null,
 	'Partitions' => 'Particiók',
 	'Partition name' => 'Partició neve',
 	'Values' => 'Értékek',
@@ -250,6 +252,7 @@ $translations = array(
 	'Type has been created.' => 'Típus létrehozva.',
 	'Alter type' => 'Típus módosítása',
 	'Search data in tables' => 'Keresés a táblákban',
+	'as a regular expression' => null,
 	'From server' => 'Szerverről',
 	'empty' => 'üres',
 	'now' => 'most',

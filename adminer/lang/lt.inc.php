@@ -1,6 +1,7 @@
 <?php
 $translations = array(
 	// label for database system selection (MySQL, SQLite, ...)
+	'Home' => null,
 	'System' => 'Sistema',
 	'Server' => 'Serveris',
 	'Username' => 'Vartotojas',
@@ -166,6 +167,7 @@ $translations = array(
 	'Maximum number of allowed fields exceeded. Please increase %s.' => 'Viršytas maksimalus leidžiamų stulpelių kiekis. Padidinkite %s.',
 
 	'Partition by' => 'Skirstyti pagal',
+	'Partition' => null,
 	'Partitions' => 'Skirsniai',
 	'Partition name' => 'Skirsnio pavadinimas',
 	'Values' => 'Reikšmės',
@@ -219,6 +221,7 @@ $translations = array(
 	'Search' => 'Ieškoti',
 	'anywhere' => 'visur',
 	'Search data in tables' => 'Ieškoti duomenų lentelėse',
+	'as a regular expression' => null,
 	'Sort' => 'Rikiuoti',
 	'descending' => 'mažėjimo tvarka',
 	'Limit' => 'Limitas',

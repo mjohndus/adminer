@@ -16,17 +16,22 @@ function bodyLoad(version, maria) {
 					if (maria) {
 						for (var i = 1; i < obj.length; i++) {
 							obj[i] = obj[i]
-								.replace(/\.html/, '/')
-								.replace(/-type-syntax/, '-data-types')
+								.replace('.html', '/')
+								.replace('-type-syntax', '-data-types')
 								.replace(/numeric-(data-types)/, '$1-$&')
-								.replace(/#statvar_.*/, '#$$1')
+								.replace(/replication-options-(master|binary-log)\//, 'replication-and-binary-log-system-variables/')
+								.replace('server-options/', 'server-system-variables/')
+								.replace('innodb-parameters/', 'innodb-system-variables/')
+								.replace(/#(statvar|sysvar|option_mysqld)_(.*)/, '#$2')
+								.replace(/#sysvar_(.*)/, '#$1')
 							;
 						}
 					}
 				}
-				obj[key] = (maria ? obj[key].replace(/dev\.mysql\.com\/doc\/mysql\/en\//, 'mariadb.com/kb/en/library/') : obj[key]) // MariaDB
-					.replace(/\/doc\/mysql/, '/doc/refman/' + version) // MySQL
-					.replace(/\/docs\/current/, '/docs/' + version) // PostgreSQL
+
+				obj[key] = (maria ? obj[key].replace('dev.mysql.com/doc/mysql/en/', 'mariadb.com/kb/en/') : obj[key]) // MariaDB
+					.replace('/doc/mysql/', '/doc/refman/' + version) // MySQL
+					.replace('/docs/current/', '/docs/' + version) // PostgreSQL
 				;
 			}
 		}
@@ -253,10 +258,6 @@ function editingClick(event) {
 		var name = el.name;
 		if (/^add\[/.test(name)) {
 			editingAddRow.call(el, 1);
-		} else if (/^up\[/.test(name)) {
-			editingMoveRow.call(el, 1);
-		} else if (/^down\[/.test(name)) {
-			editingMoveRow.call(el);
 		} else if (/^drop_col\[/.test(name)) {
 			editingRemoveRow.call(el, 'fields\$1[field]');
 		} else {
@@ -353,7 +354,10 @@ function editingAddRow(focus) {
 		}
 	}
 	tags[0].oninput = editingNameChange;
+
+	initSortableRow(row2);
 	row.parentNode.insertBefore(row2, row.nextSibling);
+
 	if (focus) {
 		input.oninput = editingNameChange;
 		input.focus();
@@ -372,22 +376,6 @@ function editingRemoveRow(name) {
 	var field = formField(this.form, this.name.replace(/[^\[]+(.+)/, name));
 	field.parentNode.removeChild(field);
 	parentTag(this, 'tr').style.display = 'none';
-	return false;
-}
-
-/** Move table row for field
-* @param [boolean]
-* @return boolean false for success
-* @this HTMLInputElement
-*/
-function editingMoveRow(up){
-	var row = parentTag(this, 'tr');
-	if (!('nextElementSibling' in row)) {
-		return true;
-	}
-	row.parentNode.insertBefore(row, up
-		? row.previousElementSibling
-		: row.nextElementSibling ? row.nextElementSibling.nextElementSibling : row.parentNode.firstChild);
 	return false;
 }
 

@@ -34,7 +34,7 @@ if (isset($_GET["file"])) {
 if ($_GET["script"] == "version") {
 	$file = open_file_with_lock(get_temp_dir() . "/adminer.version");
 	if ($file) {
-		write_and_unlock_file($file, serialize(["signature" => $_POST["signature"], "version" => $_POST["version"]]));
+		write_and_unlock_file($file, serialize(["version" => $_POST["version"]]));
 	}
 	exit;
 }
@@ -93,11 +93,16 @@ $types = $config['types'];
 $structured_types = $config['structured_types'];
 $unsigned = $config['unsigned'];
 $operators = $config['operators'];
+$operator_like = $config['operator_like'];
+$operator_regexp = $config['operator_regexp'];
 $functions = $config['functions'];
 $grouping = $config['grouping'];
 $edit_functions = $config['edit_functions'];
+
 if ($adminer->operators === null) {
 	$adminer->operators = $operators;
+	$adminer->operator_like = $operator_like;
+	$adminer->operator_regexp = $operator_regexp;
 }
 
 define("SERVER", $_GET[DRIVER]); // read from pgsql=localhost

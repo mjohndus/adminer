@@ -1,5 +1,6 @@
 <?php
 $translations = array(
+	'Home' => null,
 	'Login' => 'Intră',
 	'Logout successful.' => 'Ați ieșit cu succes.',
 	'Invalid server or credentials.' => null,
@@ -189,6 +190,7 @@ $translations = array(
 	'Tables have been dropped.' => 'Tabelele au fost șterse.',
 	'Clone' => 'Clonează',
 	'Partition by' => 'Împarte',
+	'Partition' => null,
 	'Partitions' => 'Secțiuni',
 	'Partition name' => 'Denumirea secțiunii',
 	'Values' => 'Parametru',
@@ -224,6 +226,7 @@ $translations = array(
 	'Permanent login' => 'Logare permanentă',
 	'Databases have been dropped.' => 'Bazele de date au fost șterse.',
 	'Search data in tables' => 'Caută în tabele',
+	'as a regular expression' => null,
 	'Schema' => 'Schema',
 	'Alter schema' => 'Modifică schema',
 	'Create schema' => 'Crează o schemă',

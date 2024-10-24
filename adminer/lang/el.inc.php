@@ -1,6 +1,7 @@
 <?php
 $translations = array(
 	// label for database system selection (MySQL, SQLite, ...)
+	'Home' => null,
 	'System' => 'Σύστημα',
 	'Server' => 'Διακομιστής',
 	'Username' => 'Όνομα Χρήστη',
@@ -177,6 +178,7 @@ $translations = array(
 	'Maximum number of allowed fields exceeded. Please increase %s.' => 'Υπέρβαση μέγιστου επιτρεπόμενου αριθμού πεδίων. Παρακαλώ αυξήστε %s.',
 
 	'Partition by' => 'Τμηματοποίηση ανά',
+	'Partition' => null,
 	'Partitions' => 'Τμήματα',
 	'Partition name' => 'Όνομα Τμήματος',
 	'Values' => 'Τιμές',
@@ -231,6 +233,7 @@ $translations = array(
 	'Search' => 'Αναζήτηση',
 	'anywhere' => 'παντού',
 	'Search data in tables' => 'Αναζήτηση δεδομένων στους πίνακες',
+	'as a regular expression' => null,
 	'Sort' => 'Ταξινόμηση',
 	'descending' => 'Φθίνουσα',
 	'Limit' => 'Όριο',

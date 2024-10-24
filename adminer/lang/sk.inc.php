@@ -1,5 +1,6 @@
 <?php
 $translations = array(
+	'Home' => 'Domov',
 	'Login' => 'Prihlásiť sa',
 	'Logout successful.' => 'Odhlásenie prebehlo v poriadku.',
 	'Invalid server or credentials.' => 'Neplatný server alebo prihlasovacie údaje.',
@@ -190,6 +191,7 @@ $translations = array(
 	'Whole result' => 'Celý výsledok',
 	'Clone' => 'Klonovať',
 	'Partition by' => 'Rozdeliť podľa',
+	'Partition' => 'Oddiel',
 	'Partitions' => 'Oddiely',
 	'Partition name' => 'Názov oddielu',
 	'Values' => 'Hodnoty',
@@ -224,6 +226,7 @@ $translations = array(
 	'Permanent login' => 'Trvalé prihlásenie',
 	'%d in total' => '%d celkom',
 	'Search data in tables' => 'Vyhľadať dáta v tabuľkách',
+	'as a regular expression' => 'ako regulárny výraz',
 	'Alter schema' => 'Pozmeniť schému',
 	'Create schema' => 'Vytvoriť schému',
 	'Schema has been dropped.' => 'Schéma bola odstránená.',

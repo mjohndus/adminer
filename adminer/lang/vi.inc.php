@@ -1,6 +1,7 @@
 <?php
 $translations = array(
 	// label for database system selection (MySQL, SQLite, ...)
+	'Home' => null,
 	'System' => 'Hệ thống',
 	'Server' => 'Máy chủ',
 	'Username' => 'Tên người dùng',
@@ -172,6 +173,7 @@ $translations = array(
 	'Maximum number of allowed fields exceeded. Please increase %s.' => 'Thiết lập %s cần tăng thêm. (Đã vượt giới hạnố trường tối đa cho phép trong một biểu mẫu).',
 
 	'Partition by' => 'Phân chia bằng',
+	'Partition' => null,
 	'Partitions' => 'Phân hoạch',
 	'Partition name' => 'Tên phân hoạch',
 	'Values' => 'Giá trị',
@@ -225,6 +227,7 @@ $translations = array(
 	'Search' => 'Tìm kiếm',
 	'anywhere' => 'bất cứ đâu',
 	'Search data in tables' => 'Tìm kiếm dữ liệu trong các bảng',
+	'as a regular expression' => null,
 	'Sort' => 'Sắp xếp',
 	'descending' => 'giảm dần',
 	'Limit' => 'Giới hạn',

@@ -1,5 +1,6 @@
 <?php
 $translations = array(
+	'Home' => null,
 	'Login' => 'Login',
 	'Logout successful.' => 'Abmeldung erfolgreich.',
 	'Thanks for using Adminer, consider <a href="https://www.adminer.org/en/donation/">donating</a>.' => 'Danke, dass Sie Adminer genutzt haben. <a href="https://www.adminer.org/de/donation/">Spenden willkommen!</a>',
@@ -191,6 +192,7 @@ $translations = array(
 	'Clone' => 'Klonen',
 	'Maximum number of allowed fields exceeded. Please increase %s.' => 'Die maximal erlaubte Anzahl der Felder ist überschritten. Bitte %s erhöhen.',
 	'Partition by' => 'Partitionieren um',
+	'Partition' => 'Partition',
 	'Partitions' => 'Partitionen',
 	'Partition name' => 'Name der Partition',
 	'Values' => 'Werte',
@@ -225,6 +227,7 @@ $translations = array(
 	'Permanent login' => 'Passwort speichern',
 	'Databases have been dropped.' => 'Datenbanken wurden entfernt.',
 	'Search data in tables' => 'Suche in Tabellen',
+	'as a regular expression' => null,
 	'Schema' => 'Schema',
 	'Alter schema' => 'Schema ändern',
 	'Create schema' => 'Schema erstellen',

@@ -1,5 +1,6 @@
 <?php
 $translations = array(
+	'Home' => null,
 	'Login' => 'লগইন',
 	'Logout successful.' => 'সফলভাবে লগআউট হয়েছে।',
 	'Invalid server or credentials.' => null,
@@ -190,6 +191,7 @@ $translations = array(
 	'Clone' => 'ক্লোন',
 	'Maximum number of allowed fields exceeded. Please increase %s.' => 'অনুমোদিত ফিল্ড এর সর্বাধিক সংখ্যা অতিক্রম করে গেছে। অনুগ্রহপূর্বক %s বৃদ্ধি করুন।',
 	'Partition by' => 'পার্টিশন যার মাধ্যমে',
+	'Partition' => null,
 	'Partitions' => 'পার্টিশন',
 	'Partition name' => 'পার্টিশনের নাম',
 	'Values' => 'মানসমূহ',
@@ -224,6 +226,7 @@ $translations = array(
 	'Permanent login' => 'স্থায়ী লগইন',
 	'Databases have been dropped.' => 'ডাটাবেজসমূহ মুছে ফেলা হয়েছে।',
 	'Search data in tables' => 'টেবিলে তথ্য খুঁজুন',
+	'as a regular expression' => null,
 	'Schema' => 'স্কিমা',
 	'Alter schema' => 'স্কিমা পরিবর্তন করো',
 	'Create schema' => 'স্কিমা তৈরী করো',

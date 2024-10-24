@@ -1,5 +1,6 @@
 <?php
 $translations = array(
+	'Home' => null,
 	'$1-$3-$5' => '$1-$3-$5',
 	'%.3f s' => '%.3f 초',
 	'%d byte(s)' => '%d 바이트',
@@ -172,6 +173,7 @@ $translations = array(
 	'Parameter name' => '매개변수 이름',
 	'Partition by' => '파티션',
 	'Partition name' => '파티션 이름',
+	'Partition' => null,
 	'Partitions' => '파티션',
 	'Password' => '비밀번호',
 	'Permanent link' => '영구적으로 링크',
@@ -204,6 +206,7 @@ $translations = array(
 	'Schema has been dropped.' => '스키마를 삭제했습니다.',
 	'Schema' => '스키마',
 	'Search data in tables' => '테이블 내 데이터 검색',
+	'as a regular expression' => null,
 	'Search' => '검색',
 	'Select data' => '데이터를 선택하십시오.',
 	'Select database' => '데이터베이스를 선택하십시오.',

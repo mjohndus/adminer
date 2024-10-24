@@ -1,5 +1,6 @@
 <?php
 $translations = array(
+	'Home' => null,
 	'Login' => 'Ieiet',
 	'Logout successful.' => 'Jūs veiksmīgi izgājāt no sistēmas.',
 	'Invalid server or credentials.' => null,
@@ -189,6 +190,7 @@ $translations = array(
 	'Tables have been dropped.' => 'Tabulas dzēstas.',
 	'Clone' => 'Klonēt',
 	'Partition by' => 'Sadalīt pēc',
+	'Partition' => null,
 	'Partitions' => 'Partīcijas',
 	'Partition name' => 'Partīcijas nosaukums',
 	'Values' => 'Vērtības',
@@ -224,6 +226,7 @@ $translations = array(
 	'Permanent login' => 'Atcerēties mani',
 	'Databases have been dropped.' => 'Datubāzes dzēstas.',
 	'Search data in tables' => 'Meklēt tabulās',
+	'as a regular expression' => null,
 	'Schema' => 'Shēma',
 	'Alter schema' => 'Izmainīt shēmu',
 	'Create schema' => 'Jauna shēma',

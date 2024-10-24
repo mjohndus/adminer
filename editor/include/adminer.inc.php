@@ -1,6 +1,8 @@
 <?php
 class Adminer {
 	var $operators = array("<=", ">=");
+	var $operator_like = null;
+	var $operator_regexp = null;
 	var $_values = array();
 
 	function name() {
@@ -262,15 +264,20 @@ ORDER BY ORDINAL_POSITION", null, "") as $row) { //! requires MySQL 5
 			if (($val["col"] == "" || $columns[$val["col"]]) && "$val[col]$val[val]" != "") {
 				echo "<div><select name='where[$i][col]'><option value=''>(" . lang('anywhere') . ")" . optionlist($columns, $val["col"], true) . "</select>";
 				echo html_select("where[$i][op]", array(-1 => "") + $this->operators, $val["op"]);
-				echo "<input type='search' name='where[$i][val]' value='" . h($val["val"]) . "'>" . script("mixin(qsl('input'), {onkeydown: selectSearchKeydown, onsearch: selectSearchSearch});", "") . "</div>\n";
+				echo "<input type='search' name='where[$i][val]' value='" . h($val["val"]) . "'>" . script("mixin(qsl('input'), {onkeydown: selectSearchKeydown, onsearch: selectSearchSearch});", "");
+				echo " <input type='image' src='../adminer/static/cross.gif' class='jsonly icon remove' title='" . h(lang('Remove')) . "' alt='x'>" . script('qsl("#fieldset-search .remove").onclick = selectRemoveRow;', "");
+				echo "</div>\n";
 				$i++;
 			}
 		}
 		echo "<div><select name='where[$i][col]'><option value=''>(" . lang('anywhere') . ")" . optionlist($columns, null, true) . "</select>";
 		echo script("qsl('select').onchange = selectAddRow;", "");
 		echo html_select("where[$i][op]", array(-1 => "") + $this->operators);
-		echo "<input type='search' name='where[$i][val]'></div>";
+		echo "<input type='search' name='where[$i][val]'>";
 		echo script("mixin(qsl('input'), {onchange: function () { this.parentNode.firstChild.onchange(); }, onsearch: selectSearchSearch});");
+		echo " <input type='image' src='../adminer/static/cross.gif' class='jsonly icon remove' title='" . h(lang('Remove')) . "' alt='x'>";
+		echo script('qsl("#fieldset-search .remove").onclick = selectRemoveRow;', "");
+		echo "</div>";
 		echo "</div></fieldset>\n";
 	}
 
@@ -483,7 +490,7 @@ ORDER BY ORDINAL_POSITION", null, "") as $row) { //! requires MySQL 5
 		return $return;
 	}
 
-	function editInput($table, $field, $attrs, $value) {
+	function editInput($table, $field, $attrs, $value, $function) {
 		if ($field["type"] == "enum") {
 			return (isset($_GET["select"]) ? "<label><input type='radio'$attrs value='-1' checked><i>" . lang('original') . "</i></label> " : "")
 				. enum_input("radio", $attrs, $field, ($value || isset($_GET["select"]) ? $value : 0), ($field["null"] ? "" : null))
@@ -511,7 +518,9 @@ qsl('div').onclick = whisperClick;", "")
 			$hint = lang('[yyyy]-mm-dd') . ($hint ? " [$hint]" : "");
 		}
 		if ($hint) {
-			return "<input value='" . h($value) . "'$attrs> ($hint)"; //! maxlength
+			return "<input"
+				. ($function != "now" ? " value='" . h($value) . "'" : " data-last-value='" . h($value) . "'")
+				. "$attrs> ($hint)"; //! maxlength
 		}
 		if (preg_match('~_(md5|sha1)$~i', $field["field"])) {
 			return "<input type='password' value='" . h($value) . "'$attrs>";
@@ -595,8 +604,12 @@ qsl('div').onclick = whisperClick;", "")
 <h1>
     <?php echo $this->name(); ?>
     <?php if ($missing != "auth"): ?>
-    <span class="version"><?php echo $VERSION; ?></span>
-    <a href="https://www.adminer.org/editor/#download"<?php echo target_blank(); ?> id="version"><?php echo (version_compare($VERSION, $_COOKIE["adminer_version"]) < 0 ? h($_COOKIE["adminer_version"]) : ""); ?></a>
+    <span class="version">
+		<?php echo $VERSION; ?>
+    	<a href="https://github.com/pematon/adminer/releases"<?php echo target_blank(); ?> id="version">
+			<?php echo (version_compare($VERSION, $_COOKIE["adminer_version"]) < 0 ? h($_COOKIE["adminer_version"]) : ""); ?>
+		</a>
+	</span>
 	<?php endif; ?>
 </h1>
 <?php
@@ -621,6 +634,7 @@ qsl('div').onclick = whisperClick;", "")
 				if (!$table_status) {
 					echo "<p class='message'>" . lang('No tables.') . "\n";
 				} else {
+					$this->printTablesFilter();
 					$this->tablesPrint($table_status);
 				}
 			}
@@ -630,19 +644,32 @@ qsl('div').onclick = whisperClick;", "")
 	function databasesPrint($missing) {
 	}
 
+	function printTablesFilter()
+	{
+		global $adminer;
+
+		echo "<div class='tables-filter jsonly'>"
+			. "<input id='tables-filter' autocomplete='off' placeholder='" . lang('Table') . "'>"
+			. script("initTablesFilter(" . json_encode($adminer->database()) . ");")
+			. "</div>\n";
+	}
+
 	function tablesPrint($tables) {
-		echo "<ul id='tables'>";
-		echo script("mixin(qs('#tables'), {onmouseover: menuOver, onmouseout: menuOut});");
+		echo "<ul id='tables'>" . script("mixin(qs('#tables'), {onmouseover: menuOver, onmouseout: menuOut});");
+
 		foreach ($tables as $row) {
-			echo '<li>';
-			$name = $this->tableName($row);
-			if (isset($row["Engine"]) && $name != "") { // ignore views and tables without name
-				echo "<a href='" . h(ME) . 'select=' . urlencode($row["Name"]) . "'"
-					. bold($_GET["select"] == $row["Name"] || $_GET["edit"] == $row["Name"], "select")
-					. " title='" . lang('Select data') . "'>$name</a>\n"
-				;
+			// Skip views and tables without a name.
+			if (!isset($row["Engine"]) || ($name = $this->tableName($row)) == "") {
+				continue;
 			}
+
+			$active = $_GET["select"] == $row["Name"] || $_GET["edit"] == $row["Name"];
+
+			echo '<li><a href="' . h(ME) . 'select=' . urlencode($row["Name"]) . '"'
+				. bold($active, "select")
+				. " title='" . lang('Select data') . "'  data-main='true'>$name</a></li>\n";
 		}
+
 		echo "</ul>\n";
 	}
 
@@ -656,6 +683,8 @@ qsl('div').onclick = whisperClick;", "")
 				}
 			}
 		}
+
+		return null;
 	}
 
 	function _foreignKeyOptions($table, $column, $value = null) {

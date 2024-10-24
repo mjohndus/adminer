@@ -1,5 +1,6 @@
 <?php
 $translations = array(
+	'Home' => null,
 	'Login' => 'நுழை',
 	'Logout successful.' => 'வெற்றிக‌ர‌மாய் வெளியேறியாயிற்று.',
 	'Invalid server or credentials.' => null,
@@ -187,6 +188,7 @@ $translations = array(
 	'Clone' => 'ந‌க‌லி (Clone)',
 	'Maximum number of allowed fields exceeded. Please increase %s.' => 'அனும‌திக்க‌ப்ப‌ட்ட‌ அதிக‌ப‌ட்ச‌ கோப்புக‌ளின் எண்ணிக்கை மீற‌ப்ப‌ட்ட‌து. த‌ய‌வு செய்து %s ம‌ற்றும் %s யை அதிக‌ரிக்க‌வும்.',
 	'Partition by' => 'பிரித்த‌து',
+	'Partition' => null,
 	'Partitions' => 'பிரிவுக‌ள்',
 	'Partition name' => 'பிரிவின் பெய‌ர்',
 	'Values' => 'ம‌திப்புக‌ள்',
@@ -224,6 +226,7 @@ $translations = array(
 	'Alter schema' => 'அமைப்புமுறையை மாற்று',
 	'Create schema' => 'அமைப்புமுறையை உருவாக்கு',
 	'Search data in tables' => 'த‌க‌வ‌லை அட்ட‌வ‌ணையில் தேடு',
+	'as a regular expression' => null,
 	'Sequences' => 'வ‌ரிசைமுறை',
 	'Create sequence' => 'வ‌ரிசைமுறையை உருவாக்கு',
 	'User types' => 'ப‌ய‌னாள‌ர் வ‌கைக‌ள்',

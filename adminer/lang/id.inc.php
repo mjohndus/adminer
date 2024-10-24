@@ -1,6 +1,7 @@
 <?php
 $translations = array(
 	// label for database system selection (MySQL, SQLite, ...)
+	'Home' => null,
 	'System' => 'Sistem',
 	'Server' => 'Server',
 	'Username' => 'Pengguna',
@@ -167,6 +168,7 @@ $translations = array(
 	'Maximum number of allowed fields exceeded. Please increase %s.' => 'Sudah lebih dumlah ruas maksimum yang diizinkan. Harap naikkan %s.',
 
 	'Partition by' => 'Partisi menurut',
+	'Partition' => null,
 	'Partitions' => 'Partisi',
 	'Partition name' => 'Nama partisi',
 	'Values' => 'Nilai',
@@ -220,6 +222,7 @@ $translations = array(
 	'Search' => 'Cari',
 	'anywhere' => 'di mana pun',
 	'Search data in tables' => 'Cari data dalam tabel',
+	'as a regular expression' => null,
 	'Sort' => 'Urutkan',
 	'descending' => 'menurun',
 	'Limit' => 'Batas',

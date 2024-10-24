@@ -1,5 +1,6 @@
 <?php
 $translations = array(
+	'Home' => null,
 	'Login' => 'เข้าสู่ระบบ',
 	'Logout successful.' => 'ออกจากระบบเรียบร้อยแล้ว.',
 	'Invalid server or credentials.' => null,
@@ -190,6 +191,7 @@ $translations = array(
 	'Clone' => 'ทำซ้ำ',
 	'Maximum number of allowed fields exceeded. Please increase %s.' => 'จำนวนสูงสุดของฟิลด์อนุญาตให้เกิน กรุณาเพิ่มอีก %s.',
 	'Partition by' => 'พาร์ทิชันโดย',
+	'Partition' => null,
 	'Partitions' => 'พาร์ทิชัน',
 	'Partition name' => 'ชื่อของพาร์ทิชัน',
 	'Values' => 'ค่า',
@@ -224,6 +226,7 @@ $translations = array(
 	'Permanent login' => 'จดจำการเข้าสู่ระบบตลอดไป',
 	'Databases have been dropped.' => 'ฐานข้อมูลถูกลบแล้ว.',
 	'Search data in tables' => 'ค้นหาในตาราง',
+	'as a regular expression' => null,
 	'Schema' => 'Schema',
 	'Alter schema' => 'เปลี่ยนแปลง schema',
 	'Create schema' => 'สร้าง schema',

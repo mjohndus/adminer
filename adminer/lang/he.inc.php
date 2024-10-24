@@ -1,5 +1,6 @@
 <?php
 $translations = array(
+	'Home' => null,
 	'Login' => 'התחברות',
 	'Logout successful.' => 'ההתחברות הצליחה',
 	'Invalid server or credentials.' => null,
@@ -188,6 +189,7 @@ $translations = array(
 	'Clone' => 'שכפל',
 	'Maximum number of allowed fields exceeded. Please increase %s.' => 'הגעת למספר השדות המרבי. בבקשה הגדל את %s',
 	'Partition by' => 'מחיצות ע"י',
+	'Partition' => null,
 	'Partitions' => 'מחיצות',
 	'Partition name' => 'שם מחיצה',
 	'Values' => 'ערכים',
@@ -223,6 +225,7 @@ $translations = array(
 	'Databases have been dropped.' => 'מסד הנתונים הושלך',
 	'Database has been dropped.' => 'מסד הנתונים הושלך',
 	'Search data in tables' => 'חפש מידע בטבלאות',
+	'as a regular expression' => null,
 	'Schema' => 'סכמה',
 	'Alter schema' => 'שנה סכמה',
 	'Create schema' => 'צור סכמה',

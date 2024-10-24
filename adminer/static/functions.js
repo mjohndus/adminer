@@ -1,4 +1,15 @@
 
+/**
+ * Returns the element found by given identifier.
+ *
+ * @param {string} id
+ * @param {?HTMLElement} context Defaults to document.
+ * @return {?HTMLElement}
+ */
+function gid(id, context = null) {
+	return (context || document).getElementById(id);
+}
+
 /** Get first element by selector
 * @param string
 * @param [HTMLElement] defaults to document
@@ -73,13 +84,15 @@ function alterClass(el, className, enable) {
 	}
 }
 
-/** Toggle visibility
-* @param string
-* @return boolean false
-*/
+/**
+ * Toggles visibility of element with ID.
+ *
+ * @param {string} id
+ * @return {boolean} Always false.
+ */
 function toggle(id) {
-	var el = qs('#' + id);
-	el.className = (el.className === 'hidden' ? '' : 'hidden');
+	gid(id).classList.toggle("hidden");
+
 	return false;
 }
 
@@ -94,34 +107,31 @@ function cookie(assign, days) {
 	document.cookie = assign + '; expires=' + date;
 }
 
-/** Verify current Adminer version
-* @param string
-* @param string own URL base
-* @param string
-*/
-function verifyVersion(current, url, token) {
+/**
+ * Verifies current Adminer version.
+ *
+ * @param currentVersion string
+ * @param baseUrl string
+ * @param token string
+ */
+function verifyVersion(currentVersion, baseUrl, token) {
 	cookie('adminer_version=0', 1);
-	var iframe = document.createElement('iframe');
-	iframe.src = 'https://www.adminer.org/version/?current=' + current;
-	iframe.frameBorder = 0;
-	iframe.marginHeight = 0;
-	iframe.scrolling = 'no';
-	iframe.style.width = '7ex';
-	iframe.style.height = '1.25em';
-	if (window.postMessage && window.addEventListener) {
-		iframe.style.display = 'none';
-		addEventListener('message', function (event) {
-			if (event.origin === 'https://www.adminer.org') {
-				var match = /version=(.+)/.exec(event.data);
-				if (match) {
-					cookie('adminer_version=' + match[1], 1);
-					ajax(url + 'script=version', function () {
-					}, event.data + '&token=' + token);
-				}
-			}
-		}, false);
-	}
-	qs('#version').appendChild(iframe);
+
+	ajax('https://api.github.com/repos/pematon/adminer/releases/latest', function (request) {
+		const response = JSON.parse(request.responseText);
+
+		const version = response.tag_name.replace(/^\D*/, '');
+		if (!version) return;
+
+		cookie('adminer_version=' + version, 1);
+
+		const data = 'version=' + version + '&token=' + token;
+		ajax(baseUrl + 'script=version', function () {}, data);
+
+		if (currentVersion !== version) {
+			qs('#version').innerText = version;
+		}
+	});
 }
 
 /** Get value of select
@@ -357,7 +367,78 @@ function pageClick(href, page) {
 	}
 }
 
+let tablesFilterTimeout = null;
+let tablesFilterValue = '';
 
+function initTablesFilter(dbName) {
+	if (sessionStorage) {
+		document.addEventListener('DOMContentLoaded', function () {
+			if (dbName === sessionStorage.getItem('adminer_tables_filter_db') && sessionStorage.getItem('adminer_tables_filter')) {
+				qs('#tables-filter').value = sessionStorage.getItem('adminer_tables_filter');
+				filterTables();
+			} else {
+				sessionStorage.removeItem('adminer_tables_filter');
+			}
+
+			sessionStorage.setItem('adminer_tables_filter_db', dbName);
+		});
+	}
+
+	const filterInput = qs('#tables-filter');
+	filterInput.addEventListener('input', function () {
+		window.clearTimeout(tablesFilterTimeout);
+		tablesFilterTimeout = window.setTimeout(filterTables, 200);
+	});
+
+	document.body.addEventListener('keydown', function(event) {
+		if (isCtrl(event) && event.shiftKey && event.key.toUpperCase() === 'F') {
+			filterInput.focus();
+			filterInput.select();
+
+			event.preventDefault();
+		}
+	});
+}
+
+function filterTables() {
+	const value = qs('#tables-filter').value.toLowerCase();
+	if (value === tablesFilterValue) {
+		return;
+	}
+	tablesFilterValue = value;
+
+	let reg
+	if (value !== '') {
+		const valueExp = (`${value}`).replace(/[\\.+*?\[^\]$(){}=!<>|:]/g, '\\$&');
+		reg = new RegExp(`(${valueExp})`, 'gi');
+	}
+
+	if (sessionStorage) {
+		sessionStorage.setItem('adminer_tables_filter', value);
+	}
+
+	const tables = qsa('#tables li');
+	for (let i = 0; i < tables.length; i++) {
+		let a = qs('a[data-main="true"], span[data-main="true"]', tables[i]);
+
+		let tableName = tables[i].dataset.tableName;
+		if (tableName == null) {
+			tableName = a.innerHTML.trim();
+
+			tables[i].dataset.tableName = tableName;
+		}
+
+		if (value === "") {
+			tables[i].classList.remove('hidden');
+			a.innerHTML = tableName;
+		} else if (tableName.toLowerCase().indexOf(value) >= 0) {
+			tables[i].classList.remove('hidden');
+			a.innerHTML = tableName.replace(reg, '<strong>$1</strong>');
+		} else {
+			tables[i].classList.add('hidden');
+		}
+	}
+}
 
 /** Display items in menu
 * @param MouseEvent
@@ -379,30 +460,66 @@ function menuOut() {
 
 
 
-/** Add row in select fieldset
-* @this HTMLSelectElement
-*/
-function selectAddRow() {
-	var field = this;
-	var row = cloneNode(field.parentNode);
+/**
+ * Adds row in select fieldset.
+ *
+ * @param {Event} event
+ * @this HTMLSelectElement
+ */
+function selectAddRow(event) {
+	const field = this;
+	const row = cloneNode(field.parentNode);
+
 	field.onchange = selectFieldChange;
-	field.onchange();
-	var selects = qsa('select', row);
-	for (var i=0; i < selects.length; i++) {
-		selects[i].name = selects[i].name.replace(/[a-z]\[\d+/, '$&1');
-		selects[i].selectedIndex = 0;
+	field.onchange(event);
+
+	const selects = qsa('select', row);
+	for (const select of selects) {
+		select.name = select.name.replace(/[a-z]\[\d+/, '$&1');
+		select.selectedIndex = 0;
 	}
-	var inputs = qsa('input', row);
-	for (var i=0; i < inputs.length; i++) {
-		inputs[i].name = inputs[i].name.replace(/[a-z]\[\d+/, '$&1');
-		inputs[i].className = '';
-		if (inputs[i].type === 'checkbox') {
-			inputs[i].checked = false;
+
+	const inputs = qsa('input', row);
+	for (const input of inputs) {
+		// Skip buttons.
+		if (input.type === 'image') {
+			continue;
+		}
+
+		input.name = input.name.replace(/[a-z]\[\d+/, '$&1');
+		input.className = '';
+		if (input.type === 'checkbox') {
+			input.checked = false;
 		} else {
-			inputs[i].value = '';
+			input.value = '';
 		}
 	}
-	field.parentNode.parentNode.appendChild(row);
+
+	const buttons = qsa('.icon', row);
+	for (const button of buttons) {
+		button.onclick = selectRemoveRow;
+	}
+
+	const parent = field.parentNode.parentNode;
+	if (parent.classList.contains("sortable")) {
+		initSortableRow(field.parentElement);
+	}
+
+	parent.appendChild(row);
+}
+
+/**
+ * Removes a row in select fieldset.
+ *
+ * @this HTMLInputElement
+ * @return {boolean} Always false.
+ */
+function selectRemoveRow() {
+	const row = this.parentNode;
+
+	row.parentNode.removeChild(row);
+
+	return false;
 }
 
 /** Prevent onsearch handler on Enter
@@ -424,6 +541,127 @@ function selectSearchSearch() {
 		this.parentNode.firstChild.selectedIndex = 0;
 	}
 }
+
+// Sorting.
+(function() {
+	let placeholderRow, nextRow, dragHelper;
+	let startY, minY, maxY;
+
+	/**
+	 * Initializes sortable list of DIV elements.
+	 *
+	 * @param {string} parentId
+	 */
+	window.initSortable = function(parentSelector) {
+		const parent = qs(parentSelector);
+		if (!parent) return;
+
+		for (const row of parent.children) {
+			if (!row.classList.contains("no-sort")) {
+				initSortableRow(row);
+			}
+		}
+	};
+
+	/**
+	 * Initializes one row of sortable parent.
+	 *
+	 * @param {HTMLElement} row
+	 */
+	window.initSortableRow = function(row) {
+		row.classList.remove("no-sort");
+
+		const handle = qs(".handle", row);
+		handle.addEventListener("mousedown", (event) => {
+			event.preventDefault();
+
+			const parent = row.parentNode;
+			startY = event.clientY - getOffsetTop(row);
+			minY = getOffsetTop(parent);
+			maxY = minY + parent.offsetHeight - row.offsetHeight;
+
+			placeholderRow = row.cloneNode(true);
+			placeholderRow.classList.add("placeholder");
+			parent.insertBefore(placeholderRow, row);
+
+			nextRow = row.nextElementSibling;
+
+			let top = event.clientY - startY;
+			let left = getOffsetLeft(row);
+			let width = row.getBoundingClientRect().width;
+
+			if (row.tagName === "TR") {
+				const firstChild = row.firstElementChild;
+				const borderWidth = (firstChild.offsetWidth - firstChild.clientWidth) / 2;
+				const borderHeight = (firstChild.offsetHeight - firstChild.clientHeight) / 2;
+
+				minY -= borderHeight;
+				maxY -= borderHeight;
+				top -= borderHeight;
+				left -= borderWidth;
+				width += 2 * borderWidth;
+
+				for (const child of row.children) {
+					child.style.width = child.getBoundingClientRect().width + "px";
+				}
+
+				dragHelper = document.createElement("table");
+				dragHelper.appendChild(row);
+			} else {
+				dragHelper = row;
+			}
+
+			dragHelper.style.top = `${top}px`;
+			dragHelper.style.left = `${left}px`;
+			dragHelper.style.width = `${width}px`;
+			dragHelper.classList.add("dragging");
+			document.body.appendChild(dragHelper);
+
+			window.addEventListener("mousemove", updateSorting);
+
+			window.addEventListener("mouseup", () => {
+				dragHelper.classList.remove("dragging");
+				dragHelper.style.top = null;
+				dragHelper.style.left = null;
+				dragHelper.style.width = null;
+
+				parent.insertBefore(dragHelper.tagName === "TABLE" ? dragHelper.firstChild : dragHelper, placeholderRow);
+				placeholderRow.remove();
+
+				window.removeEventListener("mousemove", updateSorting);
+			}, { once: true });
+		});
+	};
+
+	function updateSorting(event) {
+		let top = Math.min(Math.max(event.clientY - startY, minY), maxY);
+		dragHelper.style.top = `${top}px`;
+
+		const parent = placeholderRow.parentNode;
+		top = top - minY + parent.offsetTop;
+
+		let sibling;
+		if (top > placeholderRow.offsetTop + placeholderRow.offsetHeight / 2) {
+			sibling = !nextRow.classList.contains("no-sort") ? nextRow.nextElementSibling : nextRow;
+		} else if (top + placeholderRow.offsetHeight < placeholderRow.offsetTop + placeholderRow.offsetHeight / 2) {
+			sibling = placeholderRow.previousElementSibling;
+		} else {
+			sibling = nextRow;
+		}
+
+		if (sibling !== nextRow) {
+			const parent = placeholderRow.parentNode;
+
+			nextRow = sibling;
+			if (sibling) {
+				parent.insertBefore(placeholderRow, nextRow);
+			} else {
+				parent.appendChild(placeholderRow);
+			}
+		}
+	}
+})();
+
 
 
 
@@ -547,37 +785,62 @@ function editingKeydown(event) {
 	return true;
 }
 
-/** Disable maxlength for functions
-* @this HTMLSelectElement
-*/
+/**
+ * Disables maxlength for functions and manages value visibility.
+ *
+ * @this HTMLSelectElement
+ */
 function functionChange() {
-	var input = this.form[this.name.replace(/^function/, 'fields')];
-	if (input) { // undefined with the set data type
-		if (selectValue(this)) {
-			if (input.origType === undefined) {
-				input.origType = input.type;
-				input.origMaxLength = input.getAttribute('data-maxlength');
-			}
-			input.removeAttribute('data-maxlength');
-			input.type = 'text';
-		} else if (input.origType) {
-			input.type = input.origType;
-			if (input.origMaxLength >= 0) {
-				input.setAttribute('data-maxlength', input.origMaxLength);
-			}
-		}
-		oninput({target: input});
+	const input = this.form[this.name.replace(/^function/, 'fields')];
+	const value = selectValue(this);
+
+	// Undefined with the set data type.
+	if (!input) {
+		helpClose();
+		return;
 	}
+
+	if (value) {
+		if (input.origType === undefined) {
+			input.origType = input.type;
+			input.origMaxLength = input.getAttribute('data-maxlength');
+		}
+
+		input.removeAttribute('data-maxlength');
+		input.type = 'text';
+	} else if (input.origType) {
+		input.type = input.origType;
+		if (input.origMaxLength >= 0) {
+			input.setAttribute('data-maxlength', input.origMaxLength);
+		}
+	}
+
+	// Hide input value if it will be not used by selected function.
+	if (value === "NULL" || value === "now") {
+		if (input.value !== "") {
+			input.dataset.lastValue = input.value;
+			input.value = "";
+		}
+	} else if (input.dataset.lastValue) {
+		input.value = input.dataset.lastValue;
+	}
+
+	oninput({target: input});
+
 	helpClose();
 }
 
-/** Skip 'original' when typing
-* @param number
-* @this HTMLTableCellElement
-*/
+/**
+ * Unset 'original', 'NULL' and 'now' functions when typing.
+ *
+ * @param first number
+ * @this HTMLTableCellElement
+ */
 function skipOriginal(first) {
-	var fnSelect = this.previousSibling.firstChild;
-	if (fnSelect.selectedIndex < first) {
+	const fnSelect = this.previousSibling.firstChild;
+	const value = selectValue(fnSelect);
+
+	if (fnSelect.selectedIndex < first || value === "NULL" || value === "now") {
 		fnSelect.selectedIndex = first;
 	}
 }
@@ -916,6 +1179,18 @@ function cloneNode(el) {
 	}
 	setupSubmitHighlight(el2);
 	return el2;
+}
+
+function getOffsetTop(element) {
+	let box = element.getBoundingClientRect();
+
+	return box.top + window.scrollY;
+}
+
+function getOffsetLeft(element) {
+	let box = element.getBoundingClientRect();
+
+	return box.left + window.scrollX;
 }
 
 oninput = function (event) {

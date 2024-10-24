@@ -235,7 +235,7 @@ function html_select($name, $options, $value = "", $onchange = true, $labelled_b
 */
 function select_input($attrs, $options, $value = "", $onchange = "", $placeholder = "") {
 	$tag = ($options ? "select" : "input");
-	return "<$tag$attrs" . ($options
+	return "<$tag $attrs" . ($options
 		? "><option value=''>$placeholder" . optionlist($options, $value, true) . "</select>"
 		: " size='10' value='" . h($value) . "' placeholder='$placeholder'>"
 	) . ($onchange ? script("qsl('$tag').onchange = $onchange;", "") : ""); //! use oninput for input
@@ -250,18 +250,17 @@ function confirm($message = "", $selector = "qsl('input')") {
 	return script("$selector.onclick = function () { return confirm('" . ($message ? js_escape($message) : lang('Are you sure?')) . "'); };", "");
 }
 
-/** Print header for hidden fieldset (close by </div></fieldset>)
-* @param string
-* @param string
-* @param bool
-* @return null
-*/
-function print_fieldset($id, $legend, $visible = false) {
+/**
+ * Prints header for hidden fieldset (close by </div></fieldset>)
+ * @param $id string
+ * @param $legend string
+ */
+function print_fieldset($id, $legend, $visible = false, $sortable = false) {
 	echo "<fieldset><legend>";
 	echo "<a href='#fieldset-$id'>$legend</a>";
 	echo script("qsl('a').onclick = partial(toggle, 'fieldset-$id');", "");
 	echo "</legend>";
-	echo "<div id='fieldset-$id'" . ($visible ? "" : " class='hidden'") . ">\n";
+	echo "<div id='fieldset-$id' class='" . ($visible ? "" : "hidden") . ($sortable ? " sortable" : "") . "'>\n";
 }
 
 /** Return class='active' if $bold is true
@@ -891,7 +890,7 @@ function hidden_fields_get() {
 */
 function table_status1($table, $fast = false) {
 	$return = table_status($table, $fast);
-	return ($return ? $return : array("Name" => $table));
+	return ($return ?: array("Name" => $table));
 }
 
 /** Find out foreign keys for each column
@@ -963,7 +962,7 @@ function input($field, $value, $function) {
 	echo "<td class='function'>";
 
 	if ($field["type"] == "enum") {
-		echo h($functions[""]) . "<td>" . $adminer->editInput($_GET["edit"], $field, $attrs, $value);
+		echo h($functions[""]) . "<td>" . $adminer->editInput($_GET["edit"], $field, $attrs, $value, $function);
 	} else {
 		$has_function = (in_array($function, $functions) || isset($functions[$function]));
 		echo (count($functions) > 1
@@ -972,7 +971,7 @@ function input($field, $value, $function) {
 				. script("qsl('select').onchange = functionChange;", "")
 			: h(reset($functions))
 		) . '<td>';
-		$input = $adminer->editInput($_GET["edit"], $field, $attrs, $value); // usage in call is without a table
+		$input = $adminer->editInput($_GET["edit"], $field, $attrs, $value, $function); // usage in call is without a table
 		if ($input != "") {
 			echo $input;
 		} elseif (preg_match('~bool~', $field["type"])) {
@@ -1006,7 +1005,8 @@ function input($field, $value, $function) {
 			// type='date' and type='time' display localized value which may be confusing, type='datetime' uses 'T' as date and time separator
 			echo "<input"
 				. ((!$has_function || $function === "") && preg_match('~(?<!o)int(?!er)~', $field["type"]) && !preg_match('~\[\]~', $field["full_type"]) ? " type='number'" : "")
-				. " value='" . h($value) . "'" . ($maxlength ? " data-maxlength='$maxlength'" : "")
+				. ($function != "now" ? " value='" . h($value) . "'" : " data-last-value='" . h($value) . "'")
+				. ($maxlength ? " data-maxlength='$maxlength'" : "")
 				. (preg_match('~char|binary~', $field["type"]) && $maxlength > 20 ? " size='40'" : "")
 				. "$attrs>"
 			;
@@ -1020,9 +1020,7 @@ function input($field, $value, $function) {
 			}
 			$first++;
 		}
-		if ($first) {
-			echo script("mixin(qsl('td'), {onchange: partial(skipOriginal, $first), oninput: function () { this.onchange(); }});");
-		}
+		echo script("mixin(qsl('td'), {onchange: partial(skipOriginal, $first), oninput: function () { this.onchange(); }});");
 	}
 }
 
@@ -1319,7 +1317,7 @@ function select_value($val, $link, $field, $text_length) {
 				. "<td>" . select_value($v, $link, $field, $text_length)
 			;
 		}
-		return "<table cellspacing='0'>$return</table>";
+		return "<table>$return</table>";
 	}
 	if (!$link) {
 		$link = $adminer->selectLink($val, $field);

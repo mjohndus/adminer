@@ -6,7 +6,7 @@
 * @param string used after colon in title and heading, should be HTML escaped
 * @return null
 */
-function page_header($title, $error = "", $breadcrumb = array(), $title2 = "") {
+function page_header($title, $error = "", $breadcrumb = [], $title2 = "") {
 	global $LANG, $VERSION, $adminer, $drivers, $jush;
 	page_headers();
 	if (is_ajax() && $error) {
@@ -15,6 +15,14 @@ function page_header($title, $error = "", $breadcrumb = array(), $title2 = "") {
 	}
 	$title_all = $title . ($title2 != "" ? ": $title2" : "");
 	$title_page = strip_tags($title_all . (SERVER != "" && SERVER != "localhost" ? h(" - " . SERVER) : "") . " - " . $adminer->name());
+
+	// Load Adminer version from file if cookie is missing.
+	$filename = get_temp_dir() . "/adminer.version";
+	if (!$_COOKIE["adminer_version"] && file_exists($filename) && filemtime($filename) + 86400 > time()) { // 86400 - 1 day in seconds
+		$data = unserialize(file_get_contents($filename));
+		$_COOKIE["adminer_version"] = $data["version"];
+		cookie("adminer_version", $data["version"], 24 * 3600);
+	}
 	?>
 <!DOCTYPE html>
 <html lang="<?php echo $LANG; ?>" dir="<?php echo lang('ltr'); ?>">
@@ -33,32 +41,16 @@ function page_header($title, $error = "", $breadcrumb = array(), $title2 = "") {
 <?php } ?>
 
 <body class="<?php echo lang('ltr'); ?> nojs">
-<?php
-	$filename = get_temp_dir() . "/adminer.version";
-	if (!$_COOKIE["adminer_version"] && function_exists('openssl_verify') && file_exists($filename) && filemtime($filename) + 86400 > time()) { // 86400 - 1 day in seconds
-		$version = unserialize(file_get_contents($filename));
-		$public = "-----BEGIN PUBLIC KEY-----
-MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAwqWOVuF5uw7/+Z70djoK
-RlHIZFZPO0uYRezq90+7Amk+FDNd7KkL5eDve+vHRJBLAszF/7XKXe11xwliIsFs
-DFWQlsABVZB3oisKCBEuI71J4kPH8dKGEWR9jDHFw3cWmoH3PmqImX6FISWbG3B8
-h7FIx3jEaw5ckVPVTeo5JRm/1DZzJxjyDenXvBQ/6o9DgZKeNDgxwKzH+sw9/YCO
-jHnq1cFpOIISzARlrHMa/43YfeNRAm/tsBXjSxembBPo7aQZLAWHmaj5+K19H10B
-nCpz9Y++cipkVEiKRGih4ZEvjoFysEOdRLj6WiD/uUNky4xGeA6LaJqh5XpkFkcQ
-fQIDAQAB
------END PUBLIC KEY-----
-";
-		if (openssl_verify($version["version"], base64_decode($version["signature"]), $public) == 1) {
-			$_COOKIE["adminer_version"] = $version["version"]; // doesn't need to send to the browser
-		}
-	}
-	?>
 <script<?php echo nonce(); ?>>
-mixin(document.body, {onkeydown: bodyKeydown, onclick: bodyClick<?php
-	echo (isset($_COOKIE["adminer_version"]) ? "" : ", onload: partial(verifyVersion, '$VERSION', '" . js_escape(ME) . "', '" . get_token() . "')"); // $token may be empty in auth.inc.php
-	?>});
-document.body.className = document.body.className.replace(/ nojs/, ' js');
-var offlineMessage = '<?php echo js_escape(lang('You are offline.')); ?>';
-var thousandsSeparator = '<?php echo js_escape(lang(',')); ?>';
+	document.body.onkeydown = bodyKeydown;
+	document.body.onclick = bodyClick;
+	<?php if (!isset($_COOKIE["adminer_version"])): ?>
+	document.body.onload = function () { verifyVersion('<?php echo $VERSION; ?>', '<?php echo js_escape(ME); ?>', '<?php echo get_token(); ?>') };
+	<?php endif; ?>
+	document.body.className = document.body.className.replace(/ nojs/, ' js');
+
+	var offlineMessage = '<?php echo js_escape(lang('You are offline.')); ?>';
+	var thousandsSeparator = '<?php echo js_escape(lang(',')); ?>';
 </script>
 
 <div id="help" class="jush-<?php echo $jush; ?> jsonly hidden"></div>
@@ -67,32 +59,46 @@ var thousandsSeparator = '<?php echo js_escape(lang(',')); ?>';
 <div id="content">
 <?php
 	if ($breadcrumb !== null) {
+		echo '<p id="breadcrumb">';
+
 		$link = substr(preg_replace('~\b(username|db|ns)=[^&]*&~', '', ME), 0, -1);
-		echo '<p id="breadcrumb"><a href="' . h($link ? $link : ".") . '">' . $drivers[DRIVER] . '</a> &raquo; ';
-		$link = substr(preg_replace('~\b(db|ns)=[^&]*&~', '', ME), 0, -1);
-		$server = $adminer->serverName(SERVER);
-		$server = ($server != "" ? $server : lang('Server'));
+		echo '<a href="' . h($link ?: ".") . '">' . lang('Home') . '</a> » ';
+
+		$server = "";
 		if ($breadcrumb === false) {
-			echo "$server\n";
+			$server .= h($drivers[DRIVER]) . ": ";
+		}
+
+		$server_name = $adminer->serverName(SERVER);
+		$server .= $server_name != "" ? h($server_name) : lang('Server');
+
+		if ($breadcrumb === false) {
+			echo h($server), "\n";
 		} else {
-			echo "<a href='" . h($link) . "' accesskey='1' title='Alt+Shift+1'>$server</a> &raquo; ";
+			$link = substr(preg_replace('~\b(db|ns)=[^&]*&~', '', ME), 0, -1);
+			echo "<a href='" . h($link) . "' accesskey='1' title='Alt+Shift+1'>$server</a> » ";
+
 			if ($_GET["ns"] != "" || (DB != "" && is_array($breadcrumb))) {
-				echo '<a href="' . h($link . "&db=" . urlencode(DB) . (support("scheme") ? "&ns=" : "")) . '">' . h(DB) . '</a> &raquo; ';
+				echo '<a href="' . h($link . "&db=" . urlencode(DB) . (support("scheme") ? "&ns=" : "")) . '">' . h(DB) . '</a> » ';
 			}
+
 			if (is_array($breadcrumb)) {
 				if ($_GET["ns"] != "") {
-					echo '<a href="' . h(substr(ME, 0, -1)) . '">' . h($_GET["ns"]) . '</a> &raquo; ';
+					echo '<a href="' . h(substr(ME, 0, -1)) . '">' . h($_GET["ns"]) . '</a> » ';
 				}
+
 				foreach ($breadcrumb as $key => $val) {
 					$desc = (is_array($val) ? $val[1] : h($val));
 					if ($desc != "") {
-						echo "<a href='" . h(ME . "$key=") . urlencode(is_array($val) ? $val[0] : $val) . "'>$desc</a> &raquo; ";
+						echo "<a href='" . h(ME . "$key=") . urlencode(is_array($val) ? $val[0] : $val) . "'>$desc</a> » ";
 					}
 				}
 			}
+
 			echo "$title\n";
 		}
 	}
+
 	echo "<h2>$title_all</h2>\n";
 	echo "<div id='ajaxstatus' class='jsonly hidden'></div>\n";
 	restart_session();
@@ -126,20 +132,24 @@ function page_headers() {
 	$adminer->headers();
 }
 
-/** Get Content Security Policy headers
-* @return array of arrays with directive name in key, allowed sources in value
-*/
+/**
+ * Gets Content Security Policy headers.
+ *
+ * @return array of arrays with directive name in key, allowed sources in value
+ * @throws \Random\RandomException
+ */
 function csp() {
-	return array(
-		array(
-			"script-src" => "'self' 'unsafe-inline' 'nonce-" . get_nonce() . "' 'strict-dynamic'", // 'self' is a fallback for browsers not supporting 'strict-dynamic', 'unsafe-inline' is a fallback for browsers not supporting 'nonce-'
-			"connect-src" => "'self'",
-			"frame-src" => "https://www.adminer.org",
+	return [
+		[
+			// 'self' is a fallback for browsers not supporting 'strict-dynamic', 'unsafe-inline' is a fallback for browsers not supporting 'nonce-'
+			"script-src" => "'self' 'unsafe-inline' 'nonce-" . get_nonce() . "' 'strict-dynamic'",
+			"connect-src" => "'self' https://api.github.com/repos/pematon/adminer/releases/latest",
+			"frame-src" => "'self'",
 			"object-src" => "'none'",
 			"base-uri" => "'none'",
 			"form-action" => "'self'",
-		),
-	);
+		],
+	];
 }
 
 /**
@@ -175,27 +185,38 @@ function page_messages($error) {
 	}
 }
 
-/** Print HTML footer
-* @param string "auth", "db", "ns"
-* @return null
-*/
-function page_footer($missing = "") {
+/**
+ * Prints HTML footer.
+ *
+ * @param $missing string "auth", "db", "ns"
+ */
+function page_footer($missing = "")
+{
 	global $adminer, $token;
-	?>
-</div>
 
-<?php switch_lang(); ?>
-<?php if ($missing != "auth") { ?>
-<form action="" method="post">
-<p class="logout">
-<input type="submit" name="logout" value="<?php echo lang('Logout'); ?>" id="logout">
-<input type="hidden" name="token" value="<?php echo $token; ?>">
-</p>
-</form>
-<?php } ?>
-<div id="menu">
-<?php $adminer->navigation($missing); ?>
-</div>
+	echo "</div>"; // #content
+
+	echo "<div id='footer'>\n";
+	switch_lang();
+
+	if ($missing != "auth") {
+	?>
+
+	<div class="logout">
+		<form action="" method="post">
+			<?php echo h($_GET["username"]); ?>
+			<input type="submit" name="logout" value="<?php echo lang('Logout'); ?>" id="logout">
+			<input type="hidden" name="token" value="<?php echo $token; ?>">
+		</form>
+	</div>
+
 <?php
+	}
+	echo "</div>\n";
+
+	echo "<div id='menu'>\n";
+	$adminer->navigation($missing);
+	echo "</div>\n";
+
 	echo script("setupSubmitHighlight(document);");
 }

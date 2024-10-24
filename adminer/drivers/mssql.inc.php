@@ -40,7 +40,8 @@ if (isset($_GET["mssql"])) {
 			}
 
 			function quote($string) {
-				return "'" . str_replace("'", "''", $string) . "'";
+				$unicode = strlen($string) != strlen(utf8_decode($string));
+				return ($unicode ? "N" : "") . "'" . str_replace("'", "''", $string) . "'";
 			}
 
 			function select_db($database) {
@@ -163,7 +164,8 @@ if (isset($_GET["mssql"])) {
 			}
 
 			function quote($string) {
-				return "'" . str_replace("'", "''", $string) . "'";
+				$unicode = strlen($string) != strlen(utf8_decode($string));
+				return ($unicode ? "N" : "") . "'" . str_replace("'", "''", $string) . "'";
 			}
 
 			function select_db($database) {
@@ -675,6 +677,7 @@ WHERE sys1.xtype = 'TR' AND sys2.name = " . q($table)
 			'structured_types' => $structured_types,
 			'unsigned' => array(),
 			'operators' => array("=", "<", ">", "<=", ">=", "!=", "LIKE", "LIKE %%", "IN", "IS NULL", "NOT LIKE", "NOT IN", "IS NOT NULL"),
+			'operator_like' => "LIKE %%",
 			'functions' => array("len", "lower", "round", "upper"),
 			'grouping' => array("avg", "count", "count distinct", "max", "min", "sum"),
 			'edit_functions' => array(
