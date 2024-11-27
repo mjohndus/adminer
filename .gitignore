@@ -1,7 +1,5 @@
-/adminer/adminer.css
-/adminer*.php
-/editor*.php
-/**/compiled
-/vendor/
-/export/
-/externals/
+/**/compiled/*
+/**/adminer.css
+/export
+/externals
+/vendor
