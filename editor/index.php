@@ -13,7 +13,12 @@
 
 namespace Adminer;
 
+include "../adminer/core/AdminerInterface.php";
+include "core/Editor.php";
+
 include "../adminer/include/bootstrap.inc.php";
+include "include/connect.inc.php";
+
 $drivers[DRIVER] = lang('Login');
 
 if (isset($_GET["select"]) && ($_POST["edit"] || $_POST["clone"]) && !$_POST["save"]) {
@@ -27,10 +32,15 @@ if (isset($_GET["download"])) {
 } elseif (isset($_GET["select"])) {
 	include "../adminer/select.inc.php";
 } elseif (isset($_GET["script"])) {
-	include "./script.inc.php";
+	include "script.inc.php";
 } else {
-	include "./db.inc.php";
+	include "db.inc.php";
 }
 
 // each page calls its own page_header(), if the footer should not be called then the page exits
 page_footer();
+
+function create_instance(array $config = []): AdminerInterface
+{
+	return new Editor($config);
+}

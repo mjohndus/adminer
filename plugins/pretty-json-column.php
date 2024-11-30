@@ -5,7 +5,7 @@ namespace Adminer;
 /** Pretty print JSON values in edit
 */
 class AdminerPrettyJsonColumn {
-	/** @var AdminerPlugin */
+	/** @var Pluginer */
 	protected $adminer;
 
 	public function __construct($adminer) {

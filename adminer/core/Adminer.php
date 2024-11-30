@@ -4,13 +4,57 @@ namespace Adminer;
 
 // any method change in this file should be transferred to editor/include/adminer.inc.php and plugins/plugin.php
 
-class Adminer {
-	/** @var array operators used in select, null for all operators */
-	var $operators = null;
-	/** @var string operator for LIKE condition */
-	var $operator_like = null;
-	/** @var string operator for regular expression condition */
-	var $operator_regexp = null;
+class Adminer implements AdminerInterface
+{
+	/** @var ?array operators used in select, null for all operators */
+	private $operators = null;
+	/** @var ?string operator for LIKE condition */
+	private $likeOperator = null;
+	/** @var ?string operator for regular expression condition */
+	private $regexpOperator = null;
+
+	/** @var Config */
+    private $config;
+
+    public function __construct(array $config = [])
+	{
+		$this->config = new Config($config);
+	}
+
+	public function getConfig(): Config
+	{
+		return $this->config;
+	}
+
+	public function setOperators(?array $operators, ?string $likeOperator, ?string $regexpOperator): void
+	{
+		$this->operators = $operators;
+		$this->likeOperator = $likeOperator;
+		$this->regexpOperator = $regexpOperator;
+	}
+
+    public function removeOperator(string $operator): void
+	{
+		$pos = array_search($operator, $this->operators);
+		if ($pos !== false) {
+			unset($this->operators[$pos]);
+		}
+	}
+
+    public function getOperators(): ?array
+	{
+		return $this->operators;
+	}
+
+	public function getLikeOperator(): ?string
+	{
+		return $this->likeOperator;
+	}
+
+	public function getRegexpOperator(): ?string
+	{
+		return $this->regexpOperator;
+	}
 
 	/** Name in title and navigation
 	* @return string HTML code
@@ -1302,4 +1346,8 @@ bodyLoad('<?php echo (is_object($connection) ? preg_replace('~^(\d\.?\d).*~s', '
 		return null;
 	}
 
+	public function foreignColumn($foreignKeys, $column): ?array
+	{
+		return null;
+	}
 }
