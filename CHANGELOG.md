@@ -1,6 +1,15 @@
 Changelog
 =========
 
+Adminer 4.12.1 (2024-11-21)
+-------------------------
+
+### Changes
+
+- Remove donation link from logout message
+- Update German translation (by @wintstar, @odysseuscm)
+- Declare compatibility with PHP 8.4
+
 Adminer 4.12 (2024-11-21)
 -------------------------
 
@@ -454,7 +463,7 @@ Adminer 4.4.0 (2018-01-17)
 - PostgreSQL: Sort table names (regression from 4.3.1)
 - Editor: Don't set time zone from PHP, fixes DST
 - Editor: Display field comment's text inside [] only in edit form
-- Editor: Fix doubleclick on database page
+- Editor: Fix double-click on database page
 - Editor: Fix Search data in tables
 - Customization: Always send security headers
 - Hebrew translation
@@ -665,7 +674,7 @@ Adminer 3.7.0 (2013-05-19)
 - Fix resetting search (bug #318)
 - Don't use LIMIT 1 if updating unique row (bug #320)
 - Restrict editing rows without unique identifier to search results
-- Display navigation bellow main content on mobile browsers
+- Display navigation below main content on mobile browsers
 - Get number of rows on export page asynchronously
 - Respect 'whole result' even if some rows are checked (bug #339 since Adminer 3.7.0)
 - MySQL: Optimize create table page and Editor navigation

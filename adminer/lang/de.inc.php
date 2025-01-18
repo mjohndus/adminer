@@ -1,9 +1,8 @@
 <?php
 $translations = array(
-	'Home' => null,
+	'Home' => 'Startseite',
 	'Login' => 'Login',
 	'Logout successful.' => 'Abmeldung erfolgreich.',
-	'Thanks for using Adminer, consider <a href="https://www.adminer.org/en/donation/">donating</a>.' => 'Danke, dass Sie Adminer genutzt haben. <a href="https://www.adminer.org/de/donation/">Spenden willkommen!</a>',
 	'Invalid server or credentials.' => 'Ungültige Server oder Anmelde-Informationen.',
 	'Server' => 'Server',
 	'Username' => 'Benutzer',
@@ -304,17 +303,17 @@ $translations = array(
 	'Database does not support password.' => 'Die Datenbank unterstützt kein Passwort.',
 	'Disable %s or enable %s or %s extensions.' => 'Deaktivieren Sie %s oder aktivieren Sie die Erweiterungen %s oder %s.',
 
-	'Columns' => null,
-	'Nullable' => null,
-	'Default' => null,
+	'Columns' => 'Spalten',
+	'Nullable' => 'Nullbar',
+	'Default' => 'Standard',
 	'Yes' => 'Ja',
 	'No' => 'Nein',
-	'One Time Password' => null,
-	'Invalid OTP code.' => null,
+	'One Time Password' => 'Einmal-Passwort',
+	'Invalid OTP code.' => 'Ungültiger OTP-Code.',
 
-	'Schemas' => null,
-	'No schemas.' => null,
-	'Show schema' => null,
-	'No driver' => null,
-	'Database driver not found.' => null,
+	'Schemas' => 'Schemata',
+	'No schemas.' => 'Keine Schemata.',
+	'Show schema' => 'Zeige Schemata',
+	'No driver' => 'Kein Treiber',
+	'Database driver not found.' => 'Datenbanktreiber nicht gefunden.',
 );
