@@ -71,6 +71,11 @@ if (isset($_GET["pgsql"])) {
 			}
 
 			function query($query, $unbuffered = false) {
+				if (!$this->_link) {
+					$this->error = "Invalid connection";
+					return false;
+				}
+
 				$result = @pg_query($this->_link, $query);
 				$this->error = "";
 				if (!$result) {
@@ -497,12 +502,17 @@ ORDER BY connamespace, conname") as $row) {
 
 	function drop_databases($databases) {
 		global $connection;
+
 		$connection->close();
+
 		return apply_queries("DROP DATABASE", $databases, 'idf_escape');
 	}
 
 	function rename_database($name, $collation) {
-		//! current database cannot be renamed
+		global $connection;
+
+		$connection->close();
+
 		return queries("ALTER DATABASE " . idf_escape(DB) . " RENAME TO " . idf_escape($name));
 	}
 
@@ -776,8 +786,6 @@ AND typelem = 0"
 	}
 
 	function create_sql($table, $auto_increment, $style) {
-		global $connection;
-		$return = '';
 		$return_parts = array();
 		$sequences = array();
 
@@ -812,8 +820,11 @@ AND typelem = 0"
 					: "SELECT * FROM $sequence_name"
 				);
 				$sq = reset($rows);
-				$sequences[] = ($style == "DROP+CREATE" ? "DROP SEQUENCE IF EXISTS $sequence_name;\n" : "")
-					. "CREATE SEQUENCE $sequence_name INCREMENT $sq[increment_by] MINVALUE $sq[min_value] MAXVALUE $sq[max_value]" . ($auto_increment && $sq['last_value'] ? " START $sq[last_value]" : "") . " CACHE $sq[cache_value];";
+
+				$sequences[] = ($style == "DROP+CREATE" ? "DROP SEQUENCE IF EXISTS $sequence_name;\n" : "") .
+					"CREATE SEQUENCE $sequence_name INCREMENT $sq[increment_by] MINVALUE $sq[min_value] MAXVALUE $sq[max_value]" .
+					($auto_increment && $sq['last_value'] ? " START " . ($sq["last_value"] + 1) : "") .
+					" CACHE $sq[cache_value];";
 			}
 		}
 

@@ -13,8 +13,11 @@ function page_header($title, $error = "", $breadcrumb = [], $title2 = "") {
 		page_messages($error);
 		exit;
 	}
-	$title_all = $title . ($title2 != "" ? ": $title2" : "");
-	$title_page = strip_tags($title_all . (SERVER != "" && SERVER != "localhost" ? h(" - " . SERVER) : "") . " - " . $adminer->name());
+
+	$service_title = strip_tags($adminer->name());
+	$title_all = strip_tags($title . ($title2 != "" ? ": $title2" : ""));
+
+	$title_page = $title_all . (SERVER != "" ? h(" - " . SERVER) : "") . " - " . ($service_title != "" ? $service_title : "AdminerNeo");
 
 	// Load Adminer version from file if cookie is missing.
 	$filename = get_temp_dir() . "/adminer.version";
@@ -143,7 +146,7 @@ function csp() {
 		[
 			// 'self' is a fallback for browsers not supporting 'strict-dynamic', 'unsafe-inline' is a fallback for browsers not supporting 'nonce-'
 			"script-src" => "'self' 'unsafe-inline' 'nonce-" . get_nonce() . "' 'strict-dynamic'",
-			"connect-src" => "'self' https://api.github.com/repos/pematon/adminer/releases/latest",
+			"connect-src" => "'self' https://api.github.com/repos/adminerneo/adminerneo/releases/latest",
 			"frame-src" => "'self'",
 			"object-src" => "'none'",
 			"base-uri" => "'none'",
