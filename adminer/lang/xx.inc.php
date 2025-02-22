@@ -352,7 +352,7 @@ $translations = array(
 	'Type has been created.' => 'Xx.',
 	'Alter type' => 'Xx',
 
-	// MySQL check constraints
+	// Table check constraints
 	'Checks' => 'Xx',
 	'Create check' => 'Xx',
 	'Alter check' => 'Xx',
