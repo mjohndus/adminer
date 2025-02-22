@@ -287,7 +287,7 @@ function php_shrink($input) {
 		if (!is_array($token)) {
 			$token = array(0, $token);
 		}
-		if ($tokens[$i+2][0] === T_CLOSE_TAG && $tokens[$i+3][0] === T_INLINE_HTML && $tokens[$i+4][0] === T_OPEN_TAG
+		if (isset($tokens[$i+4]) && $tokens[$i+2][0] === T_CLOSE_TAG && $tokens[$i+3][0] === T_INLINE_HTML && $tokens[$i+4][0] === T_OPEN_TAG
 			&& strlen(add_apo_slashes($tokens[$i+3][1])) < strlen($tokens[$i+3][1]) + 3
 		) {
 			$tokens[$i+2] = array(T_ECHO, 'echo');
@@ -415,6 +415,7 @@ if ($argv) {
 }
 
 // Check function definition in drivers.
+/* Disabled for now because it reports too many warnings.
 $file = file_get_contents(dirname(__FILE__) . "/adminer/drivers/mysql.inc.php");
 $file = preg_replace('~class Min_Driver.*\n\t}~sU', '', $file);
 preg_match_all('~\bfunction ([^(]+)~', $file, $matches); //! respect context (extension, class)
@@ -435,6 +436,7 @@ foreach (glob(dirname(__FILE__) . "/adminer/drivers/*.inc.php") as $filename) {
 		}
 	}
 }
+*/
 
 include dirname(__FILE__) . "/adminer/include/pdo.inc.php";
 include dirname(__FILE__) . "/adminer/include/driver.inc.php";
@@ -500,7 +502,7 @@ if ($single_driver) {
 
 if ($project == "editor") {
 	$file = preg_replace('~;\.\./vendor/vrana/jush/jush\.css~', '', $file);
-	$file = preg_replace('~compile_file\(\'\.\./(vendor/vrana/jush/modules/jush\.js|adminer/static/[^.]+\.gif)[^)]+\)~', "''", $file);
+	$file = preg_replace('~compile_file\(\'\.\./(vendor/vrana/jush/modules/jush\.js|adminer/static/(?!cross)[^.]+\.gif)[^)]+\)~', "''", $file);
 }
 
 $file = preg_replace_callback("~lang\\('((?:[^\\\\']+|\\\\.)*)'([,)])~s", 'replace_lang', $file);

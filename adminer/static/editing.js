@@ -30,7 +30,7 @@ function bodyLoad(version, maria) {
 				}
 
 				obj[key] = (maria ? obj[key].replace('dev.mysql.com/doc/mysql/en/', 'mariadb.com/kb/en/') : obj[key]) // MariaDB
-					.replace('/doc/mysql/', '/doc/refman/' + version) // MySQL
+					.replace('/doc/mysql/', '/doc/refman/' + version + '/') // MySQL
 					.replace('/docs/current/', '/docs/' + version) // PostgreSQL
 				;
 			}
@@ -513,7 +513,7 @@ function partitionNameChange() {
 */
 function editingCommentsClick(el, focus) {
 	var comment = el.form['Comment'];
-	columnShow(el.checked, 6);
+	columnShow(el.checked, 7);
 	comment.classList.toggle('hidden', !el.checked);
 	if (focus && el.checked) {
 		comment.focus();

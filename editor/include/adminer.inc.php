@@ -77,7 +77,7 @@ class Adminer {
 
 	function loginForm() {
 		echo "<table cellspacing='0' class='layout'>\n";
-		echo $this->loginFormField('username', '<tr><th>' . lang('Username') . '<td>', '<input type="hidden" name="auth[driver]" value="mysql"><input name="auth[username]" id="username" value="' . h($_GET["username"]) . '" autocomplete="username" autocapitalize="off">' . script("focus(gid('username'));"));
+		echo $this->loginFormField('username', '<tr><th>' . lang('Username') . '<td>', '<input type="hidden" name="auth[driver]" value="mysql"><input name="auth[username]" id="username" value="' . h($_GET["username"]) . '" autocomplete="username" autocapitalize="off">');
 		echo $this->loginFormField('password', '<tr><th>' . lang('Password') . '<td>', '<input type="password" name="auth[password]" autocomplete="current-password">' . "\n");
 		echo "</table>\n";
 		echo "<p><input type='submit' value='" . lang('Login') . "'>\n";
@@ -613,7 +613,7 @@ qsl('div').onclick = whisperClick;", "")
 			</a>
 		</span>
 		<?php
-		if (!isset($_COOKIE["adminer_version"])) {
+		if (!isset($_COOKIE["adminer_version"]) && version_compare(PHP_VERSION, 7.1) >= 0) {
 			echo script("verifyVersion('" . js_escape(ME) . "', '" . get_token() . "');");
 		}
 		?>
