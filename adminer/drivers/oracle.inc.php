@@ -165,6 +165,11 @@ if (isset($_GET["oracle"])) {
 			}
 			return true;
 		}
+
+		function hasCStyleEscapes() {
+			return true;
+		}
+
 	}
 
 	/**
@@ -496,10 +501,6 @@ AND c_src.TABLE_NAME = " . q($table);
 	 */
 	function is_strict_mode() {
 		return false;
-	}
-
-	function is_c_style_escapes() {
-		return true;
 	}
 
 	function process_list() {
