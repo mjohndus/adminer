@@ -1,6 +1,44 @@
 Changelog
 =========
 
+AdminNeo 4.15 (2025-02-25)
+----------------------------
+
+### Changes
+
+- Change project's name to AdminNeo / EditorNeo
+- Do not strip "localhost" from page title
+- Use autofocus attribute instead of JS function
+- Fix links to MySQL docs (by @adrianbj)
+- Auto-discover designs in AdminerDesigns plugin (by @tdaguin)
+- Separate Collation column in table-structure plugin (by @Denitz)
+- PostgreSQL: Preserve whitespace in EXPLAIN (by @vrana)
+- PostgreSQL: Support altering auto_increment (by @vrana)
+- Oracle: Include tables granted by other user (by Takashi SHIRAI)
+- MongoDB: Execute commands against the selected DB (by @Baskkra)
+- SimpleDB: Disable XML entity loader (by @vrana)
+- Clickhouse: Support for array values (by @morozovsk)
+- Correct German translation error (by @TimAnthonyAlexander)
+- Disable checking of new AdminNeo version on PHP 7.0 and lower
+
+### Bugfixes
+
+- Fix AdminerEditForeign plugin interrupting other plugins for input fields
+- Fix PrettyJsonColumn plugin circular dependency (by @marc-dll)
+- Fix PrettyJsonColumn plugin destroying enum fields
+- Fix missing cross.gif in compiled Editor (issue #53)
+- Fix displaying comments in Alter table form (issue #50)
+- MySQL: Fix saving bit(64) values (by @vrana)
+- MySQL: Fix mysqli ssl without server certificate (by @zeleznypa)
+- SQLite: Fix altering foreign keys (by @vrana)
+- SQLite: Fix expressions in default values (by @vrana)
+- MS SQL: Foreign keys in non-default schema (by @vrana)
+- Handle compilation warnings (by @devinemke)
+- Fix the UI of pappu687 for latest version (by @4msar)
+- Other fixes of pappu687 design (issue #52, issue #55)
+
+Ported relevant changes and fixes from Adminer 4.16.0.
+
 AdminNeo 4.14 (2025-02-02)
 ----------------------------
 
