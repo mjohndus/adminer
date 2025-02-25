@@ -1131,7 +1131,7 @@ function setupSubmitHighlight(parent) {
 * @param HTMLElement
 */
 function setupSubmitHighlightInput(input) {
-	if (!input.type.match(/submit|image|file/)) {
+	if (!/submit|image|file/.test(input.type)) {
 		addEvent(input, 'focus', inputFocus);
 		addEvent(input, 'blur', inputBlur);
 	}
