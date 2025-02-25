@@ -34,7 +34,7 @@ if (isset($_GET["mysql"])) {
 					$database,
 					(is_numeric($port) ? $port : ini_get("mysqli.default_port")),
 					(!is_numeric($port) ? $port : $socket),
-					($ssl ? MYSQLI_CLIENT_SSL_DONT_VERIFY_SERVER_CERT : 0)
+					($ssl ? (empty($ssl['cert']) ? 2048 : 64) : 0) // 2048 - MYSQLI_CLIENT_SSL, 64 - MYSQLI_CLIENT_SSL_DONT_VERIFY_SERVER_CERT (not available before PHP 5.6.16)
 				);
 				$this->options(MYSQLI_OPT_LOCAL_INFILE, false);
 				return $return;
