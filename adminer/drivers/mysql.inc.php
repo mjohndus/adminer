@@ -25,6 +25,8 @@ if (isset($_GET["mysql"])) {
 						isset($ssl['ca']) ? $ssl['ca'] : null,
 						null, null
 					);
+				} else {
+					$ssl = null;
 				}
 
 				$return = @$this->real_connect(
