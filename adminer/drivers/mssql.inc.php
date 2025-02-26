@@ -259,6 +259,21 @@ if (isset($_GET["mssql"])) {
 			}
 		}
 
+	} elseif (extension_loaded("pdo_sqlsrv")) {
+		class Min_DB extends Min_PDO {
+			var $extension = "PDO_SQLSRV";
+
+			function connect($server, $username, $password) {
+				$this->dsn("sqlsrv:Server=" . str_replace(":", ",", $server), $username, $password);
+				return true;
+			}
+
+			function select_db($database) {
+				// database selection is separated from the connection so dbname in DSN can't be used
+				return $this->query("USE " . idf_escape($database));
+			}
+		}
+
 	} elseif (extension_loaded("pdo_dblib")) {
 		class Min_DB extends Min_PDO {
 			var $extension = "PDO_DBLIB";
@@ -269,7 +284,6 @@ if (isset($_GET["mssql"])) {
 			}
 
 			function select_db($database) {
-				// database selection is separated from the connection so dbname in DSN can't be used
 				return $this->query("USE " . idf_escape($database));
 			}
 		}
@@ -749,7 +763,7 @@ WHERE sys1.xtype = 'TR' AND sys2.name = " . q($table)
 			$structured_types[$key] = array_keys($val);
 		}
 		return array(
-			'possible_drivers' => array("SQLSRV", "MSSQL", "PDO_DBLIB"),
+			'possible_drivers' => array("SQLSRV", "MSSQL", "PDO_SQLSRV", "PDO_DBLIB"),
 			'jush' => "mssql",
 			'types' => $types,
 			'structured_types' => $structured_types,
