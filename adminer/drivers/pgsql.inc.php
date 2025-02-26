@@ -262,6 +262,14 @@ if (isset($_GET["pgsql"])) {
 			}
 		}
 
+		function hasCStyleEscapes() {
+			static $c_style;
+			if ($c_style === null) {
+				$c_style = ($this->_conn->result("SHOW standard_conforming_strings") == "off");
+			}
+			return $c_style;
+		}
+
 	}
 
 
@@ -328,7 +336,7 @@ ORDER BY d.datname");
 
 	function tables_list() {
 		$query = "SELECT table_name, table_type FROM information_schema.tables WHERE table_schema = current_schema()";
-		if (support('materializedview')) { // ' - support("materializedview") could be removed by compile.php
+		if (support("materializedview")) {
 			$query .= "
 UNION ALL
 SELECT matviewname, 'MATERIALIZED VIEW'
@@ -900,16 +908,6 @@ ORDER BY connamespace, conname"
 	 */
 	function is_strict_mode() {
 		return false;
-	}
-
-	function is_c_style_escapes() {
-		global $connection;
-		static $c_style;
-		if ($c_style === null) {
-			$c_style = ($connection->result("SHOW standard_conforming_strings") == "off");
-		}
-
-		return $c_style;
 	}
 
 	function process_list() {

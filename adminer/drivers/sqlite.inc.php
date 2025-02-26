@@ -797,9 +797,8 @@ if (isset($_GET["sqlite"]) || isset($_GET["sqlite2"])) {
 	function show_variables() {
 		global $connection;
 		$return = array();
-		$result = $connection->query("PRAGMA pragma_list");
-		while ($row = $result->fetch_row()) {
-			$return[$row[0]] = $connection->result("PRAGMA $row[0]");
+		foreach (get_rows("PRAGMA pragma_list") as $row) {
+			$return[$row["name"]] = $connection->result("PRAGMA $row[name]");
 		}
 		return $return;
 	}
@@ -809,10 +808,6 @@ if (isset($_GET["sqlite"]) || isset($_GET["sqlite2"])) {
 	 */
 	function is_strict_mode() {
 		return false;
-	}
-
-	function is_c_style_escapes() {
-		return true;
 	}
 
 	function show_status() {

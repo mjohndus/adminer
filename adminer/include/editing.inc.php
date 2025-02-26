@@ -367,7 +367,7 @@ function edit_fields(array $fields, array $collations, $type = "TABLE", $foreign
 			'mariadb' => "auto_increment/",
 			'sqlite' => "autoinc.html",
 			'pgsql' => "datatype-numeric.html#DATATYPE-SERIAL",
-			'mssql' => "ms186775.aspx",
+			'mssql' => "t-sql/statements/create-table-transact-sql-identity-property",
 		]); ?>
 		</td>
 		<td id="label-default"><?php echo lang('Default value'); ?></td>
@@ -689,7 +689,7 @@ function doc_link(array $paths, $text = "<sup>?</sup>") {
 		'sql' => "https://dev.mysql.com/doc/refman/$version/en/",
 		'sqlite' => "https://www.sqlite.org/",
 		'pgsql' => "https://www.postgresql.org/docs/$version/",
-		'mssql' => "https://msdn.microsoft.com/library/",
+		'mssql' => "https://learn.microsoft.com/en-us/sql/",
 		'oracle' => "https://www.oracle.com/pls/topic/lookup?ctx=db" . preg_replace('~^.* (\d+)\.(\d+)\.\d+\.\d+\.\d+.*~s', '\1\2', $server_info) . "&id=",
 		'elastic' => "https://www.elastic.co/guide/en/elasticsearch/reference/$version/",
 	];
@@ -703,7 +703,7 @@ function doc_link(array $paths, $text = "<sup>?</sup>") {
 		return "";
 	}
 
-	return "<a href='" . h($urls[$jush] . $paths[$jush]) . "'" . target_blank() . ">$text</a>";
+	return "<a href='" . h($urls[$jush] . $paths[$jush] . ($jush == 'mssql' ? "?view=sql-server-ver$version" : "")) . "'" . target_blank() . ">$text</a>";
 }
 
 /** Wrap gzencode() for usage in ob_start()
