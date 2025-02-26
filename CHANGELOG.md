@@ -1,6 +1,41 @@
 Changelog
 =========
 
+AdminNeo 4.16-dev
+-----------------
+
+### Changes
+
+- SQLite: Show all supported pragmas in Variables (by @vrana)
+- PostgreSQL: Link user defined types (by @vrana)
+- PostgreSQL: Export functions (by @vrana)
+- MySQL, PostgreSQL, MS SQL: Support CHECK constraint (by @jkoop, @vrana)
+- MySQL: Don't offer empty enum value in edit (by @vrana)
+- MySQL 9+: Support vector type (by @vrana)
+- Hide collations if empty (by @vrana)
+- Hide column options in indexes definition by default (by @vrana)
+- Set body width to auto (by @wutsch0)
+- Layout corrections on narrow screens (by @vrana)
+
+### Bugfixes
+
+- MySQL: Fix connecting if SSL connection is configured only for MS SQL
+- MySQL: Fix links to information_schema help (by @vrana)
+- MS SQL: Allow altering table in non-default schema (by @vrana)
+- MS SQL: Displaying and changing default values (by @vrana)
+- MS SQL: Fix length of nvarchar columns (by @vrana)
+- MS SQL: Update doc_links (by @vrana)
+- Oracle: Fix foreign key doc link (by @vrana)
+- PostgreSQL: Constraint enum values in editing (by @vrana)
+- PostgreSQL 8+: Fix exporting table constraints (by @vrana)
+- Fix Latvian plurals (by @vrana)
+- Fix undefined variable in SQL export (by @vrana)
+- Fix links to PostgreSQL docs (by @vrana)
+- Fix printing SQL errors as comments in export (by @vrana)
+- Editor: Select value of foreign key in edit (by @vrana)
+
+(Ported relevant changes and fixes from Adminer 4.17.0-4.17.1.)
+
 AdminNeo 4.15 (2025-02-25)
 ----------------------------
 
@@ -37,7 +72,7 @@ AdminNeo 4.15 (2025-02-25)
 - Fix the UI of pappu687 for latest version (by @4msar)
 - Other fixes of pappu687 design (issue #52, issue #55)
 
-Ported relevant changes and fixes from Adminer 4.16.0.
+(Ported relevant changes and fixes from Adminer 4.16.0.)
 
 AdminNeo 4.14 (2025-02-02)
 ----------------------------
