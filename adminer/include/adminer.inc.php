@@ -17,14 +17,14 @@ class Adminer {
 	}
 
 	/** Connection parameters
-	* @return array ($server, $username, $password)
+	* @return array [$server, $username, $password]
 	*/
 	function credentials() {
 		return array(SERVER, $_GET["username"], get_password());
 	}
 
 	/** Get SSL connection options
-	* @return array array("key" => filename, "cert" => filename, "ca" => filename) or null
+	* @return array ["key" => filename, "cert" => filename, "ca" => filename] or null
 	*/
 	function connectSsl() {
 	}
@@ -331,12 +331,17 @@ class Adminer {
 	* @return null
 	*/
 	function tableStructurePrint($fields) {
+		global $structured_types;
 		echo "<div class='scrollable'>\n";
 		echo "<table cellspacing='0' class='nowrap'>\n";
 		echo "<thead><tr><th>" . lang('Column') . "<td>" . lang('Type') . (support("comment") ? "<td>" . lang('Comment') : "") . "</thead>\n";
 		foreach ($fields as $field) {
 			echo "<tr" . odd() . "><th>" . h($field["field"]);
-			echo "<td><span title='" . h($field["collation"]) . "'>" . h($field["full_type"]) . "</span>";
+			$type = h($field["full_type"]);
+			echo "<td><span title='" . h($field["collation"]) . "'>"
+				. (in_array($type, (array) $structured_types[lang('User types')]) ? "<a href='" . h(ME . 'type=' . urlencode($type)) . "'>$type</a>" : $type)
+				. "</span>"
+			;
 			echo ($field["null"] ? " <i>NULL</i>" : "");
 			echo ($field["auto_increment"] ? " <i>" . lang('Auto Increment') . "</i>" : "");
 			echo (isset($field["default"]) ? " <span title='" . lang('Default value') . "'>[<b>" . h($field["default"]) . "</b>]</span>" : "");
@@ -587,7 +592,7 @@ class Adminer {
 	/** Process columns box in select
 	* @param array selectable columns
 	* @param array
-	* @return array (array(select_expressions), array(group_expressions))
+	* @return array [array(select_expressions), array(group_expressions)]
 	*/
 	function selectColumnsProcess($columns, $indexes) {
 		global $functions, $grouping;
@@ -800,7 +805,7 @@ class Adminer {
 		if ($field["type"] == "enum") {
 			return (isset($_GET["select"]) ? "<label><input type='radio'$attrs value='-1' checked><i>" . lang('original') . "</i></label> " : "")
 				. ($field["null"] ? "<label><input type='radio'$attrs value=''" . ($value !== null || isset($_GET["select"]) ? "" : " checked") . "><i>NULL</i></label> " : "")
-				. enum_input("radio", $attrs, $field, $value, 0) // 0 - empty
+				. enum_input("radio", $attrs, $field, $value, $value === 0 ? 0 : null) // 0 - empty value
 			;
 		}
 		return "";
@@ -913,8 +918,9 @@ class Adminer {
 	*/
 	function dumpData($table, $style, $query) {
 		global $connection, $jush;
-		$max_packet = ($jush == "sqlite" ? 0 : 1048576); // default, minimum is 1024
 		if ($style) {
+			$max_packet = ($jush == "sqlite" ? 0 : 1048576); // default, minimum is 1024
+			$fields = [];
 			if ($_POST["format"] == "sql") {
 				if ($style == "TRUNCATE+INSERT") {
 					echo truncate_sql($table) . ";\n";

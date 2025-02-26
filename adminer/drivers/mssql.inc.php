@@ -5,7 +5,7 @@
 * @author Jakub Vrana
 */
 
-$drivers["mssql"] = "MS SQL (beta)";
+$drivers["mssql"] = "MS SQL";
 
 if (isset($_GET["mssql"])) {
 	define("DRIVER", "mssql");
@@ -392,21 +392,25 @@ if (isset($_GET["mssql"])) {
 	function fields($table) {
 		$comments = get_key_vals("SELECT objname, cast(value as varchar(max)) FROM fn_listextendedproperty('MS_DESCRIPTION', 'schema', " . q(get_schema()) . ", 'table', " . q($table) . ", 'column', NULL)");
 		$return = array();
-		foreach (get_rows("SELECT c.max_length, c.precision, c.scale, c.name, c.is_nullable, c.is_identity, c.collation_name, t.name type, CAST(d.definition as text) [default]
+		foreach (get_rows("SELECT c.max_length, c.precision, c.scale, c.name, c.is_nullable, c.is_identity, c.collation_name, t.name type, CAST(d.definition as text) [default], d.name default_constraint
 FROM sys.all_columns c
 JOIN sys.all_objects o ON c.object_id = o.object_id
 JOIN sys.types t ON c.user_type_id = t.user_type_id
-LEFT JOIN sys.default_constraints d ON c.default_object_id = d.parent_column_id
+LEFT JOIN sys.default_constraints d ON c.default_object_id = d.object_id
 WHERE o.schema_id = SCHEMA_ID(" . q(get_schema()) . ") AND o.type IN ('S', 'U', 'V') AND o.name = " . q($table)
 		) as $row) {
 			$type = $row["type"];
-			$length = (preg_match("~char|binary~", $type) ? $row["max_length"] : ($type == "decimal" ? "$row[precision],$row[scale]" : ""));
+			$length = (preg_match("~char|binary~", $type)
+				? $row["max_length"] / ($type[0] == 'n' ? 2 : 1)
+				: ($type == "decimal" ? "$row[precision],$row[scale]" : "")
+			);
 			$return[$row["name"]] = array(
 				"field" => $row["name"],
 				"full_type" => $type . ($length ? "($length)" : ""),
 				"type" => $type,
 				"length" => $length,
-				"default" => $row["default"],
+				"default" => (preg_match("~^\('(.*)'\)$~", $row["default"], $match) ? str_replace("''", "'", $match[1]) : $row["default"]),
+				"default_constraint" => $row["default_constraint"],
 				"null" => $row["is_nullable"],
 				"auto_increment" => $row["is_identity"],
 				"collation" => $row["collation_name"],
@@ -481,6 +485,7 @@ WHERE OBJECT_NAME(i.object_id) = " . q($table)
 	function alter_table($table, $name, $fields, $foreign, $comment, $engine, $collation, $auto_increment, $partitioning) {
 		$alter = array();
 		$comments = array();
+		$orig_fields = fields($table);
 		foreach ($fields as $field) {
 			$column = idf_escape($field[0]);
 			$val = $field[1];
@@ -493,11 +498,22 @@ WHERE OBJECT_NAME(i.object_id) = " . q($table)
 				if ($field[0] == "") {
 					$alter["ADD"][] = "\n  " . implode("", $val) . ($table == "" ? substr($foreign[$val[0]], 16 + strlen($val[0])) : ""); // 16 - strlen("  FOREIGN KEY ()")
 				} else {
+					$default = $val[3];
+					unset($val[3]); // default values are set separately
 					unset($val[6]); //! identity can't be removed
 					if ($column != $val[0]) {
 						queries("EXEC sp_rename " . q(table($table) . ".$column") . ", " . q(idf_unescape($val[0])) . ", 'COLUMN'");
 					}
 					$alter["ALTER COLUMN " . implode("", $val)][] = "";
+					$orig_field = $orig_fields[$field[0]];
+					if (default_value($orig_field) != $default) {
+						if ($orig_field["default"] !== null) {
+							$alter["DROP"][] = " " . idf_escape($orig_field["default_constraint"]);
+						}
+						if ($default) {
+							$alter["ADD"][] = "\n $default FOR $column";
+						}
+					}
 				}
 			}
 		}
@@ -511,7 +527,7 @@ WHERE OBJECT_NAME(i.object_id) = " . q($table)
 			$alter[""] = $foreign;
 		}
 		foreach ($alter as $key => $val) {
-			if (!queries("ALTER TABLE " . idf_escape($name) . " $key" . implode(",", $val))) {
+			if (!queries("ALTER TABLE " . table($name) . " $key" . implode(",", $val))) {
 				return false;
 			}
 		}
@@ -661,7 +677,7 @@ WHERE sys1.xtype = 'TR' AND sys2.name = " . q($table)
 	}
 
 	function is_c_style_escapes() {
-		return true;
+		return false;
 	}
 
 	function show_status() {
@@ -676,7 +692,7 @@ WHERE sys1.xtype = 'TR' AND sys2.name = " . q($table)
 	}
 
 	function support($feature) {
-		return preg_match('~^(comment|columns|database|drop_col|indexes|descidx|scheme|sql|table|trigger|view|view_trigger)$~', $feature); //! routine|
+		return preg_match('~^(check|comment|columns|database|drop_col|indexes|descidx|scheme|sql|table|trigger|view|view_trigger)$~', $feature); //! routine|
 	}
 
 	function driver_config() {

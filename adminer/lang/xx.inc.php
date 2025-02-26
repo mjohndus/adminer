@@ -208,7 +208,7 @@ $translations = array(
 	'Alter indexes' => 'Xx',
 	'Add next' => 'Xx',
 	'Index Type' => 'Xx',
-	'Column (length)' => 'Xx',
+	'length' => 'xx',
 
 	'Foreign keys' => 'Xx',
 	'Foreign key' => 'Xx',
@@ -351,6 +351,14 @@ $translations = array(
 	'Type has been dropped.' => 'Xx.',
 	'Type has been created.' => 'Xx.',
 	'Alter type' => 'Xx',
+
+	// Table check constraints
+	'Checks' => 'Xx',
+	'Create check' => 'Xx',
+	'Alter check' => 'Xx',
+	'Check has been created.' => 'Xx.',
+	'Check has been altered.' => 'Xx.',
+	'Check has been dropped.' => 'Xx.',
 
 	// Plugins
 	'Columns' => 'Xx',
