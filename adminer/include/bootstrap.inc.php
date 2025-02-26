@@ -117,6 +117,7 @@ include "./include/adminer.inc.php";
 $adminer = (function_exists('adminer_object') ? adminer_object() : new Adminer());
 
 if (defined("DRIVER")) {
+	$on_actions = "RESTRICT|NO ACTION|CASCADE|SET NULL|SET DEFAULT"; ///< @var string used in foreign_keys()
 	$config = driver_config();
 	$possible_drivers = $config['possible_drivers'];
 	$jush = $config['jush'];
@@ -157,5 +158,3 @@ include "../adminer/include/encryption.inc.php";
 include "../adminer/include/auth.inc.php";
 include "./include/editing.inc.php";
 include "./include/connect.inc.php";
-
-$on_actions = "RESTRICT|NO ACTION|CASCADE|SET NULL|SET DEFAULT"; ///< @var string used in foreign_keys()
