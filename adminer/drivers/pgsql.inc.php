@@ -812,10 +812,10 @@ AND typelem = 0"
 			// sequences for fields
 			if (preg_match('~nextval\(\'([^\']+)\'\)~', $field['default'], $matches)) {
 				$sequence_name = $matches[1];
-				$rows = get_rows(min_version(10)
+				$rows = get_rows((min_version(10)
 					? "SELECT *, cache_size AS cache_value FROM pg_sequences WHERE schemaname = current_schema() AND sequencename = " . q(idf_unescape($sequence_name))
 					: "SELECT * FROM $sequence_name"
-				);
+				), null, "-- ");
 				$sq = reset($rows);
 
 				$sequences[] = ($style == "DROP+CREATE" ? "DROP SEQUENCE IF EXISTS $sequence_name;\n" : "") .
@@ -847,7 +847,7 @@ AND typelem = 0"
 			}
 		}
 
-		foreach (get_rows("SELECT indexdef FROM pg_catalog.pg_indexes WHERE schemaname = current_schema() AND tablename = " . q($table)) as $row) {
+		foreach (get_rows("SELECT indexdef FROM pg_catalog.pg_indexes WHERE schemaname = current_schema() AND tablename = " . q($table), null, "-- ") as $row) {
 			$return .= "\n\n$row[indexdef];";
 		}
 
