@@ -339,7 +339,7 @@ if (isset($_GET["mysql"])) {
 			}
 		}
 
-		function tableHelp($name) {
+		function tableHelp($name, $is_view = false) {
 			$maria = preg_match('~MariaDB~', $this->_conn->server_info);
 			if (information_schema(DB)) {
 				return strtolower("information-schema-" . ($maria ? "$name-table/" : str_replace("_", "-", $name) . "-table.html"));
