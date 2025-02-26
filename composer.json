@@ -47,6 +47,8 @@
         "ext-mssql": "Allows access to MS SQL database (old extension)",
         "ext-oci8": "Allows access to Oracle database",
         "ext-interbase": "Allows access to Firebird database",
+        "ext-simplexml": "Allows access to SimpleDB database",
+        "ext-libxml": "Allows processing responses from SimpleDB database",
         "ext-pdo_pgsql": "PDO interface for PostgreSQL database",
         "ext-pdo_dblib": "PDO interface for MS SQL database and Sybase",
         "ext-pdo_sqlite": "PDO interface for SQLite database",
