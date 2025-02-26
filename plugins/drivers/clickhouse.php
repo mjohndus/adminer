@@ -14,7 +14,6 @@ if (isset($_GET["clickhouse"])) {
 		 * @return Min_Result|bool
 		 */
 		function rootQuery($db, $query) {
-			@ini_set('track_errors', 1); // @ - may be disabled
 			$file = @file_get_contents("$this->_url/?database=$db", false, stream_context_create(array('http' => array(
 				'method' => 'POST',
 				'content' => $this->isQuerySelectLike($query) ? "$query FORMAT JSONCompact" : $query,
