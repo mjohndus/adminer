@@ -716,19 +716,11 @@ WHERE sys1.xtype = 'TR' AND sys2.name = " . q($table)
 		return $return;
 	}
 
-	function show_variables() {
-		return array();
-	}
-
 	/**
 	 * @return bool
 	 */
 	function is_strict_mode() {
 		return false;
-	}
-
-	function show_status() {
-		return array();
 	}
 
 	function convert_field($field) {

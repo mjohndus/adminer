@@ -779,18 +779,6 @@ if (isset($_GET["sqlite"]) || isset($_GET["sqlite2"])) {
 		return array();
 	}
 
-	function schemas() {
-		return array();
-	}
-
-	function get_schema() {
-		return "";
-	}
-
-	function set_schema($scheme) {
-		return true;
-	}
-
 	function create_sql($table, $auto_increment, $style) {
 		global $connection;
 
