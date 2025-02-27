@@ -448,21 +448,22 @@ function where($where, $fields = array()) {
 	foreach ((array) $where["where"] as $key => $val) {
 		$key = bracket_escape($key, 1); // 1 - back
 		$column = escape_key($key);
+		$field_type = $fields[$key]["type"];
 
-		if ($jush == "sql" && $fields[$key]["type"] == "json") {
+		if ($jush == "sql" && $field_type == "json") {
 			$conditions[] = "$column = CAST(" . q($val) . " AS JSON)";
 		} elseif ($jush == "sql" && is_numeric($val) && strpos($val, ".") !== false) {
 			// LIKE because of floats but slow with ints.
 			$conditions[] = "$column LIKE " . q($val);
-		} elseif ($jush == "mssql") {
-			// LIKE because of text.
+		} elseif ($jush == "mssql" && strpos($field_type, "datetime") === false) {
+			// LIKE because of text. But it does not work with datetime, datetime2 and smalldatetime.
 			$conditions[] = "$column LIKE " . q(preg_replace('~[_%[]~', '[\0]', $val));
 		} else {
 			$conditions[] = "$column = " . unconvert_field($fields[$key], q($val));
 		}
 
 		// Not just [a-z] to catch non-ASCII characters.
-		if ($jush == "sql" && preg_match('~char|text~', $fields[$key]["type"]) && preg_match("~[^ -@]~", $val)) {
+		if ($jush == "sql" && preg_match('~char|text~', $field_type) && preg_match("~[^ -@]~", $val)) {
 			$conditions[] = "$column = " . q($val) . " COLLATE " . charset($connection) . "_bin";
 		}
 	}
