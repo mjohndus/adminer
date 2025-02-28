@@ -175,6 +175,9 @@ if (isset($_GET["elastic"])) {
 			if (empty($search)) {
 				return false;
 			}
+			if ($select == ["*"]) {
+				$tableFields = array_keys(fields($table));
+			}
 
 			$return = [];
 			foreach ($search["hits"]["hits"] as $hit) {
@@ -189,7 +192,9 @@ if (isset($_GET["elastic"])) {
 						$fields[$key] = $key == "_id" ? $hit["_id"] : $hit["_source"][$key];
 					}
 				} else {
-					$fields = $hit["_source"];
+					foreach ($tableFields as $key) {
+						$fields[$key] = $key == "_id" ? $hit["_id"] : $hit["_source"][$key];
+					}
 				}
 				foreach ($fields as $key => $val) {
 					$row[$key] = (is_array($val) ? json_encode($val) : $val);
