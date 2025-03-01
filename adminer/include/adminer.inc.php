@@ -1202,7 +1202,7 @@ bodyLoad('<?php echo (is_object($connection) ? preg_replace('~^(\d\.?\d).*~s', '
 		global $adminer;
 
 		echo "<div class='tables-filter jsonly'>"
-			. "<input id='tables-filter' autocomplete='off' placeholder='" . lang('Table') . "'>"
+			. "<input id='tables-filter' type='search' autocomplete='off' placeholder='" . lang('Table') . "'>"
 			. script("initTablesFilter(" . json_encode($adminer->database()) . ");")
 			. "</div>\n";
 	}

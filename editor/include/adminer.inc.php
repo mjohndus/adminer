@@ -657,7 +657,7 @@ qsl('div').onclick = whisperClick;", "")
 		global $adminer;
 
 		echo "<div class='tables-filter jsonly'>"
-			. "<input id='tables-filter' autocomplete='off' placeholder='" . lang('Table') . "'>"
+			. "<input id='tables-filter' type='search' autocomplete='off' placeholder='" . lang('Table') . "'>"
 			. script("initTablesFilter(" . json_encode($adminer->database()) . ");")
 			. "</div>\n";
 	}
