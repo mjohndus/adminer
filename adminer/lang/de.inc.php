@@ -316,4 +316,11 @@ $translations = array(
 	'Show schema' => 'Zeige Schemata',
 	'No driver' => 'Kein Treiber',
 	'Database driver not found.' => 'Datenbanktreiber nicht gefunden.',
+
+	'Check has been dropped.' => 'Check wurde abgebrochen.',
+	'Check has been altered.' => 'Check wurde geändert',
+	'Check has been created.' => 'Check wurde erstellt',
+	'Alter check' => 'Check ändern',
+	'Create check' => 'Check erstellen',
+	'Checks' => 'Checks',
 );

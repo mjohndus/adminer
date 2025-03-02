@@ -1,6 +1,13 @@
 Changelog
 =========
 
+AdminNeo 4.16.1
+---------------
+
+### Changes
+
+- Update German translation (issue #66, by @wintstar)
+
 AdminNeo 4.16
 -------------
 
