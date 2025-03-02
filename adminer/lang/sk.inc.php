@@ -313,4 +313,11 @@ $translations = array(
 	'Schemas' => 'Schémy',
 	'No schemas.' => 'Žiadne schémy.',
 	'Show schema' => 'Zobraziť schému',
+
+	'Checks' => 'Kontroly',
+	'Create check' => 'Vytvoriť kontrolu',
+	'Alter check' => 'Zmeniť kontrolu',
+	'Check has been created.' => 'Kontrola bola vytvorená.',
+	'Check has been altered.' => 'Kontrola byla zmenená.',
+	'Check has been dropped.' => 'Kontrola byla odstránená.',
 );

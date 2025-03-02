@@ -7,13 +7,14 @@ AdminNeo 4.16.1
 ### Changes
 
 - Update German translation (issue #66, by @wintstar)
+- Update Slovak translation
 
 AdminNeo 4.16
 -------------
 
 ### Changes
 
-- Use strong encryption for storing login information
+- Use strong encryption for storing login information (by @gildas-ld)
 - SQLite: Show all supported pragmas in Variables (by @vrana)
 - PostgreSQL: Link user defined types (by @vrana)
 - PostgreSQL: Export functions (by @vrana)
