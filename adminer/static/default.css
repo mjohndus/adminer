@@ -41,7 +41,7 @@ input::placeholder { color: #000; opacity: 0.4; }
 .js .hidden, .nojs .jsonly { display: none; }
 .js .column { position: absolute; background: #ddf; padding: .27em 1ex .3em 0; margin-top: -.27em; }
 .nowrap { white-space: nowrap; }
-p.nowrap { white-space: pre; }
+p.nowrap, table.nowrap td, table.nowrap th { white-space: pre; }
 .wrap td { white-space: normal; }
 .error { color: red; background: #fee; }
 .error b { background: #fff; font-weight: normal; }
@@ -130,5 +130,5 @@ table.dragging { background: #eee; }
 	#lang, #menu { display: none; }
 	#content { margin-left: 1em; }
 	#breadcrumb { left: 1em; }
-	.nowrap td, .nowrap th, td.nowrap { white-space: normal; }
+	p.nowrap, table.nowrap td, table.nowrap th { white-space: normal; }
 }
