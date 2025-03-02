@@ -1,11 +1,12 @@
 Changelog
 =========
 
-AdminNeo 4.16-dev
------------------
+AdminNeo 4.16
+-------------
 
 ### Changes
 
+- Use strong encryption for storing login information
 - SQLite: Show all supported pragmas in Variables (by @vrana)
 - PostgreSQL: Link user defined types (by @vrana)
 - PostgreSQL: Export functions (by @vrana)
@@ -21,6 +22,7 @@ AdminNeo 4.16-dev
 
 - MySQL: Fix connecting if SSL connection is configured only for MS SQL
 - MySQL: Fix links to information_schema help (by @vrana)
+- MS SQL: Fix editing rows with datetime column in primary key (issue #61)
 - MS SQL: Allow altering table in non-default schema (by @vrana)
 - MS SQL: Displaying and changing default values (by @vrana)
 - MS SQL: Fix length of nvarchar columns (by @vrana)
@@ -33,6 +35,7 @@ AdminNeo 4.16-dev
 - Fix links to PostgreSQL docs (by @vrana)
 - Fix printing SQL errors as comments in export (by @vrana)
 - Editor: Select value of foreign key in edit (by @vrana)
+- Keep whitespaces and lines in result table (regression from 4.10)
 
 (Ported relevant changes and fixes from Adminer 4.17.0-4.17.1.)
 
