@@ -380,7 +380,7 @@ class Adminer {
 	*/
 	function tableIndexesPrint($indexes) {
 		echo "<table>\n";
-		echo "<thead><tr><th>" . lang('Type') . "</th><td>" . lang('Column (length)') . "</td></tr></thead>\n";
+		echo "<thead><tr><th>" . lang('Type') . "</th><td>" . lang('Column') . " (" . lang('length') . ")</td></tr></thead>\n";
 
 		foreach ($indexes as $name => $index) {
 			ksort($index["columns"]); // enforce correct columns order
