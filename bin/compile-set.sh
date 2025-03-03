@@ -6,6 +6,8 @@ set -e
 BASEDIR=$( cd `dirname $0`/.. ; pwd )
 cd "$BASEDIR"
 
+composer update
+
 php compile.php
 php compile.php en
 php compile.php de
