@@ -8,6 +8,7 @@ AdminNeo 4.16.1
 
 - Update German translation (issue #66, by @wintstar)
 - Update Slovak translation
+- Fix including proper dependencies without dark mode support (issue #67)
 
 AdminNeo 4.16
 -------------
