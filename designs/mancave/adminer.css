@@ -1007,31 +1007,31 @@ code.jush-sql ~ a:hover,
 	margin-bottom: 20px;
 }
 
-.jush-sql_code{
+.jush-sql_code, .jush-js_code{
 	color: #fafafa !important;
 	font-family: "Lucida Grande",Verdana,Arial,"Bitstream Vera Sans",sans-serif !important;
 }
 
 .jush a, .jush a:visited{
-	color: #fba;
+	color: #fba !important;
 	font-weight: normal;
 }
 
 .jush a:hover{
-	color: #fba;
+	color: #fba !important;
 	cursor: pointer;
 }
 
 .jush-php_quo, .jush-quo, .jush-quo_one, .jush-php_eot, .jush-apo, .jush-sql_apo, .jush-sqlite_apo, .jush-sql_quo, .jush-sql_eot{
-	color: aquamarine;
+	color: aquamarine !important;
 }
 
 .jush-bac, .jush-php_bac, .jush-bra, .jush-mssql_bra, .jush-sqlite_quo{
-	color: plum;
+	color: plum !important;
 }
 
 .jush-num, .jush-clr{
-	color: #85E2FF;
+	color: #85E2FF !important;
 }
 
 code {

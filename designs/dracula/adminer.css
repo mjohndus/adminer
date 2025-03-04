@@ -689,7 +689,7 @@ input::placeholder {
  .jush-bra,
  .jush-mssql_bra,
  .jush-sqlite_quo {
-   color: var(--color-darkYellow);
+   color: var(--color-darkYellow) !important;
  }
 
  .jush-php_quo,
@@ -701,12 +701,12 @@ input::placeholder {
  .jush-sqlite_apo,
  .jush-sql_quo,
  .jush-sql_eot {
-   color: var(--color-darkOrange);
+   color: var(--color-darkOrange) !important;
  }
 
  .jush-num,
  .jush-clr {
-   color: var(--color-darkPurple);
+   color: var(--color-darkPurple) !important;
  }
 
  @media print {
