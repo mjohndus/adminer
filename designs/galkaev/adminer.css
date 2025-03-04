@@ -404,7 +404,8 @@ thead th {
 
 input,
 select,
-textarea
+textarea,
+pre.jush
 {
 	color: #333;
 	font-size: 15px;
@@ -930,6 +931,10 @@ code.jush-sql ~ a:hover,
 
 /* sql
    ----------------------------------------------------------------------- */
+
+pre.jush {
+	background: black;
+}
 
 .sqlarea{
 	border: 1px solid #444 !important;

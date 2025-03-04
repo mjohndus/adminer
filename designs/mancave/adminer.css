@@ -450,7 +450,7 @@ textarea
 	outline: none;
 }
 
-textarea, input, select {
+textarea, input, select, pre.jush {
     border-width: 1px;
     -moz-border-radius: 4px;
     -khtml-border-radius: 4px;
