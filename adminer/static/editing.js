@@ -86,22 +86,20 @@ function messagesPrint(el) {
 	}
 }
 
+function initLoginDriver(driverSelect) {
+	driverSelect.onchange = function () {
+		const trs = parentTag(driverSelect, 'table').rows;
+		const disabled = /sqlite/.test(selectValue(driverSelect));
 
+		// 1 - row with server
+		trs[1].classList.toggle('hidden', disabled);
+		trs[1].getElementsByTagName('input')[0].disabled = disabled;
+	};
 
-/**
- * Hides or shows some login rows for selected driver.
- *
- * @param {HTMLSelectElement} driverSelect
- */
-function loginDriver(driverSelect) {
-	const trs = parentTag(driverSelect, 'table').rows;
-	const disabled = /sqlite/.test(selectValue(driverSelect));
-
-	// 1 - row with server
-	trs[1].classList.toggle('hidden', disabled);
-	trs[1].getElementsByTagName('input')[0].disabled = disabled;
+	document.addEventListener('DOMContentLoaded', function () {
+		driverSelect.onchange();
+	});
 }
-
 
 
 var dbCtrl;
