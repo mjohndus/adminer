@@ -4,14 +4,6 @@ if (extension_loaded('pdo')) {
 	abstract class Min_PDO {
 		var $_result, $server_info, $affected_rows, $errno, $error, $pdo;
 
-		function __construct() {
-			global $adminer;
-			$pos = array_search("SQL", $adminer->operators);
-			if ($pos !== false) {
-				unset($adminer->operators[$pos]);
-			}
-		}
-
 		function dsn($dsn, $username, $password, $options = []) {
 			$options[PDO::ATTR_ERRMODE] = PDO::ERRMODE_SILENT;
 			$options[PDO::ATTR_STATEMENT_CLASS] = [Min_PDOStatement::class];
