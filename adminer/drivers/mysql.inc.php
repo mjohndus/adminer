@@ -575,7 +575,7 @@ if (isset($_GET["mysql"])) {
 
 	/** Get information about fields
 	* @param string
-	* @return array [$name => ["field" => , "full_type" => , "type" => , "length" => , "unsigned" => , "default" => , "null" => , "auto_increment" => , "on_update" => , "collation" => , "privileges" => , "comment" => , "primary" => ]]
+	* @return array [$name => ["field" => , "full_type" => , "type" => , "length" => , "unsigned" => , "default" => , "null" => , "auto_increment" => , "on_update" => , "collation" => , "privileges" => , "comment" => , "primary" => , "generated" => ]]
 	*/
 	function fields($table) {
 		$return = array();
