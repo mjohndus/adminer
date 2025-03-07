@@ -405,6 +405,16 @@ abstract class Driver
 	}
 
 	/**
+	 * Checks whether table supports indexes.
+	 *
+	 * @param array $tableStatus The result of table_status().
+	 */
+	public function supportsIndex(array $tableStatus): bool
+	{
+		return !is_view($tableStatus);
+	}
+
+	/**
 	 * Checks if C-style escapes are supported.
 	 */
 	public function hasCStyleEscapes(): bool

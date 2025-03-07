@@ -64,16 +64,16 @@ if (support("partitioning") && preg_match("~partitioned~", $table_status["Create
 	echo $editLink;
 }
 
-if (!is_view($table_status)) {
-	if (support("indexes")) {
-		echo "<h2 id='indexes'>" . lang('Indexes') . "</h2>\n";
-		$indexes = indexes($TABLE);
-		if ($indexes) {
-			Admin::get()->printTableIndexes($indexes);
-		}
-		echo '<p class="links"><a href="' . h(ME) . 'indexes=' . urlencode($TABLE) . '">' . icon("edit") . lang('Alter indexes') . "</a>\n";
+if (support("indexes") && Driver::get()->supportsIndex($table_status)) {
+	echo "<h2 id='indexes'>" . lang('Indexes') . "</h2>\n";
+	$indexes = indexes($TABLE);
+	if ($indexes) {
+		Admin::get()->printTableIndexes($indexes);
 	}
+	echo '<p class="links"><a href="' . h(ME) . 'indexes=' . urlencode($TABLE) . '">' . icon("edit") . lang('Alter indexes') . "</a>\n";
+}
 
+if (!is_view($table_status)) {
 	if (fk_support($table_status)) {
 		echo "<h2 id='foreign-keys'>" . lang('Foreign keys') . "</h2>\n";
 		$foreign_keys = foreign_keys($TABLE);

@@ -375,6 +375,11 @@ if (isset($_GET["pgsql"])) {
 			return null;
 		}
 
+		public function supportsIndex(array $tableStatus): bool
+		{
+			return $tableStatus["Engine"] != "view";
+		}
+
 		public function hasCStyleEscapes(): bool
 		{
 			static $c_style;
