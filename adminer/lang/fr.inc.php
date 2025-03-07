@@ -287,7 +287,7 @@ $translations = array(
 	'%d / ' => '%d / ',
 	'Limit rows' => 'Limiter les lignes',
 	'Default value' => 'Valeur par défaut',
-	'If you did not send this request from Adminer then close this page.' => 'Si vous n\'avez pas envoyé cette requête depuis Adminer, alors fermez cette page.',
+	'If you did not send this request from AdminNeo then close this page.' => 'Si vous n\'avez pas envoyé cette requête depuis AdminNeo, alors fermez cette page.',
 	'You are offline.' => 'Vous êtes hors ligne.',
 
 	'Drop %s?' => 'Supprimer %s?',
@@ -295,7 +295,7 @@ $translations = array(
 	'DB' => 'BD',
 	'ATTACH queries are not supported.' => 'Requêtes ATTACH ne sont pas supportées.',
 	'Warnings' => 'Avertissements',
-	'Adminer does not support accessing a database without a password, <a href="https://www.adminer.org/en/password/"%s>more information</a>.' => 'Adminer ne supporte pas l\'accès aux bases de données sans mot de passe, <a href="https://www.adminer.org/en/password/"%s>plus d\'information</a>.',
+	'AdminNeo does not support accessing a database without a password, <a href="https://www.adminer.org/en/password/"%s>more information</a>.' => 'AdminNeo ne supporte pas l\'accès aux bases de données sans mot de passe, <a href="https://www.adminer.org/en/password/"%s>plus d\'information</a>.',
 	'The action will be performed after successful login with the same credentials.' => 'Cette action sera exécutée après s\'être connecté avec les mêmes données de connexion.',
 	'Connecting to privileged ports is not allowed.' => 'La connexion aux ports privilégiés n\'est pas autorisée.',
 	'There is a space in the input password which might be the cause.' => 'Il y a un espace dans le mot de passe entré qui pourrait en être la cause.',
@@ -316,4 +316,11 @@ $translations = array(
 	'Show schema' => null,
 	'No driver' => null,
 	'Database driver not found.' => null,
+
+	'Check has been dropped.' => null,
+	'Check has been altered.' => null,
+	'Check has been created.' => null,
+	'Alter check' => null,
+	'Create check' => null,
+	'Checks' => null,
 );

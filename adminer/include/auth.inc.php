@@ -271,7 +271,7 @@ if ($_POST) {
 		}
 		$error = (!$_POST["token"] && $max_vars
 			? lang('Maximum number of allowed fields exceeded. Please increase %s.', "'$ini'")
-			: lang('Invalid CSRF token. Send the form again.') . ' ' . lang('If you did not send this request from Adminer then close this page.')
+			: lang('Invalid CSRF token. Send the form again.') . ' ' . lang('If you did not send this request from AdminNeo then close this page.')
 		);
 	}
 

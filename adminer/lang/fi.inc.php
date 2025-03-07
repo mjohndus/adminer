@@ -16,7 +16,7 @@ $translations = array(
 	'Master password expired. <a href="https://www.adminer.org/en/extension/"%s>Implement</a> %s method to make it permanent.' => 'Master-salasana ei ole enää voimassa. <a href="https://www.adminer.org/en/extension/"%s>Toteuta</a> %s-metodi sen tekemiseksi pysyväksi.',
 	'Language' => 'Kieli',
 	'Invalid CSRF token. Send the form again.' => 'Virheellinen CSRF-vastamerkki. Lähetä lomake uudelleen.',
-	'If you did not send this request from Adminer then close this page.' => 'Jollet lähettänyt tämä pyyntö Adminerista, sulje tämä sivu.',
+	'If you did not send this request from AdminNeo then close this page.' => 'Jollet lähettänyt tämä pyyntö AdminNeo, sulje tämä sivu.',
 	'No extension' => 'Ei laajennusta',
 	'None of the supported PHP extensions (%s) are available.' => 'Mitään tuetuista PHP-laajennuksista (%s) ei ole käytettävissä.',
 	'Session support must be enabled.' => 'Istuntotuki on oltava päällä.',
@@ -60,7 +60,7 @@ $translations = array(
 	'Edit all' => 'Muokkaa kaikkia',
 
 	'File upload' => 'Tiedoston lataus palvelimelle',
-	'From server' => 'Verkkopalvelimella Adminer-kansiossa oleva tiedosto',
+	'From server' => 'Verkkopalvelimella AdminNeo-kansiossa oleva tiedosto',
 	'Webserver file %s' => 'Verkkopalvelintiedosto %s',
 	'Run file' => 'Suorita tämä',
 	'File does not exist.' => 'Tiedostoa ei ole.',
@@ -340,7 +340,7 @@ $translations = array(
 	'DB' => 'TK',
 	'ATTACH queries are not supported.' => 'ATTACH-komennolla tehtyjä kyselyjä ei tueta.',
 	'Warnings' => 'Varoitukset',
-	'Adminer does not support accessing a database without a password, <a href="https://www.adminer.org/en/password/"%s>more information</a>.' => 'Adminer ei tue pääsyä tietokantaan ilman salasanaa, katso tarkemmin <a href="https://www.adminer.org/en/password/"%s>täältä</a>.',
+	'AdminNeo does not support accessing a database without a password, <a href="https://www.adminer.org/en/password/"%s>more information</a>.' => 'AdminNeo ei tue pääsyä tietokantaan ilman salasanaa, katso tarkemmin <a href="https://www.adminer.org/en/password/"%s>täältä</a>.',
 	'The action will be performed after successful login with the same credentials.' => 'Toiminto suoritetaan sen jälkeen, kun on onnistuttu kirjautumaan samoilla käyttäjätunnuksilla uudestaan.',
 	'Connecting to privileged ports is not allowed.' => 'Yhteydet etuoikeutettuihin portteihin eivät ole sallittuja.',
 	'There is a space in the input password which might be the cause.' => 'Syynä voi olla syötetyssä salasanassa oleva välilyönti.',
@@ -361,4 +361,11 @@ $translations = array(
 	'Show schema' => null,
 	'No driver' => null,
 	'Database driver not found.' => null,
+
+	'Check has been dropped.' => null,
+	'Check has been altered.' => null,
+	'Check has been created.' => null,
+	'Alter check' => null,
+	'Create check' => null,
+	'Checks' => null,
 );

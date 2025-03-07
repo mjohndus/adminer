@@ -154,7 +154,7 @@ class Adminer {
 	*/
 	function login($login, $password) {
 		if ($password == "") {
-			return lang('Adminer does not support accessing a database without a password, <a href="https://www.adminer.org/en/password/"%s>more information</a>.', target_blank());
+			return lang('AdminNeo does not support accessing a database without a password, <a href="https://www.adminer.org/en/password/"%s>more information</a>.', target_blank());
 		}
 		return true;
 	}
