@@ -304,7 +304,11 @@ function default_value($field) {
 
 	$generated = $field["generated"];
 	if (in_array($generated, Driver::get()->getGenerated())) {
-		return " GENERATED ALWAYS AS ($default) $generated";
+		if (DIALECT == "mssql") {
+			return " AS ($default)" . ($generated == "VIRTUAL" ? "" : " $generated");
+		} else {
+			return " GENERATED ALWAYS AS ($default) $generated";
+		}
 	}
 
 	if (stripos($default, "GENERATED ") === 0) {
