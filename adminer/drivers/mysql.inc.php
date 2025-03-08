@@ -339,7 +339,7 @@ if (isset($_GET["mysql"])) {
 			}
 		}
 
-		function tableHelp($name) {
+		function tableHelp($name, $is_view = false) {
 			$maria = preg_match('~MariaDB~', $this->_conn->server_info);
 			if (information_schema(DB)) {
 				return strtolower("information-schema-" . ($maria ? "$name-table/" : str_replace("_", "-", $name) . "-table.html"));
@@ -513,7 +513,7 @@ if (isset($_GET["mysql"])) {
 
 	/** Count tables in all databases
 	* @param array
-	* @return array arra($db => $tables)
+	* @return array [$db => $tables]
 	*/
 	function count_tables($databases) {
 		$return = array();
@@ -526,7 +526,7 @@ if (isset($_GET["mysql"])) {
 	/** Get table status
 	* @param string
 	* @param bool return only "Name", "Engine" and "Comment" fields
-	* @return array [$name => array("Name" => , "Engine" => , "Comment" => , "Oid" => , "Rows" => , "Collation" => , "Auto_increment" => , "Data_length" => , "Index_length" => , "Data_free" => )] or only inner array with $name
+	* @return array [$name => ["Name" => , "Engine" => , "Comment" => , "Oid" => , "Rows" => , "Collation" => , "Auto_increment" => , "Data_length" => , "Index_length" => , "Data_free" => ]] or only inner array with $name
 	*/
 	function table_status($name = "", $fast = false) {
 		if ($fast && min_version(5)) {
@@ -575,28 +575,38 @@ if (isset($_GET["mysql"])) {
 
 	/** Get information about fields
 	* @param string
-	* @return array [$name => array("field" => , "full_type" => , "type" => , "length" => , "unsigned" => , "default" => , "null" => , "auto_increment" => , "on_update" => , "collation" => , "privileges" => , "comment" => , "primary" => )]
+	* @return array [$name => ["field" => , "full_type" => , "type" => , "length" => , "unsigned" => , "default" => , "null" => , "auto_increment" => , "on_update" => , "collation" => , "privileges" => , "comment" => , "primary" => , "generated" => ]]
 	*/
 	function fields($table) {
 		$return = array();
-		foreach (get_rows("SHOW FULL COLUMNS FROM " . table($table)) as $row) {
-			preg_match('~^([^( ]+)(?:\((.+)\))?( unsigned)?( zerofill)?$~', $row["Type"], $match);
-			$return[$row["Field"]] = array(
-				"field" => $row["Field"],
-				"full_type" => $row["Type"],
+		foreach (get_rows("SELECT * FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = " . q($table) . " ORDER BY ORDINAL_POSITION") as $row) {
+			$field = $row["COLUMN_NAME"];
+			$default = $row["COLUMN_DEFAULT"];
+			$type = $row["COLUMN_TYPE"];
+			// https://mariadb.com/kb/en/library/show-columns/, https://github.com/vrana/adminer/pull/359#pullrequestreview-276677186
+			$generated = preg_match('~^(VIRTUAL|PERSISTENT|STORED)~', $row["EXTRA"]);
+			preg_match('~^([^( ]+)(?:\((.+)\))?( unsigned)?( zerofill)?$~', $type, $match);
+			$return[$field] = array(
+				"field" => $field,
+				"full_type" => $type,
 				"type" => $match[1],
 				"length" => $match[2],
 				"unsigned" => ltrim($match[3] . $match[4]),
-				"default" => ($row["Default"] != "" || preg_match("~char|set~", $match[1]) ? (preg_match('~text~', $match[1]) ? stripslashes(preg_replace("~^'(.*)'\$~", '\1', $row["Default"])) : $row["Default"]) : null),
-				"null" => ($row["Null"] == "YES"),
-				"auto_increment" => ($row["Extra"] == "auto_increment"),
-				"on_update" => (preg_match('~^on update (.+)~i', $row["Extra"], $match) ? $match[1] : ""), //! available since MySQL 5.1.23
-				"collation" => $row["Collation"],
-				"privileges" => array_flip(preg_split('~, *~', $row["Privileges"])) + ["where" => 1, "order" => 1],
-				"comment" => $row["Comment"],
-				"primary" => ($row["Key"] == "PRI"),
-				// https://mariadb.com/kb/en/library/show-columns/, https://github.com/vrana/adminer/pull/359#pullrequestreview-276677186
-				"generated" => preg_match('~^(VIRTUAL|PERSISTENT|STORED)~', $row["Extra"]),
+				"default" => ($generated
+					? $row["GENERATION_EXPRESSION"]
+					: ($default != "" || preg_match("~char|set~", $match[1])
+						? (preg_match('~text~', $match[1]) ? stripslashes(preg_replace("~^'(.*)'\$~", '\1', $default)) : $default)
+						: null
+					)
+				),
+				"null" => ($row["IS_NULLABLE"] == "YES"),
+				"auto_increment" => ($row["EXTRA"] == "auto_increment"),
+				"on_update" => (preg_match('~\bon update (\w+)~i', $row["EXTRA"], $match) ? $match[1] : ""), //! available since MySQL 5.1.23
+				"collation" => $row["COLLATION_NAME"],
+				"privileges" => array_flip(explode(",", $row["PRIVILEGES"])) + ["where" => 1, "order" => 1],
+				"comment" => $row["COLUMN_COMMENT"],
+				"primary" => ($row["COLUMN_KEY"] == "PRI"),
+				"generated" => $generated,
 			);
 		}
 		return $return;
@@ -605,7 +615,7 @@ if (isset($_GET["mysql"])) {
 	/** Get table indexes
 	* @param string
 	* @param string Min_DB to use
-	* @return array [$key_name => array("type" => , "columns" => array(), "lengths" => array(), "descs" => array())]
+	* @return array [$key_name => ["type" => , "columns" => [], "lengths" => [], "descs" => []]]
 	*/
 	function indexes($table, $connection2 = null) {
 		$return = array();
@@ -621,7 +631,7 @@ if (isset($_GET["mysql"])) {
 
 	/** Get foreign keys in table
 	* @param string
-	* @return array [$name => array("db" => , "ns" => , "table" => , "source" => array(), "target" => array(), "on_delete" => , "on_update" => )]
+	* @return array [$name => ["db" => , "ns" => , "table" => , "source" => [], "target" => [], "on_delete" => , "on_update" => ]]
 	*/
 	function foreign_keys($table) {
 		global $connection, $on_actions;
@@ -768,7 +778,7 @@ if (isset($_GET["mysql"])) {
 	/** Run commands to create or alter table
 	* @param string "" to create
 	* @param string new name
-	* @param array of array($orig, $process_field, $after)
+	* @param array of [$orig, $process_field, $after]
 	* @param array of strings
 	* @param string
 	* @param string
@@ -805,7 +815,7 @@ if (isset($_GET["mysql"])) {
 
 	/** Run commands to alter indexes
 	* @param string escaped table name
-	* @param array of array("index type", "name", array("column definition", ...)) or array("index type", "name", "DROP")
+	* @param array of ["index type", "name", ["column definition", ...]] or ["index type", "name", "DROP"]
 	* @return bool
 	*/
 	function alter_indexes($table, $alter) {
@@ -920,7 +930,7 @@ if (isset($_GET["mysql"])) {
 
 	/** Get defined triggers
 	* @param string
-	* @return array [$name => array($timing, $event)]
+	* @return array [$name => [$timing, $event]]
 	*/
 	function triggers($table) {
 		$return = array();
@@ -931,7 +941,7 @@ if (isset($_GET["mysql"])) {
 	}
 
 	/** Get trigger options
-	* @return array ["Timing" => array(), "Event" => array(), "Type" => array()]
+	* @return array ["Timing" => [], "Event" => [], "Type" => []]
 	*/
 	function trigger_options() {
 		return array(
@@ -947,7 +957,7 @@ if (isset($_GET["mysql"])) {
 	 * @param string $name
 	 * @param string $type "FUNCTION" or "PROCEDURE"
 	 *
-	 * @return array ["fields" => array("field" => , "type" => , "length" => , "unsigned" => , "inout" => , "collation" => ), "returns" => , "definition" => , "language" => ]
+	 * @return array ["fields" => ["field" => , "type" => , "length" => , "unsigned" => , "inout" => , "collation" => ], "returns" => , "definition" => , "language" => ]
 	 */
 	function routine($name, $type) {
 		global $connection, $enum_length, $inout, $types;
@@ -1038,36 +1048,6 @@ if (isset($_GET["mysql"])) {
 	*/
 	function found_rows($table_status, $where) {
 		return ($where || $table_status["Engine"] != "InnoDB" ? null : $table_status["Rows"]);
-	}
-
-	/** Get user defined types
-	* @return array
-	*/
-	function types() {
-		return array();
-	}
-
-	/** Get existing schemas
-	* @return array
-	*/
-	function schemas() {
-		return array();
-	}
-
-	/** Get current schema
-	* @return string
-	*/
-	function get_schema() {
-		return "";
-	}
-
-	/** Set current schema
-	* @param string
-	* @param Min_DB
-	* @return bool
-	*/
-	function set_schema($schema, $connection2 = null) {
-		return true;
 	}
 
 	/** Get SQL command to create table
@@ -1218,7 +1198,7 @@ if (isset($_GET["mysql"])) {
 	*/
 	function driver_config() {
 		$types = array(); ///< @var array [$type => $maximum_unsigned_length, ...]
-		$structured_types = array(); ///< @var array [$description => array($type, ...), ...]
+		$structured_types = array(); ///< @var array [$description => [$type, ...], ...]
 		foreach (array(
 			lang('Numbers') => array("tinyint" => 3, "smallint" => 5, "mediumint" => 8, "int" => 10, "bigint" => 20, "decimal" => 66, "float" => 12, "double" => 21),
 			lang('Date and time') => array("date" => 10, "datetime" => 19, "timestamp" => 19, "time" => 10, "year" => 4),

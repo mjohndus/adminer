@@ -105,7 +105,7 @@ if (isset($_GET["oracle"])) {
 
 			function fetch_field() {
 				$column = $this->_offset++;
-				$return = new stdClass;
+				$return = new \stdClass;
 				$return->name = oci_field_name($this->_result, $column);
 				$return->orgname = $return->name;
 				$return->type = oci_field_type($this->_result, $column);
@@ -353,7 +353,7 @@ ORDER BY ac.constraint_type, aic.column_position", $connection2) as $row) {
 	}
 
 	function information_schema($db) {
-		return false;
+		return get_schema() == "INFORMATION_SCHEMA";
 	}
 
 	function error() {

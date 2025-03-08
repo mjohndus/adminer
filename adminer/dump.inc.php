@@ -3,7 +3,7 @@ $TABLE = $_GET["dump"];
 
 if ($_POST && !$error) {
 	$cookie = "";
-	foreach (array("output", "format", "db_style", "routines", "events", "table_style", "auto_increment", "triggers", "data_style") as $key) {
+	foreach (array("output", "format", "db_style", "types", "routines", "events", "table_style", "auto_increment", "triggers", "data_style") as $key) {
 		$cookie .= "&$key=" . urlencode($_POST[$key]);
 	}
 	cookie("adminer_export", substr($cookie, 1));
@@ -51,6 +51,18 @@ SET foreign_key_checks = 0;
 					echo use_sql($db) . ";\n\n";
 				}
 				$out = "";
+
+				if ($_POST["types"]) {
+					foreach (types() as $id => $type) {
+						$enums = type_values($id);
+						if ($enums) {
+							$out .= ($style != 'DROP+CREATE' ? "DROP TYPE IF EXISTS " . idf_escape($type) . ";;\n" : "") . "CREATE TYPE " . idf_escape($type) . " AS ENUM ($enums);\n\n";
+						} else {
+							//! https://github.com/postgres/postgres/blob/REL_17_4/src/bin/pg_dump/pg_dump.c#L10846
+							$out .= "-- Could not export type $type\n\n";
+						}
+					}
+				}
 
 				if ($_POST["routines"]) {
 					foreach (routines() as $row) {
@@ -126,7 +138,7 @@ SET foreign_key_checks = 0;
 	}
 
 	if ($is_sql) {
-		echo "-- " . $connection->result("SELECT NOW()") . "\n";
+		echo "-- " . gmdate("Y-m-d H:i:s e") . "\n";
 	}
 	exit;
 }
@@ -155,6 +167,7 @@ if (!isset($row["events"])) { // backwards compatibility
 echo "<tr><th>" . lang('Format') . "<td>" . html_select("format", $adminer->dumpFormat(), $row["format"], false) . "\n"; // false = radio
 
 echo ($jush == "sqlite" ? "" : "<tr><th>" . lang('Database') . "<td>" . html_select('db_style', $db_style, $row["db_style"])
+	. (support("type") ? checkbox("types", 1, $row["types"], lang('User types')) : "")
 	. (support("routine") ? checkbox("routines", 1, $row["routines"], lang('Routines')) : "")
 	. (support("event") ? checkbox("events", 1, $row["events"], lang('Events')) : "")
 );

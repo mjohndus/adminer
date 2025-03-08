@@ -138,7 +138,7 @@ if (isset($_GET["pgsql"])) {
 
 			function fetch_field() {
 				$column = $this->_offset++;
-				$return = new stdClass;
+				$return = new \stdClass;
 				if (function_exists('pg_field_table')) {
 					$return->orgtable = pg_field_table($this->_result, $column);
 				}
@@ -251,10 +251,10 @@ if (isset($_GET["pgsql"])) {
 			return $this->_conn->warnings();
 		}
 
-		function tableHelp($name) {
+		function tableHelp($name, $is_view = false) {
 			$links = array(
 				"information_schema" => "infoschema",
-				"pg_catalog" => "catalog",
+				"pg_catalog" => ($is_view ? "view" : "catalog"),
 			);
 			$link = $links[$_GET["ns"]];
 			if ($link) {
@@ -304,9 +304,9 @@ if (isset($_GET["pgsql"])) {
 	}
 
 	function get_databases() {
-		return get_vals("SELECT d.datname FROM pg_database d JOIN pg_roles r ON d.datdba = r.oid
-WHERE d.datallowconn = TRUE AND has_database_privilege(d.datname, 'CONNECT') AND pg_has_role(r.rolname, 'USAGE')
-ORDER BY d.datname");
+		return get_vals("SELECT datname FROM pg_database
+WHERE datallowconn = TRUE AND has_database_privilege(datname, 'CONNECT')
+ORDER BY datname");
 	}
 
 	function limit($query, $where, $limit, $offset = 0, $separator = " ") {
@@ -349,7 +349,14 @@ ORDER BY 1";
 	}
 
 	function count_tables($databases) {
-		return array(); // would require reconnect
+		global $connection;
+		$return = array();
+		foreach ($databases as $db) {
+			if ($connection->select_db($db)) {
+				$return[$db] = count(tables_list());
+			}
+		}
+		return $return;
 	}
 
 	function table_status($name = "") {
@@ -379,7 +386,7 @@ WHERE relkind IN ('r', 'm', 'v', 'f', 'p')
 			'timestamp without time zone' => 'timestamp',
 			'timestamp with time zone' => 'timestamptz',
 		);
-		foreach (get_rows("SELECT a.attname AS field, format_type(a.atttypid, a.atttypmod) AS full_type, pg_get_expr(d.adbin, d.adrelid) AS default, a.attnotnull::int, col_description(c.oid, a.attnum) AS comment" . (min_version(10) ? ", a.attidentity" : "") . "
+		foreach (get_rows("SELECT a.attname AS field, format_type(a.atttypid, a.atttypmod) AS full_type, pg_get_expr(d.adbin, d.adrelid) AS default, a.attnotnull::int, col_description(c.oid, a.attnum) AS comment" . (min_version(10) ? ", a.attidentity" . (min_version(12) ? ", a.attgenerated" : "") : "") . "
 FROM pg_class c
 JOIN pg_namespace n ON c.relnamespace = n.oid
 JOIN pg_attribute a ON c.oid = a.attrelid
@@ -405,6 +412,7 @@ ORDER BY a.attnum"
 			if (in_array($row['attidentity'], array('a', 'd'))) {
 				$row['default'] = 'GENERATED ' . ($row['attidentity'] == 'd' ? 'BY DEFAULT' : 'ALWAYS') . ' AS IDENTITY';
 			}
+			$row["generated"] = ($row["attgenerated"] == "s");
 			$row["null"] = !$row["attnotnull"];
 			$row["auto_increment"] = $row['attidentity'] || preg_match('~^nextval\(~i', $row["default"]);
 			$row["privileges"] = array("insert" => 1, "select" => 1, "update" => 1, "where" => 1, "order" => 1);
@@ -424,16 +432,18 @@ ORDER BY a.attnum"
 		$return = array();
 		$table_oid = $connection2->result("SELECT oid FROM pg_class WHERE relnamespace = (SELECT oid FROM pg_namespace WHERE nspname = current_schema()) AND relname = " . q($table));
 		$columns = get_key_vals("SELECT attnum, attname FROM pg_attribute WHERE attrelid = $table_oid AND attnum > 0", $connection2);
-		foreach (get_rows("SELECT relname, indisunique::int, indisprimary::int, indkey, indoption, (indpred IS NOT NULL)::int as indispartial FROM pg_index i, pg_class ci WHERE i.indrelid = $table_oid AND ci.oid = i.indexrelid", $connection2) as $row) {
+		foreach (get_rows("SELECT relname, indisunique::int, indisprimary::int, indkey, indoption, (indpred IS NOT NULL)::int as indispartial FROM pg_index i, pg_class ci WHERE i.indrelid = $table_oid AND ci.oid = i.indexrelid ORDER BY indisprimary DESC, indisunique DESC", $connection2) as $row) {
 			$relname = $row["relname"];
 			$return[$relname]["type"] = ($row["indispartial"] ? "INDEX" : ($row["indisprimary"] ? "PRIMARY" : ($row["indisunique"] ? "UNIQUE" : "INDEX")));
 			$return[$relname]["columns"] = array();
-			foreach (explode(" ", $row["indkey"]) as $indkey) {
-				$return[$relname]["columns"][] = $columns[$indkey];
-			}
 			$return[$relname]["descs"] = array();
-			foreach (explode(" ", $row["indoption"]) as $indoption) {
-				$return[$relname]["descs"][] = ($indoption & 1 ? '1' : null); // 1 - INDOPTION_DESC
+			if ($row["indkey"]) {
+				foreach (explode(" ", $row["indkey"]) as $indkey) {
+					$return[$relname]["columns"][] = $columns[$indkey];
+				}
+				foreach (explode(" ", $row["indoption"]) as $indoption) {
+					$return[$relname]["descs"][] = ($indoption & 1 ? '1' : null); // 1 - INDOPTION_DESC
+				}
 			}
 			$return[$relname]["lengths"] = array();
 		}
@@ -474,7 +484,7 @@ ORDER BY conkey, conname") as $row) {
 	}
 
 	function information_schema($db) {
-		return ($db == "information_schema");
+		return get_schema() == "information_schema";
 	}
 
 	function error() {
@@ -743,6 +753,12 @@ AND typelem = 0"
 		);
 	}
 
+	function type_values($id) {
+		// to get values from type string: unnest(enum_range(NULL::"$type"))
+		$enums = get_vals("SELECT enumlabel FROM pg_enum WHERE enumtypid = $id ORDER BY enumsortorder");
+		return ($enums ? "'" . implode("', '", array_map('addslashes', $enums)) . "'" : "");
+	}
+
 	function schemas() {
 		return get_vals("SELECT nspname FROM pg_namespace ORDER BY nspname");
 	}
@@ -785,6 +801,7 @@ AND typelem = 0"
 	}
 
 	function create_sql($table, $auto_increment, $style) {
+		global $driver;
 		$return_parts = array();
 		$sequences = array();
 
@@ -794,8 +811,6 @@ AND typelem = 0"
 			return rtrim("CREATE VIEW " . idf_escape($table) . " AS $view[select]", ";");
 		}
 		$fields = fields($table);
-		$indexes = indexes($table);
-		ksort($indexes);
 
 		if (!$status || empty($fields)) {
 			return false;
@@ -813,10 +828,10 @@ AND typelem = 0"
 			// sequences for fields
 			if (preg_match('~nextval\(\'([^\']+)\'\)~', $field['default'], $matches)) {
 				$sequence_name = $matches[1];
-				$rows = get_rows(min_version(10)
+				$rows = get_rows((min_version(10)
 					? "SELECT *, cache_size AS cache_value FROM pg_sequences WHERE schemaname = current_schema() AND sequencename = " . q(idf_unescape($sequence_name))
 					: "SELECT * FROM $sequence_name"
-				);
+				), null, "-- ");
 				$sq = reset($rows);
 
 				$sequences[] = ($style == "DROP+CREATE" ? "DROP SEQUENCE IF EXISTS $sequence_name;\n" : "") .
@@ -831,40 +846,19 @@ AND typelem = 0"
 			$return = implode("\n\n", $sequences) . "\n\n$return";
 		}
 
-		// primary + unique keys
-		foreach ($indexes as $index_name => $index) {
-			switch($index['type']) {
-				case 'UNIQUE': $return_parts[] = "CONSTRAINT " . idf_escape($index_name) . " UNIQUE (" . implode(', ', array_map('idf_escape', $index['columns'])) . ")"; break;
-				case 'PRIMARY': $return_parts[] = "CONSTRAINT " . idf_escape($index_name) . " PRIMARY KEY (" . implode(', ', array_map('idf_escape', $index['columns'])) . ")"; break;
+		$primary = "";
+		foreach (indexes($table) as $index_name => $index) {
+			if ($index['type'] == 'PRIMARY') {
+				$primary = $index_name;
+				$return_parts[] = "CONSTRAINT " . idf_escape($index_name) . " PRIMARY KEY (" . implode(', ', array_map('idf_escape', $index['columns'])) . ")";
 			}
 		}
 
-		$constraints = get_key_vals("SELECT conname, " . (min_version(8) ? "pg_get_constraintdef(pg_constraint.oid)" : "CONCAT('CHECK ', consrc)") . "
-FROM pg_catalog.pg_constraint
-INNER JOIN pg_catalog.pg_namespace ON pg_constraint.connamespace = pg_namespace.oid
-INNER JOIN pg_catalog.pg_class ON pg_constraint.conrelid = pg_class.oid AND pg_constraint.connamespace = pg_class.relnamespace
-WHERE pg_constraint.contype = 'c'
-AND conrelid != 0 -- handle only CONSTRAINTs here, not TYPES
-AND nspname = current_schema()
-AND relname = " . q($table) . "
-ORDER BY connamespace, conname"
-		);
-		foreach ($constraints as $conname => $consrc) {
-			$return_parts[] = "CONSTRAINT " . idf_escape($conname) . " $consrc";
+		foreach ($driver->checkConstraints($table) as $conname => $consrc) {
+			$return_parts[] = "CONSTRAINT " . idf_escape($conname) . " CHECK $consrc";
 		}
 
 		$return .= implode(",\n    ", $return_parts) . "\n) WITH (oids = " . ($status['Oid'] ? 'true' : 'false') . ");";
-
-		// "basic" indexes after table definition
-		foreach ($indexes as $index_name => $index) {
-			if ($index['type'] == 'INDEX') {
-				$columns = array();
-				foreach ($index['columns'] as $key => $val) {
-					$columns[] = idf_escape($val) . ($index['descs'][$key] ? " DESC" : "");
-				}
-				$return .= "\n\nCREATE INDEX " . idf_escape($index_name) . " ON " . idf_escape($status['nspname']) . "." . idf_escape($status['Name']) . " USING btree (" . implode(', ', $columns) . ");";
-			}
-		}
 
 		// comments for table & fields
 		if ($status['Comment']) {
@@ -875,6 +869,10 @@ ORDER BY connamespace, conname"
 			if ($field['comment']) {
 				$return .= "\n\nCOMMENT ON COLUMN " . idf_escape($status['nspname']) . "." . idf_escape($status['Name']) . "." . idf_escape($field_name) . " IS " . q($field['comment']) . ";";
 			}
+		}
+
+		foreach (get_rows("SELECT indexdef FROM pg_catalog.pg_indexes WHERE schemaname = current_schema() AND tablename = " . q($table) . ($primary ? " AND indexname != " . q($primary) : ""), null, "-- ") as $row) {
+			$return .= "\n\n$row[indexdef];";
 		}
 
 		return rtrim($return, ';');
@@ -912,9 +910,6 @@ ORDER BY connamespace, conname"
 
 	function process_list() {
 		return get_rows("SELECT * FROM pg_stat_activity ORDER BY " . (min_version(9.2) ? "pid" : "procpid"));
-	}
-
-	function show_status() {
 	}
 
 	function convert_field($field) {

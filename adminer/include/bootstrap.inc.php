@@ -1,10 +1,9 @@
 <?php
-function adminer_errors($errno, $errstr) {
-	return (bool)preg_match('~^(Trying to access array offset on( value of type)? null|Undefined array key)~', $errstr);
-}
 
 error_reporting(6135); // errors and warnings
-set_error_handler('adminer_errors', E_WARNING);
+set_error_handler(function ($errno, $errstr) {
+	return (bool)preg_match('~^(Trying to access array offset on( value of type)? null|Undefined array key)~', $errstr);
+}, E_WARNING);
 
 include "../adminer/include/debug.inc.php";
 include "../adminer/include/coverage.inc.php";
@@ -56,11 +55,7 @@ $HTTPS = ($_SERVER["HTTPS"] && strcasecmp($_SERVER["HTTPS"], "off")) || ini_bool
 if (!defined("SID")) {
 	session_cache_limiter(""); // to allow restarting session
 	session_name("adminer_sid"); // use specific session name to get own namespace
-	$params = array(0, preg_replace('~\?.*~', '', $_SERVER["REQUEST_URI"]), "", $HTTPS);
-	if (version_compare(PHP_VERSION, '5.2.0') >= 0) {
-		$params[] = true; // HttpOnly
-	}
-	call_user_func_array('session_set_cookie_params', $params); // ini_set() may be disabled
+	session_set_cookie_params(0, preg_replace('~\?.*~', '', $_SERVER["REQUEST_URI"]), "", $HTTPS, true); // ini_set() may be disabled
 	session_start();
 }
 
@@ -117,6 +112,7 @@ include "./include/adminer.inc.php";
 $adminer = (function_exists('adminer_object') ? adminer_object() : new Adminer());
 
 if (defined("DRIVER")) {
+	$on_actions = "RESTRICT|NO ACTION|CASCADE|SET NULL|SET DEFAULT"; ///< @var string used in foreign_keys()
 	$config = driver_config();
 	$possible_drivers = $config['possible_drivers'];
 	$jush = $config['jush'];
@@ -157,5 +153,3 @@ include "../adminer/include/encryption.inc.php";
 include "../adminer/include/auth.inc.php";
 include "./include/editing.inc.php";
 include "./include/connect.inc.php";
-
-$on_actions = "RESTRICT|NO ACTION|CASCADE|SET NULL|SET DEFAULT"; ///< @var string used in foreign_keys()

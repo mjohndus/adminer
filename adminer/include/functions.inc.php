@@ -651,7 +651,7 @@ function query_redirect($query, $location, $message, $redirect = true, $execute 
 
 /** Execute and remember query
 * @param string or null to return remembered queries, end with ';' to use DELIMITER
-* @return Min_Result or array($queries, $time) if $query = null
+* @return Min_Result or [$queries, $time] if $query = null
 */
 function queries($query) {
 	global $connection;
@@ -826,7 +826,7 @@ function format_number($val) {
 */
 function friendly_url($val) {
 	// used for blobs and export
-	return preg_replace('~[^a-z0-9_]~i', '-', $val);
+	return preg_replace('~\W~i', '-', $val);
 }
 
 /** Print hidden fields
@@ -871,7 +871,7 @@ function table_status1($table, $fast = false) {
 
 /** Find out foreign keys for each column
 * @param string
-* @return array [$col => array()]
+* @return array [$col => []]
 */
 function column_foreign_keys($table) {
 	global $adminer;
@@ -934,11 +934,11 @@ function input($field, $value, $function) {
 
 	$disabled = stripos($field["default"], "GENERATED ALWAYS AS ") === 0 ? " disabled=''" : "";
 	$attrs = " name='fields[$name]' $disabled";
-	if ($jush == "pgsql" && in_array($field["type"], (array) $structured_types[lang('User types')])) {
-		$enums = get_vals("SELECT enumlabel FROM pg_enum WHERE enumtypid = " . $types[$field["type"]] . " ORDER BY enumsortorder");
+	if (in_array($field["type"], (array) $structured_types[lang('User types')])) {
+		$enums = type_values($types[$field["type"]]);
 		if ($enums) {
 			$field["type"] = "enum";
-			$field["length"] = "'" . implode("','", array_map('addslashes', $enums)) . "'";
+			$field["length"] = $enums;
 		}
 	}
 
@@ -1499,6 +1499,7 @@ function edit_form($table, $fields, $row, $update) {
 	} else {
 		echo "<table cellspacing='0' class='layout'>" . script("qsl('table').onkeydown = editingKeydown;");
 
+		$first = 0;
 		foreach ($fields as $name => $field) {
 			echo "<tr><th>" . $adminer->fieldName($field);
 			$default = $_GET["set"][bracket_escape($name)];
@@ -1539,6 +1540,9 @@ function edit_form($table, $fields, $row, $update) {
 				$value = "";
 				$function = "uuid";
 			}
+			if ($field["auto_increment"] || $function == "now" || $function == "uuid") {
+				$first++;
+			}
 			input($field, $value, $function);
 			echo "\n";
 		}
@@ -1565,7 +1569,7 @@ function edit_form($table, $fields, $row, $update) {
 		}
 	}
 	echo ($update ? "<input type='submit' name='delete' value='" . lang('Delete') . "'>" . confirm() . "\n"
-		: ($_POST || !$fields ? "" : script("qsa('td', gid('form'))[1].firstChild.focus();"))
+		: ($_POST || !$fields ? "" : script("qsa('td', gid('form'))[2*$first+1].firstChild.focus();"))
 	);
 	if (isset($_GET["select"])) {
 		hidden_fields(array("check" => (array) $_POST["check"], "clone" => $_POST["clone"], "all" => $_POST["all"]));

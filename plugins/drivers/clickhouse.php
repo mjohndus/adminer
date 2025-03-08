@@ -147,7 +147,7 @@ if (isset($_GET["clickhouse"])) {
 
 		function fetch_field() {
 			$column = $this->_offset++;
-			$return = new stdClass;
+			$return = new \stdClass;
 			if ($column < count($this->columns)) {
 				$return->name = $this->meta[$column]['name'];
 				$return->orgname = $return->name;
@@ -388,18 +388,6 @@ if (isset($_GET["clickhouse"])) {
 
 	function types() {
 		return array();
-	}
-
-	function schemas() {
-		return array();
-	}
-
-	function get_schema() {
-		return "";
-	}
-
-	function set_schema($schema) {
-		return true;
 	}
 
 	function auto_increment() {

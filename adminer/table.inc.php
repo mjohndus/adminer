@@ -65,7 +65,9 @@ if (!is_view($table_status)) {
 				echo "<tr title='" . h($name) . "'>";
 				echo "<th><i>" . implode("</i>, <i>", array_map('h', $foreign_key["source"])) . "</i>";
 				echo "<td><a href='" . h($foreign_key["db"] != "" ? preg_replace('~db=[^&]*~', "db=" . urlencode($foreign_key["db"]), ME) : ($foreign_key["ns"] != "" ? preg_replace('~ns=[^&]*~', "ns=" . urlencode($foreign_key["ns"]), ME) : ME)) . "table=" . urlencode($foreign_key["table"]) . "'>"
-					. ($foreign_key["db"] != "" ? "<b>" . h($foreign_key["db"]) . "</b>." : "") . ($foreign_key["ns"] != "" ? "<b>" . h($foreign_key["ns"]) . "</b>." : "") . h($foreign_key["table"])
+					. ($foreign_key["db"] != "" && $foreign_key["db"] != DB ? "<b>" . h($foreign_key["db"]) . "</b>." : "")
+					. ($foreign_key["ns"] != "" && $foreign_key["ns"] != $_GET["ns"] ? "<b>" . h($foreign_key["ns"]) . "</b>." : "")
+					. h($foreign_key["table"])
 					. "</a>"
 				;
 				echo "(<i>" . implode("</i>, <i>", array_map('h', $foreign_key["target"])) . "</i>)";
@@ -81,7 +83,7 @@ if (!is_view($table_status)) {
 
 	if (support("check")) {
 		echo "<h3 id='checks'>" . lang('Checks') . "</h3>\n";
-		$check_constraints = check_constraints($TABLE);
+		$check_constraints = $driver->checkConstraints($TABLE);
 		if ($check_constraints) {
 			echo "<table cellspacing='0'>\n";
 			foreach ($check_constraints as $key => $val) {
