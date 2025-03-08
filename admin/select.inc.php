@@ -17,17 +17,18 @@ $order_columns = []; // searchable columns
 $text_length = null;
 foreach ($fields as $key => $field) {
 	$name = Admin::get()->getFieldName($field);
+	$name_plain = html_entity_decode(strip_tags($name), ENT_QUOTES);
 	if (isset($field["privileges"]["select"]) && $name != "") {
-		$columns[$key] = html_entity_decode(strip_tags($name), ENT_QUOTES);
+		$columns[$key] = $name_plain;
 		if (is_shortable($field)) {
 			$text_length = Admin::get()->processSelectionLength();
 		}
 	}
 	if (isset($field["privileges"]["where"]) && $name != "") {
-		$search_columns[$key] = html_entity_decode(strip_tags($name), ENT_QUOTES);
+		$search_columns[$key] = $name_plain;
 	}
 	if (isset($field["privileges"]["order"]) && $name != "") {
-		$order_columns[$key] = html_entity_decode(strip_tags($name), ENT_QUOTES);
+		$order_columns[$key] = $name_plain;
 	}
 	$rights += $field["privileges"];
 }
@@ -363,12 +364,11 @@ if (!$columns && support("table")) {
 						$desc = "&desc%5B0%5D=1";
 						$sortable = isset($field["privileges"]["order"]);
 						echo "<th id='th[" . h(bracket_escape($key)) . "]'>" . script("mixin(qsl('th'), {onmouseover: partial(columnMouse), onmouseout: partial(columnMouse, ' hidden')});", "");
+						$fun = apply_sql_function($val["fun"] ?? null, $name); //! columns looking like functions
 						if ($sortable) {
-							echo '<a href="' . h($href . ($order[0] == $column || $order[0] == $key || (!$order && $is_group && $group[0] == $column) ? $desc : '')) . '">'; // $order[0] == $key - COUNT(*)
-						}
-						echo apply_sql_function($val["fun"] ?? null, $name); //! columns looking like functions
-						if ($sortable) {
-							echo "</a>";
+							echo '<a href="', h($href . ($order[0] == $column || $order[0] == $key || (!$order && $is_group && $group[0] == $column) ? $desc : '')), '">', "$fun</a>"; // $order[0] == $key - COUNT(*)
+						} else {
+							echo $fun;
 						}
 						echo "<span class='column hidden'>";
 						if ($sortable) {
