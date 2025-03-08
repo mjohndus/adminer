@@ -23,6 +23,7 @@ AdminNeo 4.17-dev
 - MS SQL: Link help from sys tables (by @vrana)
 - MS SQL: Fix highlighting columns as primary keys (by @vrana)
 - MS SQL PDO: Support offset (by Takashi SHIRAI)
+- CockroachDB: Add support via PostgreSQL driver (by @vrana)
 - Hide SQL export if driver doesn't support it (by @vrana)
 - New version of design rmSOFT (by @mesaros)
 
@@ -43,7 +44,7 @@ AdminNeo 4.17-dev
 - MS SQL: Fix CSV import (by @vrana)
 - MS SQL: Fix altering foreign key (by @vrana)
 
-(Ported relevant changes and fixes from Adminer 5.0.0-5.0.1. Backward compatibility is still kept.)
+(Ported relevant changes and fixes from Adminer 5.0.0-5.0.2. Backward compatibility is still kept.)
 
 AdminNeo 4.16.1
 ---------------
