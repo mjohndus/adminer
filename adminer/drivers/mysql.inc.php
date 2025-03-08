@@ -579,7 +579,7 @@ if (isset($_GET["mysql"])) {
 	*/
 	function fields($table) {
 		$return = array();
-		foreach (get_rows("SELECT * FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = " . q(DB) . " AND TABLE_NAME = " . q($table) . " ORDER BY ORDINAL_POSITION") as $row) {
+		foreach (get_rows("SELECT * FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = " . q($table) . " ORDER BY ORDINAL_POSITION") as $row) {
 			$field = $row["COLUMN_NAME"];
 			$default = $row["COLUMN_DEFAULT"];
 			$type = $row["COLUMN_TYPE"];
