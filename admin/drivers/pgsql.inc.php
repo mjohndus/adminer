@@ -485,6 +485,7 @@ ORDER BY 1";
 	function table_status($name = "") {
 		static $has_size;
 		if ($has_size === null) {
+			// https://github.com/cockroachdb/cockroach/issues/40391
 			$has_size = Connection::get()->getValue("SELECT 'pg_table_size'::regproc");
 		}
 		$return = [];
