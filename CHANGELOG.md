@@ -1,6 +1,49 @@
 Changelog
 =========
 
+AdminNeo 4.17-dev
+-----------------
+
+### Changes
+
+- Speed up with disabled output buffering (by @vrana)
+- Allow creating generated columns (by @vrana)
+- MySQL: Display generated value in table structure (by @vrana)
+- PostgreSQL, MS SQL, Oracle: Hide table actions for information_schema (by @vrana)
+- PostgreSQL: Print errors in export (by @vrana)
+- PostgreSQL: Do not alter indexes with expressions (by @vrana)
+- PostgreSQL: Display and export ENUM types (by @vrana)
+- SQLite: Add command Check tables (by @vrana)
+- SQLite: Support CHECK constraint (by @vrana)
+- SQLite: Support generated columns (by @vrana)
+- MS SQL: Support export (by @vrana)
+- MS SQL: Support computed columns (by @vrana)
+- MS SQL: Display foreign keys ON UPDATE and ON DELETE (by @vrana)
+- MS SQL: Add support for PDO_SQLSRV extension (by @vrana)
+- MS SQL: Link help from sys tables (by @vrana)
+- MS SQL: Fix highlighting columns as primary keys (by @vrana)
+- MS SQL PDO: Support offset (by Takashi SHIRAI)
+- Hide SQL export if driver doesn't support it (by @vrana)
+- New version of design rmSOFT (by @mesaros)
+
+### Bugfixes
+
+- Fix JS error in login form if login-servers plugin is used
+- Fix custom JUSH colors in alternative designs
+- Fix background color of SQL textarea in dark designs
+- Skip generated columns in multi-edit (by @vrana)
+- PostgreSQL: Compute size of all databases (by @vrana)
+- PostgreSQL: Do not alter indexes with expressions (by @vrana)
+- PostgreSQL: Fix export of indexes with expressions (by @vrana)
+- PostgreSQL: Display ? instead of -1 rows in table overview (by @vrana)
+- PostgreSQL: Show accessible databases to non-owners (by @vrana)
+- PostgreSQL: Skip editing generated columns (by @vrana)
+- SQLite: Display all rows of variable values (by @vrana)
+- MS SQL: Fix CSV import (by @vrana)
+- MS SQL: Fix altering foreign key (by @vrana)
+
+(Ported relevant changes and fixes from Adminer 5.0.0-5.0.1. Backward compatibility is still kept.)
+
 AdminNeo 4.16.1
 ---------------
 
@@ -8,6 +51,9 @@ AdminNeo 4.16.1
 
 - Update German translation (issue #66, by @wintstar)
 - Update Slovak translation
+
+### Bugfixes
+
 - Fix including proper dependencies without dark mode support (issue #67)
 
 AdminNeo 4.16
