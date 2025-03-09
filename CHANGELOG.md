@@ -28,6 +28,7 @@ AdminNeo 4.17-dev
 
 ### Bugfixes
 
+- Fix importing multiple SQL files not terminated by semicolon (issue #70)
 - Fix JS error in login form if login-servers plugin is used
 - Fix custom JUSH colors in alternative designs
 - Fix background color of SQL textarea in dark designs
