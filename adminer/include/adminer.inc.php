@@ -333,7 +333,7 @@ class Adminer {
 	* @return null
 	*/
 	function tableStructurePrint($fields) {
-		global $structured_types;
+		global $structured_types, $jush;
 		echo "<div class='scrollable'>\n";
 		echo "<table cellspacing='0' class='nowrap'>\n";
 		echo "<thead><tr><th>" . lang('Column') . "<td>" . lang('Type') . (support("comment") ? "<td>" . lang('Comment') : "") . "</thead>\n";
@@ -347,7 +347,7 @@ class Adminer {
 			echo ($field["null"] ? " <i>NULL</i>" : "");
 			echo ($field["auto_increment"] ? " <i>" . lang('Auto Increment') . "</i>" : "");
 			$default = h($field["default"]);
-			echo (isset($field["default"]) ? " <span title='" . lang('Default value') . "'>[<b>" . ($field["generated"] ? "<code class='jush-" . JUSH . "'>$default</code>" : $default) . "</b>]</span>" : "");
+			echo (isset($field["default"]) ? " <span title='" . lang('Default value') . "'>[<b>" . ($field["generated"] ? "<code class='jush-$jush'>$default</code>" : $default) . "</b>]</span>" : "");
 			echo (support("comment") ? "<td>" . h($field["comment"]) : "");
 			echo "\n";
 		}
