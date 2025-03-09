@@ -578,14 +578,18 @@ if (isset($_GET["mysql"])) {
 	* @return array [$name => ["field" => , "full_type" => , "type" => , "length" => , "unsigned" => , "default" => , "null" => , "auto_increment" => , "on_update" => , "collation" => , "privileges" => , "comment" => , "primary" => , "generated" => ]]
 	*/
 	function fields($table) {
+		global $connection;
+
 		$return = array();
 		foreach (get_rows("SELECT * FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = " . q($table) . " ORDER BY ORDINAL_POSITION") as $row) {
+			$maria = preg_match('~MariaDB~', $connection->server_info);
 			$field = $row["COLUMN_NAME"];
-			$default = $row["COLUMN_DEFAULT"];
+			$default = preg_replace("~^'(.*)'\$~", '\1', $row["COLUMN_DEFAULT"]);
 			$type = $row["COLUMN_TYPE"];
 			// https://mariadb.com/kb/en/library/show-columns/, https://github.com/vrana/adminer/pull/359#pullrequestreview-276677186
 			$generated = preg_match('~^(VIRTUAL|PERSISTENT|STORED)~', $row["EXTRA"]);
 			preg_match('~^([^( ]+)(?:\((.+)\))?( unsigned)?( zerofill)?$~', $type, $match);
+
 			$return[$field] = array(
 				"field" => $field,
 				"full_type" => $type,
@@ -593,9 +597,12 @@ if (isset($_GET["mysql"])) {
 				"length" => $match[2],
 				"unsigned" => ltrim($match[3] . $match[4]),
 				"default" => ($generated
-					? $row["GENERATION_EXPRESSION"]
-					: ($default != "" || preg_match("~char|set~", $match[1])
-						? (preg_match('~text~', $match[1]) ? stripslashes(preg_replace("~^'(.*)'\$~", '\1', $default)) : $default)
+					? ($maria ? $row["GENERATION_EXPRESSION"] : stripslashes($row["GENERATION_EXPRESSION"]))
+					: ($row["COLUMN_DEFAULT"] != "" || preg_match("~char|set~", $match[1])
+						? (preg_match('~text~', $match[1])
+							? stripslashes($default)
+							: ($maria ? str_replace("''", "'", $default) : $row["COLUMN_DEFAULT"]) // MariaDB: texts are escaped with slashes, chars with double apostrophe
+						)
 						: null
 					)
 				),
