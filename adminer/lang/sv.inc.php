@@ -13,13 +13,13 @@ $translations = array(
 	'Logout successful.' => 'Du är nu utloggad.',
 	'Invalid server or credentials.' => null,
 	'There is a space in the input password which might be the cause.' => 'Det finns ett mellanslag i lösenordet, vilket kan vara anledningen.',
-	'Adminer does not support accessing a database without a password, <a href="https://www.adminer.org/en/password/"%s>more information</a>.' => 'Adminer tillåter inte att ansluta till en databas utan lösenord. <a href="https://www.adminer.org/en/password/"%s>Mer information</a>.',
+	'AdminNeo does not support accessing a database without a password, <a href="https://www.adminer.org/en/password/"%s>more information</a>.' => 'AdminNeo tillåter inte att ansluta till en databas utan lösenord. <a href="https://www.adminer.org/en/password/"%s>Mer information</a>.',
 	'Database does not support password.' => 'Databasen stödjer inte lösenord.',
 	'Too many unsuccessful logins, try again in %d minute(s).' => array('För många misslyckade inloggningar, försök igen om %d minut.', 'För många misslyckade inloggningar, försök igen om %d minuter.'),
 	'Master password expired. <a href="https://www.adminer.org/en/extension/"%s>Implement</a> %s method to make it permanent.' => 'Huvudlösenordet har löpt ut. <a href="https://www.adminer.org/en/extension/"%s>Implementera</a> %s en metod för att göra det permanent.',
 	'Language' => 'Språk',
 	'Invalid CSRF token. Send the form again.' => 'Ogiltig CSRF-token. Skicka formuläret igen.',
-	'If you did not send this request from Adminer then close this page.' => 'Om du inte skickade en förfrågan från Adminer så kan du stänga den här sidan.',
+	'If you did not send this request from AdminNeo then close this page.' => 'Om du inte skickade en förfrågan från AdminNeo så kan du stänga den här sidan.',
 	'No extension' => 'Inget tillägg',
 	'None of the supported PHP extensions (%s) are available.' => 'Inga av de PHP-tilläggen som stöds (%s) är tillgängliga.',
 	'Connecting to privileged ports is not allowed.' => 'Anslutning till privilegierade portar är inte tillåtet.',
@@ -206,7 +206,7 @@ $translations = array(
 	'Alter indexes' => 'Ändra index',
 	'Add next' => 'Lägg till nästa',
 	'Index Type' => 'Indextyp',
-	'Column (length)' => 'Kolumn (längd)',
+	'length' => 'längd',
 
 	'Foreign keys' => 'Främmande nycklar',
 	'Foreign key' => 'Främmande nyckel',
@@ -308,7 +308,7 @@ $translations = array(
 	'Geometry' => 'Geometri',
 	'Relations' => 'Relationer',
 
-	'Editor' => 'Redigerare',
+	// 'Editor' => 'Redigerare',
 	// date format in Editor: $1 yyyy, $2 yy, $3 mm, $4 m, $5 dd, $6 d
 	'$1-$3-$5' => '$1-$3-$5',
 	// hint for date format - use language equivalents for day, month and year shortcuts
@@ -360,4 +360,11 @@ $translations = array(
 	'Show schema' => null,
 	'No driver' => null,
 	'Database driver not found.' => null,
+
+	'Check has been dropped.' => null,
+	'Check has been altered.' => null,
+	'Check has been created.' => null,
+	'Alter check' => null,
+	'Create check' => null,
+	'Checks' => null,
 );

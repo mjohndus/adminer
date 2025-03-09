@@ -1,11 +1,10 @@
 #!/usr/bin/env php
 <?php
-function adminer_errors($errno, $errstr) {
-	return !!preg_match('~^(Trying to access array offset on value of type null|Undefined array key)~', $errstr);
-}
 
 error_reporting(6135); // errors and warnings
-set_error_handler('adminer_errors', E_WARNING);
+set_error_handler(function ($errno, $errstr) {
+	return !!preg_match('~^(Trying to access array offset on value of type null|Undefined array key)~', $errstr);
+}, E_WARNING);
 
 include dirname(__FILE__) . "/adminer/include/debug.inc.php";
 include dirname(__FILE__) . "/adminer/include/version.inc.php";
@@ -441,7 +440,7 @@ foreach (glob(dirname(__FILE__) . "/adminer/drivers/*.inc.php") as $filename) {
 include dirname(__FILE__) . "/adminer/include/pdo.inc.php";
 include dirname(__FILE__) . "/adminer/include/driver.inc.php";
 
-$features = ["call" => "routine", "dump", "event", "privileges", "procedure" => "routine", "processlist", "routine", "scheme", "sequence", "status", "trigger", "type", "user" => "privileges", "variables", "view"];
+$features = ["check", "call" => "routine", "dump", "event", "privileges", "procedure" => "routine", "processlist", "routine", "scheme", "sequence", "status", "trigger", "type", "user" => "privileges", "variables", "view"];
 $lang_ids = []; // global variable simplifies usage in a callback functions
 
 // Start with index.php.
@@ -486,7 +485,7 @@ if ($single_driver) {
 	// Remove source code for unsupported features.
 	foreach ($features as $feature) {
 		if (!support($feature)) {
-			$file = preg_replace("((\t*)" . preg_quote('if (support("' . $feature . '")') . ".*\n\\1\\})sU", '', $file);
+			$file = preg_replace("((\t*)" . preg_quote('if (support("' . $feature . '")') . ".*?\n\\1\\}( else)?)s", '', $file);
 		}
 	}
 

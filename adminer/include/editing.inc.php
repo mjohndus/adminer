@@ -1,4 +1,6 @@
 <?php
+// This file is not used in Adminer Editor.
+
 /** Print select result
 * @param Min_Result
 * @param Min_DB connection to examine indexes
@@ -97,7 +99,7 @@ function select($result, $connection2 = null, $orgtables = array(), $limit = 0) 
 
 /** Get referencable tables with single column primary key except self
 * @param string
-* @return array ($table_name => $field)
+* @return array [$table_name => $field]
 */
 function referencable_primary($self) {
 	$return = array(); // table_name => field
@@ -162,6 +164,41 @@ function textarea($name, $value, $rows = 10, $cols = 80) {
 	echo "</textarea>";
 }
 
+/** Generate HTML <select> or <input> if $options are empty
+* @param string
+* @param array
+* @param string
+* @param string
+* @param string
+* @return string
+*/
+function select_input($attrs, $options, $value = "", $onchange = "", $placeholder = "") {
+	$tag = ($options ? "select" : "input");
+	return "<$tag $attrs" . ($options
+			? "><option value=''>$placeholder" . optionlist($options, $value, true) . "</select>"
+			: " size='10' value='" . h($value) . "' placeholder='$placeholder'>"
+		) . ($onchange ? script("qsl('$tag').onchange = $onchange;", "") : ""); //! use oninput for input
+}
+
+/** Print one row in JSON object
+* @param string or "" to close the object
+* @param string
+* @return null
+*/
+function json_row($key, $val = null) {
+	static $first = true;
+	if ($first) {
+		echo "{";
+	}
+	if ($key != "") {
+		echo ($first ? "" : ",") . "\n\t\"" . addcslashes($key, "\r\n\t\"\\/") . '": ' . ($val !== null ? '"' . addcslashes($val, "\r\n\"\\/") . '"' : 'null');
+		$first = false;
+	} else {
+		echo "\n}\n";
+		$first = true;
+	}
+}
+
 /** Print table columns for type edit
 * @param string
 * @param array
@@ -183,10 +220,31 @@ if ($foreign_keys) {
 }
 echo optionlist(array_merge($extra_types, $structured_types), $type);
 ?></select><td><input name="<?php echo h($key); ?>[length]" value="<?php echo h($field["length"]); ?>" size="3"<?php echo (!$field["length"] && preg_match('~var(char|binary)$~', $type) ? " class='required'" : ""); //! type="number" with enabled JavaScript ?> aria-labelledby="label-length"><td class="options"><?php
-	echo "<select name='" . h($key) . "[collation]'" . (preg_match('~(char|text|enum|set)$~', $type) ? "" : " class='hidden'") . '><option value="">(' . lang('collation') . ')' . optionlist($collations, $field["collation"]) . '</select>';
+	echo ($collations ? "<select name='" . h($key) . "[collation]'" . (preg_match('~(char|text|enum|set)$~', $type) ? "" : " class='hidden'") . '><option value="">(' . lang('collation') . ')' . optionlist($collations, $field["collation"]) . '</select>' : '');
 	echo ($unsigned ? "<select name='" . h($key) . "[unsigned]'" . (!$type || preg_match(number_type(), $type) ? "" : " class='hidden'") . '><option>' . optionlist($unsigned, $field["unsigned"]) . '</select>' : '');
 	echo (isset($field['on_update']) ? "<select name='" . h($key) . "[on_update]'" . (preg_match('~timestamp|datetime~', $type) ? "" : " class='hidden'") . '>' . optionlist(array("" => "(" . lang('ON UPDATE') . ")", "CURRENT_TIMESTAMP"), (preg_match('~^CURRENT_TIMESTAMP~i', $field["on_update"]) ? "CURRENT_TIMESTAMP" : $field["on_update"])) . '</select>' : '');
 	echo ($foreign_keys ? "<select name='" . h($key) . "[on_delete]'" . (preg_match("~`~", $type) ? "" : " class='hidden'") . "><option value=''>(" . lang('ON DELETE') . ")" . optionlist(explode("|", $on_actions), $field["on_delete"]) . "</select> " : " "); // space for IE
+}
+
+/**
+ * @param string $table
+ * @return array
+ */
+function get_partitions_info($table) {
+	global $connection;
+
+	$from = "FROM information_schema.PARTITIONS WHERE TABLE_SCHEMA = " . q(DB) . " AND TABLE_NAME = " . q($table);
+
+	$result = $connection->query("SELECT PARTITION_METHOD, PARTITION_EXPRESSION, PARTITION_ORDINAL_POSITION $from ORDER BY PARTITION_ORDINAL_POSITION DESC LIMIT 1");
+
+	$info = [];
+	list($info["partition_by"], $info["partition"],  $info["partitions"]) = $result->fetch_row();
+
+	$partitions = get_key_vals("SELECT PARTITION_NAME, PARTITION_DESCRIPTION $from AND PARTITION_NAME != '' ORDER BY PARTITION_ORDINAL_POSITION");
+	$info["partition_names"] = array_keys($partitions);
+	$info["partition_values"] = array_values($partitions);
+
+	return $info;
 }
 
 /** Filter length value including enums
@@ -207,25 +265,24 @@ function process_length($length) {
 * @return string
 */
 function process_type($field, $collate = "COLLATE") {
-	global $unsigned;
+	global $unsigned, $jush;
 	return " $field[type]"
 		. process_length($field["length"])
 		. (preg_match(number_type(), $field["type"]) && in_array($field["unsigned"], $unsigned) ? " $field[unsigned]" : "")
-		. (preg_match('~char|text|enum|set~', $field["type"]) && $field["collation"] ? " $collate " . q($field["collation"]) : "")
+		. (preg_match('~char|text|enum|set~', $field["type"]) && $field["collation"] ? " $collate " . ($jush == "mssql" ? $field["collation"] : q($field["collation"])) : "")
 	;
 }
 
 /** Create SQL string from field
 * @param array basic field information
 * @param array information about field type
-* @return array array("field", "type", "NULL", "DEFAULT", "ON UPDATE", "COMMENT", "AUTO_INCREMENT")
+* @return array ["field", "type", "NULL", "DEFAULT", "ON UPDATE", "COMMENT", "AUTO_INCREMENT"]
 */
 function process_field($field, $type_field) {
 	// MariaDB exports CURRENT_TIMESTAMP as a function.
 	if ($field["on_update"]) {
 		$field["on_update"] = str_ireplace("current_timestamp()", "CURRENT_TIMESTAMP", $field["on_update"]);
 	}
-
 	return array(
 		idf_escape(trim($field["field"])),
 		process_type($type_field),
@@ -242,6 +299,7 @@ function process_field($field, $type_field) {
 * @return string
 */
 function default_value($field) {
+	global $jush;
 	$default = $field["default"];
 	if ($default === null) return "";
 
@@ -249,12 +307,14 @@ function default_value($field) {
 		return " $default";
 	}
 
-	// MariaDB exports CURRENT_TIMESTAMP as a function.
-	$default = str_ireplace("current_timestamp()", "CURRENT_TIMESTAMP", $default);
+	if (preg_match('~char|binary|text|enum|set~', $field["type"]) || preg_match('~^(?![a-z])~i', $default)) {
+		return " DEFAULT " . q($default);
+	} else {
+		// MariaDB exports CURRENT_TIMESTAMP as a function.
+		$default = str_ireplace("current_timestamp()", "CURRENT_TIMESTAMP", $default);
 
-	$quote = preg_match('~char|binary|text|enum|set~', $field["type"]) || preg_match('~^(?![a-z])~i', $default);
-
-	return " DEFAULT " . ($quote ? q($default) : $default);
+		return " DEFAULT " . ($jush == "sqlite" ? "($default)" : $default);
+	}
 }
 
 /** Get type class to use in CSS
@@ -307,7 +367,7 @@ function edit_fields(array $fields, array $collations, $type = "TABLE", $foreign
 			'mariadb' => "auto_increment/",
 			'sqlite' => "autoinc.html",
 			'pgsql' => "datatype-numeric.html#DATATYPE-SERIAL",
-			'mssql' => "ms186775.aspx",
+			'mssql' => "t-sql/statements/create-table-transact-sql-identity-property",
 		]); ?>
 		</td>
 		<td id="label-default"><?php echo lang('Default value'); ?></td>
@@ -529,13 +589,13 @@ function create_routine($routine, $row) {
 			$set[] = (preg_match("~^($inout)\$~", $field["inout"]) ? "$field[inout] " : "") . idf_escape($field["field"]) . process_type($field, "CHARACTER SET");
 		}
 	}
-	$definition = rtrim("\n$row[definition]", ";");
+	$definition = rtrim($row["definition"], ";");
 	return "CREATE $routine "
 		. idf_escape(trim($row["name"]))
 		. " (" . implode(", ", $set) . ")"
-		. (isset($_GET["function"]) ? " RETURNS" . process_type($row["returns"], "CHARACTER SET") : "")
+		. ($routine == "FUNCTION" ? " RETURNS" . process_type($row["returns"], "CHARACTER SET") : "")
 		. ($row["language"] ? " LANGUAGE $row[language]" : "")
-		. ($jush == "pgsql" ? " AS " . q($definition) : "$definition;")
+		. ($jush == "pgsql" ? " AS " . q($definition) : "\n$definition;")
 	;
 }
 
@@ -548,7 +608,7 @@ function remove_definer($query) {
 }
 
 /** Format foreign key to use in SQL query
-* @param array ("db" => string, "ns" => string, "table" => string, "source" => array, "target" => array, "on_delete" => one of $on_actions, "on_update" => one of $on_actions)
+* @param array ["db" => string, "ns" => string, "table" => string, "source" => array, "target" => array, "on_delete" => one of $on_actions, "on_update" => one of $on_actions]
 * @return string
 */
 function format_foreign_key($foreign_key) {
@@ -558,7 +618,7 @@ function format_foreign_key($foreign_key) {
 	return " FOREIGN KEY (" . implode(", ", array_map('idf_escape', $foreign_key["source"])) . ") REFERENCES "
 		. ($db != "" && $db != $_GET["db"] ? idf_escape($db) . "." : "")
 		. ($ns != "" && $ns != $_GET["ns"] ? idf_escape($ns) . "." : "")
-		. table($foreign_key["table"])
+		. idf_escape($foreign_key["table"])
 		. " (" . implode(", ", array_map('idf_escape', $foreign_key["target"])) . ")" //! reuse $name - check in older MySQL versions
 		. (preg_match("~^($on_actions)\$~", $foreign_key["on_delete"]) ? " ON DELETE $foreign_key[on_delete]" : "")
 		. (preg_match("~^($on_actions)\$~", $foreign_key["on_update"]) ? " ON UPDATE $foreign_key[on_update]" : "")
@@ -615,7 +675,7 @@ function doc_link(array $paths, $text = "<sup>?</sup>") {
 		'sql' => "https://dev.mysql.com/doc/refman/$version/en/",
 		'sqlite' => "https://www.sqlite.org/",
 		'pgsql' => "https://www.postgresql.org/docs/$version/",
-		'mssql' => "https://msdn.microsoft.com/library/",
+		'mssql' => "https://learn.microsoft.com/en-us/sql/",
 		'oracle' => "https://www.oracle.com/pls/topic/lookup?ctx=db" . preg_replace('~^.* (\d+)\.(\d+)\.\d+\.\d+\.\d+.*~s', '\1\2', $server_info) . "&id=",
 		'elastic' => "https://www.elastic.co/guide/en/elasticsearch/reference/$version/",
 	];
@@ -629,7 +689,7 @@ function doc_link(array $paths, $text = "<sup>?</sup>") {
 		return "";
 	}
 
-	return "<a href='" . h($urls[$jush] . $paths[$jush]) . "'" . target_blank() . ">$text</a>";
+	return "<a href='" . h($urls[$jush] . $paths[$jush] . ($jush == 'mssql' ? "?view=sql-server-ver$version" : "")) . "'" . target_blank() . ">$text</a>";
 }
 
 /** Wrap gzencode() for usage in ob_start()

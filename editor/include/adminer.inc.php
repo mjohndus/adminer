@@ -6,7 +6,7 @@ class Adminer {
 	var $_values = array();
 
 	function name() {
-		return "<a id='h1' href='" . h(HOME_URL) . "'>" . lang('Editor') . "</a>";
+		return "<a id='h1' href='" . h(HOME_URL) . "'>EditorNeo</a>";
 	}
 
 	//! driver, ns
@@ -608,7 +608,7 @@ qsl('div').onclick = whisperClick;", "")
 	<?php if ($missing != "auth"): ?>
 		<span class="version">
 			<?php echo $VERSION; ?>
-			<a href="https://github.com/adminerneo/adminerneo/releases"<?php echo target_blank(); ?> id="version">
+			<a href="https://github.com/adminneo-org/adminneo/releases"<?php echo target_blank(); ?> id="version">
 				<?php echo (version_compare($VERSION, $_COOKIE["adminer_version"]) < 0 ? h($_COOKIE["adminer_version"]) : ""); ?>
 			</a>
 		</span>
@@ -657,7 +657,7 @@ qsl('div').onclick = whisperClick;", "")
 		global $adminer;
 
 		echo "<div class='tables-filter jsonly'>"
-			. "<input id='tables-filter' autocomplete='off' placeholder='" . lang('Table') . "'>"
+			. "<input id='tables-filter' type='search' autocomplete='off' placeholder='" . lang('Table') . "'>"
 			. script("initTablesFilter(" . json_encode($adminer->database()) . ");")
 			. "</div>\n";
 	}

@@ -25,6 +25,8 @@ if (isset($_GET["mysql"])) {
 						isset($ssl['ca']) ? $ssl['ca'] : null,
 						null, null
 					);
+				} else {
+					$ssl = null;
 				}
 
 				$return = @$this->real_connect(
@@ -34,7 +36,7 @@ if (isset($_GET["mysql"])) {
 					$database,
 					(is_numeric($port) ? $port : ini_get("mysqli.default_port")),
 					(!is_numeric($port) ? $port : $socket),
-					($ssl ? MYSQLI_CLIENT_SSL_DONT_VERIFY_SERVER_CERT : 0)
+					($ssl ? (empty($ssl['cert']) ? 2048 : 64) : 0) // 2048 - MYSQLI_CLIENT_SSL, 64 - MYSQLI_CLIENT_SSL_DONT_VERIFY_SERVER_CERT (not available before PHP 5.6.16)
 				);
 				$this->options(MYSQLI_OPT_LOCAL_INFILE, false);
 				return $return;
@@ -337,14 +339,23 @@ if (isset($_GET["mysql"])) {
 			}
 		}
 
-		function tableHelp($name) {
+		function tableHelp($name, $is_view = false) {
 			$maria = preg_match('~MariaDB~', $this->_conn->server_info);
 			if (information_schema(DB)) {
-				return strtolower(($maria ? "information-schema-$name-table/" : str_replace("_", "-", $name) . "-table.html"));
+				return strtolower("information-schema-" . ($maria ? "$name-table/" : str_replace("_", "-", $name) . "-table.html"));
 			}
 			if (DB == "mysql") {
-				return ($maria ? "mysql$name-table/" : "system-database.html"); //! more precise link
+				return ($maria ? "mysql$name-table/" : "system-schema.html"); //! more precise link
 			}
+		}
+
+		function hasCStyleEscapes() {
+			static $c_style;
+			if ($c_style === null) {
+				$sql_mode = $this->_conn->result("SHOW VARIABLES LIKE 'sql_mode'", 1);
+				$c_style = (strpos($sql_mode, 'NO_BACKSLASH_ESCAPES') === false);
+			}
+			return $c_style;
 		}
 
 	}
@@ -391,6 +402,12 @@ if (isset($_GET["mysql"])) {
 
 				// insert/update function
 				$edit_functions[0]['uuid'] = 'uuid';
+			}
+
+			if (min_version(9, '', $connection)) {
+				$structured_types[lang('Numbers')][] = "vector";
+				$types["vector"] = 16383;
+				$edit_functions[0]['vector'] = 'string_to_vector';
 			}
 
 			return $connection;
@@ -485,7 +502,7 @@ if (isset($_GET["mysql"])) {
 	}
 
 	/** Get tables list
-	* @return array array($name => $type)
+	* @return array [$name => $type]
 	*/
 	function tables_list() {
 		return get_key_vals(min_version(5)
@@ -496,7 +513,7 @@ if (isset($_GET["mysql"])) {
 
 	/** Count tables in all databases
 	* @param array
-	* @return array array($db => $tables)
+	* @return array [$db => $tables]
 	*/
 	function count_tables($databases) {
 		$return = array();
@@ -509,7 +526,7 @@ if (isset($_GET["mysql"])) {
 	/** Get table status
 	* @param string
 	* @param bool return only "Name", "Engine" and "Comment" fields
-	* @return array array($name => array("Name" => , "Engine" => , "Comment" => , "Oid" => , "Rows" => , "Collation" => , "Auto_increment" => , "Data_length" => , "Index_length" => , "Data_free" => )) or only inner array with $name
+	* @return array [$name => ["Name" => , "Engine" => , "Comment" => , "Oid" => , "Rows" => , "Collation" => , "Auto_increment" => , "Data_length" => , "Index_length" => , "Data_free" => ]] or only inner array with $name
 	*/
 	function table_status($name = "", $fast = false) {
 		if ($fast && min_version(5)) {
@@ -558,28 +575,38 @@ if (isset($_GET["mysql"])) {
 
 	/** Get information about fields
 	* @param string
-	* @return array array($name => array("field" => , "full_type" => , "type" => , "length" => , "unsigned" => , "default" => , "null" => , "auto_increment" => , "on_update" => , "collation" => , "privileges" => , "comment" => , "primary" => ))
+	* @return array [$name => ["field" => , "full_type" => , "type" => , "length" => , "unsigned" => , "default" => , "null" => , "auto_increment" => , "on_update" => , "collation" => , "privileges" => , "comment" => , "primary" => , "generated" => ]]
 	*/
 	function fields($table) {
 		$return = array();
-		foreach (get_rows("SHOW FULL COLUMNS FROM " . table($table)) as $row) {
-			preg_match('~^([^( ]+)(?:\((.+)\))?( unsigned)?( zerofill)?$~', $row["Type"], $match);
-			$return[$row["Field"]] = array(
-				"field" => $row["Field"],
-				"full_type" => $row["Type"],
+		foreach (get_rows("SELECT * FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = " . q($table) . " ORDER BY ORDINAL_POSITION") as $row) {
+			$field = $row["COLUMN_NAME"];
+			$default = $row["COLUMN_DEFAULT"];
+			$type = $row["COLUMN_TYPE"];
+			// https://mariadb.com/kb/en/library/show-columns/, https://github.com/vrana/adminer/pull/359#pullrequestreview-276677186
+			$generated = preg_match('~^(VIRTUAL|PERSISTENT|STORED)~', $row["EXTRA"]);
+			preg_match('~^([^( ]+)(?:\((.+)\))?( unsigned)?( zerofill)?$~', $type, $match);
+			$return[$field] = array(
+				"field" => $field,
+				"full_type" => $type,
 				"type" => $match[1],
 				"length" => $match[2],
 				"unsigned" => ltrim($match[3] . $match[4]),
-				"default" => ($row["Default"] != "" || preg_match("~char|set~", $match[1]) ? (preg_match('~text~', $match[1]) ? stripslashes(preg_replace("~^'(.*)'\$~", '\1', $row["Default"])) : $row["Default"]) : null),
-				"null" => ($row["Null"] == "YES"),
-				"auto_increment" => ($row["Extra"] == "auto_increment"),
-				"on_update" => (preg_match('~^on update (.+)~i', $row["Extra"], $match) ? $match[1] : ""), //! available since MySQL 5.1.23
-				"collation" => $row["Collation"],
-				"privileges" => array_flip(preg_split('~, *~', $row["Privileges"])) + ["where" => 1, "order" => 1],
-				"comment" => $row["Comment"],
-				"primary" => ($row["Key"] == "PRI"),
-				// https://mariadb.com/kb/en/library/show-columns/, https://github.com/vrana/adminer/pull/359#pullrequestreview-276677186
-				"generated" => preg_match('~^(VIRTUAL|PERSISTENT|STORED)~', $row["Extra"]),
+				"default" => ($generated
+					? $row["GENERATION_EXPRESSION"]
+					: ($default != "" || preg_match("~char|set~", $match[1])
+						? (preg_match('~text~', $match[1]) ? stripslashes(preg_replace("~^'(.*)'\$~", '\1', $default)) : $default)
+						: null
+					)
+				),
+				"null" => ($row["IS_NULLABLE"] == "YES"),
+				"auto_increment" => ($row["EXTRA"] == "auto_increment"),
+				"on_update" => (preg_match('~\bon update (\w+)~i', $row["EXTRA"], $match) ? $match[1] : ""), //! available since MySQL 5.1.23
+				"collation" => $row["COLLATION_NAME"],
+				"privileges" => array_flip(explode(",", $row["PRIVILEGES"])) + ["where" => 1, "order" => 1],
+				"comment" => $row["COLUMN_COMMENT"],
+				"primary" => ($row["COLUMN_KEY"] == "PRI"),
+				"generated" => $generated,
 			);
 		}
 		return $return;
@@ -588,7 +615,7 @@ if (isset($_GET["mysql"])) {
 	/** Get table indexes
 	* @param string
 	* @param string Min_DB to use
-	* @return array array($key_name => array("type" => , "columns" => array(), "lengths" => array(), "descs" => array()))
+	* @return array [$key_name => ["type" => , "columns" => [], "lengths" => [], "descs" => []]]
 	*/
 	function indexes($table, $connection2 = null) {
 		$return = array();
@@ -604,7 +631,7 @@ if (isset($_GET["mysql"])) {
 
 	/** Get foreign keys in table
 	* @param string
-	* @return array array($name => array("db" => , "ns" => , "table" => , "source" => array(), "target" => array(), "on_delete" => , "on_update" => ))
+	* @return array [$name => ["db" => , "ns" => , "table" => , "source" => [], "target" => [], "on_delete" => , "on_update" => ]]
 	*/
 	function foreign_keys($table) {
 		global $connection, $on_actions;
@@ -631,7 +658,7 @@ if (isset($_GET["mysql"])) {
 
 	/** Get view SELECT
 	* @param string
-	* @return array array("select" => )
+	* @return array ["select" => ]
 	*/
 	function view($name) {
 		global $connection;
@@ -751,7 +778,7 @@ if (isset($_GET["mysql"])) {
 	/** Run commands to create or alter table
 	* @param string "" to create
 	* @param string new name
-	* @param array of array($orig, $process_field, $after)
+	* @param array of [$orig, $process_field, $after]
 	* @param array of strings
 	* @param string
 	* @param string
@@ -788,7 +815,7 @@ if (isset($_GET["mysql"])) {
 
 	/** Run commands to alter indexes
 	* @param string escaped table name
-	* @param array of array("index type", "name", array("column definition", ...)) or array("index type", "name", "DROP")
+	* @param array of ["index type", "name", ["column definition", ...]] or ["index type", "name", "DROP"]
 	* @return bool
 	*/
 	function alter_indexes($table, $alter) {
@@ -891,7 +918,7 @@ if (isset($_GET["mysql"])) {
 
 	/** Get information about trigger
 	* @param string trigger name
-	* @return array array("Trigger" => , "Timing" => , "Event" => , "Of" => , "Type" => , "Statement" => )
+	* @return array ["Trigger" => , "Timing" => , "Event" => , "Of" => , "Type" => , "Statement" => ]
 	*/
 	function trigger($name) {
 		if ($name == "") {
@@ -903,7 +930,7 @@ if (isset($_GET["mysql"])) {
 
 	/** Get defined triggers
 	* @param string
-	* @return array array($name => array($timing, $event))
+	* @return array [$name => [$timing, $event]]
 	*/
 	function triggers($table) {
 		$return = array();
@@ -914,7 +941,7 @@ if (isset($_GET["mysql"])) {
 	}
 
 	/** Get trigger options
-	* @return array ("Timing" => array(), "Event" => array(), "Type" => array())
+	* @return array ["Timing" => [], "Event" => [], "Type" => []]
 	*/
 	function trigger_options() {
 		return array(
@@ -930,7 +957,7 @@ if (isset($_GET["mysql"])) {
 	 * @param string $name
 	 * @param string $type "FUNCTION" or "PROCEDURE"
 	 *
-	 * @return array ("fields" => array("field" => , "type" => , "length" => , "unsigned" => , "inout" => , "collation" => ), "returns" => , "definition" => , "language" => )
+	 * @return array ["fields" => ["field" => , "type" => , "length" => , "unsigned" => , "inout" => , "collation" => ], "returns" => , "definition" => , "language" => ]
 	 */
 	function routine($name, $type) {
 		global $connection, $enum_length, $inout, $types;
@@ -975,7 +1002,7 @@ if (isset($_GET["mysql"])) {
 	}
 
 	/** Get list of routines
-	* @return array ("SPECIFIC_NAME" => , "ROUTINE_NAME" => , "ROUTINE_TYPE" => , "DTD_IDENTIFIER" => )
+	* @return array ["SPECIFIC_NAME" => , "ROUTINE_NAME" => , "ROUTINE_TYPE" => , "DTD_IDENTIFIER" => ]
 	*/
 	function routines() {
 		return get_rows("SELECT ROUTINE_NAME AS SPECIFIC_NAME, ROUTINE_NAME, ROUTINE_TYPE, DTD_IDENTIFIER, ROUTINE_COMMENT FROM information_schema.ROUTINES WHERE ROUTINE_SCHEMA = " . q(DB));
@@ -1023,36 +1050,6 @@ if (isset($_GET["mysql"])) {
 		return ($where || $table_status["Engine"] != "InnoDB" ? null : $table_status["Rows"]);
 	}
 
-	/** Get user defined types
-	* @return array
-	*/
-	function types() {
-		return array();
-	}
-
-	/** Get existing schemas
-	* @return array
-	*/
-	function schemas() {
-		return array();
-	}
-
-	/** Get current schema
-	* @return string
-	*/
-	function get_schema() {
-		return "";
-	}
-
-	/** Set current schema
-	* @param string
-	* @param Min_DB
-	* @return bool
-	*/
-	function set_schema($schema, $connection2 = null) {
-		return true;
-	}
-
 	/** Get SQL command to create table
 	* @param string
 	* @param bool
@@ -1097,7 +1094,7 @@ if (isset($_GET["mysql"])) {
 	}
 
 	/** Get server variables
-	* @return array ($name => $value)
+	* @return array [$name => $value]
 	*/
 	function show_variables() {
 		return get_key_vals("SHOW VARIABLES");
@@ -1116,25 +1113,15 @@ if (isset($_GET["mysql"])) {
 		return $strictMode;
 	}
 
-	function is_c_style_escapes() {
-		static $c_style = null;
-
-		if ($c_style === null) {
-			$c_style = strpos(get_key_vals("SHOW VARIABLES LIKE 'sql_mode'")["sql_mode"], 'NO_BACKSLASH_ESCAPES') === false;
-		}
-
-		return $c_style;
-	}
-
 	/** Get process list
-	* @return array ($row)
+	* @return array [$row]
 	*/
 	function process_list() {
 		return get_rows("SHOW FULL PROCESSLIST");
 	}
 
 	/** Get status variables
-	* @return array ($name => $value)
+	* @return array [$name => $value]
 	*/
 	function show_status() {
 		return get_key_vals("SHOW STATUS");
@@ -1166,7 +1153,7 @@ if (isset($_GET["mysql"])) {
 			$return = "UNHEX($return)";
 		}
 		if ($field["type"] == "bit") {
-			$return = "CONV($return, 2, 10) + 0";
+			$return = "CONVERT(b$return, UNSIGNED)";
 		}
 		if (preg_match("~geometry|point|linestring|polygon~", $field["type"])) {
 			$prefix = (min_version(8) ? "ST_" : "");
@@ -1176,11 +1163,11 @@ if (isset($_GET["mysql"])) {
 	}
 
 	/** Check whether a feature is supported
-	* @param string "comment", "copy", "database", "descidx", "drop_col", "dump", "event", "indexes", "kill", "materializedview", "partitioning", "privileges", "procedure", "processlist", "routine", "scheme", "sequence", "status", "table", "trigger", "type", "variables", "view", "view_trigger"
+	* @param string "check", "comment", "copy", "database", "descidx", "drop_col", "dump", "event", "indexes", "kill", "materializedview", "partitioning", "privileges", "procedure", "processlist", "routine", "scheme", "sequence", "status", "table", "trigger", "type", "variables", "view", "view_trigger"
 	* @return bool
 	*/
 	function support($feature) {
-		return !preg_match("~scheme|sequence|type|view_trigger|materializedview" . (min_version(8) ? "" : "|descidx" . (min_version(5.1) ? "" : "|event|partitioning" . (min_version(5) ? "" : "|routine|trigger|view"))) . "~", $feature);
+		return !preg_match("~scheme|sequence|type|view_trigger|materializedview" . (min_version(8) ? "" : "|descidx" . (min_version(5.1) ? "" : "|event|partitioning" . (min_version(5) ? "" : "|routine|trigger|view"))) . (min_version('8.0.16', '10.2.1') ? "" : "|check") . "~", $feature);
 	}
 
 	/** Kill a process
@@ -1207,11 +1194,11 @@ if (isset($_GET["mysql"])) {
 	}
 
 	/** Get driver config
-	* @return array array('possible_drivers' => , 'jush' => , 'types' => , 'structured_types' => , 'unsigned' => , 'operators' => , 'functions' => , 'grouping' => , 'edit_functions' => )
+	* @return array ['possible_drivers' => , 'jush' => , 'types' => , 'structured_types' => , 'unsigned' => , 'operators' => , 'functions' => , 'grouping' => , 'edit_functions' => ]
 	*/
 	function driver_config() {
-		$types = array(); ///< @var array ($type => $maximum_unsigned_length, ...)
-		$structured_types = array(); ///< @var array ($description => array($type, ...), ...)
+		$types = array(); ///< @var array [$type => $maximum_unsigned_length, ...]
+		$structured_types = array(); ///< @var array [$description => [$type, ...], ...]
 		foreach (array(
 			lang('Numbers') => array("tinyint" => 3, "smallint" => 5, "mediumint" => 8, "int" => 10, "bigint" => 20, "decimal" => 66, "float" => 12, "double" => 21),
 			lang('Date and time') => array("date" => 10, "datetime" => 19, "timestamp" => 19, "time" => 10, "year" => 4),

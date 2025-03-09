@@ -13,18 +13,18 @@ class Adminer {
 	* @return string HTML code
 	*/
 	function name() {
-		return "<a id='h1' href='" . h(HOME_URL) . "'>AdminerNeo</a>";
+		return "<a id='h1' href='" . h(HOME_URL) . "'>AdminNeo</a>";
 	}
 
 	/** Connection parameters
-	* @return array ($server, $username, $password)
+	* @return array [$server, $username, $password]
 	*/
 	function credentials() {
 		return array(SERVER, $_GET["username"], get_password());
 	}
 
 	/** Get SSL connection options
-	* @return array array("key" => filename, "cert" => filename, "ca" => filename) or null
+	* @return array ["key" => filename, "cert" => filename, "ca" => filename] or null
 	*/
 	function connectSsl() {
 	}
@@ -127,9 +127,9 @@ class Adminer {
 	function loginForm() {
 		global $drivers;
 		echo "<table cellspacing='0' class='layout'>\n";
-		echo $this->loginFormField('driver', '<tr><th>' . lang('System') . '<td>', html_select("auth[driver]", $drivers, DRIVER, "loginDriver(this);") . "\n");
+		echo $this->loginFormField('driver', '<tr><th>' . lang('System') . '<td>', html_select("auth[driver]", $drivers, DRIVER) . script("initLoginDriver(qsl('select'));"));
 		echo $this->loginFormField('server', '<tr><th>' . lang('Server') . '<td>', '<input name="auth[server]" value="' . h(SERVER) . '" title="hostname[:port]" placeholder="localhost" autocapitalize="off">' . "\n");
-		echo $this->loginFormField('username', '<tr><th>' . lang('Username') . '<td>', '<input name="auth[username]" id="username" value="' . h($_GET["username"]) . '" autocomplete="username" autocapitalize="off">' . script("gid('username').form['auth[driver]'].onchange();"));
+		echo $this->loginFormField('username', '<tr><th>' . lang('Username') . '<td>', '<input name="auth[username]" id="username" value="' . h($_GET["username"]) . '" autocomplete="username" autocapitalize="off">');
 		echo $this->loginFormField('password', '<tr><th>' . lang('Password') . '<td>', '<input type="password" name="auth[password]" autocomplete="current-password">' . "\n");
 		echo $this->loginFormField('db', '<tr><th>' . lang('Database') . '<td>', '<input name="auth[db]" value="' . h($_GET["db"]) . '" autocapitalize="off">' . "\n");
 		echo "</table>\n";
@@ -154,7 +154,7 @@ class Adminer {
 	*/
 	function login($login, $password) {
 		if ($password == "") {
-			return lang('Adminer does not support accessing a database without a password, <a href="https://www.adminer.org/en/password/"%s>more information</a>.', target_blank());
+			return lang('AdminNeo does not support accessing a database without a password, <a href="https://www.adminer.org/en/password/"%s>more information</a>.', target_blank());
 		}
 		return true;
 	}
@@ -188,8 +188,10 @@ class Adminer {
 		if (support("table") || support("indexes")) {
 			$links["table"] = lang('Show structure');
 		}
+		$is_view = false;
 		if (support("table")) {
-			if (is_view($tableStatus)) {
+			$is_view = is_view($tableStatus);
+			if ($is_view) {
 				$links["view"] = lang('Alter view');
 			} else {
 				$links["create"] = lang('Alter table');
@@ -202,7 +204,7 @@ class Adminer {
 		foreach ($links as $key => $val) {
 			echo " <a href='" . h(ME) . "$key=" . urlencode($name) . ($key == "edit" ? $set : "") . "'" . bold(isset($_GET[$key])) . ">$val</a>";
 		}
-		echo doc_link(array($jush => $driver->tableHelp($name)), "?");
+		echo doc_link(array($jush => $driver->tableHelp($name, $is_view)), "?");
 		echo "\n";
 	}
 
@@ -331,15 +333,21 @@ class Adminer {
 	* @return null
 	*/
 	function tableStructurePrint($fields) {
+		global $structured_types;
 		echo "<div class='scrollable'>\n";
 		echo "<table cellspacing='0' class='nowrap'>\n";
 		echo "<thead><tr><th>" . lang('Column') . "<td>" . lang('Type') . (support("comment") ? "<td>" . lang('Comment') : "") . "</thead>\n";
 		foreach ($fields as $field) {
 			echo "<tr" . odd() . "><th>" . h($field["field"]);
-			echo "<td><span title='" . h($field["collation"]) . "'>" . h($field["full_type"]) . "</span>";
+			$type = h($field["full_type"]);
+			echo "<td><span title='" . h($field["collation"]) . "'>"
+				. (in_array($type, (array) $structured_types[lang('User types')]) ? "<a href='" . h(ME . 'type=' . urlencode($type)) . "'>$type</a>" : $type)
+				. "</span>"
+			;
 			echo ($field["null"] ? " <i>NULL</i>" : "");
 			echo ($field["auto_increment"] ? " <i>" . lang('Auto Increment') . "</i>" : "");
-			echo (isset($field["default"]) ? " <span title='" . lang('Default value') . "'>[<b>" . h($field["default"]) . "</b>]</span>" : "");
+			$default = h($field["default"]);
+			echo (isset($field["default"]) ? " <span title='" . lang('Default value') . "'>[<b>" . ($field["generated"] ? "<code class='jush-" . JUSH . "'>$default</code>" : $default) . "</b>]</span>" : "");
 			echo (support("comment") ? "<td>" . h($field["comment"]) : "");
 			echo "\n";
 		}
@@ -375,7 +383,7 @@ class Adminer {
 	*/
 	function tableIndexesPrint($indexes) {
 		echo "<table>\n";
-		echo "<thead><tr><th>" . lang('Type') . "</th><td>" . lang('Column (length)') . "</td></tr></thead>\n";
+		echo "<thead><tr><th>" . lang('Type') . "</th><td>" . lang('Column') . " (" . lang('length') . ")</td></tr></thead>\n";
 
 		foreach ($indexes as $name => $index) {
 			ksort($index["columns"]); // enforce correct columns order
@@ -587,7 +595,7 @@ class Adminer {
 	/** Process columns box in select
 	* @param array selectable columns
 	* @param array
-	* @return array (array(select_expressions), array(group_expressions))
+	* @return array [[select_expressions], [group_expressions]]
 	*/
 	function selectColumnsProcess($columns, $indexes) {
 		global $functions, $grouping;
@@ -800,7 +808,7 @@ class Adminer {
 		if ($field["type"] == "enum") {
 			return (isset($_GET["select"]) ? "<label><input type='radio'$attrs value='-1' checked><i>" . lang('original') . "</i></label> " : "")
 				. ($field["null"] ? "<label><input type='radio'$attrs value=''" . ($value !== null || isset($_GET["select"]) ? "" : " checked") . "><i>NULL</i></label> " : "")
-				. enum_input("radio", $attrs, $field, $value, 0) // 0 - empty
+				. enum_input("radio", $attrs, $field, $value, $value === 0 ? 0 : null) // 0 - empty value
 			;
 		}
 		return "";
@@ -860,7 +868,7 @@ class Adminer {
 	* @return array empty to disable export
 	*/
 	function dumpFormat() {
-		return array('sql' => 'SQL', 'csv' => 'CSV,', 'csv;' => 'CSV;', 'tsv' => 'TSV');
+		return (support("dump") ? array('sql' => 'SQL') : array()) + array('csv' => 'CSV,', 'csv;' => 'CSV;', 'tsv' => 'TSV');
 	}
 
 	/** Export database structure
@@ -913,13 +921,24 @@ class Adminer {
 	*/
 	function dumpData($table, $style, $query) {
 		global $connection, $jush;
-		$max_packet = ($jush == "sqlite" ? 0 : 1048576); // default, minimum is 1024
 		if ($style) {
+			$max_packet = ($jush == "sqlite" ? 0 : 1048576); // default, minimum is 1024
+			$fields = [];
+			$identity_insert = false;
 			if ($_POST["format"] == "sql") {
 				if ($style == "TRUNCATE+INSERT") {
 					echo truncate_sql($table) . ";\n";
 				}
 				$fields = fields($table);
+				if ($jush == "mssql") {
+					foreach ($fields as $field) {
+						if ($field["auto_increment"]) {
+							echo "SET IDENTITY_INSERT " . table($table) . " ON;\n";
+							$identity_insert = true;
+							break;
+						}
+					}
+				}
 			}
 			$result = $connection->query($query, 1); // 1 - MYSQLI_USE_RESULT //! enum and set as numbers
 			if ($result) {
@@ -981,6 +1000,9 @@ class Adminer {
 				}
 			} elseif ($_POST["format"] == "sql") {
 				echo "-- " . str_replace("\n", " ", $connection->error) . "\n";
+			}
+			if ($identity_insert) {
+				echo "SET IDENTITY_INSERT " . table($table) . " OFF;\n";
 			}
 		}
 	}
@@ -1046,7 +1068,7 @@ class Adminer {
 	<?php if ($missing != "auth"): ?>
 		<span class="version">
 			<?php echo $VERSION; ?>
-			<a href="https://github.com/adminerneo/adminerneo/releases"<?php echo target_blank(); ?> id="version">
+			<a href="https://github.com/adminneo-org/adminneo/releases"<?php echo target_blank(); ?> id="version">
 				<?php echo (version_compare($VERSION, $_COOKIE["adminer_version"]) < 0 ? h($_COOKIE["adminer_version"]) : ""); ?>
 			</a>
 		</span>
@@ -1123,9 +1145,7 @@ bodyLoad('<?php echo (is_object($connection) ? preg_replace('~^(\d\.?\d).*~s', '
 					$actions[] = "<a href='" . h(ME) . "sql='" . bold(isset($_GET["sql"]) && !isset($_GET["import"])) . ">" . lang('SQL command') . "</a>";
 					$actions[] = "<a href='" . h(ME) . "import='" . bold(isset($_GET["import"])) . ">" . lang('Import') . "</a>";
 				}
-				if (support("dump")) {
-					$actions[] = "<a href='" . h(ME) . "dump=" . urlencode(isset($_GET["table"]) ? $_GET["table"] : $_GET["select"]) . "' id='dump'" . bold(isset($_GET["dump"])) . ">" . lang('Export') . "</a>";
-				}
+				$actions[] = "<a href='" . h(ME) . "dump=" . urlencode(isset($_GET["table"]) ? $_GET["table"] : $_GET["select"]) . "' id='dump'" . bold(isset($_GET["dump"])) . ">" . lang('Export') . "</a>";
 			}
 			if ($_GET["ns"] !== "" && !$missing && DB != "") {
 				$actions[] = '<a href="' . h(ME) . 'create="' . bold($_GET["create"] === "") . ">" . lang('Create table') . "</a>\n";
@@ -1196,7 +1216,7 @@ bodyLoad('<?php echo (is_object($connection) ? preg_replace('~^(\d\.?\d).*~s', '
 		global $adminer;
 
 		echo "<div class='tables-filter jsonly'>"
-			. "<input id='tables-filter' autocomplete='off' placeholder='" . lang('Table') . "'>"
+			. "<input id='tables-filter' type='search' autocomplete='off' placeholder='" . lang('Table') . "'>"
 			. script("initTablesFilter(" . json_encode($adminer->database()) . ");")
 			. "</div>\n";
 	}

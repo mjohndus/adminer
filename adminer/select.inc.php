@@ -30,6 +30,8 @@ foreach ($fields as $key => $field) {
 }
 
 list($select, $group) = $adminer->selectColumnsProcess($columns, $indexes);
+$select = array_unique($select);
+$group = array_unique($group);
 $is_group = count($group) < count($select);
 $where = $adminer->selectSearchProcess($fields, $indexes);
 $order = $adminer->selectOrderProcess($fields, $indexes);
@@ -105,7 +107,7 @@ if ($_POST && !$error) {
 			$affected = 0;
 			$set = array();
 			if (!$_POST["delete"]) {
-				foreach ($columns as $name => $val) { //! should check also for edit or insert privileges
+				foreach ($_POST["fields"] as $name => $val) {
 					$val = process_input($fields[$name]);
 					if ($val !== null && ($_POST["clone"] || $val !== false)) {
 						$set[idf_escape($name)] = ($val !== false ? $val : idf_escape($name));
@@ -152,7 +154,8 @@ if ($_POST && !$error) {
 			}
 			queries_redirect(remove_from_uri($_POST["all"] && $_POST["delete"] ? "page" : ""), $message, $result);
 			if (!$_POST["delete"]) {
-				edit_form($TABLE, $fields, (array) $_POST["fields"], !$_POST["clone"]);
+				$post_fields = (array) $_POST["fields"];
+				edit_form($TABLE, array_intersect_key($fields, $post_fields), $post_fields, !$_POST["clone"]);
 				page_footer();
 				exit;
 			}
@@ -206,14 +209,14 @@ if ($_POST && !$error) {
 				} else {
 					$set = array();
 					foreach ($matches2[1] as $i => $col) {
-						$set[idf_escape($cols[$i])] = ($col == "" && $fields[$cols[$i]]["null"] ? "NULL" : q(str_replace('""', '"', preg_replace('~^"|"$~', '', $col))));
+						$set[idf_escape($cols[$i])] = ($col == "" && $fields[$cols[$i]]["null"] ? "NULL" : q(preg_match('~^".*"$~s', $col) ? str_replace('""', '"', substr($col, 1, -1)) : $col));
 					}
 					$rows[] = $set;
 				}
 			}
 			$result = (!$rows || $driver->insertUpdate($TABLE, $rows, $primary));
 			if ($result) {
-				$result = $driver->commit();
+				$driver->commit();
 			}
 			queries_redirect(remove_from_uri("page"), lang('%d row(s) have been imported.', $affected), $result);
 			$driver->rollback(); // after queries_redirect() to not overwrite error
@@ -335,7 +338,7 @@ if (!$columns && support("table")) {
 				if (!isset($unselected[$key])) {
 					$val = $_GET["columns"][key($select)];
 					$field = $fields[$select ? ($val ? $val["col"] : current($select)) : $key];
-					$name = ($field ? $adminer->fieldName($field, $rank) : ($val["fun"] ? "*" : $key));
+					$name = ($field ? $adminer->fieldName($field, $rank) : ($val["fun"] ? "*" : h($key)));
 					if ($name != "") {
 						$rank++;
 						$names[$key] = $name;
@@ -453,7 +456,7 @@ if (!$columns && support("table")) {
 						$val = select_value($val, $link, $field, $text_length);
 						$id = h("val[$unique_idf][" . bracket_escape($key) . "]");
 						$value = $_POST["val"][$unique_idf][bracket_escape($key)];
-						$editable = !is_array($row[$key]) && is_utf8($val) && $rows[$n][$key] == $row[$key] && !$functions[$key];
+						$editable = !is_array($row[$key]) && is_utf8($val) && $rows[$n][$key] == $row[$key] && !$functions[$key] && !$field["generated"];
 						$text = preg_match('~text|lob~', $field["type"]);
 						echo "<td id='$id'";
 						if (($_GET["modify"] && $editable) || $value !== null) {
@@ -463,7 +466,7 @@ if (!$columns && support("table")) {
 							$long = strpos($val, "<i>…</i>");
 							echo " data-text='" . ($long ? 2 : ($text ? 1 : 0)) . "'"
 								. ($editable ? "" : " data-warning='" . h(lang('Use edit link to modify this value.')) . "'")
-								. ">$val</td>"
+								. ">$val"
 							;
 						}
 					}
@@ -587,7 +590,7 @@ if (!$columns && support("table")) {
 				echo "<div>";
 				echo "<a href='#import'>" . lang('Import') . "</a>";
 				echo script("qsl('a').onclick = partial(toggle, 'import');", "");
-				echo "<span id='import' class='hidden'>: ";
+				echo "<span id='import'" . ($_POST["import"] ? "" : " class='hidden'") . ">: ";
 				echo "<input type='file' name='csv_file'> ";
 				echo html_select("separator", array("csv" => "CSV,", "csv;" => "CSV;", "tsv" => "TSV"), $adminer_import["format"]);
 				echo " <input type='submit' name='import' value='" . lang('Import') . "'>";

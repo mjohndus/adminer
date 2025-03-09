@@ -371,9 +371,6 @@ if (isset($_GET["simpledb"])) {
 	function information_schema() {
 	}
 
-	function is_view($table_status) {
-	}
-
 	function indexes($table, $connection2 = null) {
 		return array(
 			array("type" => "PRIMARY", "columns" => array("itemName()")),
@@ -452,7 +449,6 @@ if (isset($_GET["simpledb"])) {
 		}
 		$query = str_replace('%7E', '~', substr($query, 1));
 		$query .= "&Signature=" . urlencode(base64_encode(hash_hmac('sha1', "POST\n" . preg_replace('~^https?://~', '', $host) . "\n/\n$query", $secret, true)));
-		@ini_set('track_errors', 1); // @ - may be disabled
 
 		$file = @file_get_contents($connection->_url, false, stream_context_create(array('http' => array(
 			'method' => 'POST', // may not fit in URL with GET
@@ -466,6 +462,7 @@ if (isset($_GET["simpledb"])) {
 			return false;
 		}
 		libxml_use_internal_errors(true);
+		libxml_disable_entity_loader();
 		$xml = simplexml_load_string($file);
 		if (!$xml) {
 			$error = libxml_get_last_error();

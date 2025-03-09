@@ -172,7 +172,12 @@ if (isset($_GET["sqlite"]) || isset($_GET["sqlite2"])) {
 			var $extension = "PDO_SQLite";
 
 			function __construct($filename) {
+				parent::__construct();
 				$this->dsn(DRIVER . ":$filename", "", "");
+			}
+
+			function select_db($db) {
+				return false;
 			}
 		}
 
@@ -218,13 +223,18 @@ if (isset($_GET["sqlite"]) || isset($_GET["sqlite2"])) {
 			return queries("REPLACE INTO " . table($table) . " (" . implode(", ", array_keys(reset($rows))) . ") VALUES\n" . implode(",\n", $values));
 		}
 
-		function tableHelp($name) {
+		function tableHelp($name, $is_view = false) {
 			if ($name == "sqlite_sequence") {
 				return "fileformat2.html#seqtab";
 			}
 			if ($name == "sqlite_master") {
 				return "fileformat2.html#$name";
 			}
+		}
+
+		function checkConstraints($table) {
+			preg_match_all('~ CHECK *(\( *(((?>[^()]*[^() ])|(?1))*) *\))~', $this->_conn->result("SELECT sql FROM sqlite_master WHERE type = 'table' AND name = " . q($table)), $matches); //! could be inside a comment
+			return array_combine($matches[2], $matches[2]);
 		}
 
 	}
@@ -319,7 +329,7 @@ if (isset($_GET["sqlite"]) || isset($_GET["sqlite2"])) {
 				"field" => $name,
 				"type" => (preg_match('~int~i', $type) ? "integer" : (preg_match('~char|clob|text~i', $type) ? "text" : (preg_match('~blob~i', $type) ? "blob" : (preg_match('~real|floa|doub~i', $type) ? "real" : "numeric")))),
 				"full_type" => $type,
-				"default" => (preg_match("~'(.*)'~", $default, $match) ? str_replace("''", "'", $match[1]) : ($default == "NULL" ? null : $default)),
+				"default" => (preg_match("~^'(.*)'$~", $default, $match) ? str_replace("''", "'", $match[1]) : ($default == "NULL" ? null : $default)),
 				"null" => !$row["notnull"],
 				"privileges" => array("select" => 1, "insert" => 1, "update" => 1, "where" => 1, "order" => 1),
 				"primary" => $row["pk"],
@@ -407,7 +417,7 @@ if (isset($_GET["sqlite"]) || isset($_GET["sqlite2"])) {
 
 	function view($name) {
 		global $connection;
-		return array("select" => preg_replace('~^(?:[^`"[]+|`[^`]*`|"[^"]*")* AS\s+~iU', '', $connection->result("SELECT sql FROM sqlite_master WHERE name = " . q($name)))); //! identifiers may be inside []
+		return array("select" => preg_replace('~^(?:[^`"[]+|`[^`]*`|"[^"]*")* AS\s+~iU', '', $connection->result("SELECT sql FROM sqlite_master WHERE type = 'view' AND name = " . q($name)))); //! identifiers may be inside []
 	}
 
 	function collations() {
@@ -478,7 +488,7 @@ if (isset($_GET["sqlite"]) || isset($_GET["sqlite2"])) {
 	}
 
 	function auto_increment() {
-		return " PRIMARY KEY" . (DRIVER == "sqlite" ? " AUTOINCREMENT" : "");
+		return " PRIMARY KEY AUTOINCREMENT";
 	}
 
 	function alter_table($table, $name, $fields, $foreign, $comment, $engine, $collation, $auto_increment, $partitioning) {
@@ -533,9 +543,20 @@ if (isset($_GET["sqlite"]) || isset($_GET["sqlite2"])) {
 		return true;
 	}
 
-	function recreate_table($table, $name, $fields, $originals, $foreign, $auto_increment, $indexes = []) {
-		global $connection;
-
+	/** Recreate table
+	* @param string original name
+	* @param string new name
+	* @param array [process_field()], empty to preserve
+	* @param array [$original => idf_escape($new_column)], empty to preserve
+	* @param string [format_foreign_key()], empty to preserve
+	* @param int set auto_increment to this value, 0 to preserve
+	* @param array [[$type, $name, $columns]], empty to preserve
+	* @param string CHECK constraint to drop
+	* @param string CHECK constraint to add
+	* @return bool
+	*/
+	function recreate_table($table, $name, $fields, $originals, $foreign, $auto_increment = 0, $indexes = [], $drop_check = "", $add_check = "") {
+		global $connection, $driver;
 		if ($table != "") {
 			if (!$fields) {
 				foreach (fields($table) as $key => $field) {
@@ -611,6 +632,14 @@ if (isset($_GET["sqlite"]) || isset($_GET["sqlite2"])) {
 		}
 
 		$fields = array_merge($fields, array_filter($foreign));
+		foreach ($driver->checkConstraints($table) as $check) {
+			if ($check != $drop_check) {
+				$fields[] = "  CHECK ($check)";
+			}
+		}
+		if ($add_check) {
+			$fields[] = "  CHECK ($add_check)";
+		}
 		$temp_name = ($table == $name ? "adminer_$name" : $name);
 		if (!queries("CREATE TABLE " . table($temp_name) . " (\n" . implode(",\n", $fields) . "\n)")) {
 			// implicit ROLLBACK to not overwrite $connection->error
@@ -755,18 +784,6 @@ if (isset($_GET["sqlite"]) || isset($_GET["sqlite2"])) {
 		return array();
 	}
 
-	function schemas() {
-		return array();
-	}
-
-	function get_schema() {
-		return "";
-	}
-
-	function set_schema($scheme) {
-		return true;
-	}
-
 	function create_sql($table, $auto_increment, $style) {
 		global $connection;
 
@@ -795,10 +812,14 @@ if (isset($_GET["sqlite"]) || isset($_GET["sqlite2"])) {
 	}
 
 	function show_variables() {
-		global $connection;
 		$return = array();
-		foreach (array("auto_vacuum", "cache_size", "count_changes", "default_cache_size", "empty_result_callbacks", "encoding", "foreign_keys", "full_column_names", "fullfsync", "journal_mode", "journal_size_limit", "legacy_file_format", "locking_mode", "page_size", "max_page_count", "read_uncommitted", "recursive_triggers", "reverse_unordered_selects", "secure_delete", "short_column_names", "synchronous", "temp_store", "temp_store_directory", "schema_version", "integrity_check", "quick_check") as $key) {
-			$return[$key] = $connection->result("PRAGMA $key");
+		foreach (get_rows("PRAGMA pragma_list") as $row) {
+			$name = $row["name"];
+			if ($name != "pragma_list" && $name != "compile_options") {
+				foreach (get_rows("PRAGMA $name") as $row) {
+					$return[$name] .= implode(", ", $row) . "\n";
+				}
+			}
 		}
 		return $return;
 	}
@@ -808,10 +829,6 @@ if (isset($_GET["sqlite"]) || isset($_GET["sqlite2"])) {
 	 */
 	function is_strict_mode() {
 		return false;
-	}
-
-	function is_c_style_escapes() {
-		return true;
 	}
 
 	function show_status() {
@@ -831,7 +848,7 @@ if (isset($_GET["sqlite"]) || isset($_GET["sqlite2"])) {
 	}
 
 	function support($feature) {
-		return preg_match('~^(columns|database|drop_col|dump|indexes|descidx|move_col|sql|status|table|trigger|variables|view|view_trigger)$~', $feature);
+		return preg_match('~^(check|columns|database|drop_col|dump|indexes|descidx|move_col|sql|status|table|trigger|variables|view|view_trigger)$~', $feature);
 	}
 
 	function driver_config() {

@@ -1,5 +1,5 @@
 /** @author Ondrej Valka, http://valka.info */
-body { color: #000; background: #fff; font: 90%/1.25 Verdana, Arial, Helvetica, sans-serif; margin: 0; width: -moz-fit-content; width: fit-content; }
+body { color: #000; background: #fff; font: 90%/1.25 Verdana, Arial, Helvetica, sans-serif; margin: 0; min-width: fit-content; }
 a { color: blue; text-decoration: none; }
 a:link:hover { color: red; text-decoration: underline; }
 a.text:hover { text-decoration: none; }
@@ -25,6 +25,7 @@ pre code { display: block; font-size: 100%; }
 pre, textarea { font: 110%/1.25 monospace; }
 pre.jush { background: #fff; }
 pre.comment { white-space: pre-wrap; }
+td pre { margin: 0; }
 form + pre.comment { margin-top: 2em; }
 input, textarea, select { box-sizing: border-box; }
 input[type="image"] { vertical-align: middle; margin-top: -3px; }
@@ -41,7 +42,7 @@ input::placeholder { color: #000; opacity: 0.4; }
 .js .hidden, .nojs .jsonly { display: none; }
 .js .column { position: absolute; background: #ddf; padding: .27em 1ex .3em 0; margin-top: -.27em; }
 .nowrap { white-space: nowrap; }
-p.nowrap { white-space: pre; }
+p.nowrap, table.nowrap td, table.nowrap th { white-space: pre; }
 .wrap td { white-space: normal; }
 .error { color: red; background: #fee; }
 .error b { background: #fff; font-weight: normal; }
@@ -63,9 +64,10 @@ p.nowrap { white-space: pre; }
 .view { font-style: italic; }
 .active { font-weight: bold; }
 .sqlarea { width: 98%; }
+.explain td { white-space: pre; }
 .icon { width: 18px; height: 18px; background-color: navy; }
 .icon:hover { background-color: red; }
-.size { width: 6ex; }
+.size { width: 7ex; }
 .help { cursor: help; }
 .footer { position: sticky; bottom: 0; margin-right: -20px; border-top: 20px solid rgba(255, 255, 255, .7); border-image: linear-gradient(rgba(255, 255, 255, .2), #fff) 100% 0; }
 .footer > div { background: #fff; padding: 0 0 .5em; }
@@ -115,6 +117,7 @@ table.dragging { background: #eee; }
 
 @media all and (max-width: 880px) {
 	.pages { left: auto; }
+	.logout { position: static; padding: 0 1em; }
 	#menu { position: static; width: auto; }
 	#content { margin-left: 10px; }
 	#lang { position: static; border-top: 1px solid #999; }
@@ -128,5 +131,5 @@ table.dragging { background: #eee; }
 	#lang, #menu { display: none; }
 	#content { margin-left: 1em; }
 	#breadcrumb { left: 1em; }
-	.nowrap td, .nowrap th, td.nowrap { white-space: normal; }
+	p.nowrap, table.nowrap td, table.nowrap th { white-space: normal; }
 }

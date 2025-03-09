@@ -5,7 +5,7 @@
 * @author Jakub Vrana
 */
 
-$drivers["mssql"] = "MS SQL (beta)";
+$drivers["mssql"] = "MS SQL";
 
 if (isset($_GET["mssql"])) {
 	define("DRIVER", "mssql");
@@ -61,7 +61,7 @@ if (isset($_GET["mssql"])) {
 			}
 
 			function select_db($database) {
-				return $this->query("USE " . idf_escape($database));
+				return $this->query(use_sql($database));
 			}
 
 			function query($query, $unbuffered = false) {
@@ -143,7 +143,7 @@ if (isset($_GET["mssql"])) {
 					$this->_fields = sqlsrv_field_metadata($this->_result);
 				}
 				$field = $this->_fields[$this->_offset++];
-				$return = new stdClass;
+				$return = new \stdClass;
 				$return->name = $field["Name"];
 				$return->orgname = $field["Name"];
 				$return->type = ($field["Type"] == 1 ? 254 : 0);
@@ -259,6 +259,21 @@ if (isset($_GET["mssql"])) {
 			}
 		}
 
+	} elseif (extension_loaded("pdo_sqlsrv")) {
+		class Min_DB extends Min_PDO {
+			var $extension = "PDO_SQLSRV";
+
+			function connect($server, $username, $password) {
+				$this->dsn("sqlsrv:Server=" . str_replace(":", ",", $server), $username, $password);
+				return true;
+			}
+
+			function select_db($database) {
+				// database selection is separated from the connection so dbname in DSN can't be used
+				return $this->query(use_sql($database));
+			}
+		}
+
 	} elseif (extension_loaded("pdo_dblib")) {
 		class Min_DB extends Min_PDO {
 			var $extension = "PDO_DBLIB";
@@ -269,8 +284,7 @@ if (isset($_GET["mssql"])) {
 			}
 
 			function select_db($database) {
-				// database selection is separated from the connection so dbname in DSN can't be used
-				return $this->query("USE " . idf_escape($database));
+				return $this->query(use_sql($database));
 			}
 		}
 	}
@@ -279,28 +293,56 @@ if (isset($_GET["mssql"])) {
 	class Min_Driver extends Min_SQL {
 
 		function insertUpdate($table, $rows, $primary) {
-			foreach ($rows as $set) {
-				$update = array();
-				$where = array();
-				foreach ($set as $key => $val) {
-					$update[] = "$key = $val";
-					if (isset($primary[idf_unescape($key)])) {
-						$where[] = "$key = $val";
-					}
+			$update = array();
+			$where = array();
+			$set = reset($rows);
+			$columns = "c" . implode(", c", range(1, count($set)));
+			$c = 0;
+			$insert = array();
+			foreach ($set as $key => $val) {
+				$c++;
+				$name = idf_unescape($key);
+				if (!$fields[$name]["auto_increment"]) {
+					$insert[$key] = "c$c";
 				}
-				//! can use only one query for all rows
-				if (!queries("MERGE " . table($table) . " USING (VALUES(" . implode(", ", $set) . ")) AS source (c" . implode(", c", range(1, count($set))) . ") ON " . implode(" AND ", $where) //! source, c1 - possible conflict
-					. " WHEN MATCHED THEN UPDATE SET " . implode(", ", $update)
-					. " WHEN NOT MATCHED THEN INSERT (" . implode(", ", array_keys($set)) . ") VALUES (" . implode(", ", $set) . ");" // ; is mandatory
-				)) {
-					return false;
+				if (isset($primary[$name])) {
+					$where[] = "$key = c$c";
+				} else {
+					$update[] = "$key = c$c";
 				}
 			}
-			return true;
+			$values = array();
+			foreach ($rows as $set) {
+				$values[] = "(" . implode(", ", $set) . ")";
+			}
+			if ($where) {
+				$identity = queries("SET IDENTITY_INSERT " . table($table) . " ON");
+				$return = queries("MERGE " . table($table) . " USING (VALUES\n\t" . implode(",\n\t", $values) . "\n) AS source ($columns) ON " . implode(" AND ", $where) //! source, c1 - possible conflict
+					. ($update ? "\nWHEN MATCHED THEN UPDATE SET " . implode(", ", $update) : "")
+					. "\nWHEN NOT MATCHED THEN INSERT (" . implode(", ", array_keys($identity ? $set : $insert)) . ") VALUES (" . ($identity ? $columns : implode(", ", $insert)) . ");" // ; is mandatory
+				);
+				if ($identity) {
+					queries("SET IDENTITY_INSERT " . table($table) . " OFF");
+				}
+			} else {
+				$return = queries("INSERT INTO " . table($table) . " (" . implode(", ", array_keys($set)) . ") VALUES\n" . implode(",\n", $values));
+			}
+			return $return;
 		}
 
 		function begin() {
 			return queries("BEGIN TRANSACTION");
+		}
+
+		function tableHelp($name, $is_view = false) {
+			$links = array(
+				"sys" => "catalog-views/sys-",
+				"INFORMATION_SCHEMA" => "information-schema-views/",
+			);
+			$link = $links[get_schema()];
+			if ($link) {
+				return "relational-databases/system-$link" . preg_replace('~_~', '-', strtolower($name)) . "-transact-sql";
+			}
 		}
 
 	}
@@ -392,26 +434,33 @@ if (isset($_GET["mssql"])) {
 	function fields($table) {
 		$comments = get_key_vals("SELECT objname, cast(value as varchar(max)) FROM fn_listextendedproperty('MS_DESCRIPTION', 'schema', " . q(get_schema()) . ", 'table', " . q($table) . ", 'column', NULL)");
 		$return = array();
-		foreach (get_rows("SELECT c.max_length, c.precision, c.scale, c.name, c.is_nullable, c.is_identity, c.collation_name, t.name type, CAST(d.definition as text) [default]
+		foreach (
+			get_rows("SELECT c.max_length, c.precision, c.scale, c.name, c.is_nullable, c.is_identity, c.collation_name, t.name type, CAST(d.definition as text) [default], d.name default_constraint, i.is_primary_key
 FROM sys.all_columns c
 JOIN sys.all_objects o ON c.object_id = o.object_id
 JOIN sys.types t ON c.user_type_id = t.user_type_id
-LEFT JOIN sys.default_constraints d ON c.default_object_id = d.parent_column_id
-WHERE o.schema_id = SCHEMA_ID(" . q(get_schema()) . ") AND o.type IN ('S', 'U', 'V') AND o.name = " . q($table)
-		) as $row) {
+LEFT JOIN sys.default_constraints d ON c.default_object_id = d.object_id
+LEFT JOIN sys.index_columns ic ON c.object_id = ic.object_id AND c.column_id = ic.column_id
+LEFT JOIN sys.indexes i ON ic.object_id = i.object_id AND ic.index_id = i.index_id
+WHERE o.schema_id = SCHEMA_ID(" . q(get_schema()) . ") AND o.type IN ('S', 'U', 'V') AND o.name = " . q($table)) as $row
+		) {
 			$type = $row["type"];
-			$length = (preg_match("~char|binary~", $type) ? $row["max_length"] : ($type == "decimal" ? "$row[precision],$row[scale]" : ""));
+			$length = (preg_match("~char|binary~", $type)
+				? $row["max_length"] / ($type[0] == 'n' ? 2 : 1)
+				: ($type == "decimal" ? "$row[precision],$row[scale]" : "")
+			);
 			$return[$row["name"]] = array(
 				"field" => $row["name"],
 				"full_type" => $type . ($length ? "($length)" : ""),
 				"type" => $type,
 				"length" => $length,
-				"default" => $row["default"],
+				"default" => (preg_match("~^\('(.*)'\)$~", $row["default"], $match) ? str_replace("''", "'", $match[1]) : $row["default"]),
+				"default_constraint" => $row["default_constraint"],
 				"null" => $row["is_nullable"],
 				"auto_increment" => $row["is_identity"],
 				"collation" => $row["collation_name"],
 				"privileges" => array("insert" => 1, "select" => 1, "update" => 1, "where" => 1, "order" => 1),
-				"primary" => $row["is_identity"], //! or indexes.is_primary_key
+				"primary" => $row["is_primary_key"],
 				"comment" => $comments[$row["name"]],
 			);
 		}
@@ -450,7 +499,7 @@ WHERE OBJECT_NAME(i.object_id) = " . q($table)
 	}
 
 	function information_schema($db) {
-		return false;
+		return get_schema() == "INFORMATION_SCHEMA";
 	}
 
 	function error() {
@@ -481,6 +530,7 @@ WHERE OBJECT_NAME(i.object_id) = " . q($table)
 	function alter_table($table, $name, $fields, $foreign, $comment, $engine, $collation, $auto_increment, $partitioning) {
 		$alter = array();
 		$comments = array();
+		$orig_fields = fields($table);
 		foreach ($fields as $field) {
 			$column = idf_escape($field[0]);
 			$val = $field[1];
@@ -493,11 +543,22 @@ WHERE OBJECT_NAME(i.object_id) = " . q($table)
 				if ($field[0] == "") {
 					$alter["ADD"][] = "\n  " . implode("", $val) . ($table == "" ? substr($foreign[$val[0]], 16 + strlen($val[0])) : ""); // 16 - strlen("  FOREIGN KEY ()")
 				} else {
+					$default = $val[3];
+					unset($val[3]); // default values are set separately
 					unset($val[6]); //! identity can't be removed
 					if ($column != $val[0]) {
 						queries("EXEC sp_rename " . q(table($table) . ".$column") . ", " . q(idf_unescape($val[0])) . ", 'COLUMN'");
 					}
 					$alter["ALTER COLUMN " . implode("", $val)][] = "";
+					$orig_field = $orig_fields[$field[0]];
+					if (default_value($orig_field) != $default) {
+						if ($orig_field["default"] !== null) {
+							$alter["DROP"][] = " " . idf_escape($orig_field["default_constraint"]);
+						}
+						if ($default) {
+							$alter["ADD"][] = "\n $default FOR $column";
+						}
+					}
 				}
 			}
 		}
@@ -511,7 +572,7 @@ WHERE OBJECT_NAME(i.object_id) = " . q($table)
 			$alter[""] = $foreign;
 		}
 		foreach ($alter as $key => $val) {
-			if (!queries("ALTER TABLE " . idf_escape($name) . " $key" . implode(",", $val))) {
+			if (!queries("ALTER TABLE " . table($name) . " $key" . implode(",", $val))) {
 				return false;
 			}
 		}
@@ -562,10 +623,14 @@ WHERE OBJECT_NAME(i.object_id) = " . q($table)
 
 	function foreign_keys($table) {
 		$return = array();
-		foreach (get_rows("EXEC sp_fkeys @fktable_name = " . q($table)) as $row) {
+		$on_actions = array("CASCADE", "NO ACTION", "SET NULL", "SET DEFAULT");
+		foreach (get_rows("EXEC sp_fkeys @fktable_name = " . q($table) . ", @fktable_owner = " . q(get_schema())) as $row) {
 			$foreign_key = &$return[$row["FK_NAME"]];
 			$foreign_key["db"] = $row["PKTABLE_QUALIFIER"];
+			$foreign_key["ns"] = $row["PKTABLE_OWNER"];
 			$foreign_key["table"] = $row["PKTABLE_NAME"];
+			$foreign_key["on_update"] = $on_actions[$row["UPDATE_RULE"]];
+			$foreign_key["on_delete"] = $on_actions[$row["DELETE_RULE"]];
 			$foreign_key["source"][] = $row["FKCOLUMN_NAME"];
 			$foreign_key["target"][] = $row["PKCOLUMN_NAME"];
 		}
@@ -642,15 +707,63 @@ WHERE sys1.xtype = 'TR' AND sys2.name = " . q($table)
 	}
 
 	function set_schema($schema) {
+		$_GET["ns"] = $schema;
 		return true; // ALTER USER is permanent
+	}
+
+	function create_sql($table, $auto_increment, $style) {
+		global $driver;
+		if (is_view(table_status($table))) {
+			$view = view($table);
+			return "CREATE VIEW " . table($table) . " AS $view[select]";
+		}
+		$fields = array();
+		$primary = false;
+		foreach (fields($table) as $name => $field) {
+			$val = process_field($field, $field);
+			if ($val[6]) {
+				$primary = true;
+			}
+			$fields[] = implode("", $val);
+		}
+		foreach (indexes($table) as $name => $index) {
+			if (!$primary || $index["type"] != "PRIMARY") {
+				$columns = array();
+				foreach ($index["columns"] as $key => $val) {
+					$columns[] = idf_escape($val) . ($index["descs"][$key] ? " DESC" : "");
+				}
+				$name = idf_escape($name);
+				$fields[] = ($index["type"] == "INDEX" ? "INDEX $name" : "CONSTRAINT $name " . ($index["type"] == "UNIQUE" ? "UNIQUE" : "PRIMARY KEY")) . " (" . implode(", ", $columns) . ")";
+			}
+		}
+		foreach ($driver->checkConstraints($table) as $name => $check) {
+			$fields[] = "CONSTRAINT " . idf_escape($name) . " CHECK ($check)";
+		}
+		return "CREATE TABLE " . table($table) . " (\n\t" . implode(",\n\t", $fields) . "\n)";
+	}
+
+	function foreign_keys_sql($table) {
+		$fields = array();
+		foreach (foreign_keys($table) as $foreign) {
+			$fields[] = ltrim(format_foreign_key($foreign));
+		}
+		return ($fields ? "ALTER TABLE " . table($table) . " ADD\n\t" . implode(",\n\t", $fields) . ";\n\n" : "");
+	}
+
+	function truncate_sql($table) {
+		return "TRUNCATE TABLE " . table($table);
 	}
 
 	function use_sql($database) {
 		return "USE " . idf_escape($database);
 	}
 
-	function show_variables() {
-		return array();
+	function trigger_sql($table) {
+		$return = "";
+		foreach (triggers($table) as $name => $trigger) {
+			$return .= create_trigger(" ON " . table($table), trigger($name)) . ";";
+		}
+		return $return;
 	}
 
 	/**
@@ -658,14 +771,6 @@ WHERE sys1.xtype = 'TR' AND sys2.name = " . q($table)
 	 */
 	function is_strict_mode() {
 		return false;
-	}
-
-	function is_c_style_escapes() {
-		return true;
-	}
-
-	function show_status() {
-		return array();
 	}
 
 	function convert_field($field) {
@@ -676,10 +781,12 @@ WHERE sys1.xtype = 'TR' AND sys2.name = " . q($table)
 	}
 
 	function support($feature) {
-		return preg_match('~^(comment|columns|database|drop_col|indexes|descidx|scheme|sql|table|trigger|view|view_trigger)$~', $feature); //! routine|
+		return preg_match('~^(check|comment|columns|database|drop_col|dump|indexes|descidx|scheme|sql|table|trigger|view|view_trigger)$~', $feature); //! routine|
 	}
 
 	function driver_config() {
+		global $on_actions;
+		$on_actions = str_replace('RESTRICT|', '', $on_actions);
 		$types = array();
 		$structured_types = array();
 		foreach (array( //! use sys.types
@@ -692,7 +799,7 @@ WHERE sys1.xtype = 'TR' AND sys2.name = " . q($table)
 			$structured_types[$key] = array_keys($val);
 		}
 		return array(
-			'possible_drivers' => array("SQLSRV", "MSSQL", "PDO_DBLIB"),
+			'possible_drivers' => array("SQLSRV", "MSSQL", "PDO_SQLSRV", "PDO_DBLIB"),
 			'jush' => "mssql",
 			'types' => $types,
 			'structured_types' => $structured_types,

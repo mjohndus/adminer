@@ -106,7 +106,7 @@ function verifyVersion(baseUrl, token) {
 	// Dummy value to prevent repeated verifications after AJAX failure.
 	cookie('adminer_version=0', 1);
 
-	ajax('https://api.github.com/repos/adminerneo/adminerneo/releases/latest', (request) => {
+	ajax('https://api.github.com/repos/adminneo-org/adminneo/releases/latest', (request) => {
 		const response = JSON.parse(request.responseText);
 
 		const version = response.tag_name.replace(/^\D*/, '');
@@ -1131,7 +1131,7 @@ function setupSubmitHighlight(parent) {
 * @param HTMLElement
 */
 function setupSubmitHighlightInput(input) {
-	if (!input.type.match(/submit|image|file/)) {
+	if (!/submit|image|file/.test(input.type)) {
 		addEvent(input, 'focus', inputFocus);
 		addEvent(input, 'blur', inputBlur);
 	}

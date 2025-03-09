@@ -16,7 +16,7 @@ $translations = array(
 	'Master password expired. <a href="https://www.adminer.org/en/extension/"%s>Implement</a> %s method to make it permanent.' => 'Главната парола вече е невалидна. <a href="https://www.adminer.org/en/extension/"%s>Изберете</a> %s метод, за да я направите постоянна.',
 	'Language' => 'Език',
 	'Invalid CSRF token. Send the form again.' => 'Невалиден шифроващ ключ. Попълнете и изпратете формуляра отново.',
-	'If you did not send this request from Adminer then close this page.' => 'Ако не сте изпратили тази заявка през Adminer, затворете тази страница.',
+	'If you did not send this request from AdminNeo then close this page.' => 'Ако не сте изпратили тази заявка през AdminNeo, затворете тази страница.',
 	'No driver' => null,
 	'Database driver not found.' => null,
 	'No extension' => 'Няма разширение',
@@ -195,7 +195,7 @@ $translations = array(
 	'Alter indexes' => 'Промяна на индекси',
 	'Add next' => 'Добавяне на следващ',
 	'Index Type' => 'Вид на индекса',
-	'Column (length)' => 'Колона (дължина)',
+	'length' => 'дължина',
 
 	'Foreign keys' => 'Препратки',
 	'Foreign key' => 'Препратка',
@@ -298,7 +298,7 @@ $translations = array(
 	'Geometry' => 'Геометрия',
 	'Relations' => 'Зависимости',
 
-	'Editor' => 'Редактор',
+	// 'Editor' => 'Редактор',
 	// date format in Editor: $1 yyyy, $2 yy, $3 mm, $4 m, $5 dd, $6 d
 	'$1-$3-$5' => '$1-$3-$5',
 	// hint for date format - use language equivalents for day, month and year shortcuts
@@ -345,7 +345,7 @@ $translations = array(
 	'DB' => null,
 	'ATTACH queries are not supported.' => null,
 	'Warnings' => null,
-	'Adminer does not support accessing a database without a password, <a href="https://www.adminer.org/en/password/"%s>more information</a>.' => null,
+	'AdminNeo does not support accessing a database without a password, <a href="https://www.adminer.org/en/password/"%s>more information</a>.' => null,
 	'The action will be performed after successful login with the same credentials.' => null,
 	'Connecting to privileged ports is not allowed.' => null,
 	'There is a space in the input password which might be the cause.' => null,
@@ -360,4 +360,11 @@ $translations = array(
 	'No' => 'Не',
 	'One Time Password' => null,
 	'Invalid OTP code.' => null,
+
+	'Check has been dropped.' => null,
+	'Check has been altered.' => null,
+	'Check has been created.' => null,
+	'Alter check' => null,
+	'Create check' => null,
+	'Checks' => null,
 );

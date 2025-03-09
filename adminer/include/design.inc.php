@@ -1,8 +1,12 @@
 <?php
+if (!ob_get_level()) {
+	ob_start(null, 4096);
+}
+
 /** Print HTML header
 * @param string used in title, breadcrumb and heading, should be HTML escaped
 * @param string
-* @param mixed array("key" => "link", "key2" => array("link", "desc")), null for nothing, false for driver only, true for driver and server
+* @param mixed ["key" => "link", "key2" => ["link", "desc"]], null for nothing, false for driver only, true for driver and server
 * @param string used after colon in title and heading, should be HTML escaped
 * @return null
 */
@@ -17,7 +21,7 @@ function page_header($title, $error = "", $breadcrumb = [], $title2 = "") {
 	$service_title = strip_tags($adminer->name());
 	$title_all = strip_tags($title . ($title2 != "" ? ": $title2" : ""));
 
-	$title_page = $title_all . (SERVER != "" ? h(" - " . SERVER) : "") . " - " . ($service_title != "" ? $service_title : "AdminerNeo");
+	$title_page = $title_all . (SERVER != "" ? h(" - " . SERVER) : "") . " - " . ($service_title != "" ? $service_title : "AdminNeo");
 
 	// Load Adminer version from file if cookie is missing.
 	$filename = get_temp_dir() . "/adminer.version";
@@ -32,6 +36,7 @@ function page_header($title, $error = "", $breadcrumb = [], $title2 = "") {
 <html lang="<?php echo $LANG; ?>" dir="<?php echo lang('ltr'); ?>">
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 <meta name="robots" content="noindex">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title><?php echo $title_page; ?></title>
 <link rel="stylesheet" type="text/css" href="../adminer/static/default.css?<?php echo filemtime("../adminer/static/default.css"); ?>">
 <?php echo script_src("../adminer/static/functions.js?" . filemtime("../adminer/static/functions.js")); ?>
@@ -146,7 +151,7 @@ function csp() {
 		[
 			// 'self' is a fallback for browsers not supporting 'strict-dynamic', 'unsafe-inline' is a fallback for browsers not supporting 'nonce-'
 			"script-src" => "'self' 'unsafe-inline' 'nonce-" . get_nonce() . "' 'strict-dynamic'",
-			"connect-src" => "'self' https://api.github.com/repos/adminerneo/adminerneo/releases/latest",
+			"connect-src" => "'self' https://api.github.com/repos/adminneo-org/adminneo/releases/latest",
 			"frame-src" => "'self'",
 			"object-src" => "'none'",
 			"base-uri" => "'none'",

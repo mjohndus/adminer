@@ -27,6 +27,12 @@ if ($tables_views && !$error && !$_POST["search"]) {
 			$result = drop_tables($_POST["tables"]);
 		}
 		$message = lang('Tables have been dropped.');
+	} elseif ($jush == "sqlite" && $_POST["check"]) {
+		foreach ((array) $_POST["tables"] as $table) {
+			foreach (get_rows("PRAGMA integrity_check(" . q($table) . ")") as $row) {
+				$message .= "<b>" . h($table) . "</b>: " . h($row["integrity_check"]) . "<br>";
+			}
+		}
 	} elseif ($jush != "sql") {
 		$result = ($jush == "sqlite"
 			? queries("VACUUM")
@@ -134,6 +140,7 @@ if ($adminer->homepage()) {
 					$tables++;
 				}
 				echo (support("comment") ? "<td id='Comment-" . h($name) . "'>" : "");
+				echo "\n";
 			}
 
 			echo "<tr><td><th>" . lang('%d in total', count($tables_list));
@@ -142,6 +149,7 @@ if ($adminer->homepage()) {
 			foreach (array("Data_length", "Index_length", "Data_free") as $key) {
 				echo "<td align='right' id='sum-$key'>";
 			}
+			echo "\n";
 
 			echo "</table>\n";
 			echo "</div>\n";
@@ -150,9 +158,10 @@ if ($adminer->homepage()) {
 				$vacuum = "<input type='submit' value='" . lang('Vacuum') . "'> " . help_script("VACUUM");
 				$optimize = "<input type='submit' name='optimize' value='" . lang('Optimize') . "'> " . help_script($jush == "sql" ? "OPTIMIZE TABLE" : "VACUUM OPTIMIZE");
 				echo "<fieldset><legend>" . lang('Selected') . " <span id='selected'></span></legend><div>"
-				. ($jush == "sqlite" ? $vacuum
+				. ($jush == "sqlite" ? $vacuum . "<input type='submit' name='check' value='" . lang('Check') . "'> " . help_script("PRAGMA integrity_check")
 				: ($jush == "pgsql" ? $vacuum . $optimize
-				: ($jush == "sql" ? "<input type='submit' value='" . lang('Analyze') . "'> " . help_script("ANALYZE TABLE") . $optimize
+				: ($jush == "sql" ? "<input type='submit' value='" . lang('Analyze') . "'> " . help_script("ANALYZE TABLE")
+					. $optimize
 					. "<input type='submit' name='check' value='" . lang('Check') . "'> " . help_script("CHECK TABLE")
 					. "<input type='submit' name='repair' value='" . lang('Repair') . "'> " . help_script("REPAIR TABLE")
 				: "")))

@@ -13,13 +13,13 @@ $translations = array(
 	'Logout successful.' => 'Xx.',
 	'Invalid server or credentials.' => 'Xx.',
 	'There is a space in the input password which might be the cause.' => 'Xx.',
-	'Adminer does not support accessing a database without a password, <a href="https://www.adminer.org/en/password/"%s>more information</a>.' => 'Xx, <a href="https://www.adminer.org/en/password/"%s>xx</a>.',
+	'AdminNeo does not support accessing a database without a password, <a href="https://www.adminer.org/en/password/"%s>more information</a>.' => 'Xx, <a href="https://www.adminer.org/en/password/"%s>xx</a>.',
 	'Database does not support password.' => 'Xx.',
 	'Too many unsuccessful logins, try again in %d minute(s).' => array('Xx %d.', 'Xx %d.'),
 	'Master password expired. <a href="https://www.adminer.org/en/extension/"%s>Implement</a> %s method to make it permanent.' => '<a href="https://www.adminer.org/en/extension/"%s>Xx</a> %s xx.',
 	'Language' => 'Xx',
 	'Invalid CSRF token. Send the form again.' => 'Xx.',
-	'If you did not send this request from Adminer then close this page.' => 'Xx.',
+	'If you did not send this request from AdminNeo then close this page.' => 'Xx.',
 	'No driver' => 'Xx',
 	'Database driver not found.' => 'Xx.',
 	'No extension' => 'Xx',
@@ -208,7 +208,7 @@ $translations = array(
 	'Alter indexes' => 'Xx',
 	'Add next' => 'Xx',
 	'Index Type' => 'Xx',
-	'Column (length)' => 'Xx',
+	'length' => 'xx',
 
 	'Foreign keys' => 'Xx',
 	'Foreign key' => 'Xx',
@@ -310,7 +310,7 @@ $translations = array(
 	'Geometry' => 'Xx',
 	'Relations' => 'Xx',
 
-	'Editor' => 'Xx',
+	// 'Editor' => 'Xx',
 	// date format in Editor: $1 yyyy, $2 yy, $3 mm, $4 m, $5 dd, $6 d
 	'$1-$3-$5' => 'xx',
 	// hint for date format - use language equivalents for day, month and year shortcuts
@@ -351,6 +351,14 @@ $translations = array(
 	'Type has been dropped.' => 'Xx.',
 	'Type has been created.' => 'Xx.',
 	'Alter type' => 'Xx',
+
+	// Table check constraints
+	'Checks' => 'Xx',
+	'Create check' => 'Xx',
+	'Alter check' => 'Xx',
+	'Check has been created.' => 'Xx.',
+	'Check has been altered.' => 'Xx.',
+	'Check has been dropped.' => 'Xx.',
 
 	// Plugins
 	'Columns' => 'Xx',

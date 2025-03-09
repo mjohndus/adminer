@@ -17,8 +17,6 @@ if (isset($_GET["elastic"])) {
 			 * @return array|false
 			 */
 			function rootQuery($path, array $content = null, $method = 'GET') {
-				@ini_set('track_errors', 1); // @ - may be disabled
-
 				$file = @file_get_contents("$this->_url/" . ltrim($path, '/'), false, stream_context_create(array('http' => array(
 					'method' => $method,
 					'content' => $content !== null ? json_encode($content) : null,
@@ -509,22 +507,6 @@ if (isset($_GET["elastic"])) {
 
 	function found_rows($table_status, $where) {
 		return null;
-	}
-
-	/** Create index
-	 * @param string
-	 * @return mixed
-	 */
-	function create_database($db) {
-		return connection()->rootQuery(urlencode($db), null, 'PUT');
-	}
-
-	/** Remove index
-	 * @param array
-	 * @return mixed
-	 */
-	function drop_databases($databases) {
-		return connection()->rootQuery(urlencode(implode(',', $databases)), null, 'DELETE');
 	}
 
 	/** Alter type

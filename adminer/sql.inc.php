@@ -87,7 +87,7 @@ if (!$error && $_POST) {
 					$offset = $pos + strlen($found);
 
 					if ($found && rtrim($found) != $delimiter) { // find matching quote or comment end
-						$c_style_escapes = is_c_style_escapes() || ($jush == "pgsql" && ($pos > 0 && strtolower($query[$pos - 1]) == "e"));
+						$c_style_escapes = $driver->hasCStyleEscapes() || ($jush == "pgsql" && ($pos > 0 && strtolower($query[$pos - 1]) == "e"));
 
 						$pattern = '(';
 						if ($found == '/*') {
@@ -195,7 +195,7 @@ if (!$error && $_POST) {
 									}
 									echo ($warnings ? "<div id='$warnings_id' class='hidden'>\n$warnings</div>\n" : "");
 									if ($explain) {
-										echo "<div id='$explain_id' class='hidden'>\n";
+										echo "<div id='$explain_id' class='hidden explain'>\n";
 										select($explain, $connection2, $orgtables);
 										echo "</div>\n";
 									}

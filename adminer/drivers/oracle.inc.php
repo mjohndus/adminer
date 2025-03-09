@@ -105,7 +105,7 @@ if (isset($_GET["oracle"])) {
 
 			function fetch_field() {
 				$column = $this->_offset++;
-				$return = new stdClass;
+				$return = new \stdClass;
 				$return->name = oci_field_name($this->_result, $column);
 				$return->orgname = $return->name;
 				$return->type = oci_field_type($this->_result, $column);
@@ -165,6 +165,11 @@ if (isset($_GET["oracle"])) {
 			}
 			return true;
 		}
+
+		function hasCStyleEscapes() {
+			return true;
+		}
+
 	}
 
 	/**
@@ -195,7 +200,12 @@ if (isset($_GET["oracle"])) {
 	}
 
 	function get_databases() {
-		return get_vals("SELECT tablespace_name FROM user_tablespaces ORDER BY 1");
+		return get_vals("SELECT DISTINCT tablespace_name FROM (
+SELECT tablespace_name FROM user_tablespaces
+UNION SELECT tablespace_name FROM all_tables WHERE tablespace_name IS NOT NULL
+)
+ORDER BY 1"
+		);
 	}
 
 	function limit($query, $where, $limit, $offset = 0, $separator = " ") {
@@ -343,7 +353,7 @@ ORDER BY ac.constraint_type, aic.column_position", $connection2) as $row) {
 	}
 
 	function information_schema($db) {
-		return false;
+		return get_schema() == "INFORMATION_SCHEMA";
 	}
 
 	function error() {
@@ -493,10 +503,6 @@ AND c_src.TABLE_NAME = " . q($table);
 		return false;
 	}
 
-	function is_c_style_escapes() {
-		return true;
-	}
-
 	function process_list() {
 		return get_rows('SELECT sess.process AS "process", sess.username AS "user", sess.schemaname AS "schema", sess.status AS "status", sess.wait_class AS "wait_class", sess.seconds_in_wait AS "seconds_in_wait", sql.sql_text AS "sql_text", sess.machine AS "machine", sess.port AS "port"
 FROM v$session sess LEFT OUTER JOIN v$sql sql
@@ -540,7 +546,7 @@ ORDER BY PROCESS
 			'types' => $types,
 			'structured_types' => $structured_types,
 			'unsigned' => array(),
-			'operators' => array("=", "<", ">", "<=", ">=", "!=", "LIKE", "LIKE %%", "IN", "IS NULL", "NOT LIKE", "NOT REGEXP", "NOT IN", "IS NOT NULL", "SQL"),
+			'operators' => array("=", "<", ">", "<=", ">=", "!=", "LIKE", "LIKE %%", "IN", "IS NULL", "NOT LIKE", "NOT IN", "IS NOT NULL", "SQL"),
 			'operator_like' => "LIKE %%",
 			'functions' => array("length", "lower", "round", "upper"),
 			'grouping' => array("avg", "count", "count distinct", "max", "min", "sum"),

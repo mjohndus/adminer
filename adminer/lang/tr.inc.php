@@ -16,7 +16,7 @@ $translations = array(
 	'Master password expired. <a href="https://www.adminer.org/en/extension/"%s>Implement</a> %s method to make it permanent.' => 'Ana şifrenin süresi doldu. Kalıcı olması için <a href="https://www.adminer.org/en/extension/"%s>%s medodunu</a> kullanın.',
 	'Language' => 'Dil',
 	'Invalid CSRF token. Send the form again.' => 'Geçersiz (CSRF) jetonu. Formu tekrar yolla.',
-	'If you did not send this request from Adminer then close this page.' => 'Bu isteği Adminer\'den göndermediyseniz bu sayfayı kapatın.',
+	'If you did not send this request from AdminNeo then close this page.' => 'Bu isteği AdminNeo\'den göndermediyseniz bu sayfayı kapatın.',
 	'No extension' => 'Uzantı yok',
 	'None of the supported PHP extensions (%s) are available.' => 'Desteklenen PHP eklentilerinden (%s) hiçbiri mevcut değil.',
 	'Connecting to privileged ports is not allowed.' => 'Ayrıcalıklı bağlantı noktalarına bağlanmaya izin verilmiyor.',
@@ -200,7 +200,7 @@ $translations = array(
 	'Alter indexes' => 'İndeksleri değiştir',
 	'Add next' => 'Bundan sonra ekle',
 	'Index Type' => 'İndex Türü',
-	'Column (length)' => 'Kolon (uzunluğu)',
+	'length' => 'uzunluğu',
 
 	'Foreign keys' => 'Dış anahtarlar',
 	'Foreign key' => 'Dış anahtar',
@@ -302,7 +302,7 @@ $translations = array(
 	'Geometry' => 'Geometri',
 	'Relations' => 'İlişkiler',
 
-	'Editor' => 'Düzenleyici',
+	// 'Editor' => 'Düzenleyici',
 	// date format in Editor: $1 yyyy, $2 yy, $3 mm, $4 m, $5 dd, $6 d
 	'$1-$3-$5' => '$6.$4.$1',
 	// hint for date format - use language equivalents for day, month and year shortcuts
@@ -342,7 +342,7 @@ $translations = array(
 	'Alter type' => 'Türü değiştir',
 
 	'overwrite' => null,
-	'Adminer does not support accessing a database without a password, <a href="https://www.adminer.org/en/password/"%s>more information</a>.' => null,
+	'AdminNeo does not support accessing a database without a password, <a href="https://www.adminer.org/en/password/"%s>more information</a>.' => null,
 	'There is a space in the input password which might be the cause.' => null,
 	'Unknown error.' => null,
 	'Database does not support password.' => null,
@@ -361,4 +361,11 @@ $translations = array(
 	'Show schema' => null,
 	'No driver' => null,
 	'Database driver not found.' => null,
+
+	'Check has been dropped.' => null,
+	'Check has been altered.' => null,
+	'Check has been created.' => null,
+	'Alter check' => null,
+	'Create check' => null,
+	'Checks' => null,
 );

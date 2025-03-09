@@ -49,12 +49,9 @@ if ($_POST && !process_fields($row["fields"]) && !$error) {
 				if (!$field["has_default"]) {
 					$field["default"] = null;
 				}
-				if ($key == $row["auto_increment_col"]) {
-					$field["auto_increment"] = true;
-				}
 				$process_field = process_field($field, $type_field);
 				$all_fields[] = array($field["orig"], $process_field, $after);
-				if (!$orig_field || $process_field != process_field($orig_field, $orig_field)) {
+				if (!$orig_field || $process_field !== process_field($orig_field, $orig_field)) {
 					$fields[] = array($field["orig"], $process_field, $after);
 					if ($field["orig"] != "" || $after) {
 						$use_all_fields = true;
@@ -197,7 +194,7 @@ edit_fields($row["fields"], $collations, "TABLE", $foreign_keys);
 <?php echo script("editFields();"); ?>
 </div>
 <p>
-<?php echo lang('Auto Increment'); ?>: <input type="number" name="Auto_increment" size="6" value="<?php echo h($row["Auto_increment"]); ?>">
+<?php echo lang('Auto Increment'); ?>: <input type="number" name="Auto_increment" class="size" value="<?php echo h($row["Auto_increment"]); ?>">
 <?php
 $comments = ($_POST ? $_POST["comments"] : adminer_setting("comments"));
 echo (support("comment")

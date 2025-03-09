@@ -14,7 +14,6 @@ if (isset($_GET["clickhouse"])) {
 		 * @return Min_Result|bool
 		 */
 		function rootQuery($db, $query) {
-			@ini_set('track_errors', 1); // @ - may be disabled
 			$file = @file_get_contents("$this->_url/?database=$db", false, stream_context_create(array('http' => array(
 				'method' => 'POST',
 				'content' => $this->isQuerySelectLike($query) ? "$query FORMAT JSONCompact" : $query,
@@ -120,8 +119,14 @@ if (isset($_GET["clickhouse"])) {
 		 * @param array[] $meta
 		 */
 		function __construct($rows, array $data, array $meta) {
+			$this->_rows = [];
+			foreach ($data as $item) {
+				$this->_rows[] = array_map(function ($val) {
+					return is_scalar($val) ? $val : json_encode($val, JSON_UNESCAPED_UNICODE);
+				}, $item);
+			}
+
 			$this->num_rows = $rows;
-			$this->_rows = $data;
 			$this->meta = $meta;
 			$this->columns = array_column($meta, 'name');
 
@@ -142,7 +147,7 @@ if (isset($_GET["clickhouse"])) {
 
 		function fetch_field() {
 			$column = $this->_offset++;
-			$return = new stdClass;
+			$return = new \stdClass;
 			if ($column < count($this->columns)) {
 				$return->name = $this->meta[$column]['name'];
 				$return->orgname = $return->name;
@@ -383,18 +388,6 @@ if (isset($_GET["clickhouse"])) {
 
 	function types() {
 		return array();
-	}
-
-	function schemas() {
-		return array();
-	}
-
-	function get_schema() {
-		return "";
-	}
-
-	function set_schema($schema) {
-		return true;
 	}
 
 	function auto_increment() {

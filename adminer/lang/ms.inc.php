@@ -16,7 +16,7 @@ $translations = array(
 	'Master password expired. <a href="https://www.adminer.org/en/extension/"%s>Implement</a> %s method to make it permanent.' => 'Kata laluan utama telah luput. <a href="https://www.adminer.org/en/extension/"%s>Gunakan</a> cara %s untuk mengekalkannya.',
 	'Language' => 'Bahasa',
 	'Invalid CSRF token. Send the form again.' => 'Token CSRF tidak sah. Sila hantar borang sekali lagi.',
-	'If you did not send this request from Adminer then close this page.' => 'Jika anda tidak menghantar permintaan ini dari Adminer sila tutup halaman ini.',
+	'If you did not send this request from AdminNeo then close this page.' => 'Jika anda tidak menghantar permintaan ini dari AdminNeo sila tutup halaman ini.',
 	'No extension' => 'Tiada sambungan',
 	'None of the supported PHP extensions (%s) are available.' => 'Sambungan PHP yang (%s) disokong tidak wujud.',
 	'Connecting to privileged ports is not allowed.' => 'Penyambungan ke port yang istimewa tidak dibenarkan.',
@@ -197,7 +197,7 @@ $translations = array(
 	'Alter indexes' => 'Ubah indeks',
 	'Add next' => 'Tambah yang seterusnya',
 	'Index Type' => 'Jenis Indeks',
-	'Column (length)' => 'Kolum (kepanjangan)',
+	'length' => 'kepanjangan',
 
 	'Foreign keys' => 'Kunci asing',
 	'Foreign key' => 'Kunci asing',
@@ -299,7 +299,7 @@ $translations = array(
 	'Geometry' => 'Geometri',
 	'Relations' => 'Hubungan',
 
-	'Editor' => 'Editor',
+	// 'Editor' => 'Editor',
 	// date format in Editor: $1 yyyy, $2 yy, $3 mm, $4 m, $5 dd, $6 d
 	'$1-$3-$5' => '$1-$3-$5',
 	// hint for date format - use language equivalents for day, month and year shortcuts
@@ -341,7 +341,7 @@ $translations = array(
 	'overwrite' => null,
 	'DB' => null,
 	'Warnings' => null,
-	'Adminer does not support accessing a database without a password, <a href="https://www.adminer.org/en/password/"%s>more information</a>.' => null,
+	'AdminNeo does not support accessing a database without a password, <a href="https://www.adminer.org/en/password/"%s>more information</a>.' => null,
 	'The action will be performed after successful login with the same credentials.' => null,
 	'There is a space in the input password which might be the cause.' => null,
 	'Unknown error.' => null,
@@ -361,4 +361,11 @@ $translations = array(
 	'Show schema' => null,
 	'No driver' => null,
 	'Database driver not found.' => null,
+
+	'Check has been dropped.' => null,
+	'Check has been altered.' => null,
+	'Check has been created.' => null,
+	'Alter check' => null,
+	'Create check' => null,
+	'Checks' => null,
 );

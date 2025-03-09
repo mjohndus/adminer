@@ -13,13 +13,13 @@ $translations = array(
 	'Logout successful.' => 'Odhlášení proběhlo v pořádku.',
 	'Invalid server or credentials.' => 'Neplatný server nebo přihlašovací údaje.',
 	'There is a space in the input password which might be the cause.' => 'Problém může být, že je v zadaném hesle mezera.',
-	'Adminer does not support accessing a database without a password, <a href="https://www.adminer.org/en/password/"%s>more information</a>.' => 'Adminer nepodporuje přístup k databázi bez hesla, <a href="https://www.adminer.org/cs/password/"%s>více informací</a>.',
+	'AdminNeo does not support accessing a database without a password, <a href="https://www.adminer.org/en/password/"%s>more information</a>.' => 'AdminNeo nepodporuje přístup k databázi bez hesla, <a href="https://www.adminer.org/cs/password/"%s>více informací</a>.',
 	'Database does not support password.' => 'Databáze nepodporuje heslo.',
 	'Too many unsuccessful logins, try again in %d minute(s).' => array('Příliš mnoho pokusů o přihlášení, zkuste to znovu za %d minutu.', 'Příliš mnoho pokusů o přihlášení, zkuste to znovu za %d minuty.', 'Příliš mnoho pokusů o přihlášení, zkuste to znovu za %d minut.'),
 	'Master password expired. <a href="https://www.adminer.org/en/extension/"%s>Implement</a> %s method to make it permanent.' => 'Platnost hlavního hesla vypršela. <a href="https://www.adminer.org/cs/extension/"%s>Implementujte</a> metodu %s, aby platilo stále.',
 	'Language' => 'Jazyk',
 	'Invalid CSRF token. Send the form again.' => 'Neplatný token CSRF. Odešlete formulář znovu.',
-	'If you did not send this request from Adminer then close this page.' => 'Pokud jste tento požadavek neposlali z Adminera, tak tuto stránku zavřete.',
+	'If you did not send this request from AdminNeo then close this page.' => 'Pokud jste tento požadavek neposlali z AdminNeo, tak tuto stránku zavřete.',
 	'No driver' => 'Žádný ovladač',
 	'Database driver not found.' => 'Databázový ovladač se nenašel.',
 	'No extension' => 'Žádné rozšíření',
@@ -207,7 +207,7 @@ $translations = array(
 	'Alter indexes' => 'Pozměnit indexy',
 	'Add next' => 'Přidat další',
 	'Index Type' => 'Typ indexu',
-	'Column (length)' => 'Sloupec (délka)',
+	'length' => 'délka',
 
 	'Foreign keys' => 'Cizí klíče',
 	'Foreign key' => 'Cizí klíč',
@@ -310,7 +310,7 @@ $translations = array(
 	'Geometry' => 'Geometrie',
 	'Relations' => 'Vztahy',
 
-	'Editor' => 'Editor',
+	// 'Editor' => 'Editor',
 	// date format in Editor: $1 yyyy, $2 yy, $3 mm, $4 m, $5 dd, $6 d
 	'$1-$3-$5' => '$6.$4.$1',
 	// hint for date format - use language equivalents for day, month and year shortcuts
@@ -351,6 +351,14 @@ $translations = array(
 	'Type has been dropped.' => 'Typ byl odstraněn.',
 	'Type has been created.' => 'Typ byl vytvořen.',
 	'Alter type' => 'Pozměnit typ',
+
+	// Table check constraints
+	'Checks' => 'Kontroly',
+	'Create check' => 'Vytvořit kontrolu',
+	'Alter check' => 'Změnit kontrolu',
+	'Check has been created.' => 'Kontrola byla vytvořena.',
+	'Check has been altered.' => 'Kontrola byla změněna.',
+	'Check has been dropped.' => 'Kontrola byla odstraněna.',
 
 	// Plugins
 	'Columns' => 'Sloupce',

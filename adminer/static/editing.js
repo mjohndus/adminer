@@ -29,9 +29,9 @@ function bodyLoad(version, maria) {
 					}
 				}
 
-				obj[key] = (maria ? obj[key].replace('dev.mysql.com/doc/mysql/en/', 'mariadb.com/kb/en/') : obj[key]) // MariaDB
-					.replace('/doc/mysql/', '/doc/refman/' + version + '/') // MySQL
-					.replace('/docs/current/', '/docs/' + version) // PostgreSQL
+				obj[key] = (maria ? obj[key].replace('dev.mysql.com/doc/mysql', 'mariadb.com/kb') : obj[key]) // MariaDB
+					.replace('/doc/mysql', '/doc/refman/' + version) // MySQL
+					.replace('/docs/current', '/docs/' + version) // PostgreSQL
 				;
 			}
 		}
@@ -86,22 +86,20 @@ function messagesPrint(el) {
 	}
 }
 
+function initLoginDriver(driverSelect) {
+	driverSelect.onchange = function () {
+		const trs = parentTag(driverSelect, 'table').rows;
+		const disabled = /sqlite/.test(selectValue(driverSelect));
 
+		// 1 - row with server
+		trs[1].classList.toggle('hidden', disabled);
+		trs[1].getElementsByTagName('input')[0].disabled = disabled;
+	};
 
-/**
- * Hides or shows some login rows for selected driver.
- *
- * @param {HTMLSelectElement} driverSelect
- */
-function loginDriver(driverSelect) {
-	const trs = parentTag(driverSelect, 'table').rows;
-	const disabled = /sqlite/.test(selectValue(driverSelect));
-
-	// 1 - row with server
-	trs[1].classList.toggle('hidden', disabled);
-	trs[1].getElementsByTagName('input')[0].disabled = disabled;
+	document.addEventListener('DOMContentLoaded', function () {
+		driverSelect.onchange();
+	});
 }
-
 
 
 var dbCtrl;
@@ -484,6 +482,16 @@ function columnShow(checked, column) {
 	var trs = qsa('tr', gid('edit-fields'));
 	for (var i=0; i < trs.length; i++) {
 		qsa('td', trs[i])[column].classList.toggle('hidden', !checked);
+	}
+}
+
+/** Show or hide index column options
+* @param boolean
+*/
+function indexOptionsShow(checked) {
+	var options = qsa(".idxopts");
+	for (var i=0; i < options.length; i++) {
+		options[i].classList.toggle("hidden", !checked);
 	}
 }
 

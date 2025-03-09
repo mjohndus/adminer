@@ -183,7 +183,7 @@ $translations = array(
 	'Alter indexes' => 'Змінити індексування',
 	'Add next' => 'Додати ще',
 	'Index Type' => 'Тип індексу',
-	'Column (length)' => 'Стовпець (довжина)',
+	'length' => 'довжина',
 
 	'Foreign keys' => 'Зовнішні ключі',
 	'Foreign key' => 'Зовнішній ключ',
@@ -276,7 +276,7 @@ $translations = array(
 	'Geometry' => 'Геометрія',
 	'Relations' => 'Зв\'язки',
 
-	'Editor' => 'Редактор',
+	// 'Editor' => 'Редактор',
 	// date format in Editor: $1 yyyy, $2 yy, $3 mm, $4 m, $5 dd, $6 d
 	'$1-$3-$5' => '$5.$3.$1',
 	// hint for date format - use language equivalents for day, month and year shortcuts
@@ -326,7 +326,7 @@ $translations = array(
 	'ATTACH queries are not supported.' => 'ATTACH-запити не підтримуються.',
 	'Warnings' => 'Попередження',
 	'Limit rows' => 'Обмеження рядків',
-	'Adminer does not support accessing a database without a password, <a href="https://www.adminer.org/en/password/"%s>more information</a>.' => 'Adminer не підтримує доступ до бази даних без пароля, <a href="https://www.adminer.org/en/password/"%s>більше інформації</a>.',
+	'AdminNeo does not support accessing a database without a password, <a href="https://www.adminer.org/en/password/"%s>more information</a>.' => 'AdminNeo не підтримує доступ до бази даних без пароля, <a href="https://www.adminer.org/en/password/"%s>більше інформації</a>.',
 	'Default value' => 'Значення за замовчуванням',
 	'Full table scan' => 'Повне сканування таблиці',
 	'Too many unsuccessful logins, try again in %d minute(s).' => array('Занадто багато невдалих спроб входу. Спробуйте знову через %d хвилину.', 'Занадто багато невдалих спроб входу. Спробуйте знову через %d хвилини.', 'Занадто багато невдалих спроб входу. Спробуйте знову через %d хвилин.'),
@@ -334,7 +334,7 @@ $translations = array(
 	'The action will be performed after successful login with the same credentials.' => 'Дія буде виконуватися після успішного входу в систему з тими ж обліковими даними.',
 	'Connecting to privileged ports is not allowed.' => 'Підключення до привілейованих портів заборонено.',
 	'There is a space in the input password which might be the cause.' => 'У вхідному паролі є пробіл, який може бути причиною.',
-	'If you did not send this request from Adminer then close this page.' => 'Якщо ви не посилали цей запит з Adminer, закрийте цю сторінку.',
+	'If you did not send this request from AdminNeo then close this page.' => 'Якщо ви не посилали цей запит з AdminNeo, закрийте цю сторінку.',
 	'You can upload a big SQL file via FTP and import it from server.' => 'Ви можете завантажити великий файл SQL через FTP та імпортувати його з сервера.',
 	'Size' => 'Розмір',
 	'Compute' => 'Обчислити',
@@ -361,4 +361,11 @@ $translations = array(
 	'Show schema' => null,
 	'No driver' => null,
 	'Database driver not found.' => null,
+
+	'Check has been dropped.' => null,
+	'Check has been altered.' => null,
+	'Check has been created.' => null,
+	'Alter check' => null,
+	'Create check' => null,
+	'Checks' => null,
 );

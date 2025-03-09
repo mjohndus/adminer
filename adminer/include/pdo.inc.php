@@ -1,16 +1,8 @@
 <?php
 // PDO can be used in several database drivers
 if (extension_loaded('pdo')) {
-	/*abstract*/ class Min_PDO {
+	abstract class Min_PDO {
 		var $_result, $server_info, $affected_rows, $errno, $error, $pdo;
-
-		function __construct() {
-			global $adminer;
-			$pos = array_search("SQL", $adminer->operators);
-			if ($pos !== false) {
-				unset($adminer->operators[$pos]);
-			}
-		}
 
 		function dsn($dsn, $username, $password, $options = []) {
 			$options[PDO::ATTR_ERRMODE] = PDO::ERRMODE_SILENT;
@@ -23,7 +15,7 @@ if (extension_loaded('pdo')) {
 			$this->server_info = @$this->pdo->getAttribute(PDO::ATTR_SERVER_VERSION);
 		}
 
-		/*abstract function select_db($database);*/
+		abstract function select_db($database);
 
 		function quote($string) {
 			return $this->pdo->quote($string);
@@ -97,6 +89,12 @@ if (extension_loaded('pdo')) {
 			$row->orgname = $row->name;
 			$row->charsetnr = (in_array("blob", (array) $row->flags) ? 63 : 0);
 			return $row;
+		}
+
+		function seek($offset) {
+			for ($i=0; $i < $offset; $i++) {
+				$this->fetch();
+			}
 		}
 	}
 }

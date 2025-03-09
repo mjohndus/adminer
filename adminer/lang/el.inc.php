@@ -16,7 +16,7 @@ $translations = array(
 	'Master password expired. <a href="https://www.adminer.org/en/extension/"%s>Implement</a> %s method to make it permanent.' => 'Έληξε ο Κύριος Κωδικός. <a href="https://www.adminer.org/en/extension/"%s>Ενεργοποιήστε</a> τη μέθοδο %s για να τον κάνετε μόνιμο.',
 	'Language' => 'Γλώσσα',
 	'Invalid CSRF token. Send the form again.' => 'Άκυρο κουπόνι CSRF. Στείλτε τη φόρμα ξανά.',
-	'If you did not send this request from Adminer then close this page.' => 'Αν δε στείλατε αυτό το αίτημα από το Adminer, τότε κλείστε αυτή τη σελίδα.',
+	'If you did not send this request from AdminNeo then close this page.' => 'Αν δε στείλατε αυτό το αίτημα από το AdminNeo, τότε κλείστε αυτή τη σελίδα.',
 	'No extension' => 'Καμία Επέκταση',
 	'None of the supported PHP extensions (%s) are available.' => 'Καμία από τις υποστηριζόμενες επεκτάσεις PHP (%s) δεν είναι διαθέσιμη.',
 	'Session support must be enabled.' => 'Πρέπει να είναι ενεργοποιημένη η υποστήριξη συνεδριών.',
@@ -194,7 +194,7 @@ $translations = array(
 	'Alter indexes' => 'Τροποποίηση δεικτών',
 	'Add next' => 'Προσθήκη επόμενου',
 	'Index Type' => 'Τύπος δείκτη',
-	'Column (length)' => 'Στήλη (μήκος)',
+	'length' => 'μήκος',
 
 	'Foreign keys' => 'Εξαρτημένα κλειδιά',
 	'Foreign key' => 'Εξαρτημένο κλειδί',
@@ -296,7 +296,7 @@ $translations = array(
 	'Geometry' => 'Γεωμετρία',
 	'Relations' => 'Συσχετήσεις',
 
-	'Editor' => 'Επεξεργαστής',
+	// 'Editor' => 'Επεξεργαστής',
 	// date format in Editor: $1 yyyy, $2 yy, $3 mm, $4 m, $5 dd, $6 d
 	'$1-$3-$5' => '$5/$3/$1',
 	// hint for date format - use language equivalents for day, month and year shortcuts
@@ -340,7 +340,7 @@ $translations = array(
 	'DB' => null,
 	'ATTACH queries are not supported.' => null,
 	'Warnings' => null,
-	'Adminer does not support accessing a database without a password, <a href="https://www.adminer.org/en/password/"%s>more information</a>.' => null,
+	'AdminNeo does not support accessing a database without a password, <a href="https://www.adminer.org/en/password/"%s>more information</a>.' => null,
 	'The action will be performed after successful login with the same credentials.' => null,
 	'Connecting to privileged ports is not allowed.' => null,
 	'There is a space in the input password which might be the cause.' => null,
@@ -361,4 +361,11 @@ $translations = array(
 	'Show schema' => null,
 	'No driver' => null,
 	'Database driver not found.' => null,
+
+	'Check has been dropped.' => null,
+	'Check has been altered.' => null,
+	'Check has been created.' => null,
+	'Alter check' => null,
+	'Create check' => null,
+	'Checks' => null,
 );

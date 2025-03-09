@@ -1,4 +1,5 @@
 <?php
+// This file is used both in Adminer and Adminer Editor.
 
 /** Get database connection
 * @return Min_DB
@@ -196,7 +197,11 @@ function optionlist($options, $selected = null, $use_keys = false) {
 			$opts = $v;
 		}
 		foreach ($opts as $key => $val) {
-			$return .= '<option' . ($use_keys || is_string($key) ? ' value="' . h($key) . '"' : '') . (($use_keys || is_string($key) ? (string) $key : $val) === $selected ? ' selected' : '') . '>' . h($val);
+			$return .= '<option'
+				. ($use_keys || is_string($key) ? ' value="' . h($key) . '"' : '')
+				. ($selected !== null && ($use_keys || is_string($key) ? (string) $key : $val) === $selected ? ' selected' : '')
+				. '>' . h($val)
+			;
 		}
 		if (is_array($v)) {
 			$return .= '</optgroup>';
@@ -226,22 +231,6 @@ function html_select($name, $options, $value = "", $onchange = true, $labelled_b
 		$return .= "<label><input type='radio' name='" . h($name) . "' value='" . h($key) . "'" . ($key == $value ? " checked" : "") . ">" . h($val) . "</label>";
 	}
 	return $return;
-}
-
-/** Generate HTML <select> or <input> if $options are empty
-* @param string
-* @param array
-* @param string
-* @param string
-* @param string
-* @return string
-*/
-function select_input($attrs, $options, $value = "", $onchange = "", $placeholder = "") {
-	$tag = ($options ? "select" : "input");
-	return "<$tag $attrs" . ($options
-		? "><option value=''>$placeholder" . optionlist($options, $value, true) . "</select>"
-		: " size='10' value='" . h($value) . "' placeholder='$placeholder'>"
-	) . ($onchange ? script("qsl('$tag').onchange = $onchange;", "") : ""); //! use oninput for input
 }
 
 /** Get onclick confirmation
@@ -293,25 +282,6 @@ function odd($return = ' class="odd"') {
 */
 function js_escape($string) {
 	return addcslashes($string, "\r\n'\\/"); // slash for <script>
-}
-
-/** Print one row in JSON object
-* @param string or "" to close the object
-* @param string
-* @return null
-*/
-function json_row($key, $val = null) {
-	static $first = true;
-	if ($first) {
-		echo "{";
-	}
-	if ($key != "") {
-		echo ($first ? "" : ",") . "\n\t\"" . addcslashes($key, "\r\n\t\"\\/") . '": ' . ($val !== null ? '"' . addcslashes($val, "\r\n\"\\/") . '"' : 'null');
-		$first = false;
-	} else {
-		echo "\n}\n";
-		$first = true;
-	}
 }
 
 /** Get INI boolean value
@@ -428,7 +398,7 @@ function get_rows($query, $connection2 = null, $error = "<p class='error'>") {
 		while ($row = $result->fetch_assoc()) {
 			$return[] = $row;
 		}
-	} elseif (!$result && !is_object($connection2) && $error && defined("PAGE_HEADER")) {
+	} elseif (!$result && !is_object($connection2) && $error && (defined("PAGE_HEADER") || $error == "-- ")) {
 		echo $error . error() . "\n";
 	}
 	return $return;
@@ -478,21 +448,22 @@ function where($where, $fields = array()) {
 	foreach ((array) $where["where"] as $key => $val) {
 		$key = bracket_escape($key, 1); // 1 - back
 		$column = escape_key($key);
+		$field_type = $fields[$key]["type"];
 
-		if ($jush == "sql" && $fields[$key]["type"] == "json") {
+		if ($jush == "sql" && $field_type == "json") {
 			$conditions[] = "$column = CAST(" . q($val) . " AS JSON)";
 		} elseif ($jush == "sql" && is_numeric($val) && strpos($val, ".") !== false) {
 			// LIKE because of floats but slow with ints.
 			$conditions[] = "$column LIKE " . q($val);
-		} elseif ($jush == "mssql") {
-			// LIKE because of text.
+		} elseif ($jush == "mssql" && strpos($field_type, "datetime") === false) {
+			// LIKE because of text. But it does not work with datetime, datetime2 and smalldatetime.
 			$conditions[] = "$column LIKE " . q(preg_replace('~[_%[]~', '[\0]', $val));
 		} else {
 			$conditions[] = "$column = " . unconvert_field($fields[$key], q($val));
 		}
 
 		// Not just [a-z] to catch non-ASCII characters.
-		if ($jush == "sql" && preg_match('~char|text~', $fields[$key]["type"]) && preg_match("~[^ -@]~", $val)) {
+		if ($jush == "sql" && preg_match('~char|text~', $field_type) && preg_match("~[^ -@]~", $val)) {
 			$conditions[] = "$column = " . q($val) . " COLLATE " . charset($connection) . "_bin";
 		}
 	}
@@ -680,7 +651,7 @@ function query_redirect($query, $location, $message, $redirect = true, $execute 
 
 /** Execute and remember query
 * @param string or null to return remembered queries, end with ';' to use DELIMITER
-* @return Min_Result or array($queries, $time) if $query = null
+* @return Min_Result or [$queries, $time] if $query = null
 */
 function queries($query) {
 	global $connection;
@@ -855,7 +826,7 @@ function format_number($val) {
 */
 function friendly_url($val) {
 	// used for blobs and export
-	return preg_replace('~[^a-z0-9_]~i', '-', $val);
+	return preg_replace('~\W~i', '-', $val);
 }
 
 /** Print hidden fields
@@ -900,7 +871,7 @@ function table_status1($table, $fast = false) {
 
 /** Find out foreign keys for each column
 * @param string
-* @return array array($col => array())
+* @return array [$col => []]
 */
 function column_foreign_keys($table) {
 	global $adminer;
@@ -922,7 +893,7 @@ function column_foreign_keys($table) {
 * @return null
 */
 function enum_input($type, $attrs, $field, $value, $empty = null) {
-	global $adminer;
+	global $adminer, $jush;
 
 	$return = ($empty !== null && !is_strict_mode() ? "<label><input type='$type'$attrs value='$empty'" . ((is_array($value) ? in_array($empty, $value) : $value === 0) ? " checked" : "") . "><i>" . lang('empty') . "</i></label>" : "");
 
@@ -930,7 +901,7 @@ function enum_input($type, $attrs, $field, $value, $empty = null) {
 	foreach ($matches[1] as $i => $val) {
 		$val = stripcslashes(str_replace("''", "'", $val));
 		$checked = (is_int($value) ? $value == $i+1 : (is_array($value) ? in_array($i+1, $value) : $value === $val));
-		$return .= " <label><input type='$type'$attrs value='" . ($i+1) . "'" . ($checked ? ' checked' : '') . '>' . h($adminer->editVal($val, $field)) . '</label>';
+		$return .= " <label><input type='$type'$attrs value='" . ($jush == "sql" ? $i+1 : h($val)) . "'" . ($checked ? ' checked' : '') . '>' . h($adminer->editVal($val, $field)) . '</label>';
 	}
 
 	return $return;
@@ -943,7 +914,7 @@ function enum_input($type, $attrs, $field, $value, $empty = null) {
 * @return null
 */
 function input($field, $value, $function) {
-	global $types, $adminer, $jush;
+	global $types, $structured_types, $adminer, $jush;
 
 	$name = h(bracket_escape($field["field"]));
 
@@ -963,6 +934,13 @@ function input($field, $value, $function) {
 
 	$disabled = stripos($field["default"], "GENERATED ALWAYS AS ") === 0 ? " disabled=''" : "";
 	$attrs = " name='fields[$name]' $disabled";
+	if (in_array($field["type"], (array) $structured_types[lang('User types')])) {
+		$enums = type_values($types[$field["type"]]);
+		if ($enums) {
+			$field["type"] = "enum";
+			$field["length"] = $enums;
+		}
+	}
 
 	echo "<td class='function'>";
 
@@ -1128,27 +1106,6 @@ function search_tables() {
 		}
 	}
 	echo ($sep ? "<p class='message'>" . lang('No tables.') : "</ul>") . "\n";
-}
-
-/**
- * @param string $table
- * @return array
- */
-function get_partitions_info($table) {
-	global $connection;
-
-	$from = "FROM information_schema.PARTITIONS WHERE TABLE_SCHEMA = " . q(DB) . " AND TABLE_NAME = " . q($table);
-
-	$result = $connection->query("SELECT PARTITION_METHOD, PARTITION_EXPRESSION, PARTITION_ORDINAL_POSITION $from ORDER BY PARTITION_ORDINAL_POSITION DESC LIMIT 1");
-
-	$info = [];
-	list($info["partition_by"], $info["partition"],  $info["partitions"]) = $result->fetch_row();
-
-	$partitions = get_key_vals("SELECT PARTITION_NAME, PARTITION_DESCRIPTION $from AND PARTITION_NAME != '' ORDER BY PARTITION_ORDINAL_POSITION");
-	$info["partition_names"] = array_keys($partitions);
-	$info["partition_values"] = array_values($partitions);
-
-	return $info;
 }
 
 /** Send headers for export
@@ -1542,6 +1499,7 @@ function edit_form($table, $fields, $row, $update) {
 	} else {
 		echo "<table cellspacing='0' class='layout'>" . script("qsl('table').onkeydown = editingKeydown;");
 
+		$first = 0;
 		foreach ($fields as $name => $field) {
 			echo "<tr><th>" . $adminer->fieldName($field);
 			$default = $_GET["set"][bracket_escape($name)];
@@ -1582,6 +1540,9 @@ function edit_form($table, $fields, $row, $update) {
 				$value = "";
 				$function = "uuid";
 			}
+			if ($field["auto_increment"] || $function == "now" || $function == "uuid") {
+				$first++;
+			}
 			input($field, $value, $function);
 			echo "\n";
 		}
@@ -1608,7 +1569,7 @@ function edit_form($table, $fields, $row, $update) {
 		}
 	}
 	echo ($update ? "<input type='submit' name='delete' value='" . lang('Delete') . "'>" . confirm() . "\n"
-		: ($_POST || !$fields ? "" : script("qsa('td', gid('form'))[1].firstChild.focus();"))
+		: ($_POST || !$fields ? "" : script("qsa('td', gid('form'))[2*$first+1].firstChild.focus();"))
 	);
 	if (isset($_GET["select"])) {
 		hidden_fields(array("check" => (array) $_POST["check"], "clone" => $_POST["clone"], "all" => $_POST["all"]));

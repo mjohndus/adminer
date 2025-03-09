@@ -183,7 +183,7 @@ $translations = array(
 	'Alter indexes' => 'Уреди индексе',
 	'Add next' => 'Додај следећи',
 	'Index Type' => 'Тип индекса',
-	'Column (length)' => 'Колона (дужина)',
+	'length' => 'дужина',
 
 	'Foreign keys' => 'Страни кључеви',
 	'Foreign key' => 'Страни кључ',
@@ -279,7 +279,7 @@ $translations = array(
 	'Geometry' => 'Геометрија',
 	'Relations' => 'Односи',
 
-	'Editor' => 'Уређивач',
+	// 'Editor' => 'Уређивач',
 	// date format in Editor: $1 yyyy, $2 yy, $3 mm, $4 m, $5 dd, $6 d
 	'$1-$3-$5' => '$5.$3.$1.',
 	// hint for date format - use language equivalents for day, month and year shortcuts
@@ -330,14 +330,14 @@ $translations = array(
 	'Warnings' => null,
 	'%d / ' => array(),
 	'Limit rows' => null,
-	'Adminer does not support accessing a database without a password, <a href="https://www.adminer.org/en/password/"%s>more information</a>.' => null,
+	'AdminNeo does not support accessing a database without a password, <a href="https://www.adminer.org/en/password/"%s>more information</a>.' => null,
 	'Default value' => null,
 	'Too many unsuccessful logins, try again in %d minute(s).' => array(),
 	'Master password expired. <a href="https://www.adminer.org/en/extension/"%s>Implement</a> %s method to make it permanent.' => null,
 	'The action will be performed after successful login with the same credentials.' => null,
 	'Connecting to privileged ports is not allowed.' => null,
 	'There is a space in the input password which might be the cause.' => null,
-	'If you did not send this request from Adminer then close this page.' => null,
+	'If you did not send this request from AdminNeo then close this page.' => null,
 	'You can upload a big SQL file via FTP and import it from server.' => null,
 	'Size' => null,
 	'Compute' => null,
@@ -361,4 +361,11 @@ $translations = array(
 	'Show schema' => null,
 	'No driver' => null,
 	'Database driver not found.' => null,
+
+	'Check has been dropped.' => null,
+	'Check has been altered.' => null,
+	'Check has been created.' => null,
+	'Alter check' => null,
+	'Create check' => null,
+	'Checks' => null,
 );

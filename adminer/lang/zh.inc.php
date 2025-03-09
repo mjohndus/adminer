@@ -13,13 +13,13 @@ $translations = array(
 	'Logout successful.' => '成功登出。',
 	'Invalid server or credentials.' => null,
 	'There is a space in the input password which might be the cause.' => '您输入的密码中有一个空格，这可能是导致问题的原因。',
-	'Adminer does not support accessing a database without a password, <a href="https://www.adminer.org/en/password/"%s>more information</a>.' => 'Adminer默认不支持访问没有密码的数据库，<a href="https://www.adminer.org/en/password/"%s>详情见这里</a>.',
+	'AdminNeo does not support accessing a database without a password, <a href="https://www.adminer.org/en/password/"%s>more information</a>.' => 'AdminNeo默认不支持访问没有密码的数据库，<a href="https://www.adminer.org/en/password/"%s>详情见这里</a>.',
 	'Database does not support password.' => '数据库不支持密码。',
 	'Too many unsuccessful logins, try again in %d minute(s).' => '登录失败次数过多，请 %d 分钟后重试。',
 	'Master password expired. <a href="https://www.adminer.org/en/extension/"%s>Implement</a> %s method to make it permanent.' => '主密码已过期。<a href="https://www.adminer.org/en/extension/"%s>请扩展</a> %s 方法让它永久化。',
 	'Language' => '语言',
 	'Invalid CSRF token. Send the form again.' => '无效 CSRF 令牌。请重新发送表单。',
-	'If you did not send this request from Adminer then close this page.' => '如果您并没有从Adminer发送请求，请关闭此页面。',
+	'If you did not send this request from AdminNeo then close this page.' => '如果您并没有从AdminNeo发送请求，请关闭此页面。',
 	'No extension' => '没有扩展',
 	'None of the supported PHP extensions (%s) are available.' => '没有支持的 PHP 扩展可用（%s）。',
 	'Connecting to privileged ports is not allowed.' => '不允许连接到特权端口。',
@@ -206,7 +206,7 @@ $translations = array(
 	'Alter indexes' => '修改索引',
 	'Add next' => '下一行插入',
 	'Index Type' => '索引类型',
-	'Column (length)' => '列（长度）',
+	// 'Column (length)' => '列（长度）',
 
 	'Foreign keys' => '外键',
 	'Foreign key' => '外键',
@@ -308,7 +308,7 @@ $translations = array(
 	'Geometry' => '几何图形',
 	'Relations' => '关联信息',
 
-	'Editor' => '编辑器',
+	// 'Editor' => '编辑器',
 	// date format in Editor: $1 yyyy, $2 yy, $3 mm, $4 m, $5 dd, $6 d
 	'$1-$3-$5' => '$1.$3.$5',
 	// hint for date format - use language equivalents for day, month and year shortcuts
@@ -360,4 +360,12 @@ $translations = array(
 	'Show schema' => null,
 	'No driver' => null,
 	'Database driver not found.' => null,
+
+	'Check has been dropped.' => null,
+	'Check has been altered.' => null,
+	'Check has been created.' => null,
+	'Alter check' => null,
+	'Create check' => null,
+	'length' => null,
+	'Checks' => null,
 );

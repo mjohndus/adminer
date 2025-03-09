@@ -130,7 +130,8 @@ if ($auth) {
 	if ($auth["permanent"]) {
 		$key = base64_encode($vendor) . "-" . base64_encode($server) . "-" . base64_encode($username) . "-" . base64_encode($db);
 		$private = $adminer->permanentLogin(true);
-		$permanent[$key] = "$key:" . base64_encode($private ? encrypt_string($password, $private) : "");
+		$encrypted_password = $private ? encrypt_string($password, $private) : false;
+		$permanent[$key] = "$key:" . base64_encode($encrypted_password ?: "");
 		cookie("adminer_permanent", implode(" ", $permanent));
 	}
 	if (count($_POST) == 1 // 1 - auth
@@ -240,7 +241,7 @@ if (isset($_GET["username"]) && is_string(get_password())) {
 
 $login = null;
 if (!is_object($connection) || ($login = $adminer->login($_GET["username"], get_password())) !== true) {
-	$error = (is_string($connection) ? h($connection) : (is_string($login) ? $login : lang('Invalid server or credentials.')));
+	$error = (is_string($connection) ? nl2br(h($connection)) : (is_string($login) ? $login : lang('Invalid server or credentials.')));
 	auth_error($error . (preg_match('~^ | $~', get_password()) ? '<br>' . lang('There is a space in the input password which might be the cause.') : ''));
 }
 
@@ -270,7 +271,7 @@ if ($_POST) {
 		}
 		$error = (!$_POST["token"] && $max_vars
 			? lang('Maximum number of allowed fields exceeded. Please increase %s.', "'$ini'")
-			: lang('Invalid CSRF token. Send the form again.') . ' ' . lang('If you did not send this request from Adminer then close this page.')
+			: lang('Invalid CSRF token. Send the form again.') . ' ' . lang('If you did not send this request from AdminNeo then close this page.')
 		);
 	}
 

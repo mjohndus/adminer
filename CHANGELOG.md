@@ -1,7 +1,92 @@
 Changelog
 =========
 
-AdminerNeo 4.14 (2025-02-02)
+AdminNeo 4.16.1
+---------------
+
+### Changes
+
+- Update German translation (issue #66, by @wintstar)
+- Update Slovak translation
+- Fix including proper dependencies without dark mode support (issue #67)
+
+AdminNeo 4.16
+-------------
+
+### Changes
+
+- Use strong encryption for storing login information (by @gildas-ld)
+- SQLite: Show all supported pragmas in Variables (by @vrana)
+- PostgreSQL: Link user defined types (by @vrana)
+- PostgreSQL: Export functions (by @vrana)
+- MySQL, PostgreSQL, MS SQL: Support CHECK constraint (by @jkoop, @vrana)
+- MySQL: Don't offer empty enum value in edit (by @vrana)
+- MySQL 9+: Support vector type (by @vrana)
+- Hide collations if empty (by @vrana)
+- Hide column options in indexes definition by default (by @vrana)
+- Set body width to auto (by @wutsch0)
+- Layout corrections on narrow screens (by @vrana)
+
+### Bugfixes
+
+- MySQL: Fix connecting if SSL connection is configured only for MS SQL
+- MySQL: Fix links to information_schema help (by @vrana)
+- MS SQL: Fix editing rows with datetime column in primary key (issue #61)
+- MS SQL: Allow altering table in non-default schema (by @vrana)
+- MS SQL: Displaying and changing default values (by @vrana)
+- MS SQL: Fix length of nvarchar columns (by @vrana)
+- MS SQL: Update doc_links (by @vrana)
+- Oracle: Fix foreign key doc link (by @vrana)
+- PostgreSQL: Constraint enum values in editing (by @vrana)
+- PostgreSQL 8+: Fix exporting table constraints (by @vrana)
+- Fix Latvian plurals (by @vrana)
+- Fix undefined variable in SQL export (by @vrana)
+- Fix links to PostgreSQL docs (by @vrana)
+- Fix printing SQL errors as comments in export (by @vrana)
+- Editor: Select value of foreign key in edit (by @vrana)
+- Keep whitespaces and lines in result table (regression from 4.10)
+
+(Ported relevant changes and fixes from Adminer 4.17.0-4.17.1.)
+
+AdminNeo 4.15 (2025-02-25)
+----------------------------
+
+### Changes
+
+- Change project's name to AdminNeo / EditorNeo
+- Do not strip "localhost" from page title
+- Use autofocus attribute instead of JS function
+- Fix links to MySQL docs (by @adrianbj)
+- Auto-discover designs in AdminerDesigns plugin (by @tdaguin)
+- Separate Collation column in table-structure plugin (by @Denitz)
+- PostgreSQL: Preserve whitespace in EXPLAIN (by @vrana)
+- PostgreSQL: Support altering auto_increment (by @vrana)
+- Oracle: Include tables granted by other user (by Takashi SHIRAI)
+- MongoDB: Execute commands against the selected DB (by @Baskkra)
+- SimpleDB: Disable XML entity loader (by @vrana)
+- Clickhouse: Support for array values (by @morozovsk)
+- Correct German translation error (by @TimAnthonyAlexander)
+- Disable checking of new AdminNeo version on PHP 7.0 and lower
+
+### Bugfixes
+
+- Fix AdminerEditForeign plugin interrupting other plugins for input fields
+- Fix PrettyJsonColumn plugin circular dependency (by @marc-dll)
+- Fix PrettyJsonColumn plugin destroying enum fields
+- Fix missing cross.gif in compiled Editor (issue #53)
+- Fix displaying comments in Alter table form (issue #50)
+- MySQL: Fix saving bit(64) values (by @vrana)
+- MySQL: Fix mysqli ssl without server certificate (by @zeleznypa)
+- SQLite: Fix altering foreign keys (by @vrana)
+- SQLite: Fix expressions in default values (by @vrana)
+- MS SQL: Foreign keys in non-default schema (by @vrana)
+- Handle compilation warnings (by @devinemke)
+- Fix the UI of pappu687 for latest version (by @4msar)
+- Other fixes of pappu687 design (issue #52, issue #55)
+
+(Ported relevant changes and fixes from Adminer 4.16.0.)
+
+AdminNeo 4.14 (2025-02-02)
 ----------------------------
 
 ### Changes
@@ -23,7 +108,7 @@ AdminerNeo 4.14 (2025-02-02)
 
 Thanks for help with invalid links: @adrianbj.
 
-AdminerNeo 4.13 (2025-01-23)
+AdminNeo 4.13 (2025-01-23)
 ----------------------------
 
 ### Changes
@@ -38,7 +123,7 @@ AdminerNeo 4.13 (2025-01-23)
 - SQLite: Fix exporting and recreating tables with UNIQUE column constraint
 - Fix main visual glitches in designs
 
-AdminerNeo 4.12 (2024-11-21)
+AdminNeo 4.12 (2024-11-21)
 ----------------------------
 
 ### New features
@@ -68,7 +153,7 @@ AdminerNeo 4.12 (2024-11-21)
 - Compiler: Fix translations in plugins
 - Compiler: Fix compiled SQLite single-driver Adminer
 
-AdminerNeo 4.11 (2024-10-30)
+AdminNeo 4.11 (2024-10-30)
 ----------------------------
 
 ### New features
@@ -91,7 +176,7 @@ AdminerNeo 4.11 (2024-10-30)
 - MS SQL: Prefix Unicode strings with 'N' so they are treated correctly
 - Fix printing error message while validating server URL
 
-AdminerNeo 4.10 (2024-10-22)
+AdminNeo 4.10 (2024-10-22)
 ----------------------------
 
 ### New features
@@ -124,7 +209,7 @@ AdminerNeo 4.10 (2024-10-22)
 
 - Fix missing SQL statement if warnings are printed (regression from 4.9)
 
-AdminerNeo 4.9.4 (2024-10-09)
+AdminNeo 4.9.4 (2024-10-09)
 -----------------------------
 
 - Fix the width of inline edit field
@@ -137,7 +222,7 @@ AdminerNeo 4.9.4 (2024-10-09)
 - Editor: Fix building links with array parameters
 - Clean up the code for PHP < 5.6
 
-AdminerNeo 4.9.3 (2024-10-02)
+AdminNeo 4.9.3 (2024-10-02)
 -----------------------------
 
 - MySQL, PostgreSQL: Fix queries splitting and string constants
@@ -153,7 +238,7 @@ AdminerNeo 4.9.3 (2024-10-02)
 - CSS: Fix background color of `<pre>` used as edit field
 - CSS: Bigger font size for code blocks
 
-AdminerNeo 4.9.2 (2024-09-18)
+AdminNeo 4.9.2 (2024-09-18)
 -----------------------------
 
 - Fix textarea height for single-line inputs (used typically for SQLite text field)
@@ -167,7 +252,7 @@ AdminerNeo 4.9.2 (2024-09-18)
 - Editor: Fix searching in tables
 - Add function to retrieve driver name that can be used in plugins (by @Roy-Orbison)
 
-AdminerNeo 4.9.1 (2024-09-09)
+AdminNeo 4.9.1 (2024-09-09)
 -----------------------------
 
 - Compatibility with PHP 8.3 (by @Sneda8)
@@ -185,7 +270,7 @@ AdminerNeo 4.9.1 (2024-09-09)
 - AdminerEditForeign: Refactor and fix the plugin
 - AdminerLoginOtp: Autocomplete hints for OTP input field, code refactoring
 
-AdminerNeo 4.9 (2024-08-19)
+AdminNeo 4.9 (2024-08-19)
 ---------------------------
 
 - Validate server input in login form
@@ -203,7 +288,7 @@ AdminerNeo 4.9 (2024-08-19)
 - Update composer.json
 - Add script for exporting compiled adminer variants
 
-AdminerNeo 4.8.2 (2024-03-16)
+AdminNeo 4.8.2 (2024-03-16)
 -----------------------------
 
 - Support multi-line table comments
