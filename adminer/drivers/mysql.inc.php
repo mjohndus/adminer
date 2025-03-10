@@ -580,15 +580,29 @@ if (isset($_GET["mysql"])) {
 	function fields($table) {
 		global $connection;
 
+		$maria = preg_match('~MariaDB~', $connection->server_info);
+
 		$return = array();
 		foreach (get_rows("SELECT * FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = " . q($table) . " ORDER BY ORDINAL_POSITION") as $row) {
-			$maria = preg_match('~MariaDB~', $connection->server_info);
 			$field = $row["COLUMN_NAME"];
-			$default = preg_replace("~^'(.*)'\$~", '\1', $row["COLUMN_DEFAULT"]);
 			$type = $row["COLUMN_TYPE"];
 			// https://mariadb.com/kb/en/library/show-columns/, https://github.com/vrana/adminer/pull/359#pullrequestreview-276677186
 			$generated = preg_match('~^(VIRTUAL|PERSISTENT|STORED)~', $row["EXTRA"]);
 			preg_match('~^([^( ]+)(?:\((.+)\))?( unsigned)?( zerofill)?$~', $type, $match);
+
+			$default = $row["COLUMN_DEFAULT"];
+			$is_text = preg_match('~text~', $match[1]);
+
+			// MariaDB: texts are escaped with slashes, chars with double apostrophe.
+			// MySQL: default value a'b of text column is stored as _utf8mb4\'a\\\'b\'.
+			if (!$maria && $is_text) {
+				$default = preg_replace("~^(_\w+)?('.*')$~", '\2', stripslashes($default));
+			}
+			if ($maria || $is_text) {
+				$default = preg_replace_callback("~^'(.*)'$~", function ($match) {
+					return str_replace("''", "'", stripslashes($match[1]));
+				}, $default);
+			}
 
 			$return[$field] = array(
 				"field" => $field,
@@ -598,13 +612,7 @@ if (isset($_GET["mysql"])) {
 				"unsigned" => ltrim($match[3] . $match[4]),
 				"default" => ($generated
 					? ($maria ? $row["GENERATION_EXPRESSION"] : stripslashes($row["GENERATION_EXPRESSION"]))
-					: ($row["COLUMN_DEFAULT"] != "" || preg_match("~char|set~", $match[1])
-						? (preg_match('~text~', $match[1])
-							? stripslashes($default)
-							: ($maria ? str_replace("''", "'", $default) : $row["COLUMN_DEFAULT"]) // MariaDB: texts are escaped with slashes, chars with double apostrophe
-						)
-						: null
-					)
+					: ($default != "" || preg_match("~char|set~", $match[1]) ? $default : null)
 				),
 				"null" => ($row["IS_NULLABLE"] == "YES"),
 				"auto_increment" => ($row["EXTRA"] == "auto_increment"),
