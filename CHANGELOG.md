@@ -1,8 +1,8 @@
 Changelog
 =========
 
-AdminNeo 4.17-dev
------------------
+AdminNeo 4.17
+-------------
 
 ### Changes
 
