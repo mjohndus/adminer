@@ -1,6 +1,11 @@
 Upgrade guide
 =============
 
+Migrating to 4.17
+-----------------
+
+- Plugin enum-types.php was integrated into the base code, so it can be removed.
+
 Migrating to 4.10
 -----------------
 
