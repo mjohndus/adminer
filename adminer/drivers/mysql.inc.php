@@ -604,6 +604,11 @@ if (isset($_GET["mysql"])) {
 						return str_replace("''", "'", stripslashes($matches[1]));
 					}, $default);
 				}
+
+				// MySQL: Convert binary default value.
+				if (!$maria && preg_match('~binary~', $type_matches[1]) && preg_match('~^0x(\w*)$~', $default, $matches)) {
+					$default = pack("H*", $matches[1]);
+				}
 			}
 
 			$return[$field] = array(
