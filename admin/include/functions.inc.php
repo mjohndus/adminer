@@ -1599,12 +1599,14 @@ function edit_form($table, $fields, $row, $update) {
 	?>
 <form action="" method="post" enctype="multipart/form-data" id="form">
 <?php
+	$first = 0;
 	if (!$fields) {
 		echo "<p class='error'>" . lang('You have no privileges to update this table.') . "\n";
 	} else {
 		echo "<table class='box'>" . script("qsl('table').onkeydown = onEditingKeydown;");
 
-		$first = 0;
+		$is_first = true;
+
 		foreach ($fields as $name => $field) {
 			echo "<tr><th>" . Admin::get()->getFieldName($field);
 			$key = bracket_escape($name);
@@ -1649,8 +1651,10 @@ function edit_form($table, $fields, $row, $update) {
 				$value = "";
 				$function = "uuid";
 			}
-			if ($field["auto_increment"] || $function == "now" || $function == "uuid") {
+			if ($is_first && ($field["auto_increment"] || $function == "now" || $function == "uuid")) {
 				$first++;
+			} else {
+				$is_first = false;
 			}
 			input($field, $value, $function);
 			echo "\n";
