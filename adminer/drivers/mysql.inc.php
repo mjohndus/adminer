@@ -592,7 +592,7 @@ if (isset($_GET["mysql"])) {
 
 			$default = $maria && $row["COLUMN_DEFAULT"] == "NULL" ? null : $row["COLUMN_DEFAULT"];
 			if ($default !== null) {
-				$is_text = preg_match('~text~', $match[1]);
+				$is_text = preg_match('~(text|json)~', $match[1]);
 
 				// MariaDB: texts are escaped with slashes, chars with double apostrophe.
 				// MySQL: default value a'b of text column is stored as _utf8mb4\'a\\\'b\'.
@@ -614,7 +614,7 @@ if (isset($_GET["mysql"])) {
 				"unsigned" => ltrim($match[3] . $match[4]),
 				"default" => ($generated
 					? ($maria ? $row["GENERATION_EXPRESSION"] : stripslashes($row["GENERATION_EXPRESSION"]))
-					: ($default != "" || preg_match("~char|set~", $match[1]) ? $default : null)
+					: $default
 				),
 				"null" => ($row["IS_NULLABLE"] == "YES"),
 				"auto_increment" => ($row["EXTRA"] == "auto_increment"),
