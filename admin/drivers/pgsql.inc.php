@@ -64,7 +64,10 @@ if (isset($_GET["pgsql"])) {
 
 			public function quote(string $string): string
 			{
-				return pg_escape_literal($this->connection, $string);
+				return (function_exists('pg_escape_literal')
+					? pg_escape_literal($this->connection, $string) // available since PHP 5.4.4
+					: "'" . pg_escape_string($this->connection, $string) . "'"
+				);
 			}
 
 			public function formatValue(?string $value, array $field): ?string

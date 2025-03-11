@@ -84,9 +84,12 @@ if ($_POST && !process_fields($row["fields"]) && !$error) {
 		$partitioning = "";
 		if (support("partitioning")) {
 			if (isset($partition_by[$row["partition_by"]])) {
-				$params = array_filter($row, function ($key) {
-					return preg_match('~^partition~', $key);
-				}, ARRAY_FILTER_USE_KEY);
+				$params = [];
+				foreach ($row as $key => $val) {
+					if (preg_match('~^partition~', $key)) {
+						$params[$key] = $val;
+					}
+				}
 
 				foreach ($params["partition_names"] as $key => $name) {
 					if ($name === "") {
