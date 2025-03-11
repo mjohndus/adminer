@@ -590,18 +590,20 @@ if (isset($_GET["mysql"])) {
 			$generated = preg_match('~^(VIRTUAL|PERSISTENT|STORED)~', $row["EXTRA"]);
 			preg_match('~^([^( ]+)(?:\((.+)\))?( unsigned)?( zerofill)?$~', $type, $match);
 
-			$default = $row["COLUMN_DEFAULT"];
-			$is_text = preg_match('~text~', $match[1]);
+			$default = $maria && $row["COLUMN_DEFAULT"] == "NULL" ? null : $row["COLUMN_DEFAULT"];
+			if ($default !== null) {
+				$is_text = preg_match('~text~', $match[1]);
 
-			// MariaDB: texts are escaped with slashes, chars with double apostrophe.
-			// MySQL: default value a'b of text column is stored as _utf8mb4\'a\\\'b\'.
-			if (!$maria && $is_text) {
-				$default = preg_replace("~^(_\w+)?('.*')$~", '\2', stripslashes($default));
-			}
-			if ($maria || $is_text) {
-				$default = preg_replace_callback("~^'(.*)'$~", function ($match) {
-					return str_replace("''", "'", stripslashes($match[1]));
-				}, $default);
+				// MariaDB: texts are escaped with slashes, chars with double apostrophe.
+				// MySQL: default value a'b of text column is stored as _utf8mb4\'a\\\'b\'.
+				if (!$maria && $is_text) {
+					$default = preg_replace("~^(_\w+)?('.*')$~", '\2', stripslashes($default));
+				}
+				if ($maria || $is_text) {
+					$default = preg_replace_callback("~^'(.*)'$~", function ($match) {
+						return str_replace("''", "'", stripslashes($match[1]));
+					}, $default);
+				}
 			}
 
 			$return[$field] = array(
