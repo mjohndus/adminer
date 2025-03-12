@@ -308,7 +308,7 @@ function default_value($field) {
 		return " $default";
 	}
 
-	if (preg_match('~char|binary|text|enum|set~', $field["type"]) || preg_match('~^(?![a-z])~i', $default)) {
+	if (preg_match('~char|binary|text|json|enum|set~', $field["type"]) || preg_match('~^(?![a-z])~i', $default)) {
 		// MySQL requires () around default value of text and json column.
 		if ($jush == "sql" && preg_match('~text|json~', $field["type"])) {
 			return " DEFAULT (" . q($default) . ")";
