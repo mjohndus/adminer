@@ -114,7 +114,7 @@ function adminer_object() {
     return new AdminerPlugin($plugins);
 }
 
-// Include original AdminerNeo or EditorNeo.
+// Include original AdminNeo or EditorNeo.
 include "./adminer.php";
 ```
 
