@@ -205,6 +205,14 @@ abstract class Driver
 	}
 
 	/**
+	 * Returns function used to convert the value inserted by user.
+	 */
+	public function getUnconvertFunction(array $field): string
+	{
+		return "";
+	}
+
+	/**
 	 * Selects data from a table.
 	 *
 	 * @param string $table Table name.

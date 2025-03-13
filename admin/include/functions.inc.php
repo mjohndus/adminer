@@ -1020,6 +1020,7 @@ function input($field, $value, $function) {
 	$has_function = (in_array($function, $functions) || isset($functions[$function]));
 
 	echo "<td class='function'>";
+	echo Driver::get()->getUnconvertFunction($field) . " ";
 
 	if (count($functions) > 1) {
 		$selected = $function === null || $has_function ? $function : "";

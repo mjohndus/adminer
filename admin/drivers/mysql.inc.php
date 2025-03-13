@@ -324,6 +324,19 @@ if (isset($_GET["mysql"])) {
 			return ($record ? parent::insert($table, $record) : queries("INSERT INTO " . table($table) . " ()\nVALUES ()"));
 		}
 
+		public function getUnconvertFunction(array $field): string
+		{
+			if (preg_match("~binary~", $field["type"])) {
+				return "<code class='jush-sql'>UNHEX</code>";
+			} elseif ($field["type"] == "bit") {
+				return doc_link(array('sql' => 'bit-value-literals.html'), "<code>b''</code>");
+			} elseif (preg_match("~geometry|point|linestring|polygon~", $field["type"])) {
+				return "<code class='jush-sql'>GeomFromText</code>";
+			} else {
+				return "";
+			}
+		}
+
 		public function insertUpdate(string $table, array $records, array $primary)
         {
 			$columns = array_keys(reset($records));
