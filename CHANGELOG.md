@@ -12,6 +12,7 @@ AdminNeo 5.1.0
 - MS SQL: Add support for computed columns (by @vrana)
 - SQLite: Add support for generated columns (by @vrana)
 - PostgreSQL: Add support for indexes on materialized views (by @vrana)
+- Add support for CockroachDB (by @vrana)
 - Refine and standardize Japanese translation (by @yama)
 - Plugins: Use protected visibility of member properties
 - Force inline editing with the Shift key when clicking on a link.
