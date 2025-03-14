@@ -1,6 +1,18 @@
 Changelog
 =========
 
+AdminNeo 4.17.2
+---------------
+
+### Changes
+
+- Use textarea for editing JSON values.
+
+### Bugfixes
+
+- Fix executing SQL query when history is NULL (@devinemke)
+- MySQL: Fix saving string default value of json fields
+
 AdminNeo 4.17.1
 ---------------
 
