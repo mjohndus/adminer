@@ -977,7 +977,7 @@ function input($field, $value, $function) {
 			}
 		} elseif (preg_match('~blob|bytea|raw|file~', $field["type"]) && ini_bool("file_uploads")) {
 			echo "<input type='file' name='fields-$name'>";
-		} elseif (($text = preg_match('~text|lob|memo~i', $field["type"])) || preg_match("~\n~", $value)) {
+		} elseif (($text = preg_match('~text|json|lob|memo~i', $field["type"])) || preg_match("~\n~", $value)) {
 			if ($text && $jush != "sqlite") {
 				$attrs .= " cols='50' rows='12'";
 			} else {
@@ -1515,6 +1515,9 @@ function edit_form($table, $fields, $row, $update) {
 				$default = $field["default"];
 				if ($field["type"] == "bit" && preg_match("~^b'([01]*)'\$~", $default, $regs)) {
 					$default = $regs[1];
+				}
+				if ($jush == "sql" && preg_match('~binary~', $field["type"])) {
+					$default = bin2hex($default); // same as UNHEX
 				}
 			}
 			$value = ($row !== null
