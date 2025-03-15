@@ -93,7 +93,9 @@ function select(Result $result, ?Connection $connection = null, $orgtables = [],
 			if ($link) {
 				$val = "<a href='" . h($link) . "'" . (is_web_url($link) ? target_blank() : '') . ">$val</a>";
 			}
-			echo "<td>$val";
+			// https://dev.mysql.com/doc/dev/mysql-server/latest/field__types_8h.html
+			$class = $types[$key] <= 9 || $types[$key] == 246 ? "class='number'" : "";
+			echo "<td $class>$val</td>";
 		}
 	}
 	echo ($i ? "</table>\n</div>" : "<p class='message'>" . lang('No rows.')) . "\n";
