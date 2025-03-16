@@ -124,34 +124,6 @@ function referencable_primary($self) {
 	return $return;
 }
 
-/**
- * Returns settings stored in a cookie.
- */
-function get_settings(string $cookie = "neo_settings"): array
-{
-	parse_str($_COOKIE[$cookie] ?? "", $settings);
-
-	return $settings;
-}
-
-/**
- * Returns setting stored in a cookie.
- */
-function get_setting(string $key, string $cookie = "neo_settings"): ?string
-{
-	$settings = get_settings($cookie);
-
-	return $settings[$key] ?? null;
-}
-
-/**
- * Stores settings to a cookie.
- */
-function save_settings(array $settings, string $cookie = "neo_settings"): void
-{
-	cookie($cookie, http_build_query($settings + get_settings($cookie)));
-}
-
 /** Print SQL <textarea> tag
 * @param string
 * @param string or array in which case [0] of every element is used

@@ -29,6 +29,7 @@ include __DIR__ . "/../core/Server.php";
 include __DIR__ . "/../core/Config.php";
 include __DIR__ . "/polyfill.inc.php";
 include __DIR__ . "/functions.inc.php";
+include __DIR__ . "/html.inc.php";
 include __DIR__ . "/available.inc.php";
 include __DIR__ . "/compile.inc.php";
 
