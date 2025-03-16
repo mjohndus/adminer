@@ -990,9 +990,10 @@ function enum_input(string $attrs, array $field, $value, ?string $empty = null, 
 * @param array one field from fields()
 * @param mixed
 * @param string
+* @param bool
 * @return null
 */
-function input($field, $value, $function) {
+function input($field, $value, $function, $autofocus = false) {
 	$name = h(bracket_escape($field["field"]));
 
 	$types = Driver::get()->getTypes();
@@ -1013,7 +1014,7 @@ function input($field, $value, $function) {
 
 	// Attributes.
 	$disabled = stripos($field["default"], "GENERATED ALWAYS AS ") === 0 ? " disabled=''" : "";
-	$attrs = " name='fields[$name]' $disabled";
+	$attrs = " name='fields[$name]' $disabled" . ($autofocus ? " autofocus" : "");
 
 	// Function list.
 	$functions = (isset($_GET["select"]) || $reset ? ["orig" => lang('original')] : []) + Admin::get()->getFieldFunctions($field);
@@ -1606,7 +1607,7 @@ function edit_form($table, $fields, $row, $update) {
 	} else {
 		echo "<table class='box'>" . script("qsl('table').onkeydown = onEditingKeydown;");
 
-		$is_first = true;
+		$autofocus = !$_POST;
 
 		foreach ($fields as $name => $field) {
 			echo "<tr><th>" . Admin::get()->getFieldName($field);
@@ -1652,12 +1653,13 @@ function edit_form($table, $fields, $row, $update) {
 				$value = "";
 				$function = "uuid";
 			}
-			if ($is_first && ($field["auto_increment"] || $function == "now" || $function == "uuid")) {
-				$first++;
-			} else {
-				$is_first = false;
+			if ($autofocus !== false) {
+				$autofocus = ($field["auto_increment"] || $function == "now" || $function == "uuid" ? null : true); // null - don't autofocus this input but check the next one
 			}
-			input($field, $value, $function);
+			input($field, $value, $function, $autofocus);
+			if ($autofocus) {
+				$autofocus = false;
+			}
 			echo "\n";
 		}
 		if (!support("table")) {
@@ -1683,9 +1685,7 @@ function edit_form($table, $fields, $row, $update) {
 			echo ($update ? script("qsl('input').onclick = function () { return !ajaxForm(this.form, '" . lang('Saving') . "…', this); };") : "");
 		}
 	}
-	echo ($update ? "<input type='submit' class='button' name='delete' value='" . lang('Delete') . "'>" . confirm() . "\n"
-		: ($_POST || !$fields ? "" : script("qsa('td', gid('form'))[2*$first+1].firstChild.focus();"))
-	);
+	echo ($update ? "<input type='submit' class='button' name='delete' value='" . lang('Delete') . "'>" . confirm() . "\n" : "");
 	if (isset($_GET["select"])) {
 		hidden_fields(["check" => (array) $_POST["check"], "clone" => $_POST["clone"], "all" => $_POST["all"]]);
 	}
