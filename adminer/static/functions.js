@@ -164,22 +164,24 @@ function trCheck(el) {
 	}
 }
 
-/** Fill number of selected items
-* @param string
-* @param string
-* @uses thousandsSeparator
-*/
+/**
+ * Fills number of selected items in fieldset legend and disables submit buttons if count is zero.
+ *
+ * @param {string} id
+ * @param {number|string} count Can be exact number or string like '~ 100'.
+ * @uses thousandsSeparator
+ */
 function selectCount(id, count) {
-	setHtml(id, (count === '' ? '' : '(' + (count + '').replace(/\B(?=(\d{3})+$)/g, thousandsSeparator) + ')'));
-	var el = gid(id);
-	if (el) {
-		var inputs = qsa('input', el.parentNode.parentNode);
-		for (var i = 0; i < inputs.length; i++) {
-			var input = inputs[i];
-			if (input.type === 'submit') {
-				input.disabled = (count === '0');
-			}
-		}
+	const zero = count === 0 || count === '0' || count === '';
+
+	setHtml(id, (zero ? '' : '(' + (count + '').replace(/\B(?=(\d{3})+$)/g, thousandsSeparator) + ')'));
+
+	const el = gid(id);
+	if (!el) return;
+
+	const inputs = qsa('input[type="submit"]', el.parentNode.parentNode);
+	for (let input of inputs) {
+		input.disabled = zero;
 	}
 }
 
