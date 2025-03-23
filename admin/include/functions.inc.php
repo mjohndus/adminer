@@ -420,7 +420,7 @@ function save_settings(array $settings, string $cookie = "neo_settings"): void
 * @return null
 */
 function restart_session() {
-	if (!ini_bool("session.use_cookies")) {
+	if (!ini_bool("session.use_cookies") && session_status() == PHP_SESSION_NONE) {
 		session_start();
 	}
 }
