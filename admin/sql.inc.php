@@ -52,8 +52,7 @@ if ($_POST) {
 
 		if ($query != "" && strlen($query) < 1e6) { // don't add big queries
 			$q = $query . (preg_match("~;[ \t\r\n]*\$~", $query) ? "" : ";"); //! doesn't work with DELIMITER |
-			$last_record = $history ? end($history) : false;
-			if (!$history || ($last_record && reset($last_record) != $q)) { // no repeated queries
+			if (!$history || first(end($history)) != $q) { // no repeated queries
 				restart_session();
 				$history[] = [$q, time()]; //! add elapsed time
 				set_session("queries", $history_all); // required because reference is unlinked by stop_session()

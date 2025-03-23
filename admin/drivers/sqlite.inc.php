@@ -53,9 +53,7 @@ if (isset($_GET["sqlite"])) {
 				if (is_utf8($string)) {
 					return "'" . $this->sqlite->escapeString($string) . "'";
 				} else {
-					$data = unpack('H*', $string);
-
-					return "x'" . reset($data) . "'";
+					return "x'" . first(unpack('H*', $string)) . "'";
 				}
 			}
 		}

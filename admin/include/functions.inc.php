@@ -885,6 +885,16 @@ function unlock_file($file)
 }
 
 /**
+ * Returns the first element of an array.
+ *
+ * @return mixed|false The value of the first array element, or false if the array is empty.
+ */
+function first(array $array) {
+	// reset(f()) triggers a notice
+	return reset($array);
+}
+
+/**
  * Reads password from file adminneo.key in temporary directory or create one.
  *
  * @param $create bool
