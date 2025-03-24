@@ -92,14 +92,14 @@ if (isset($_GET["sqlite"])) {
 			{
 				$column = $this->offset++;
 
-				$type = $this->resource->columnType($column); //! map to MySQL numbers
+				$type = $this->resource->columnType($column);
 				if ($type === false) {
 					return false;
 				}
 
 				return (object) [
 					"name" => $this->resource->columnName($column),
-					"type" => $type,
+					"type" => ($type == SQLITE3_TEXT ? 15 : 0),
 					"charsetnr" => ($type == SQLITE3_BLOB ? 63 : 0), // 63 - binary
 				];
 			}

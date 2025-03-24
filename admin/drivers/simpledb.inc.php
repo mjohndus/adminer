@@ -170,7 +170,7 @@ if (isset($_GET["simpledb"])) {
 
 				return (object) [
 					'name' => $keys[$this->offset++],
-					'type' => 0,
+					'type' => 15,
 					'charsetnr' => 0,
 				];
 			}

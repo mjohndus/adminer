@@ -201,7 +201,7 @@ if (isset($_GET["mssql"])) {
 
 				return (object) [
 					'name' => $field["Name"],
-					'type' => ($field["Type"] == 1 ? 254 : 0),
+					'type' => ($field["Type"] == 1 ? 254 : 15),
 					'charsetnr' => 0,
 				];
 			}

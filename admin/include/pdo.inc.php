@@ -124,8 +124,9 @@ if (extension_loaded('pdo')) {
 				return false;
 			}
 
-			$row["type"] = $row["pdo_type"]; //! map to MySQL numbers
-			$row["charsetnr"] = (in_array("blob", $row["flags"] ?? []) ? 63 : 0);
+			$type = $row["pdo_type"];
+			$row["type"] = ($type == PDO::PARAM_INT ? 0 : 15);
+			$row["charsetnr"] = ($type == \PDO::PARAM_LOB || (isset($row["flags"]) && in_array("blob", (array) $row["flags"])) ? 63 : 0);
 
 			return (object) $row;
 		}
