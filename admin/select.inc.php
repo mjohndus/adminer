@@ -140,6 +140,10 @@ if ($_POST) {
 					)
 				);
 				$affected = Connection::get()->getAffectedRows();
+				if (is_object($result)) {
+					// PostgreSQL with RETURNING fills rowsCount.
+					$affected += $result->getRowsCount();
+				}
 			} else {
 				foreach ((array) $_POST["check"] as $val) {
 					// where is not unique so OR can't be used
