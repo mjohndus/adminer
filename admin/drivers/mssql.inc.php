@@ -219,6 +219,10 @@ if (isset($_GET["mssql"])) {
 			}
 		}
 
+		function last_id($result) {
+			return Connection::get()->getValue("SELECT SCOPE_IDENTITY()"); // @@IDENTITY can return trigger INSERT
+		}
+
 	} else {
 		abstract class MsSqlPdoConnection extends PdoConnection
 		{
@@ -231,6 +235,11 @@ if (isset($_GET["mssql"])) {
 			public function quote(string $string): string
 			{
 				return (contains_unicode($string) ? "N" : "") . parent::quote($string);
+			}
+
+			public function lastInsertId()
+			{
+				return $this->pdo->lastInsertId();
 			}
 		}
 
@@ -268,6 +277,13 @@ if (isset($_GET["mssql"])) {
 					return $this->dsn("dblib:charset=utf8;host=" . str_replace(":", ";unix_socket=", preg_replace('~:(\d)~', ';port=\1', $server)), $username, $password);
 				}
 			}
+		}
+
+		function last_id($result) {
+			/** @var MsSqlPdoConnection $connection */
+			$connection = Connection::get();
+
+			return $connection->lastInsertId();
 		}
 	}
 
@@ -666,11 +682,6 @@ WHERE OBJECT_NAME(i.object_id) = " . q($table)
 		return (!$index || queries("DROP INDEX " . implode(", ", $index)))
 			&& (!$drop || queries("ALTER TABLE " . table($table) . " DROP " . implode(", ", $drop)))
 		;
-	}
-
-	function last_id($result)
-	{
-		return Connection::get()->getValue("SELECT SCOPE_IDENTITY()"); // @@IDENTITY can return trigger INSERT
 	}
 
 	function explain(Connection $connection, string $query)
