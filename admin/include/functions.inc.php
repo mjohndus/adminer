@@ -789,6 +789,9 @@ function dump_headers(string $identifier, bool $multi_table = false): string
 	}
 
 	session_write_close();
+	if (!ob_get_level()) {
+		ob_start(null, 4096);
+	}
 	ob_flush();
 	flush();
 
