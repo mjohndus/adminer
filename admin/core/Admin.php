@@ -317,7 +317,8 @@ class Admin extends Origin
 	/**
 	 * Fills descriptions of the foreign keys for the whole selection data.
 	 *
-	 * @param array $rows All selection data to print.
+	 * @param list<string[]> $rows All selection data to print.
+	 * @param array[] $foreignKeys
 	 *
 	 * @return array Updated selection data.
 	 */
@@ -373,7 +374,7 @@ class Admin extends Origin
 	/**
 	 * Prints table structure in tabular format.
 	 *
-	 * @param array $fields Data about individual fields.
+	 * @param array[] $fields Data about individual fields.
 	 */
 	public function printTableStructure(array $fields): void
 	{
@@ -461,7 +462,7 @@ class Admin extends Origin
 	/**
 	 * Prints the list of table indexes.
 	 *
-	 * @param array $indexes Data about all indexes on a table.
+	 * @param array[] $indexes Data about all indexes on a table.
 	 */
 	public function printTableIndexes(array $indexes): void
 	{
@@ -486,8 +487,8 @@ class Admin extends Origin
 	/**
 	 * Prints columns box in selection filter.
 	 *
-	 * @param array $select The result of processSelectionColumns()[0].
-	 * @param array $columns Selectable columns.
+	 * @param list<string> $select The result of processSelectionColumns()[0].
+	 * @param string[] $columns Selectable columns.
 	 */
 	public function printSelectionColumns(array $select, array $columns): void
 	{
@@ -531,8 +532,9 @@ class Admin extends Origin
 	/**
 	 * Prints search box in selection filter.
 	 *
-	 * @param array $where The result of processSelectionSearch().
-	 * @param array $columns Selectable columns.
+	 * @param list<string> $where The result of processSelectionSearch().
+	 * @param string[] $columns Selectable columns.
+	 * @param array[] $indexes
 	 */
 	public function printSelectionSearch(array $where, array $columns, array $indexes): void
 	{
@@ -574,8 +576,9 @@ class Admin extends Origin
 	/**
 	 * Prints order box in selection filter.
 	 *
-	 * @param array $order The result of processSelectionOrder().
-	 * @param array $columns Selectable columns.
+	 * @param list<string> $order The result of processSelectionOrder().
+	 * @param string[] $columns Selectable columns.
+	 * @param array[] $indexes
 	 */
 	public function printSelectionOrder(array $order, array $columns, array $indexes): void
 	{
@@ -628,6 +631,8 @@ class Admin extends Origin
 
 	/**
 	 * Prints action box in selection filter.
+	 *
+	 * @param array[] $indexes
 	 */
 	public function printSelectionAction(array $indexes): void
 	{
@@ -653,9 +658,10 @@ class Admin extends Origin
 	/**
 	 * Processes columns box in selection filter.
 	 *
-	 * @param array $columns Selectable columns.
+	 * @param string[] $columns Selectable columns.
+	 * @param array[] $indexes
 	 *
-	 * @return array [[select_expressions], [group_expressions]]
+	 * @return list<list<string>> [[select_expressions], [group_expressions]]
 	 */
 	public function processSelectionColumns(array $columns, array $indexes): array
 	{
@@ -677,7 +683,10 @@ class Admin extends Origin
 	/**
 	 * Processes search box in selection filter.
 	 *
-	 * @return array Expressions to join by AND.
+	 * @param array[] $fields
+	 * @param array[] $indexes
+	 *
+	 * @return list<string> Expressions to join by AND.
 	 */
 	public function processSelectionSearch(array $fields, array $indexes): array
 	{
@@ -742,7 +751,10 @@ class Admin extends Origin
 	/**
 	 * Processes order box in selection filter.
 	 *
-	 * @return array Expressions to join by comma.
+	 * @param array[] $fields
+	 * @param array[] $indexes
+	 *
+	 * @return list<string> Expressions to join by comma.
 	 */
 	public function processSelectionOrder(array $fields, array $indexes): array
 	{
@@ -771,6 +783,8 @@ class Admin extends Origin
 	 * Return the list of functions displayed in edit form.
 	 *
 	 * @param array $field Single field returned from fields().
+	 *
+	 * @return list<string>
 	 */
 	public function getFieldFunctions(array $field): array
 	{

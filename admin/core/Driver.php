@@ -12,16 +12,16 @@ abstract class Driver
 	/** @var Origin|Pluginer */
 	protected $admin;
 
-	/** @var array [$description => [$type => $maximum_unsigned_length, ...], ...] */
+	/** @var int[][] [$description => [$type => $maximum_unsigned_length, ...], ...] */
 	protected $types = [];
 
-	/** @var string[] List of number variants. */
+	/** @var list<string> List of number variants. */
 	protected $unsigned = [];
 
-	/** @var string[] */
+	/** @var list<string> */
 	protected $generated = [];
 
-	/** @var string[] Operators used in select. */
+	/** @var list<string> Operators used in select. */
 	protected $operators = [];
 
 	/** @var ?String Operator for LIKE condition. */
@@ -30,25 +30,25 @@ abstract class Driver
 	/** @var ?String Operator for regular expression condition. */
 	protected $regexpOperator = null;
 
-	/** @var string[] Functions used in select. */
+	/** @var list<string> Functions used in select. */
 	protected $functions = [];
 
-	/** @var string[] Grouping functions used in select. */
+	/** @var list<string> Grouping functions used in select. */
 	protected $grouping = [];
 
-	/** @var string[] List of IN/OUT parameters for procedures. */
+	/** @var list<string> List of IN/OUT parameters for procedures. */
 	protected $inOut = ["IN", "OUT", "INOUT"];
 
-	/** @var string[] List of actions used within the foreign keys. */
+	/** @var list<string> List of actions used within the foreign keys. */
 	protected $onActions = ["RESTRICT", "CASCADE", "SET NULL", "SET DEFAULT", "NO ACTION"];
 
-	/** @var array Array of ["$type|$type2" => "$function/$function2"] functions used in editing, [0] - edit and insert, [1] - edit only */
+	/** @var list<string[]> Array of ["$type|$type2" => "$function/$function2"] functions used in editing, [0] - edit and insert, [1] - edit only */
 	protected $editFunctions = [];
 
-	/** @var string[] Array of internal system databases. */
+	/** @var list<string> Array of internal system databases. */
 	protected $systemDatabases = [];
 
-	/** @var string[] Array of internal system schemas. */
+	/** @var list<string> Array of internal system schemas. */
 	protected $systemSchemas = [];
 
 	/** @var ?Driver */
@@ -87,7 +87,7 @@ abstract class Driver
 	/**
 	 * Returns the list of all types.
 	 *
-	 * @return array [$type => $maximum_unsigned_length, ...]
+	 * @return int[] [$type => $maximum_unsigned_length, ...]
 	 */
 	public function getTypes(): array
 	{
@@ -97,7 +97,7 @@ abstract class Driver
 	/**
 	 * Returns structured types.
 	 *
-	 * @return array [$description => [$type, ...], ...]
+	 * @return list<string>[]|list<string> [$description => [$type, ...], ...]
 	 */
 	public function getStructuredTypes(): array
 	{
@@ -183,7 +183,7 @@ abstract class Driver
 	}
 
 	/**
-	 * @return string[]
+	 * @return string[][]
 	 */
 	public function getEditFunctions(): array
 	{
@@ -218,10 +218,10 @@ abstract class Driver
 	 * Selects data from a table.
 	 *
 	 * @param string $table Table name.
-	 * @param array $select The result of Admin::get()->processSelectionColumns()[0].
-	 * @param array $where The result of Admin::get()->processSelectionSearch().
-	 * @param array $group The result of Admin::get()->processSelectionColumns()[1].
-	 * @param array $order The result of Admin::get()->processSelectionOrder().
+	 * @param list<string> $select The result of Admin::get()->processSelectionColumns()[0].
+	 * @param list<string> $where The result of Admin::get()->processSelectionSearch().
+	 * @param list<string> $group The result of Admin::get()->processSelectionColumns()[1].
+	 * @param list<string> $order The result of Admin::get()->processSelectionOrder().
 	 * @param ?int $limit The result of Admin::get()->processSelectionLimit().
 	 * @param int $page Index of page starting at zero.
 	 * @param bool $print Whether to print the query.
@@ -270,7 +270,7 @@ abstract class Driver
 	 * Updates data in a table.
 	 *
 	 * @param string $table Table name.
-	 * @param array $record Escaped columns in keys, quoted data in values.
+	 * @param string[] $record Escaped columns in keys, quoted data in values.
 	 * @param string $queryWhere Where condition " WHERE ...".
 	 * @param int $limit 0 or 1.
 	 * @param string $separator Separator between parts of the query.
@@ -292,7 +292,7 @@ abstract class Driver
 	 * Inserts data into a table.
 	 *
 	 * @param string $table Table name.
-	 * @param array $record Escaped columns in keys, quoted data in values.
+	 * @param string[] $record Escaped columns in keys, quoted data in values.
 	 *
 	 * @return Result|bool
 	 */
@@ -319,8 +319,8 @@ abstract class Driver
 	 * Inserts or updates data in a table.
 	 *
 	 * @param string $table Table name.
-	 * @param array $records List of records.
-	 * @param array[] $primary Array of arrays with escaped columns in keys and quoted data in values.
+	 * @param list<string[]> $records Array of arrays with escaped columns in keys and quoted data in values.
+	 * @param int[] $primary List of records.
 	 *
 	 * @return Result|bool
 	 */
@@ -444,7 +444,7 @@ abstract class Driver
 	 *
 	 * @param string $table Table name.
 	 *
-	 * @return array [$name => $clause]
+	 * @return string[] [$name => $clause]
 	 */
 	public function checkConstraints(string $table): array
 	{

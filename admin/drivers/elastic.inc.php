@@ -633,10 +633,6 @@ if (isset($_GET["elastic"])) {
 		return null;
 	}
 
-	/** Alter type
-	 * @param array
-	 * @return mixed
-	 */
 	function alter_table($table, $name, $fields, $foreign, $comment, $engine, $collation, $auto_increment, $partitioning) {
 		$properties = [];
 
@@ -670,10 +666,6 @@ if (isset($_GET["elastic"])) {
 		}
 	}
 
-	/** Drop types
-	 * @param array
-	 * @return bool
-	 */
 	function drop_tables($tables) {
 		$return = true;
 		foreach ($tables as $table) { //! convert to bulk api

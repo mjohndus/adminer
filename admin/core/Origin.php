@@ -222,7 +222,7 @@ abstract class Origin extends Plugin
 	/**
 	 * Returns cached list of databases.
 	 *
-	 * @return string[]
+	 * @return list<string>
 	 */
 	public function getDatabases($flush = true): array
 	{
@@ -234,7 +234,7 @@ abstract class Origin extends Plugin
 	/**
 	 * Returns the list of schemas.
 	 *
-	 * @return string[]
+	 * @return list<string>
 	 */
 	public function getSchemas(): array
 	{
@@ -460,6 +460,8 @@ abstract class Origin extends Plugin
 
 	/**
 	 * Returns foreign keys for table.
+	 *
+	 * @return array[] same format as foreign_keys()
 	 */
 	public function getForeignKeys(string $table): array
 	{
@@ -469,7 +471,7 @@ abstract class Origin extends Plugin
 	/**
 	 * Returns backward keys for given table.
 	 *
-	 * @return array $return[$id]["table"] = $target_table; $return[$id]["constraints"][$key_name][$target_column] = $source_column; $return[$target_table]["name"] = $this->admin->getTableName($target_table);
+	 * @return array{schema:string, table:string, constraints:string[][], name:string}[]
 	 */
 	public function getBackwardKeys(string $table, string $tableName): array
 	{
@@ -505,7 +507,8 @@ abstract class Origin extends Plugin
 	/**
 	 * Prints backward keys for given row.
 	 *
-	 * @param array $backwardKeys The result of getBackwardKeys().
+	 * @param array{schema:string, table:string, constraints:string[][], name:string}[] $backwardKeys The result of getBackwardKeys().
+	 * @param string[] $row
 	 */
 	public function printBackwardKeys(array $backwardKeys, array $row): void
 	{

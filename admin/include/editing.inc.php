@@ -7,10 +7,10 @@ namespace AdminNeo;
 *
 * @param Result
 * @param ?Connection connection to examine indexes
-* @param array
+* @param string[]
 * @param int
 *
-* @return array $orgtables
+* @return string[] $orgtables
 */
 function select(Result $result, ?Connection $connection = null, $orgtables = [], $limit = 0) {
 	$links = []; // colno => orgtable - create links from these columns
@@ -111,7 +111,7 @@ function select(Result $result, ?Connection $connection = null, $orgtables = [],
 
 /** Get referencable tables with single column primary key except self
 * @param string
-* @return array [$table_name => $field]
+* @return array[] [$table_name => $field]
 */
 function referencable_primary($self) {
 	$return = []; // table_name => field
@@ -152,7 +152,7 @@ function textarea($name, $value, $rows = 10, $cols = 80) {
 
 /** Generate HTML <select> or <input> if $options are empty
 * @param string
-* @param array
+* @param string[]
 * @param string
 * @param string
 * @param string
@@ -188,10 +188,10 @@ function json_row($key, $val = null) {
 
 /** Print table columns for type edit
 * @param string
-* @param array
-* @param array
-* @param array returned by referencable_primary()
-* @param array extra types to prepend
+* @param list<string>[]
+* @param array[]
+* @param array[] returned by referencable_primary()
+* @param list<string> extra types to prepend
 * @return null
 */
 function edit_type($key, $field, $collations, $foreign_keys = [], $extra_types = []) {
@@ -216,7 +216,7 @@ echo optionlist(array_merge($extra_types, $structured_types), $type);
 
 /**
  * @param string $table
- * @return array
+ * @return array{partition_by:string, partition:string, partitions:string, partition_names:list<string>, partition_values:list<string>}
  */
 function get_partitions_info($table) {
 	$from = "FROM information_schema.PARTITIONS WHERE TABLE_SCHEMA = " . q(DB) . " AND TABLE_NAME = " . q($table);
@@ -262,7 +262,7 @@ function process_type($field, $collate = "COLLATE") {
 /** Create SQL string from field
 * @param array basic field information
 * @param array information about field type
-* @return array ["field", "type", "NULL", "DEFAULT", "ON UPDATE", "COMMENT", "AUTO_INCREMENT"]
+* @return list<string> ["field", "type", "NULL", "DEFAULT", "ON UPDATE", "COMMENT", "AUTO_INCREMENT"]
 */
 function process_field($field, $type_field) {
 	// MariaDB exports CURRENT_TIMESTAMP as a function.
@@ -336,8 +336,10 @@ function type_class($type) {
 /**
  * Prints table interior for fields editing.
  *
+ * @param array[] $fields
+ * @param list<string>[] $collations
  * @param string $type TABLE, FUNCTION or PROCEDURE
- * @param array $foreign_keys returned by referencable_primary()
+ * @param array[] $foreign_keys returned by referencable_primary()
  */
 function edit_fields(array $fields, array $collations, $type = "TABLE", $foreign_keys = []) {
 	$fields = array_values($fields);
@@ -445,7 +447,7 @@ function edit_fields(array $fields, array $collations, $type = "TABLE", $foreign
 }
 
 /** Move fields up and down or add field
-* @param array
+* @param array[]
 * @return bool
 */
 function process_fields(&$fields) {
@@ -486,7 +488,7 @@ function process_fields(&$fields) {
 }
 
 /** Callback used in routine()
-* @param array
+* @param list<array>
 * @return string
 */
 function normalize_enum($match) {
@@ -496,8 +498,8 @@ function normalize_enum($match) {
 /**
  * Issue grant or revoke commands.
  *
- * @param bool $grant
- * @param array $privileges
+ * @param bool $grant GRANT or REVOKE
+ * @param list<string> $privileges
  * @param string $columns
  * @param string $on
  * @param string $user
@@ -583,7 +585,7 @@ function create_trigger($on, $row) {
 
 /** Generate SQL query for creating routine
 * @param string "PROCEDURE" or "FUNCTION"
-* @param array result of routine()
+* @param string[] result of routine()
 * @return string
 */
 function create_routine($routine, $row) {

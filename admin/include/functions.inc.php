@@ -56,7 +56,7 @@ function number_type() {
 }
 
 /** Disable magic_quotes_gpc
-* @param array e.g. (&$_GET, &$_POST, &$_COOKIE)
+* @param list<array> e.g. (&$_GET, &$_POST, &$_COOKIE)
 * @param bool whether to leave values as is
 * @return null modified in place
 */
@@ -195,7 +195,7 @@ function get_password() {
 /** Get list of values from database
 * @param string
 * @param mixed
-* @return array
+* @return list<string>
 */
 function get_vals($query, $column = 0) {
 	$return = [];
@@ -214,7 +214,7 @@ function get_vals($query, $column = 0) {
 * @param ?Connection
 * @param bool
 *
-* @return array
+* @return string[]
 */
 function get_key_vals($query, ?Connection $connection = null, $set_keys = true) {
 	if (!$connection) {
@@ -240,7 +240,7 @@ function get_key_vals($query, ?Connection $connection = null, $set_keys = true) 
  * @param Connection
 * @param string
 *
-* @return array of associative arrays
+* @return list<string[]> of associative arrays
 */
 function get_rows($query, ?Connection $connection = null, $error = "<p class='error'>") {
 	if (!$connection) {
@@ -259,9 +259,9 @@ function get_rows($query, ?Connection $connection = null, $error = "<p class='er
 }
 
 /** Find unique identifier of a row
-* @param array
-* @param array result of indexes()
-* @return array or null if there is no unique identifier
+* @param string[]
+* @param array[] result of indexes()
+* @return string[] or null if there is no unique identifier
 */
 function unique_array($row, $indexes) {
 	foreach ($indexes as $index) {
@@ -291,7 +291,7 @@ function escape_key($key) {
 
 /** Create SQL condition from parsed query string
 * @param array parsed query string
-* @param array
+* @param array[]
 * @return string
 */
 function where($where, $fields = []) {
@@ -329,7 +329,7 @@ function where($where, $fields = []) {
 
 /** Create SQL condition from query string
 * @param string
-* @param array
+* @param array[]
 * @return string
 */
 function where_check($val, $fields = []) {
@@ -350,9 +350,9 @@ function where_link($i, $column, $value, $operator = "=") {
 }
 
 /** Get select clause for convertible fields
-* @param array
-* @param array
-* @param array
+* @param string[]
+* @param array[]
+* @param list<string>
 * @return string
 */
 function convert_fields($columns, $fields, $select = []) {
@@ -568,8 +568,8 @@ function queries($query) {
 
 /** Apply command to all array items
 * @param string
-* @param array
-* @param callback
+* @param list<string>
+* @param callable(string):string
 * @return bool
 */
 function apply_queries($query, $tables, $escape = 'AdminNeo\table') {
@@ -729,7 +729,7 @@ function friendly_url($val) {
 /** Get status of a single table and fall back to name on error
 * @param string
 * @param bool
-* @return array
+* @return array[] same as table_status()
 */
 function table_status1($table, $fast = false) {
 	$return = table_status($table, $fast);
@@ -738,7 +738,7 @@ function table_status1($table, $fast = false) {
 
 /** Find out foreign keys for each column
 * @param string
-* @return array [$col => []]
+* @return list<string>[] [$col => []]
 */
 function column_foreign_keys($table) {
 	$return = [];
@@ -751,7 +751,7 @@ function column_foreign_keys($table) {
 }
 
 /** Compute fields() from $_POST edit data
-* @return array
+* @return array[] same as fields()
 */
 function fields_from_edit() {
 	$return = [];
@@ -801,7 +801,7 @@ function dump_headers(string $identifier, bool $multi_table = false): string
 }
 
 /** Print CSV row
-* @param array
+* @param string[]
 * @return null
 */
 function dump_csv($row) {
@@ -1018,9 +1018,9 @@ function is_shortable(?array $field): bool
 
 /** Get query to compute number of found rows
 * @param string
-* @param array
+* @param list<string>
 * @param bool
-* @param array
+* @param list<string>
 * @return string
 */
 function count_rows($table, $where, $is_group, $group) {
@@ -1033,7 +1033,7 @@ function count_rows($table, $where, $is_group, $group) {
 
 /** Run query which can be killed by AJAX call after timing out
 * @param string
-* @return array of strings
+* @return string[]
 */
 function slow_query($query) {
 	$db = Admin::get()->getDatabase();

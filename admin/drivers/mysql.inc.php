@@ -507,7 +507,7 @@ if (isset($_GET["mysql"])) {
 
 	/** Get cached list of databases
 	* @param bool
-	* @return array
+	* @return list<string>
 	*/
 	function get_databases($flush) {
 		// SHOW DATABASES can take a very long time so it is cached
@@ -547,7 +547,7 @@ if (isset($_GET["mysql"])) {
 
 	/** Get database collation
 	* @param string
-	* @param array result of collations()
+	* @param string[][] result of collations()
 	* @return string
 	*/
 	function db_collation($db, $collations) {
@@ -570,15 +570,15 @@ if (isset($_GET["mysql"])) {
 	}
 
 	/** Get tables list
-	* @return array [$name => $type]
+	* @return string[] [$name => $type]
 	*/
 	function tables_list() {
 		return get_key_vals("SELECT TABLE_NAME, TABLE_TYPE FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() ORDER BY TABLE_NAME");
 	}
 
 	/** Count tables in all databases
-	* @param array
-	* @return array [$db => $tables]
+	* @param list<string>
+	* @return int[] [$db => $tables]
 	*/
 	function count_tables($databases) {
 		$return = [];
@@ -591,7 +591,7 @@ if (isset($_GET["mysql"])) {
 	/** Get table status
 	* @param string
 	* @param bool return only "Name", "Engine" and "Comment" fields
-	* @return array [$name => ["Name" => , "Engine" => , "Comment" => , "Oid" => , "Rows" => , "Collation" => , "Auto_increment" => , "Data_length" => , "Index_length" => , "Data_free" => ]] or only inner array with $name, null if table is not found
+	* @return array{Name:string, Engine:string, Comment:string, Oid:int, Rows:int, Collation:string, Auto_increment:int, Data_length:int, Index_length:int, Data_free:int}[] or only inner array with $name, null if table is not found
 	*/
 	function table_status($name = "", $fast = false) {
 		if ($fast) {
@@ -640,7 +640,7 @@ if (isset($_GET["mysql"])) {
 
 	/** Get information about fields
 	* @param string
-	* @return array [$name => ["field" => , "full_type" => , "type" => , "length" => , "unsigned" => , "default" => , "null" => , "auto_increment" => , "on_update" => , "collation" => , "privileges" => , "comment" => , "primary" => , "generated" => ]]
+	* @return array{field:string, full_type:string, type:string, length:int, unsigned:string, default:string, null:bool, auto_increment:bool, on_update:string, collation:string, privileges:int[], comment:string, primary:bool, generated:string}[]
 	*/
 	function fields($table) {
 		$maria = Connection::get()->isMariaDB();
@@ -712,7 +712,7 @@ if (isset($_GET["mysql"])) {
 	/**
 	 * Returns table indexes.
 	 *
-	 * @return array [$key_name => ["type" => , "columns" => [], "lengths" => [], "descs" => []]]
+	 * @return array{type:string, columns:list<string>, lengths:list<int>, descs:list<bool>}[]
 	 */
 	function indexes(string $table, ?Connection $connection = null): array
 	{
@@ -729,7 +729,7 @@ if (isset($_GET["mysql"])) {
 
 	/** Get foreign keys in table
 	* @param string
-	* @return array [$name => ["db" => , "ns" => , "table" => , "source" => [], "target" => [], "on_delete" => , "on_update" => ]]
+	* @return array{db:string, ns:string, table:string, source:list<string>, target:list<string>, on_delete:string, on_update:string}[]
 	*/
 	function foreign_keys($table) {
 		static $pattern = '(?:`(?:[^`]|``)+`|"(?:[^"]|"")+")';
@@ -768,14 +768,14 @@ ORDER BY ordinal_position";
 
 	/** Get view SELECT
 	* @param string
-	* @return array ["select" => ]
+	* @return array{select:string}
 	*/
 	function view($name) {
 		return ["select" => preg_replace('~^(?:[^`]|`[^`]*`)*\s+AS\s+~isU', '', Connection::get()->getValue("SHOW CREATE VIEW " . table($name), 1))];
 	}
 
 	/** Get sorted grouped list of collations
-	* @return array
+	* @return string[][]
 	*/
 	function collations() {
 		$return = [];
@@ -796,7 +796,7 @@ ORDER BY ordinal_position";
 		ksort($return);
 
 		foreach ($return as $key => $val) {
-			asort($return[$key]);
+			sort($return[$key]);
 		}
 
 		return $return;
@@ -828,7 +828,7 @@ ORDER BY ordinal_position";
 	}
 
 	/** Drop databases
-	* @param array
+	* @param list<string>
 	* @return bool
 	*/
 	function drop_databases($databases) {
@@ -885,7 +885,7 @@ ORDER BY ordinal_position";
 	* @param string "" to create
 	* @param string new name
 	* @param array of [$orig, $process_field, $after]
-	* @param array of strings
+	* @param list<string>
 	* @param string
 	* @param string
 	* @param string
@@ -928,7 +928,7 @@ ORDER BY ordinal_position";
 
 	/** Run commands to alter indexes
 	* @param string escaped table name
-	* @param array of ["index type", "name", ["column definition", ...]] or ["index type", "name", "DROP"]
+	* @param array[] of ["index type", "name", ["column definition", ...]] or ["index type", "name", "DROP"]
 	* @return bool
 	*/
 	function alter_indexes($table, $alter) {
@@ -942,7 +942,7 @@ ORDER BY ordinal_position";
 	}
 
 	/** Run commands to truncate tables
-	* @param array
+	* @param list<string>
 	* @return bool
 	*/
 	function truncate_tables($tables) {
@@ -950,7 +950,7 @@ ORDER BY ordinal_position";
 	}
 
 	/** Drop views
-	* @param array
+	* @param list<string>
 	* @return bool
 	*/
 	function drop_views($views) {
@@ -958,7 +958,7 @@ ORDER BY ordinal_position";
 	}
 
 	/** Drop tables
-	* @param array
+	* @param list<string>
 	* @return bool
 	*/
 	function drop_tables($tables) {
@@ -966,8 +966,8 @@ ORDER BY ordinal_position";
 	}
 
 	/** Move tables to other schema
-	* @param array
-	* @param array
+	* @param list<string>
+	* @param list<string>
 	* @param string
 	* @return bool
 	*/
@@ -995,8 +995,8 @@ ORDER BY ordinal_position";
 	}
 
 	/** Copy tables to other schema
-	* @param array
-	* @param array
+	* @param list<string>
+	* @param list<string>
 	* @param string
 	* @return bool
 	*/
@@ -1030,7 +1030,7 @@ ORDER BY ordinal_position";
 
 	/** Get information about trigger
 	* @param string trigger name
-	* @return array ["Trigger" => , "Timing" => , "Event" => , "Of" => , "Type" => , "Statement" => ]
+	* @return array{Trigger:string, Timing:string, Event:string, Of:string, Type:string, Statement:string}
 	*/
 	function trigger($name) {
 		if ($name == "") {
@@ -1042,7 +1042,7 @@ ORDER BY ordinal_position";
 
 	/** Get defined triggers
 	* @param string
-	* @return array [$name => [$timing, $event]]
+	* @return array{string, string}[]
 	*/
 	function triggers($table) {
 		$return = [];
@@ -1053,7 +1053,7 @@ ORDER BY ordinal_position";
 	}
 
 	/** Get trigger options
-	* @return array ["Timing" => [], "Event" => [], "Type" => []]
+	* @return array{Timing: list<string>, Event: list<string>, Type: list<string>}
 	*/
 	function trigger_options() {
 		return [
@@ -1069,7 +1069,7 @@ ORDER BY ordinal_position";
 	 * @param string $name
 	 * @param string $type "FUNCTION" or "PROCEDURE"
 	 *
-	 * @return array ["fields" => ["field" => , "type" => , "length" => , "unsigned" => , "inout" => , "collation" => ], "returns" => , "definition" => , "language" => ]
+	 * @return array array{fields:list<array{field:string, type:string, length:string, unsigned:string, null:bool, full_type:string, inout:string, collation:string}>, comment:string, returns:array, definition:string, language:string}
 	 */
 	function routine($name, $type) {
 		$info = get_rows("SELECT ROUTINE_BODY, ROUTINE_COMMENT FROM information_schema.ROUTINES WHERE ROUTINE_SCHEMA = DATABASE() AND ROUTINE_NAME = " . q($name))[0];
@@ -1114,14 +1114,14 @@ ORDER BY ordinal_position";
 	}
 
 	/** Get list of routines
-	* @return array ["SPECIFIC_NAME" => , "ROUTINE_NAME" => , "ROUTINE_TYPE" => , "DTD_IDENTIFIER" => ]
+	* @return list<string[]> ["SPECIFIC_NAME" => , "ROUTINE_NAME" => , "ROUTINE_TYPE" => , "DTD_IDENTIFIER" => ]
 	*/
 	function routines() {
 		return get_rows("SELECT ROUTINE_NAME AS SPECIFIC_NAME, ROUTINE_NAME, ROUTINE_TYPE, DTD_IDENTIFIER, ROUTINE_COMMENT FROM information_schema.ROUTINES WHERE ROUTINE_SCHEMA = DATABASE()");
 	}
 
 	/** Get list of available routine languages
-	* @return array
+	* @return list<string>
 	*/
 	function routine_languages() {
 		return []; // "SQL" not required
@@ -1160,7 +1160,7 @@ ORDER BY ordinal_position";
 
 	/** Get approximate number of rows
 	* @param array
-	* @param array
+	* @param list<string>
 	* @return int or null if approximate number can't be retrieved
 	*/
 	function found_rows($table_status, $where) {
@@ -1210,21 +1210,21 @@ ORDER BY ordinal_position";
 	}
 
 	/** Get server variables
-	* @return array [[$name, $value]]
+	* @return list<string[]> [[$name, $value]]
 	*/
 	function show_variables() {
 		return get_rows("SHOW VARIABLES");
 	}
 
 	/** Get status variables
-	* @return array [[$name, $value]]
+	* @return list<string[]> [[$name, $value]]
 	*/
 	function show_status() {
 		return get_rows("SHOW STATUS");
 	}
 
 	/** Get process list
-	* @return array [$row]
+	* @return list<string[]> [$row]
 	*/
 	function process_list() {
 		return get_rows("SHOW FULL PROCESSLIST");
