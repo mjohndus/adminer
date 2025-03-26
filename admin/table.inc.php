@@ -5,7 +5,7 @@ namespace AdminNeo;
 $TABLE = $_GET["table"];
 $fields = fields($TABLE);
 if (!$fields) {
-	Admin::get()->addError(error());
+	Admin::get()->addError(error() ?: lang('No tables.'));
 }
 $table_status = table_status1($TABLE, true);
 $name = Admin::get()->getTableName($table_status);
