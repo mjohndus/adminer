@@ -627,7 +627,7 @@ class Admin extends Origin
 		if (list($target, $id, $name) = $this->admin->getForeignColumnInfo(column_foreign_keys($table), $column)) {
 			$return = &$this->values[$target];
 			if ($return === null) {
-				$table_status = table_status($target);
+				$table_status = table_status1($target);
 				$return = ($table_status["Rows"] > 1000 ? "" : ["" => ""] + get_key_vals("SELECT $id, $name FROM " . table($target) . " ORDER BY 2"));
 			}
 			if (!$return && $value !== null) {

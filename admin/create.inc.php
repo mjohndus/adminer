@@ -18,8 +18,8 @@ $orig_fields = [];
 $table_status = [];
 if ($TABLE != "") {
 	$orig_fields = fields($TABLE);
-	$table_status = table_status($TABLE);
-	if (!$table_status) {
+	$table_status = table_status1($TABLE);
+	if (count($table_status) < 2) { // there's only the Name field
 		Admin::get()->addError(lang('No tables.'));
 	}
 }

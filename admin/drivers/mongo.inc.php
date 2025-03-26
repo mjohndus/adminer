@@ -499,11 +499,8 @@ if (isset($_GET["mongo"])) {
 
 	function table_status($name = "", $fast = false) {
 		$return = [];
-		foreach (tables_list() as $table => $type) {
-			$return[$table] = ["Name" => $table];
-			if ($name == $table) {
-				return $return[$table];
-			}
+		foreach (($name != "" ? [$name => 1] : tables_list()) as $table => $type) {
+			$return[$table] = ["Name" => $table, "Engine" => ""];
 		}
 		return $return;
 	}

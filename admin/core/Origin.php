@@ -491,7 +491,7 @@ abstract class Origin extends Plugin
 		}
 
 		foreach ($keys as $id => $key) {
-			$name = $this->admin->getTableName(table_status($key["table"], true));
+			$name = $this->admin->getTableName(table_status1($key["table"], true));
 			if ($name != "") {
 				$search = preg_quote($tableName);
 				$separator = "(:|\\s*-)?\\s+";

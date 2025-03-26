@@ -414,7 +414,7 @@ abstract class Driver
 	/**
 	 * Checks whether table supports indexes.
 	 *
-	 * @param array $tableStatus The result of table_status().
+	 * @param array $tableStatus The result of table_status1().
 	 */
 	public function supportsIndex(array $tableStatus): bool
 	{

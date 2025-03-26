@@ -591,7 +591,7 @@ if (isset($_GET["mysql"])) {
 	/** Get table status
 	* @param string
 	* @param bool return only "Name", "Engine" and "Comment" fields
-	* @return array{Name:string, Engine:string, Comment:string, Oid:int, Rows:int, Collation:string, Auto_increment:int, Data_length:int, Index_length:int, Data_free:int}[] or only inner array with $name, null if table is not found
+	* @return array{Name:string, Engine?:?string, Comment?:string, Oid?:numeric-string, Rows?:numeric-string, Collation?:string, Auto_increment?:numeric-string, Data_length?:numeric-string, Index_length?:numeric-string, Data_free?:numeric-string, Create_options?:string, nspname?:string}[]
 	*/
 	function table_status($name = "", $fast = false) {
 		if ($fast) {
@@ -612,7 +612,6 @@ if (isset($_GET["mysql"])) {
 			if ($name != "") {
 				// MariaDB: Table name is returned as lowercase on macOS, so we fix it here.
 				$row["Name"] = $name;
-				return $row;
 			}
 
 			$tables[$row["Name"]] = $row;

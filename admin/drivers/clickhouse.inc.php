@@ -410,9 +410,6 @@ if (isset($_GET["clickhouse"])) {
 				'Name' => $table['name'],
 				'Engine' => $table['engine'],
 			];
-			if ($name === $table['name']) {
-				return $return[$table['name']];
-			}
 		}
 		return $return;
 	}
