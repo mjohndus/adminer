@@ -554,28 +554,30 @@ function query_redirect($query, $location, $message, $redirect = true, $execute 
 	return true;
 }
 
+class Queries {
+	/** @var string[] */
+	static $queries = [];
+
+	/** @var float */
+	static $start = 0.0;
+}
+
 /** Execute and remember query
-* @param string or null to return remembered queries, end with ';' to use DELIMITER
-* @return Result|array|bool or [$queries, $time] if $query = null
+* @param string end with ';' to use DELIMITER
+* @return Result|array|bool
 */
 function queries($query) {
-	static $queries = [];
-	static $start;
-	if (!$start) {
-		$start = microtime(true);
-	}
-	if ($query === null) {
-		// return executed queries
-		return [implode("\n", $queries), format_time($start)];
+	if (!Queries::$start) {
+		Queries::$start = microtime(true);
 	}
 
 	if (support("sql")) {
-		$queries[] = (preg_match('~;$~', $query) ? "DELIMITER ;;\n$query;\nDELIMITER " : $query) . ";";
+		Queries::$queries[] = (preg_match('~;$~', $query) ? "DELIMITER ;;\n$query;\nDELIMITER " : $query) . ";";
 
 		return Connection::get()->query($query);
 	} else {
 		// Save the query for later use in a flesh message. TODO: This is so ugly.
-		$queries[] = $query;
+		Queries::$queries[] = $query;
 		return [];
 	}
 }
@@ -602,7 +604,8 @@ function apply_queries($query, $tables, $escape = 'AdminNeo\table') {
 * @return bool
 */
 function queries_redirect($location, $message, $redirect) {
-	list($queries, $time) = queries(null);
+	$queries = implode("\n", Queries::$queries);
+	$time = format_time(Queries::$start);
 	return query_redirect($queries, $location, $message, $redirect, false, !$redirect, $time);
 }
 
