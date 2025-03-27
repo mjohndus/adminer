@@ -359,7 +359,7 @@ function where_link($i, $column, $value, $operator = "=") {
 /**
  * Returns select clause for convertible fields.
  *
- * @param string[] $columns
+ * @param array $columns
  * @param array[] $fields
  * @param list<string> $select
  *
@@ -447,7 +447,7 @@ function stop_session($force = false): void {
 	$use_cookies = ini_bool("session.use_cookies");
 	if (!$use_cookies || $force) {
 		session_write_close(); // improves concurrency if a user opens several pages at once, may be restarted later
-		if ($use_cookies && @ini_set("session.use_cookies", false) === false) { // @ - may be disabled
+		if ($use_cookies && @ini_set("session.use_cookies", "0") === false) { // @ - may be disabled
 			session_start();
 		}
 	}
@@ -1057,9 +1057,12 @@ function slow_query($query) {
 	$db = Admin::get()->getDatabase();
 	$timeout = Admin::get()->getQueryTimeout();
 	$slow_query = Driver::get()->slowQuery($query, $timeout);
-	if (!$slow_query && support("kill") && ($connection = connect()) && ($db == "" || $connection->selectDatabase($db))) {
-		$kill = $connection->getValue(connection_id()); // MySQL and MySQLi can use thread_id but it's not in PDO_MySQL
-		?>
+	$connection = null;
+	if (!$slow_query && support("kill")) {
+		$connection = connect();
+		if ($connection && ($db == "" || $connection->selectDatabase($db))) {
+			$kill = $connection->getValue(connection_id()); // MySQL and MySQLi can use thread_id but it's not in PDO_MySQL
+			?>
 <script<?php echo nonce(); ?>>
 	const timeout = setTimeout(() => {
 		ajax('<?php echo js_escape(ME); ?>script=kill', function() {
@@ -1067,8 +1070,7 @@ function slow_query($query) {
 	}, <?php echo 1000 * $timeout; ?>);
 </script>
 <?php
-	} else {
-		$connection = null;
+		}
 	}
 	ob_flush();
 	flush();

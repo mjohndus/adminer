@@ -189,7 +189,7 @@ function json_row($key, $val = null): void {
 * @param string
 * @param list<string>[]
 * @param array[]
-* @param array[] returned by referencable_primary()
+* @param string[]
 * @param list<string> extra types to prepend
 */
 function edit_type($key, $field, $collations, $foreign_keys = [], $extra_types = []): void {
@@ -338,8 +338,8 @@ function type_class(string $type): string
  *
  * @param array[] $fields
  * @param list<string> $collations
- * @param string $type TABLE, FUNCTION or PROCEDURE
- * @param array[] $foreign_keys returned by referencable_primary()
+ * @param 'TABLE'|'PROCEDURE'|'FUNCTION' $type
+ * @param string[] $foreign_keys
  */
 function edit_fields(array $fields, array $collations, $type = "TABLE", $foreign_keys = []): void {
 	$fields = array_values($fields);
@@ -586,7 +586,7 @@ function create_trigger(string $on, array $trigger): string
 }
 
 /** Generate SQL query for creating routine
-* @param string "PROCEDURE" or "FUNCTION"
+* @param 'PROCEDURE'|'FUNCTION'
 * @param string[] result of routine()
 * @return string
 */

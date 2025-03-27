@@ -193,7 +193,7 @@ if ($_POST) {
 					$TABLE,
 					$set,
 					" WHERE " . ($where ? implode(" AND ", $where) . " AND " : "") . where_check($unique_idf, $fields),
-					!$is_group && !$primary,
+					($is_group || $primary ? 0 : 1),
 					" "
 				);
 				if (!$result) {

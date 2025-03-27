@@ -283,7 +283,7 @@ if (support("partitioning")) {
 			echo script("qsl('input').oninput = partitionNameChange;");
 		}
 		echo "</td>";
-		echo "<td><input class='input' name='partition_values[]' value='", h($row["partition_values"][$key]), "'></td>";
+		echo "<td><input class='input' name='partition_values[]' value='", h($row["partition_values"][$key] ?? ""), "'></td>";
 		echo "</tr>\n";
 	}
 
