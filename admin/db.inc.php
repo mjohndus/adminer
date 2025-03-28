@@ -130,7 +130,7 @@ if ($_GET["ns"] === "") {
 			$view = ($type !== null && !preg_match('~table|sequence~i', $type));
 			$id = h("Table-" . $name);
 
-			echo '<tr><td class="actions">' . checkbox(($view ? "views[]" : "tables[]"), $name, in_array($name, $tables_views, true), "", "", "", $id);
+			echo '<tr><td class="actions">' . checkbox(($view ? "views[]" : "tables[]"), $name, in_array("$name", $tables_views, true), "", "", "", $id); // "$name" to check numeric table names
 
 			if (!Admin::get()->getSettings()->isSelectionPreferred() && (support("table") || support("indexes"))) {
 				$action = "table";
