@@ -2,11 +2,6 @@
 
 namespace AdminNeo;
 
-$has_token = $_SESSION["token"];
-if (!$has_token) {
-	$_SESSION["token"] = rand(1, 1e6); // defense against cross-site request forgery
-}
-
 $permanent = [];
 if ($_COOKIE["neo_permanent"]) {
 	foreach (explode(" ", $_COOKIE["neo_permanent"]) as $val) {
@@ -221,7 +216,7 @@ if ($auth) {
 		redirect(auth_url($driver, $server, $username, $db));
 	}
 
-} elseif ($_POST["logout"] && (!$has_token || verify_token())) {
+} elseif ($_POST["logout"] && (!$_SESSION["token"] || verify_token())) {
 	foreach (["pwds", "db", "dbs", "queries"] as $key) {
 		set_session($key, null);
 	}
@@ -272,11 +267,10 @@ function unset_permanent(array &$permanent): void
  */
 function auth_error(string $error, array &$permanent): void
 {
-	global $has_token;
 	$session_name = session_name();
 	if (isset($_GET["username"])) {
 		header("HTTP/1.1 403 Forbidden"); // 401 requires sending WWW-Authenticate header
-		if (($_COOKIE[$session_name] || $_GET[$session_name]) && !$has_token) {
+		if (($_COOKIE[$session_name] || $_GET[$session_name]) && !$_SESSION["token"]) {
 			$error = lang('Session expired, please login again.');
 		} else {
 			restart_session();
@@ -324,8 +318,6 @@ if (isset($_GET["username"]) && !defined('AdminNeo\DRIVER_EXTENSION')) {
 	exit;
 }
 
-stop_session(true);
-
 if (!isset($_GET["username"]) || get_password() === null) {
 	auth_error("", $permanent);
 }
@@ -339,14 +331,21 @@ $connection = connect_to_db($permanent);
 authenticate($permanent);
 create_driver($connection);
 
-if ($_POST["logout"] && $has_token && !verify_token()) {
+if ($_POST["logout"] && $_SESSION["token"] && !verify_token()) {
 	page_header(lang('Logout'), lang('Invalid CSRF token. Send the form again.'));
 	page_footer("db");
 	exit;
 }
 
+// Defense against cross-site request forgery.
+if (!$_SESSION["token"]) {
+	$_SESSION["token"] = rand(1, 1e6);
+}
+stop_session(true);
+
+// Reset token after explicit login.
 if ($auth && $_POST["token"]) {
-	$_POST["token"] = get_token(); // reset token after explicit login
+	$_POST["token"] = get_token();
 }
 
 $error = ''; ///< @var string
