@@ -48,7 +48,7 @@ function language_select()
 	echo "<div class='language'><form action='' method='post'>\n";
 	echo html_select("lang", $options, Locale::get()->getLanguage(), "this.form.submit();");
 	echo "<input type='submit' value='" . lang('Use'), "' class='button hidden'>\n";
-	echo "<input type='hidden' name='token' value='", get_token(), "'>\n"; // $token may be empty in auth.inc.php
+	echo "<input type='hidden' name='token' value='", get_token(), "'>\n";
 	echo "</form></div>\n";
 }
 

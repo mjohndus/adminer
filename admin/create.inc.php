@@ -278,5 +278,5 @@ foreach ($row["partition_names"] as $key => $val) {
 	echo "</div>\n";
 }
 ?>
-<input type="hidden" name="token" value="<?php echo $token; ?>">
+<input type="hidden" name="token" value="<?php echo get_token(); ?>">
 </form>

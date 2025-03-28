@@ -85,7 +85,7 @@ if ($in) {
 
 echo "<p>",
 	"<input type='submit' class='button' value='", lang('Call'), "'>",
-	"<input type='hidden' name='token' value='$token'>",
+	"<input type='hidden' name='token' value='", get_token(), "'>",
 	"</p>\n",
 	"</form>\n";
 

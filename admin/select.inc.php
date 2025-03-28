@@ -652,7 +652,7 @@ if (!$columns && support("table")) {
 				echo "</p>";
 			}
 
-			echo "<input type='hidden' name='token' value='$token'>\n";
+			echo "<input type='hidden' name='token' value='", get_token(), "'>\n";
 			echo "</form>\n";
 			echo (!$group && $select ? "" : script("tableCheck();"));
 		} else {

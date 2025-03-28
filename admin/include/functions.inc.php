@@ -1010,7 +1010,6 @@ function count_rows($table, $where, $is_group, $group) {
 * @return array of strings
 */
 function slow_query($query) {
-	global $token;
 	$db = Admin::get()->getDatabase();
 	$timeout = Admin::get()->getQueryTimeout();
 	$slow_query = Driver::get()->slowQuery($query, $timeout);
@@ -1020,7 +1019,7 @@ function slow_query($query) {
 <script<?php echo nonce(); ?>>
 var timeout = setTimeout(function () {
 	ajax('<?php echo js_escape(ME); ?>script=kill', function () {
-	}, 'kill=<?php echo $kill; ?>&token=<?php echo $token; ?>');
+	}, 'kill=<?php echo $kill; ?>&token=<?php echo get_token(); ?>');
 }, <?php echo 1000 * $timeout; ?>);
 </script>
 <?php

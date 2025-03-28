@@ -240,7 +240,7 @@ if (!$error && $_POST) {
 										echo html_select("format", $dump_format, $export_settings["format"] ?? null);
 										echo html_select("output", Admin::get()->getDumpOutputs(), $export_settings["output"] ?? null) . " ";
 										echo "<input type='hidden' name='query' value='", h($q), "'>";
-										echo "<input type='hidden' name='token' value='$token'>";
+										echo "<input type='hidden' name='token' value='", get_token(), "'>";
 										echo " <input type='submit' class='button' name='export' value='" . lang('Export') . "'>";
 										echo "</p></form>\n";
 									}
@@ -323,7 +323,7 @@ if (!isset($_GET["import"])) {
 
 echo checkbox("error_stops", 1, ($_POST ? $_POST["error_stops"] : isset($_GET["import"]) || $_GET["error_stops"]), lang('Stop on error'));
 echo checkbox("only_errors", 1, ($_POST ? $_POST["only_errors"] : isset($_GET["import"]) || $_GET["only_errors"]), lang('Show only errors'));
-echo "<input type='hidden' name='token' value='$token'>";
+echo "<input type='hidden' name='token' value='", get_token(), "'>";
 echo "</p>\n";
 
 if (!isset($_GET["import"]) && $history) {

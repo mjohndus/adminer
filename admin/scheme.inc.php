@@ -40,5 +40,5 @@ if ($_GET["ns"] != "") {
 	echo "<input type='submit' class='button' name='drop' value='" . lang('Drop') . "'>" . confirm(lang('Drop %s?', $_GET["ns"])) . "\n";
 }
 ?>
-<input type="hidden" name="token" value="<?php echo $token; ?>">
+<input type="hidden" name="token" value="<?php echo get_token(); ?>">
 </form>

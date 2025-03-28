@@ -529,7 +529,7 @@ function help_script_command($command, $side = false)
 * @return null
 */
 function edit_form($table, $fields, $row, $update) {
-	global $token, $error;
+	global $error;
 	$table_name = Admin::get()->getTableName(table_status1($table, true));
 	$title = $update ? lang('Edit') : lang('Insert');
 
@@ -632,7 +632,7 @@ function edit_form($table, $fields, $row, $update) {
 		?>
 		<input type="hidden" name="referer" value="<?php echo h($_POST["referer"] ?? $_SERVER["HTTP_REFERER"]); ?>">
 		<input type="hidden" name="save" value="1">
-		<input type="hidden" name="token" value="<?php echo $token; ?>">
+		<input type="hidden" name="token" value="<?php echo get_token(); ?>">
 	</form>
 	<?php
 }
