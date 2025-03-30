@@ -3,5 +3,4 @@
 /editor*.php
 /**/compiled
 /vendor/
-/composer.lock
 /export/
