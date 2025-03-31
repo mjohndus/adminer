@@ -8,7 +8,7 @@ $row = $_POST;
 
 if ($row) {
 	if (DIALECT == "sqlite") {
-		$result = recreate_table($TABLE, $TABLE, [], [], [], 0, [], $name, ($row["drop"] ? "" : $row["clause"]));
+		$result = recreate_table($TABLE, $TABLE, [], [], [], "", [], "$name", ($row["drop"] ? "" : $row["clause"]));
 	} else {
 		$result = ($name == "" || queries("ALTER TABLE " . table($TABLE) . " DROP CONSTRAINT " . idf_escape($name)));
 		if (!$row["drop"]) {

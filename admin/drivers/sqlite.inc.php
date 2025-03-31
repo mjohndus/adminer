@@ -574,13 +574,13 @@ if (isset($_GET["sqlite"])) {
 	* @param list<list<string>> [process_field()], empty to preserve
 	* @param string[] [$original => idf_escape($new_column)], empty to preserve
 	* @param string [format_foreign_key()], empty to preserve
-	* @param int set auto_increment to this value, 0 to preserve
+	* @param numeric-string set auto_increment to this value, 0 to preserve
 	* @param string[] [[$type, $name, $columns]], empty to preserve
 	* @param string CHECK constraint to drop
 	* @param string CHECK constraint to add
 	* @return bool
 	*/
-	function recreate_table($table, $name, $fields, $originals, $foreign, $auto_increment = 0, $indexes = [], $drop_check = "", $add_check = "") {
+	function recreate_table($table, $name, $fields, $originals, $foreign, $auto_increment = "", $indexes = [], $drop_check = "", $add_check = "") {
 		if ($table != "") {
 			if (!$fields) {
 				foreach (fields($table) as $key => $field) {
@@ -685,7 +685,7 @@ if (isset($_GET["sqlite"])) {
 				$triggers[] = "CREATE TRIGGER " . idf_escape($trigger_name) . " " . implode(" ", $timing_event) . " ON " . table($name) . "\n$trigger[Statement]";
 			}
 
-			$auto_increment = $auto_increment ? 0 : Connection::get()->getValue("SELECT seq FROM sqlite_sequence WHERE name = " . q($table)); // if $auto_increment is set then it will be updated later
+			$auto_increment = $auto_increment ? "" : Connection::get()->getValue("SELECT seq FROM sqlite_sequence WHERE name = " . q($table)); // if $auto_increment is set then it will be updated later
 			if (!queries("DROP TABLE " . table($table)) // drop before creating indexes and triggers to allow using old names
 				|| ($table == $name && !queries("ALTER TABLE " . table($temp_name) . " RENAME TO " . table($name)))
 				|| !alter_indexes($name, $indexes)
@@ -720,7 +720,7 @@ if (isset($_GET["sqlite"])) {
 	function alter_indexes($table, $alter) {
 		foreach ($alter as $index) {
 			if ($index[0] == "PRIMARY" || (preg_match('~^sqlite_~', $index[1]))) {
-				return recreate_table($table, $table, [], [], [], 0, $alter);
+				return recreate_table($table, $table, [], [], [], "", $alter);
 			}
 		}
 

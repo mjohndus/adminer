@@ -894,7 +894,7 @@ ORDER BY ordinal_position";
 	* @param string
 	* @param string
 	* @param string
-	* @param string number
+	* @param numeric-string
 	* @param string
 	* @return bool
 	*/

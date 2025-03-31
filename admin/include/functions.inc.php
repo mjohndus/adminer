@@ -40,8 +40,8 @@ function escape_string($val) {
 	return substr(q($val), 1, -1);
 }
 
-/** Remove non-digits from a string
-* @param string
+/** Remove non-digits from a string; used instead of intval() to not corrupt big numbers
+* @param numeric-string
 * @return string
 */
 function number($val) {
