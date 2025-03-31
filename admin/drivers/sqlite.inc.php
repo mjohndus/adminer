@@ -245,6 +245,18 @@ if (isset($_GET["sqlite"])) {
 			return array_combine($matches[2], $matches[2]);
 		}
 
+		function getAllFields(): array
+		{
+			$allFields = [];
+
+			foreach (tables_list() as $table => $type) {
+				foreach (fields($table) as $field) {
+					$allFields[$table][] = $field;
+				}
+			}
+
+			return $allFields;
+		}
 	}
 
 

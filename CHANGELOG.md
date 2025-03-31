@@ -16,6 +16,7 @@ AdminNeo 5.1.0
 - Add support for CockroachDB (by @vrana)
 - Align numbers right (by @vrana)
 - Display comment in title of field (by @vrana)
+- Optimize retrieving columns for schema (by @vrana)
 - Shorten queries saved from SQL command to URL (by @vrana)
 - Remember export setting at SQL command
 - Refine and standardize Japanese translation (by @yama)
