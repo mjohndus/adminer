@@ -8,6 +8,7 @@ AdminNeo 5.3.0
 
 - More secure randomness on PHP5 (by @pavetheway91)
 - 256 bits of entropy in all random strings
+- SystemForeignKeysPlugin: Add support for new system tables (by @vrana).
 
 ### Bugfixes
 
