@@ -22,6 +22,7 @@ if ($_POST["clear"]) {
 	$history = [];
 	redirect(remove_from_uri("history"));
 }
+stop_session();
 
 $title = isset($_GET["import"]) ? lang('Import') : lang('SQL command');
 page_header($title, [$title]);
