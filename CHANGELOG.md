@@ -20,6 +20,7 @@ AdminNeo 5.1.0
 - MySQL: Fix using undefined PDO constant on PHP 5
 - MariaDB: Fix parsing type of the generated column in view
 - MS SQL: Add missing support for Encrypt and TrustServerCertificate parameters in PDO_SQLSRV
+- Select: Allow ordering by COUNT(*) (regression from 4.9.0) (by @vrana)
 
 (Ported remaining relevant changes from Adminer 5.0.0-5.0.2.)
 
