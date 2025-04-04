@@ -107,9 +107,12 @@ class Pluginer extends Admin
 		$this->applyPlugin(__FUNCTION__, func_get_args());
 	}
 
-	public function getCspHeader(): array
+	public function updateCspHeader(array &$csp): void
 	{
-		return $this->applyPlugin(__FUNCTION__, func_get_args());
+		$args = func_get_args();
+		$this->applyPluginRef(__FUNCTION__, $args);
+
+		$csp = $args[0];
 	}
 
 	public function printFavicons(): void
@@ -367,11 +370,6 @@ class Pluginer extends Admin
 		return $this->applyPlugin(__FUNCTION__, func_get_args());
 	}
 
-	public function callParent(string $function, array $args = [])
-	{
-		return call_user_func_array([parent::class, $function], $args);
-	}
-
 	private function appendPlugin(string $function, array $args)
 	{
 		$return = $this->callParent($function, $args);
@@ -391,6 +389,11 @@ class Pluginer extends Admin
 	}
 
 	private function applyPlugin(string $function, array $args)
+	{
+		return $this->applyPluginRef($function, $args);
+	}
+
+	private function applyPluginRef(string $function, array &$args)
 	{
 		if (count($args) > 6) {
 			trigger_error('Too many parameters.', E_USER_WARNING);
@@ -435,5 +438,28 @@ class Pluginer extends Admin
 		}
 
 		return $this->callParent($function, $args);
+	}
+
+	public function callParent(string $function, array &$args = [])
+	{
+		// Method call_user_func_array() doesn't work well with references.
+		switch (count($args)) {
+			case 0:
+				return parent::$function();
+			case 1:
+				return parent::$function($args[0]);
+			case 2:
+				return parent::$function($args[0], $args[1]);
+			case 3:
+				return parent::$function($args[0], $args[1], $args[2]);
+			case 4:
+				return parent::$function($args[0], $args[1], $args[2], $args[3]);
+			case 5:
+				return parent::$function($args[0], $args[1], $args[2], $args[3], $args[4]);
+			case 6:
+				return parent::$function($args[0], $args[1], $args[2], $args[3], $args[4], $args[5]);
+			default:
+				return null;
+		}
 	}
 }
