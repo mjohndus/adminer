@@ -175,6 +175,12 @@ include "adminneo.php";
     - `tableStructurePrint()` -> `printTableStructure()`
     - `tablePartitionsPrint()` -> `printTablePartitions()`
     - `tableIndexesPrint()` -> `printTableIndexes()`
+    - `selectColumnsPrint()` -> `printSelectionColumns()`
+    - `selectSearchPrint()` -> `printSelectionSearch()`
+    - `selectOrderPrint()` -> `printSelectionOrder()`
+    - `selectLimitPrint()` -> `printSelectionLimit()`
+    - `selectLengthPrint()` -> `printSelectionLength()`
+    - `selectActionPrint()` -> `printSelectionAction()`
     - `dumpOutput()` -> `getDumpOutputs()`
     - `dumpFormat()` -> `getDumpFormats()`
     - `dumpHeaders()` -> `sendDumpHeaders()`

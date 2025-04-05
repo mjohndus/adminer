@@ -497,12 +497,13 @@ class Admin extends AdminBase
 	}
 
 	/**
-	 * Prints columns box in select filter.
+	 * Prints columns box in selection filter.
 	 *
-	 * @param array $select result of selectColumnsProcess()[0]
-	 * @param array $columns selectable columns
+	 * @param array $select The result of selectColumnsProcess()[0].
+	 * @param array $columns Selectable columns.
 	 */
-	function selectColumnsPrint(array $select, array $columns) {
+	public function printSelectionColumns(array $select, array $columns): void
+	{
 		global $functions, $grouping;
 
 		print_fieldset_start("select", lang('Select'), "columns", (bool)$select, true);
@@ -545,12 +546,13 @@ class Admin extends AdminBase
 	}
 
 	/**
-	 * Prints search box in select.
+	 * Prints search box in selection filter.
 	 *
-	 * @param array $where result of selectSearchProcess()
-	 * @param array $columns selectable columns
+	 * @param array $where The result of selectSearchProcess().
+	 * @param array $columns Selectable columns.
 	 */
-	function selectSearchPrint(array $where, array $columns, array $indexes) {
+	public function printSelectionSearch(array $where, array $columns, array $indexes): void
+	{
 		print_fieldset_start("search", lang('Search'), "search", (bool)$where);
 
 		foreach ($indexes as $i => $index) {
@@ -587,12 +589,13 @@ class Admin extends AdminBase
 	}
 
 	/**
-	 * Prints order box in select filter.
+	 * Prints order box in selection filter.
 	 *
-	 * @param array $order result of selectOrderProcess()
-	 * @param array $columns selectable columns
+	 * @param array $order The result of selectOrderProcess().
+	 * @param array $columns Selectable columns.
 	 */
-	function selectOrderPrint(array $order, array $columns, array $indexes) {
+	public function printSelectionOrder(array $order, array $columns, array $indexes): void
+	{
 		print_fieldset_start("sort", lang('Sort'), "sort", (bool)$order, true);
 
 		$_GET["order"][""] = "";
@@ -616,10 +619,9 @@ class Admin extends AdminBase
 	}
 
 	/**
-	 * Prints limit box in select.
-	 * @param ?int $limit result of selectLimitProcess()
+	 * Prints limit box in selection filter.
 	 */
-	public function selectLimitPrint(?int $limit): void
+	public function printSelectionLimit(?int $limit): void
 	{
 		echo "<fieldset><legend>" . lang('Limit') . "</legend><div class='fieldset-content'>", // <div> for easy styling
 			"<input type='number' name='limit' class='input size' value='" . h($limit) . "'>",
@@ -627,23 +629,25 @@ class Admin extends AdminBase
 			"</div></fieldset>\n";
 	}
 
-	/** Print text length box in select
-	* @param string result of selectLengthProcess()
-	* @return null
-	*/
-	function selectLengthPrint($text_length) {
-		if ($text_length !== null) {
+	/**
+	 * Prints text length box in selection filter.
+	 *
+	 * @param ?string $textLength The result of selectLengthProcess().
+	 */
+	public function printSelectionLength(?string $textLength): void
+	{
+		if ($textLength !== null) {
 			echo "<fieldset><legend>" . lang('Text length') . "</legend><div class='fieldset-content'>";
-			echo "<input type='number' name='text_length' class='input size' value='" . h($text_length) . "'>";
+			echo "<input type='number' name='text_length' class='input size' value='" . h($textLength) . "'>";
 			echo "</div></fieldset>\n";
 		}
 	}
 
-	/** Print action box in select
-	* @param array
-	* @return null
-	*/
-	function selectActionPrint($indexes) {
+	/**
+	 * Prints action box in selection filter.
+	 */
+	public function printSelectionAction(array $indexes): void
+	{
 		echo "<fieldset><legend>" . lang('Action') . "</legend><div class='fieldset-content'>";
 		echo "<input type='submit' class='button' value='" . lang('Select') . "'>";
 		echo " <span id='noindex' title='" . lang('Full table scan') . "'></span>";

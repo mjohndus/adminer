@@ -266,12 +266,12 @@ if (!$columns && support("table")) {
 	echo '<input type="submit" class="button" value="' . h(lang('Select')) . '">'; # hidden default submit so filter remove buttons aren't "clicked" on submission from enter key
 	echo "</div>\n";
 	echo "<div class='field-sets'>\n";
-	$admin->selectColumnsPrint($select, $columns);
-	$admin->selectSearchPrint($where, $search_columns, $indexes);
-	$admin->selectOrderPrint($order, $order_columns, $indexes);
-	$admin->selectLimitPrint($limit);
-	$admin->selectLengthPrint($text_length);
-	$admin->selectActionPrint($indexes);
+	$admin->printSelectionColumns($select, $columns);
+	$admin->printSelectionSearch($where, $search_columns, $indexes);
+	$admin->printSelectionOrder($order, $order_columns, $indexes);
+	$admin->printSelectionLimit($limit);
+	$admin->printSelectionLength($text_length);
+	$admin->printSelectionAction($indexes);
 	echo "</div>\n</form>\n";
 
 	$page = $_GET["page"] ?? 0;

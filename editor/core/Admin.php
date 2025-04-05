@@ -240,11 +240,13 @@ ORDER BY ORDINAL_POSITION", null, "") as $row) { //! requires MySQL 5
 		//
 	}
 
-	function selectColumnsPrint(array $select, array $columns) {
-		// can allow grouping functions by indexes
+	public function printSelectionColumns(array $select, array $columns): void
+	{
+		//
 	}
 
-	function selectSearchPrint(array $where, array $columns, array $indexes) {
+	public function printSelectionSearch(array $where, array $columns, array $indexes): void
+	{
 		$where = (array) $_GET["where"];
 		echo '<fieldset id="fieldset-search"><legend>' . lang('Search') . "</legend><div class='fieldset-content'>\n";
 		$keys = [];
@@ -301,7 +303,8 @@ ORDER BY ORDINAL_POSITION", null, "") as $row) { //! requires MySQL 5
 		echo "</div></fieldset>\n";
 	}
 
-	function selectOrderPrint(array $order, array $columns, array $indexes) {
+	public function printSelectionOrder(array $order, array $columns, array $indexes): void
+	{
 		//! desc
 		$orders = [];
 		foreach ($indexes as $key => $index) {
@@ -326,17 +329,20 @@ ORDER BY ORDINAL_POSITION", null, "") as $row) { //! requires MySQL 5
 		}
 	}
 
-	public function selectLimitPrint(?int $limit): void
+	public function printSelectionLimit(?int $limit): void
 	{
 		echo "<fieldset><legend>" . lang('Limit') . "</legend><div class='fieldset-content'>",
 			html_select("limit", ["", "50", "100"], (string)$limit),
 			"</div></fieldset>\n";
 	}
 
-	function selectLengthPrint($text_length) {
+	public function printSelectionLength(?string $textLength): void
+	{
+		//
 	}
 
-	function selectActionPrint($indexes) {
+	public function printSelectionAction(array $indexes): void
+	{
 		echo "<fieldset><legend>" . lang('Action') . "</legend><div class='fieldset-content'>";
 		echo "<input type='submit' class='button' value='" . lang('Select') . "'>";
 		echo "</div></fieldset>\n";

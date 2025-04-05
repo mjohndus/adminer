@@ -220,34 +220,34 @@ class Pluginer extends Admin
 		$this->applyPlugin(__FUNCTION__, func_get_args());
 	}
 
-	public function selectColumnsPrint(array $select, array $columns)
-	{
-		return $this->applyPlugin(__FUNCTION__, func_get_args());
-	}
-
-	public function selectSearchPrint(array $where, array $columns, array $indexes)
-	{
-		return $this->applyPlugin(__FUNCTION__, func_get_args());
-	}
-
-	public function selectOrderPrint(array $order, array $columns, array $indexes)
-	{
-		return $this->applyPlugin(__FUNCTION__, func_get_args());
-	}
-
-	public function selectLimitPrint(?int $limit): void
+	public function printSelectionColumns(array $select, array $columns): void
 	{
 		$this->applyPlugin(__FUNCTION__, func_get_args());
 	}
 
-	public function selectLengthPrint($text_length)
+	public function printSelectionSearch(array $where, array $columns, array $indexes): void
 	{
-		return $this->applyPlugin(__FUNCTION__, func_get_args());
+		$this->applyPlugin(__FUNCTION__, func_get_args());
 	}
 
-	public function selectActionPrint($indexes)
+	public function printSelectionOrder(array $order, array $columns, array $indexes): void
 	{
-		return $this->applyPlugin(__FUNCTION__, func_get_args());
+		$this->applyPlugin(__FUNCTION__, func_get_args());
+	}
+
+	public function printSelectionLimit(?int $limit): void
+	{
+		$this->applyPlugin(__FUNCTION__, func_get_args());
+	}
+
+	public function printSelectionLength(?string $textLength): void
+	{
+		$this->applyPlugin(__FUNCTION__, func_get_args());
+	}
+
+	public function printSelectionAction(array $indexes): void
+	{
+		$this->applyPlugin(__FUNCTION__, func_get_args());
 	}
 
 	public function selectCommandPrint()

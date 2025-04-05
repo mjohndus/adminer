@@ -369,17 +369,17 @@ abstract class AdminBase
 
 	public abstract function printTableIndexes(array $indexes): void;
 
-	public abstract function selectColumnsPrint(array $select, array $columns);
+	public abstract function printSelectionColumns(array $select, array $columns): void;
 
-	public abstract function selectSearchPrint(array $where, array $columns, array $indexes);
+	public abstract function printSelectionSearch(array $where, array $columns, array $indexes): void;
 
-	public abstract function selectOrderPrint(array $order, array $columns, array $indexes);
+	public abstract function printSelectionOrder(array $order, array $columns, array $indexes): void;
 
-	public abstract function selectLimitPrint(?int $limit): void;
+	public abstract function printSelectionLimit(?int $limit): void;
 
-	public abstract function selectLengthPrint($text_length);
+	public abstract function printSelectionLength(?string $textLength): void;
 
-	public abstract function selectActionPrint($indexes);
+	public abstract function printSelectionAction(array $indexes): void;
 
 	public abstract function selectCommandPrint();
 
