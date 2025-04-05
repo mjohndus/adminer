@@ -348,14 +348,6 @@ ORDER BY ORDINAL_POSITION", null, "") as $row) { //! requires MySQL 5
 		echo "</div></fieldset>\n";
 	}
 
-	function selectCommandPrint() {
-		return true;
-	}
-
-	function selectImportPrint() {
-		return true;
-	}
-
 	function selectColumnsProcess($columns, $indexes) {
 		return [[], []];
 	}

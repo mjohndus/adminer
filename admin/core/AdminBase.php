@@ -381,9 +381,10 @@ abstract class AdminBase
 
 	public abstract function printSelectionAction(array $indexes): void;
 
-	public abstract function selectCommandPrint();
-
-	public abstract function selectImportPrint();
+	public function isDataEditAllowed(): bool
+	{
+		return !information_schema(DB);
+	}
 
 	public abstract function selectColumnsProcess($columns, $indexes);
 

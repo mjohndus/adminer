@@ -670,20 +670,6 @@ class Admin extends AdminBase
 		echo "</div></fieldset>\n";
 	}
 
-	/** Print command box in select
-	* @return bool whether to print default commands
-	*/
-	function selectCommandPrint() {
-		return !information_schema(DB);
-	}
-
-	/** Print import box in select
-	* @return bool whether to print default import
-	*/
-	function selectImportPrint() {
-		return !information_schema(DB);
-	}
-
 	/** Process columns box in select
 	* @param array selectable columns
 	* @param array

@@ -596,7 +596,7 @@ if (!$columns && support("table")) {
 				echo checkbox("all", 1, 0, ($found_rows !== false ? ($exact_count ? "" : "~ ") . lang('%d row(s)', $found_rows) : ""), "var checked = formChecked(this, /check/); selectCount('selected', this.checked ? '$display_rows' : checked); selectCount('selected2', this.checked || !checked ? '$display_rows' : checked);") . "\n";
 				echo "</div></fieldset>\n";
 
-				if ($admin->selectCommandPrint()) {
+				if ($admin->isDataEditAllowed()) {
 					?>
 <fieldset<?php echo ($_GET["modify"] ? '' : ' class="jsonly"'); ?>><legend><?php echo lang('Modify'); ?></legend><div class='fieldset-content'>
 <input type="submit" class="button" value="<?php echo lang('Save'); ?>"<?php echo ($_GET["modify"] ? '' : ' title="' . lang('Ctrl+click on a value to modify it.') . '"'); ?>>
@@ -628,7 +628,7 @@ if (!$columns && support("table")) {
 			    echo "</div></div>\n";
 			}
 
-			if ($admin->selectImportPrint()) {
+			if ($admin->isDataEditAllowed()) {
 				echo "<p>";
 				echo "<a href='#import'>", icon("import"), lang('Import') . "</a>";
 				echo script("qsl('a').onclick = partial(toggle, 'import');", "");

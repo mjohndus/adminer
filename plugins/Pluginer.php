@@ -250,12 +250,7 @@ class Pluginer extends Admin
 		$this->applyPlugin(__FUNCTION__, func_get_args());
 	}
 
-	public function selectCommandPrint()
-	{
-		return $this->applyPlugin(__FUNCTION__, func_get_args());
-	}
-
-	public function selectImportPrint()
+	public function isDataEditAllowed(): bool
 	{
 		return $this->applyPlugin(__FUNCTION__, func_get_args());
 	}
