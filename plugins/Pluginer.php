@@ -350,9 +350,9 @@ class Pluginer extends Admin
 		$this->applyPlugin(__FUNCTION__, func_get_args());
 	}
 
-	public function tablesPrint(array $tables)
+	public function printTableList(array $tables): void
 	{
-		return $this->applyPlugin(__FUNCTION__, func_get_args());
+		$this->applyPlugin(__FUNCTION__, func_get_args());
 	}
 
 	public function foreignColumn($foreignKeys, $column): ?array

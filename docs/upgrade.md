@@ -168,6 +168,7 @@ include "adminneo.php";
     - `queryTimeout()` -> `getQueryTimeout()`
     - `navigation()` -> `printNavigation()`
     - `databasesPrint()` -> `printDatabaseSwitcher()`
+    - `tablesPrint()` -> `printTableList()`
     - `loginForm()` -> `printLoginForm()`
     - `loginFormField()` -> `getLoginFormRow()`
     - `selectLinks()` -> `printTableMenu()`

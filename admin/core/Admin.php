@@ -1186,7 +1186,7 @@ class Admin extends AdminBase
 			if ($_GET["ns"] !== "" && !$missing && DB != "") {
 				if ($tables) {
 					$this->printTablesFilter();
-					$this->tablesPrint($tables);
+					$this->printTableList($tables);
 				} else {
 					echo "<p class='message'>" . lang('No tables.') . "</p>\n";
 				}
@@ -1259,12 +1259,12 @@ class Admin extends AdminBase
 	}
 
 	/**
-	 * Prints table list in menu.
+	 * Prints table list in main navigation.
 	 *
 	 * @param array $tables Result of table_status('', true)
-	 * @return null
 	 */
-	function tablesPrint(array $tables) {
+	public function printTableList(array $tables): void
+	{
 		$menuClass = ($this->config->isNavigationDual() ? "class='dual'" : ($this->config->isNavigationReversed() ? "class='reversed'" : ""));
 
 		echo "<nav id='tables'><menu $menuClass>";
@@ -1313,8 +1313,6 @@ class Admin extends AdminBase
 		}
 
 		echo "</menu></nav>\n";
-
-		return null;
 	}
 
 	public function foreignColumn($foreignKeys, $column): ?array

@@ -537,7 +537,7 @@ abstract class AdminBase
 			. "</div>\n";
 	}
 
-	public abstract function tablesPrint(array $tables);
+	public abstract function printTableList(array $tables): void;
 
 	public abstract function foreignColumn($foreignKeys, $column): ?array;
 }

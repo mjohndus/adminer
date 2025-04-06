@@ -607,7 +607,7 @@ ORDER BY ORDINAL_POSITION", null, "") as $row) { //! requires MySQL 5
 					echo "<p class='message'>" . lang('No tables.') . "</p>\n";
 				} else {
 					$this->printTablesFilter();
-					$this->tablesPrint($table_status);
+					$this->printTableList($table_status);
 				}
 			}
 		}
@@ -618,7 +618,8 @@ ORDER BY ORDINAL_POSITION", null, "") as $row) { //! requires MySQL 5
 		//
 	}
 
-	function tablesPrint(array $tables) {
+	public function printTableList(array $tables): void
+	{
 		echo "<nav id='tables'><menu>";
 
 		foreach ($tables as $row) {
