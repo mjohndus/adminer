@@ -36,11 +36,11 @@ abstract class Min_SQL {
 
 	/** Select data from table
 	* @param string
-	* @param array result of $admin->selectColumnsProcess()[0]
-	* @param array result of $admin->selectSearchProcess()
-	* @param array result of $admin->selectColumnsProcess()[1]
-	* @param array result of $admin->selectOrderProcess()
-	* @param ?int result of $admin->selectLimitProcess()
+	* @param array result of $admin->processSelectionColumns()[0]
+	* @param array result of $admin->processSelectionSearch()
+	* @param array result of $admin->processSelectionColumns()[1]
+	* @param array result of $admin->processSelectionOrder()
+	* @param ?int result of $admin->processSelectionLimit()
 	* @param int index of page starting at zero
 	* @param bool whether to print the query
 	* @return Min_Result

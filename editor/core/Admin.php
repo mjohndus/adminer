@@ -348,11 +348,13 @@ ORDER BY ORDINAL_POSITION", null, "") as $row) { //! requires MySQL 5
 		echo "</div></fieldset>\n";
 	}
 
-	function selectColumnsProcess($columns, $indexes) {
+	public function processSelectionColumns(array $columns, array $indexes): array
+	{
 		return [[], []];
 	}
 
-	function selectSearchProcess($fields, $indexes) {
+	public function processSelectionSearch(array $fields, array $indexes): array
+	{
 		global $driver;
 
 		$return = [];
@@ -395,7 +397,8 @@ ORDER BY ORDINAL_POSITION", null, "") as $row) { //! requires MySQL 5
 		return $return;
 	}
 
-	function selectOrderProcess($fields, $indexes) {
+	public function processSelectionOrder(array $fields, array $indexes): array
+	{
 		$index_order = $_GET["index_order"];
 		if ($index_order != "") {
 			unset($_GET["order"][1]);
@@ -423,7 +426,8 @@ ORDER BY ORDINAL_POSITION", null, "") as $row) { //! requires MySQL 5
 		return [];
 	}
 
-	function selectLengthProcess() {
+	public function processSelectionLength(): string
+	{
 		return "100";
 	}
 

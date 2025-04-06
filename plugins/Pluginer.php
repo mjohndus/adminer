@@ -255,27 +255,27 @@ class Pluginer extends Admin
 		return $this->applyPlugin(__FUNCTION__, func_get_args());
 	}
 
-	public function selectColumnsProcess($columns, $indexes)
+	public function processSelectionColumns(array $columns, array $indexes): array
 	{
 		return $this->applyPlugin(__FUNCTION__, func_get_args());
 	}
 
-	public function selectSearchProcess($fields, $indexes)
+	public function processSelectionSearch(array $fields, array $indexes): array
 	{
 		return $this->applyPlugin(__FUNCTION__, func_get_args());
 	}
 
-	public function selectOrderProcess($fields, $indexes)
+	public function processSelectionOrder(array $fields, array $indexes): array
 	{
 		return $this->applyPlugin(__FUNCTION__, func_get_args());
 	}
 
-	public function selectLimitProcess(): ?int
+	public function processSelectionLimit(): ?int
 	{
 		return $this->applyPlugin(__FUNCTION__, func_get_args());
 	}
 
-	public function selectLengthProcess()
+	public function processSelectionLength(): string
 	{
 		return $this->applyPlugin(__FUNCTION__, func_get_args());
 	}

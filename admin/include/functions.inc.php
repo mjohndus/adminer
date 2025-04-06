@@ -1218,7 +1218,7 @@ function search_tables(): void
 			continue;
 		}
 
-		$result = $connection->query("SELECT" . limit("1 FROM " . table($table), " WHERE " . implode(" AND ", $admin->selectSearchProcess(fields($table), [])), 1));
+		$result = $connection->query("SELECT" . limit("1 FROM " . table($table), " WHERE " . implode(" AND ", $admin->processSelectionSearch(fields($table), [])), 1));
 		if ($result && !$result->fetch_row()) {
 			continue;
 		}

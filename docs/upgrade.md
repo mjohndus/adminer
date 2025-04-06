@@ -182,6 +182,11 @@ include "adminneo.php";
     - `selectLimitPrint()` -> `printSelectionLimit()`
     - `selectLengthPrint()` -> `printSelectionLength()`
     - `selectActionPrint()` -> `printSelectionAction()`
+    - `selectColumnsProcess()` -> `processSelectionColumns()`
+    - `selectSearchProcess()` -> `processSelectionSearch()`
+    - `selectOrderProcess()` -> `processSelectionOrder()`
+    - `selectLimitProcess()` -> `processSelectionLimit()`
+    - `selectLengthProcess()` -> `processSelectionLength()`
     - `dumpOutput()` -> `getDumpOutputs()`
     - `dumpFormat()` -> `getDumpFormats()`
     - `dumpHeaders()` -> `sendDumpHeaders()`

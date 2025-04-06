@@ -386,18 +386,18 @@ abstract class AdminBase
 		return !information_schema(DB);
 	}
 
-	public abstract function selectColumnsProcess($columns, $indexes);
+	public abstract function processSelectionColumns(array $columns, array $indexes): array;
 
-	public abstract function selectSearchProcess($fields, $indexes);
+	public abstract function processSelectionSearch(array $fields, array $indexes): array;
 
-	public abstract function selectOrderProcess($fields, $indexes);
+	public abstract function processSelectionOrder(array $fields, array $indexes): array;
 
 	/**
 	 * Processed limit box in select.
 	 *
 	 * @return ?int Expression to use in LIMIT, will be escaped.
 	 */
-	public function selectLimitProcess(): ?int
+	public function processSelectionLimit(): ?int
 	{
 		if (!isset($_GET["limit"])) {
 			return $this->config->getRecordsPerPage();
@@ -406,7 +406,7 @@ abstract class AdminBase
 		return $_GET["limit"] != "" ? (int)$_GET["limit"] : null;
 	}
 
-	public abstract function selectLengthProcess();
+	public abstract function processSelectionLength(): string;
 
 	public abstract function editRowPrint($table, $fields, $row, $update);
 

@@ -26,7 +26,7 @@ foreach ($fields as $key => $field) {
 	if (isset($field["privileges"]["select"]) && $name != "") {
 		$columns[$key] = html_entity_decode(strip_tags($name), ENT_QUOTES);
 		if (is_shortable($field)) {
-			$text_length = $admin->selectLengthProcess();
+			$text_length = $admin->processSelectionLength();
 		}
 	}
 	if (isset($field["privileges"]["where"]) && $name != "") {
@@ -38,13 +38,13 @@ foreach ($fields as $key => $field) {
 	$rights += $field["privileges"];
 }
 
-list($select, $group) = $admin->selectColumnsProcess($columns, $indexes);
+list($select, $group) = $admin->processSelectionColumns($columns, $indexes);
 $select = array_unique($select);
 $group = array_unique($group);
 $is_group = count($group) < count($select);
-$where = $admin->selectSearchProcess($fields, $indexes);
-$order = $admin->selectOrderProcess($fields, $indexes);
-$limit = $admin->selectLimitProcess();
+$where = $admin->processSelectionSearch($fields, $indexes);
+$order = $admin->processSelectionOrder($fields, $indexes);
+$limit = $admin->processSelectionLimit();
 
 if ($_GET["modify"] && !$admin->isDataEditAllowed()) {
 	redirect(ME . "select=" . urlencode($TABLE));

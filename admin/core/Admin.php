@@ -499,7 +499,7 @@ class Admin extends AdminBase
 	/**
 	 * Prints columns box in selection filter.
 	 *
-	 * @param array $select The result of selectColumnsProcess()[0].
+	 * @param array $select The result of processSelectionColumns()[0].
 	 * @param array $columns Selectable columns.
 	 */
 	public function printSelectionColumns(array $select, array $columns): void
@@ -548,7 +548,7 @@ class Admin extends AdminBase
 	/**
 	 * Prints search box in selection filter.
 	 *
-	 * @param array $where The result of selectSearchProcess().
+	 * @param array $where The result of processSelectionSearch().
 	 * @param array $columns Selectable columns.
 	 */
 	public function printSelectionSearch(array $where, array $columns, array $indexes): void
@@ -591,7 +591,7 @@ class Admin extends AdminBase
 	/**
 	 * Prints order box in selection filter.
 	 *
-	 * @param array $order The result of selectOrderProcess().
+	 * @param array $order The result of processSelectionOrder().
 	 * @param array $columns Selectable columns.
 	 */
 	public function printSelectionOrder(array $order, array $columns, array $indexes): void
@@ -632,7 +632,7 @@ class Admin extends AdminBase
 	/**
 	 * Prints text length box in selection filter.
 	 *
-	 * @param ?string $textLength The result of selectLengthProcess().
+	 * @param ?string $textLength The result of processSelectionLength().
 	 */
 	public function printSelectionLength(?string $textLength): void
 	{
@@ -670,12 +670,15 @@ class Admin extends AdminBase
 		echo "</div></fieldset>\n";
 	}
 
-	/** Process columns box in select
-	* @param array selectable columns
-	* @param array
-	* @return array [[select_expressions], [group_expressions]]
-	*/
-	function selectColumnsProcess($columns, $indexes) {
+	/**
+	 * Processes columns box in selection filter.
+	 *
+	 * @param array $columns Selectable columns.
+	 *
+	 * @return array [[select_expressions], [group_expressions]]
+	 */
+	public function processSelectionColumns(array $columns, array $indexes): array
+	{
 		global $functions, $grouping;
 		$select = []; // select expressions, empty for *
 		$group = []; // expressions without aggregation - will be used for GROUP BY if an aggregation function is used
@@ -690,12 +693,13 @@ class Admin extends AdminBase
 		return [$select, $group];
 	}
 
-	/** Process search box in select
-	* @param array
-	* @param array
-	* @return array expressions to join by AND
-	*/
-	function selectSearchProcess($fields, $indexes) {
+	/**
+	 * Processes search box in selection filter.
+	 *
+	 * @return array Expressions to join by AND.
+	 */
+	public function processSelectionSearch(array $fields, array $indexes): array
+	{
 		global $driver;
 
 		$return = [];
@@ -756,12 +760,13 @@ class Admin extends AdminBase
 		return $return;
 	}
 
-	/** Process order box in select
-	* @param array
-	* @param array
-	* @return array expressions to join by comma
-	*/
-	function selectOrderProcess($fields, $indexes) {
+	/**
+	 * Processes order box in selection filter.
+	 *
+	 * @return array Expressions to join by comma.
+	 */
+	public function processSelectionOrder(array $fields, array $indexes): array
+	{
 		$return = [];
 		foreach ((array) $_GET["order"] as $key => $val) {
 			if ($val != "") {
@@ -773,11 +778,14 @@ class Admin extends AdminBase
 		return $return;
 	}
 
-	/** Process length box in select
-	* @return string number of characters to shorten texts, will be escaped
-	*/
-	function selectLengthProcess() {
-		return (isset($_GET["text_length"]) ? $_GET["text_length"] : "100");
+	/**
+	 * Processes length box in selection filter.
+	 *
+	 * @return string Number of characters to shorten texts, will be escaped.
+	 */
+	public function processSelectionLength(): string
+	{
+		return $_GET["text_length"] ?? "100";
 	}
 
 	/** Print before edit form
