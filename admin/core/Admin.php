@@ -137,7 +137,7 @@ class Admin extends AdminBase
 	}
 
 	/**
-	 * Prints top menu for table selection and structure page.
+	 * Prints top menu on table selection and structure page.
 	 *
 	 * @param array $tableStatus The result of SHOW TABLE STATUS.
 	 * @param ?string $set New item options, NULL for no new item.
@@ -1092,11 +1092,10 @@ class Admin extends AdminBase
 	}
 
 	/**
-	 * Prints homepage.
-	 *
-	 * @return bool Whether to print default homepage.
+	 * Prints top menu on database page.
 	 */
-	function homepage() {
+	public function printDatabaseMenu(): void
+	{
 		echo "<p class='links top-links'>\n";
 
 		$ns = $_GET["ns"] ?? null;
@@ -1115,8 +1114,6 @@ class Admin extends AdminBase
 		}
 
 		echo "</p>\n";
-
-		return true;
 	}
 
 	/** Prints navigation

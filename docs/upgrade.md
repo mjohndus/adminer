@@ -149,6 +149,7 @@ include "adminneo.php";
 - Function `csp()` was replaced by `updateCspHeader()` that allows to redefine CSP directives of just one 
   Content-Security-Policy HTTP header.
 - Functions `selectCommandPrint()` and `selectImportPrint()` were replaced by one function `isDataEditAllowed()`.
+- Function `homepage()` was removed. Only the top menu can be customized by `printDatabaseMenu()`. 
 - Removed customizable functions:
     - `dumpFilename()`
     - `selectEmailPrint()`

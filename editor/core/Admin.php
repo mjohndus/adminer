@@ -574,8 +574,9 @@ ORDER BY ORDINAL_POSITION", null, "") as $row) { //! requires MySQL 5
 		return "";
 	}
 
-	function homepage() {
-		return true;
+	public function printDatabaseMenu(): void
+	{
+		//
 	}
 
 	function navigation($missing) {

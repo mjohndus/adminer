@@ -497,7 +497,7 @@ abstract class AdminBase
 
 	public abstract function getImportFilePath(): string;
 
-	public abstract function homepage();
+	public abstract function printDatabaseMenu(): void;
 
 	public abstract function navigation($missing);
 
