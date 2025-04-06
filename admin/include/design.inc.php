@@ -133,7 +133,7 @@ function page_header(string $title, string $error = "", $breadcrumb = [], ?strin
 
 	echo "<button id='navigation-button' class='button light navigation-button'>", icon_solo("menu"), icon_solo("close"), "</button>";
     echo "<div id='navigation-panel' class='navigation-panel'>\n";
-	$admin->navigation($missing);
+	$admin->printNavigation($missing);
 
 	echo "<div class='footer'>\n";
 	language_select();

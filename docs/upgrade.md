@@ -166,6 +166,7 @@ include "adminneo.php";
     - `schemas()` -> `getSchemas()`
     - `collations()` -> `getCollations()`
     - `queryTimeout()` -> `getQueryTimeout()`
+    - `navigation()` -> `printNavigation()`
     - `loginForm()` -> `printLoginForm()`
     - `loginFormField()` -> `getLoginFormRow()`
     - `selectLinks()` -> `printTableMenu()`

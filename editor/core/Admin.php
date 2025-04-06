@@ -579,31 +579,10 @@ ORDER BY ORDINAL_POSITION", null, "") as $row) { //! requires MySQL 5
 		//
 	}
 
-	function navigation($missing) {
-		global $VERSION;
+	public function printNavigation(?string $missing): void
+	{
+		parent::printNavigation($missing);
 
-		$last_version = $_COOKIE["neo_version"] ?? null;
-?>
-
-<div class="header">
-	<?= $this->name(); ?>
-
-	<?php if ($missing != "auth"): ?>
-		<span class="version">
-			<?= h($VERSION); ?>
-			<a id="version" class="version-badge" href="https://github.com/adminneo-org/adminneo/releases"<?= target_blank(); ?> title="<?= h($last_version); ?>">
-				<?= ($this->config->isVersionVerificationEnabled() && $last_version && version_compare($VERSION, $last_version) < 0 ? icon_solo("asterisk") : ""); ?>
-			</a>
-		</span>
-		<?php
-		if ($this->config->isVersionVerificationEnabled() && !$last_version) {
-			echo script("verifyVersion('" . js_escape(ME) . "', '" . get_token() . "');");
-		}
-		?>
-	<?php endif; ?>
-</div>
-
-<?php
 		if ($missing == "auth") {
 			$first = true;
 			foreach ((array) $_SESSION["pwds"] as $vendor => $servers) {
