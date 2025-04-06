@@ -46,6 +46,10 @@ $where = $admin->selectSearchProcess($fields, $indexes);
 $order = $admin->selectOrderProcess($fields, $indexes);
 $limit = $admin->selectLimitProcess();
 
+if ($_GET["modify"] && !$admin->isDataEditAllowed()) {
+	redirect(ME . "select=" . urlencode($TABLE));
+}
+
 if ($_GET["val"] && is_ajax()) {
 	header("Content-Type: text/plain; charset=utf-8");
 	foreach ($_GET["val"] as $unique_idf => $row) {
@@ -335,12 +339,14 @@ if (!$columns && support("table")) {
 			echo "<div class='scrollable'>\n";
 			echo "<table id='table' class='nowrap checkable'>\n";
 
-			echo script("mixin(gid('table'), {onclick: tableClick, ondblclick: partialArg(tableClick, true), onkeydown: editingKeydown});");
+			echo script("mixin(gid('table'), {onclick: partialArg(tableClick, false, " . ($admin->isDataEditAllowed() ? "true" : "false") . "), ondblclick: partialArg(tableClick, true), onkeydown: editingKeydown});");
 			echo "<thead><tr>";
 
 			if ($group || !$select) {
-				echo "<th class='actions'><input type='checkbox' id='all-page' class='jsonly'>" . script("gid('all-page').onclick = partial(formCheck, /check/);", ""),
-					" <a href='", h($_GET["modify"] ? remove_from_uri("modify") : $_SERVER["REQUEST_URI"] . "&modify=1") . "' title='", lang('Modify'), "'>", icon_solo("edit-all"), "</a>";
+				echo "<th class='actions'><input type='checkbox' id='all-page' class='jsonly'>" . script("gid('all-page').onclick = partial(formCheck, /check/);", "");
+				if ($admin->isDataEditAllowed()) {
+					echo " <a href='", h($_GET["modify"] ? remove_from_uri("modify") : $_SERVER["REQUEST_URI"] . "&modify=1") . "' title='", lang('Modify'), "'>", icon_solo("edit-all"), "</a>";
+				}
 			}
 
 			$names = [];
@@ -421,7 +427,7 @@ if (!$columns && support("table")) {
 					echo "<td class='actions'>",
 						checkbox("check[]", substr($unique_idf, 1), in_array(substr($unique_idf, 1), (array)$_POST["check"]));
 
-					if (!$is_group && !information_schema(DB)) {
+					if (!$is_group && $admin->isDataEditAllowed()) {
 						echo " <a href='", h(ME . "edit=" . urlencode($TABLE) . $unique_idf), "' class='edit' title='", lang('Edit'), "'>", icon_solo("edit"), "</a>";
 					}
 				}

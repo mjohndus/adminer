@@ -247,10 +247,10 @@ function formChecked(el, name) {
 * @param MouseEvent
 * @param [boolean] force click
 */
-function tableClick(event, click) {
+function tableClick(event, click, canEdit = true) {
 	var td = parentTag(event.target, 'td');
 	var text;
-	if (td && (text = td.getAttribute('data-text'))) {
+	if (canEdit && td && (text = td.getAttribute('data-text'))) {
 		if (selectClick.call(td, event, +text, td.getAttribute('data-warning'))) {
 			return;
 		}

@@ -183,7 +183,7 @@ if ($admin->homepage()) {
 			echo "</table>\n";
 			echo "</div>\n";
 
-			if (!information_schema(DB)) {
+			if ($admin->isDataEditAllowed()) {
 				echo "<div class='table-footer'><div class='field-sets'>\n";
 				$vacuum = "<input type='submit' class='button' value='" . lang('Vacuum') . "'> " . help_script("VACUUM");
 				$optimize = "<input type='submit' class='button' name='optimize' value='" . lang('Optimize') . "'> " . help_script($jush == "sql" ? "OPTIMIZE TABLE" : "VACUUM OPTIMIZE");
