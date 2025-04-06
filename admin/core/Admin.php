@@ -1153,7 +1153,7 @@ class Admin extends AdminBase
 				echo "<nav id='logins'><menu>\n$output</menu></nav>\n";
 			}
 		} else {
-			$this->databasesPrint($missing);
+			$this->printDatabaseSwitcher($missing);
 
 			$actions = [];
 			if (DB == null || !$missing) {
@@ -1217,12 +1217,10 @@ class Admin extends AdminBase
 	}
 
 	/**
-	 * Prints databases select in menu.
-	 *
-	 * @param $missing string
-	 * @return null
+	 * Prints databases selection in main navigation.
 	 */
-	function databasesPrint($missing) {
+	public function printDatabaseSwitcher(?string $missing): void
+	{
 		global $admin, $connection;
 
 		$databases = $this->getDatabases();
@@ -1258,8 +1256,6 @@ class Admin extends AdminBase
 		}
 
 		echo "</form></div>\n";
-
-		return null;
 	}
 
 	/**

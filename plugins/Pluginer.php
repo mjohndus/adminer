@@ -340,9 +340,9 @@ class Pluginer extends Admin
 		$this->applyPlugin(__FUNCTION__, func_get_args());
 	}
 
-	public function databasesPrint($missing)
+	public function printDatabaseSwitcher(?string $missing): void
 	{
-		return $this->applyPlugin(__FUNCTION__, func_get_args());
+		$this->applyPlugin(__FUNCTION__, func_get_args());
 	}
 
 	public function printTablesFilter(): void

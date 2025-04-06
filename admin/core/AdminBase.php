@@ -527,7 +527,7 @@ abstract class AdminBase
 <?php
 	}
 
-	public abstract function databasesPrint($missing);
+	public abstract function printDatabaseSwitcher(?string $missing): void;
 
 	public function printTablesFilter(): void
 	{

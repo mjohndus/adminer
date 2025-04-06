@@ -600,7 +600,7 @@ ORDER BY ORDINAL_POSITION", null, "") as $row) { //! requires MySQL 5
 				echo "</menu></nav>\n";
 			}
 		} else {
-			$this->databasesPrint($missing);
+			$this->printDatabaseSwitcher($missing);
 			if ($missing != "db" && $missing != "ns") {
 				$table_status = table_status('', true);
 				if (!$table_status) {
@@ -613,7 +613,9 @@ ORDER BY ORDINAL_POSITION", null, "") as $row) { //! requires MySQL 5
 		}
 	}
 
-	function databasesPrint($missing) {
+	public function printDatabaseSwitcher(?string $missing): void
+	{
+		//
 	}
 
 	function tablesPrint(array $tables) {
