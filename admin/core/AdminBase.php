@@ -495,7 +495,7 @@ abstract class AdminBase
 
 	public abstract function dumpData(string $table, string $style, string $query): void;
 
-	public abstract function importServerPath();
+	public abstract function getImportFilePath(): string;
 
 	public abstract function homepage();
 

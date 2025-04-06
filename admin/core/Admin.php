@@ -1082,11 +1082,12 @@ class Admin extends AdminBase
 	}
 
 	/**
-	 * Gets the path of the file for webserver load.
+	 * Returns the path of the file for webserver import.
 	 *
-	 * @return string Path of the sql import file.
+	 * @return string Path of the sql import file. Empty to hide the import.
 	 */
-	function importServerPath() {
+	public function getImportFilePath(): string
+	{
 		return "adminneo.sql";
 	}
 

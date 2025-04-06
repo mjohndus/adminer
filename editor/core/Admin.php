@@ -569,8 +569,9 @@ ORDER BY ORDINAL_POSITION", null, "") as $row) { //! requires MySQL 5
 		}
 	}
 
-	function importServerPath() {
-		return null;
+	public function getImportFilePath(): string
+	{
+		return "";
 	}
 
 	function homepage() {

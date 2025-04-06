@@ -198,6 +198,7 @@ include "adminneo.php";
     - `editInput()` -> `getFieldInput()`
     - `editHint()` -> `getFieldInputHint()`
     - `processInput()` -> `processFieldInput()`
+    - `importServerPath()` -> `getImportFilePath()`
     - `selectQuery()` -> `formatSelectQuery()`
     - `messageQuery()` -> `formatMessageQuery()`
     - `sqlCommandQuery()` -> `formatSqlCommandQuery()`

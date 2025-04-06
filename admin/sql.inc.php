@@ -30,15 +30,13 @@ if (!$error && $_POST) {
 	if (!isset($_GET["import"])) {
 		$query = $_POST["query"];
 	} elseif ($_POST["webfile"]) {
-		$import_file_path = $admin->importServerPath();
-		if (!$import_file_path) {
-			$fp = false;
-		} elseif (file_exists($import_file_path)) {
-			$fp = fopen($import_file_path, "rb");
-		} elseif (file_exists("$import_file_path.gz")) {
-			$fp = fopen("compress.zlib://$import_file_path.gz", "rb");
-		} else {
-			$fp = false;
+		$import_file_path = $admin->getImportFilePath();
+		if ($import_file_path) {
+			if (file_exists($import_file_path)) {
+				$fp = fopen($import_file_path, "rb");
+			} elseif (file_exists("$import_file_path.gz")) {
+				$fp = fopen("compress.zlib://$import_file_path.gz", "rb");
+			}
 		}
 
 		$query = $fp ? fread($fp, 1e6) : false;
@@ -312,7 +310,7 @@ if (!isset($_GET["import"])) {
 	}
 	echo "</div></fieldset>\n";
 
-	$import_file_path = $admin->importServerPath();
+	$import_file_path = $admin->getImportFilePath();
 	if ($import_file_path) {
 		echo "<fieldset><legend>" . lang('From server') . "</legend><div class='fieldset-content'>";
 		echo lang('Webserver file %s', "<code>" . h($import_file_path) . "$gz</code>");
