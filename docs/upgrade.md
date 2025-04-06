@@ -177,6 +177,7 @@ include "adminneo.php";
     - `backwardKeysPrint()` -> `printBackwardKeys()`
     - `rowDescription()` -> `getTableDescriptionFieldName()`
     - `rowDescriptions()` -> `fillForeignDescriptions()`
+    - `foreignColumn()` -> `getForeignColumnInfo()`
     - `tableStructurePrint()` -> `printTableStructure()`
     - `tablePartitionsPrint()` -> `printTablePartitions()`
     - `tableIndexesPrint()` -> `printTableIndexes()`

@@ -1315,7 +1315,7 @@ class Admin extends AdminBase
 		echo "</menu></nav>\n";
 	}
 
-	public function foreignColumn($foreignKeys, $column): ?array
+	public function getForeignColumnInfo(array $foreignKeys, string $column): ?array
 	{
 		return null;
 	}

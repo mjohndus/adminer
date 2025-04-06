@@ -355,7 +355,7 @@ class Pluginer extends Admin
 		$this->applyPlugin(__FUNCTION__, func_get_args());
 	}
 
-	public function foreignColumn($foreignKeys, $column): ?array
+	public function getForeignColumnInfo(array $foreignKeys, string $column): ?array
 	{
 		return $this->applyPlugin(__FUNCTION__, func_get_args());
 	}

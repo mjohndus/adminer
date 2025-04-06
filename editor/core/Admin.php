@@ -164,7 +164,7 @@ ORDER BY ORDINAL_POSITION", null, "") as $row) { //! requires MySQL 5
 	{
 		$return = $rows;
 		foreach ($rows[0] as $key => $val) {
-			if (list($table, $id, $name) = $this->foreignColumn($foreignKeys, $key)) {
+			if (list($table, $id, $name) = $this->getForeignColumnInfo($foreignKeys, $key)) {
 				// find all used ids
 				$ids = [];
 				foreach ($rows as $row) {
@@ -639,7 +639,8 @@ ORDER BY ORDINAL_POSITION", null, "") as $row) { //! requires MySQL 5
 		echo "</menu></nav>\n";
 	}
 
-	public function foreignColumn($foreignKeys, $column): ?array {
+	public function getForeignColumnInfo(array $foreignKeys, string $column): ?array
+	{
 		foreach ((array) $foreignKeys[$column] as $foreignKey) {
 			if (count($foreignKey["source"]) == 1) {
 				$name = $this->getTableDescriptionFieldName($foreignKey["table"]);
@@ -655,7 +656,7 @@ ORDER BY ORDINAL_POSITION", null, "") as $row) { //! requires MySQL 5
 
 	private function foreignKeyOptions($table, $column, $value = null) {
 		global $connection;
-		if (list($target, $id, $name) = $this->foreignColumn(column_foreign_keys($table), $column)) {
+		if (list($target, $id, $name) = $this->getForeignColumnInfo(column_foreign_keys($table), $column)) {
 			$return = &$this->values[$target];
 			if ($return === null) {
 				$table_status = table_status($target);

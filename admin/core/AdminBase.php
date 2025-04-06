@@ -539,5 +539,5 @@ abstract class AdminBase
 
 	public abstract function printTableList(array $tables): void;
 
-	public abstract function foreignColumn($foreignKeys, $column): ?array;
+	public abstract function getForeignColumnInfo(array $foreignKeys, string $column): ?array;
 }
