@@ -300,6 +300,7 @@ $translations = [
 	'Schemas' => 'Schémy',
 	'No schemas.' => 'Žiadne schémy.',
 	'Show schema' => 'Zobraziť schému',
+	'Info' => 'Info',
 
 	'Checks' => 'Kontroly',
 	'Create check' => 'Vytvoriť kontrolu',

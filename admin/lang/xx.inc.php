@@ -33,6 +33,7 @@ $translations = [
 	'The action will be performed after successful login with the same credentials.' => 'Xx.',
 	'%s version: %s through PHP extension %s' => '%s xx: %s xx %s',
 	'Refresh' => 'Xx',
+	'Info' => 'Xx',
 
 	// text direction - 'ltr' or 'rtl'
 	'ltr' => 'xx',

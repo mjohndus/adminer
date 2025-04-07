@@ -184,7 +184,8 @@ class Admin extends AdminBase
 			echo " <a href='", h(ME), "$key=", urlencode($table), ($key == "edit" ? $set : ""), "'", bold(isset($_GET[$key])), ">", icon($val[1]), "$val[0]</a>";
 		}
 
-		echo doc_link([$jush => $driver->tableHelp($table, $is_view)], "?");
+		echo doc_link([$jush => $driver->tableHelp($table, $is_view)], icon("help") . lang('Info'));
+
 		echo "\n";
 	}
 
