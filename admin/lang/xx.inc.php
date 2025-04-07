@@ -349,9 +349,10 @@ $translations = [
 	'Check has been created.' => 'Xx.',
 	'Check has been altered.' => 'Xx.',
 	'Check has been dropped.' => 'Xx.',
-	'One Time Password' => 'Xx',
-	'Invalid OTP code.' => 'Xx.',
 
-	'Access denied.' => null,
-	'Enter OTP code.' => null,
+	// Plugins.
+	'One Time Password' => 'Xx',
+	'Enter OTP code.' => 'Xx.',
+	'Invalid OTP code.' => 'Xx.',
+	'Access denied.' => 'Xx.',
 ];

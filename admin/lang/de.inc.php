@@ -294,7 +294,9 @@ $translations = [
 	'Unknown error.' => 'Unbekannter Fehler.',
 	'Database does not support password.' => 'Die Datenbank unterstützt kein Passwort.',
 	'One Time Password' => 'Einmal-Passwort',
+	'Enter OTP code.' => 'OTP-Code eingeben',
 	'Invalid OTP code.' => 'Ungültiger OTP-Code.',
+	'Access denied.' => 'Zugang verweigert',
 
 	'Schemas' => 'Schemata',
 	'No schemas.' => 'Keine Schemata.',
@@ -310,7 +312,4 @@ $translations = [
 	'Checks' => 'Checks',
 
 	'Invalid permanent login, please login again.' => 'Ungültige permanente Anmeldung, bitte melden Sie sich erneut an.',
-
-	'Access denied.' => 'Zugang verweigert',
-	'Enter OTP code.' => 'OTP-Code eingeben',
 ];

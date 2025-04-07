@@ -296,7 +296,9 @@ $translations = [
 	'yes' => 'áno',
 	'no' => 'nie',
 	'One Time Password' => 'Jednorázové heslo',
-	'Invalid OTP code.' => 'Neplatný kód OTP.',
+	'Enter OTP code.' => 'Zadajte jednorázový kód.',
+	'Invalid OTP code.' => 'Neplatný jednorázový kód.',
+	'Access denied.' => 'Prístup zamietnutý.',
 	'Schemas' => 'Schémy',
 	'No schemas.' => 'Žiadne schémy.',
 	'Show schema' => 'Zobraziť schému',
@@ -308,7 +310,4 @@ $translations = [
 	'Check has been created.' => 'Kontrola bola vytvorená.',
 	'Check has been altered.' => 'Kontrola byla zmenená.',
 	'Check has been dropped.' => 'Kontrola byla odstránená.',
-
-	'Access denied.' => null,
-	'Enter OTP code.' => null,
 ];

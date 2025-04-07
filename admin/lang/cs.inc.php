@@ -349,9 +349,10 @@ $translations = [
 	'Check has been created.' => 'Kontrola byla vytvořena.',
 	'Check has been altered.' => 'Kontrola byla změněna.',
 	'Check has been dropped.' => 'Kontrola byla odstraněna.',
-	'One Time Password' => 'Jednorázové heslo',
-	'Invalid OTP code.' => 'Neplatný kód OTP.',
 
-	'Access denied.' => null,
-	'Enter OTP code.' => null,
+	// Plugins
+	'One Time Password' => 'Jednorázové heslo',
+	'Enter OTP code.' => 'Zadejte jednorázový kód.',
+	'Invalid OTP code.' => 'Neplatný jednorázový kód.',
+	'Access denied.' => 'Přístup zamítnut.',
 ];
