@@ -66,7 +66,7 @@ table.nowrap tbody td {
 	white-space: pre;
 }
 
-table.checkable > tbody > tr:hover > th, table.checkable > tbody > tr:hover > td {
+table > tbody > tr:hover > th, table > tbody > tr:hover > td {
 	background: var(--list-hover);
 }
 
@@ -86,6 +86,10 @@ table.box {
 table.box > tbody > tr > th {
 	background: var(--table-header-bg);
 	text-align: right;
+}
+
+table.box > tbody > tr > td {
+	background: none;
 }
 
 table.box > tbody > tr:first-child > th, table.box > tbody > tr:first-child > td {
