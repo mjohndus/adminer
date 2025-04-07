@@ -672,13 +672,18 @@ function ini_bytes($ini) {
 /**
  * Creates link to database documentation.
  *
- * @param array $paths $jush => $path
- * @param string $text HTML code
+ * @param ?string[] $paths $jush => $path
+ * @param string $text HTML code.
  *
- * @return string HTML code
+ * @return string HTML code.
  */
-function doc_link(array $paths, $text = "<sup>?</sup>") {
+function doc_link(array $paths, string $text = "<sup>?</sup>"): string
+{
 	global $jush, $connection;
+
+	if (!($paths[$jush] ?? null)) {
+		return "";
+	}
 
 	$server_info = $connection->server_info;
 	$version = preg_replace('~^(\d\.?\d).*~s', '\1', $server_info); // two most significant digits
@@ -694,11 +699,7 @@ function doc_link(array $paths, $text = "<sup>?</sup>") {
 
 	if (preg_match('~MariaDB~', $server_info)) {
 		$urls['sql'] = "https://mariadb.com/kb/en/";
-		$paths['sql'] = (isset($paths['mariadb']) ? $paths['mariadb'] : str_replace(".html", "/", $paths['sql']));
-	}
-
-	if (!($paths[$jush] ?? null)) {
-		return "";
+		$paths['sql'] = $paths['mariadb'] ?? str_replace(".html", "/", $paths['sql']);
 	}
 
 	return "<a href='" . h($urls[$jush] . $paths[$jush] . ($jush == 'mssql' ? "?view=sql-server-ver$version" : "")) . "'" . target_blank() . ">$text</a>";
