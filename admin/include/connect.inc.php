@@ -22,7 +22,7 @@ if (!(DB != "" ? $connection->select_db(DB) : isset($_GET["sql"]) || isset($_GET
 	}
 	if (DB != "") {
 		header("HTTP/1.1 404 Not Found");
-		page_header(lang('Database') . ": " . h(DB), lang('Invalid database.'), true, "db");
+		page_header(lang('Database') . ": " . h(DB), lang('Invalid database.'), true);
 	} else {
 		if ($_POST["db"] && !$error) {
 			queries_redirect(substr(ME, 0, -1), lang('Databases have been dropped.'), drop_databases($_POST["db"]));
@@ -31,7 +31,7 @@ if (!(DB != "" ? $connection->select_db(DB) : isset($_GET["sql"]) || isset($_GET
 		$server_name = $admin->getServerName(SERVER);
 		$title = h($drivers[DRIVER]) . ": " . ($server_name != "" ? h($server_name) : lang('Server'));
 
-		page_header($title, $error, false, "db");
+		page_header($title, $error, false);
 
 		$links = [
 			'privileges' => [lang('Privileges'), "users"],
@@ -103,7 +103,7 @@ if (!(DB != "" ? $connection->select_db(DB) : isset($_GET["sql"]) || isset($_GET
 
 	echo '<p class="links"><a href="' . h(ME) . 'database=">' . icon("database-add") . lang('Create database') . "</a>\n";
 
-	page_footer();
+	page_footer("db");
 	exit;
 }
 
@@ -114,8 +114,8 @@ if (support("scheme")) {
 		}
 		if (!set_schema($_GET["ns"])) {
 			header("HTTP/1.1 404 Not Found");
-			page_header(lang('Schema') . ": " . h($_GET["ns"]), lang('Invalid schema.'), true, "ns");
-			page_footer();
+			page_header(lang('Schema') . ": " . h($_GET["ns"]), lang('Invalid schema.'), true);
+			page_footer("ns");
 			exit;
 		}
 	}

@@ -12,11 +12,10 @@ if (!ob_get_level()) {
  * @param string $title Used in title and h2, should be HTML escaped.
  * @param string $error
  * @param mixed $breadcrumb ["key" => "link", "key2" => ["link", "desc"], 0 => "desc"], null for nothing, false for driver only, true for driver and server
- * @param ?string $missing "auth", "db", "ns"
  */
-function page_header(string $title, string $error = "", $breadcrumb = [], ?string $missing = null): void
+function page_header(string $title, string $error = "", $breadcrumb = []): void
 {
-	global $LANG, $admin, $jush, $token;
+	global $LANG, $admin, $jush;
 
 	page_headers();
 	if (is_ajax() && $error) {
@@ -130,30 +129,6 @@ function page_header(string $title, string $error = "", $breadcrumb = [], ?strin
 <?php
 	echo "<div id='help' class='jush-$jush jsonly hidden'></div>";
     echo script("initHelpPopup();");
-
-	echo "<button id='navigation-button' class='button light navigation-button'>", icon_solo("menu"), icon_solo("close"), "</button>";
-    echo "<div id='navigation-panel' class='navigation-panel'>\n";
-	$admin->printNavigation($missing);
-
-	echo "<div class='footer'>\n";
-	language_select();
-
-	if ($missing != "auth") {
-		?>
-
-        <div class="logout">
-            <form action="" method="post">
-				<?php echo h($_GET["username"]); ?>
-                <input type="submit" class="button" name="logout" value="<?php echo lang('Logout'); ?>" id="logout">
-                <input type="hidden" name="token" value="<?php echo $token; ?>">
-            </form>
-        </div>
-
-		<?php
-	}
-	echo "</div>\n"; // footer
-	echo "</div>\n"; // navigation-panel
-	echo script("initNavigation();");
 
     echo "<div id='content'>\n";
 	echo "<div class='header'>\n";
@@ -290,8 +265,39 @@ function page_messages($error) {
 
 /**
  * Prints page footer.
+ *
+ * @param ?string $missing "auth", "db", "ns"
  */
-function page_footer()
+function page_footer(?string $missing = null): void
 {
+	global $admin, $token;
+
 	echo "</div>\n"; // content
+
+	// Main navigation is printed after the page content, because databases and tables can be changed after the query
+	// execution in 'SQL command' page.
+	echo "<button id='navigation-button' class='button light navigation-button'>", icon_solo("menu"), icon_solo("close"), "</button>";
+	echo "<div id='navigation-panel' class='navigation-panel'>\n";
+	$admin->printNavigation($missing);
+
+	echo "<div class='footer'>\n";
+	language_select();
+
+	if ($missing != "auth") {
+		?>
+
+		<div class="logout">
+			<form action="" method="post">
+				<?php echo h($_GET["username"]); ?>
+				<input type="submit" class="button" name="logout" value="<?php echo lang('Logout'); ?>" id="logout">
+				<input type="hidden" name="token" value="<?php echo $token; ?>">
+			</form>
+		</div>
+
+		<?php
+	}
+	echo "</div>\n"; // footer
+	echo "</div>\n"; // navigation-panel
+
+	echo script("initNavigation();");
 }
