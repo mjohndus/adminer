@@ -704,43 +704,45 @@ class Admin extends Origin
 			$val = $where["val"];
 
 			if ("$col$val" != "" && in_array($op, $this->getOperators())) {
-				$prefix = "";
-				$cond = " $op";
+				$conditions = [];
 
-				if (preg_match('~IN$~', $op)) {
-					$in = process_length($val);
-					$cond .= " " . ($in != "" ? $in : "(NULL)");
-				} elseif ($op == "SQL") {
-					$cond = " $val"; // SQL injection
-				} elseif ($op == "LIKE %%") {
-					$cond = " LIKE " . $this->admin->processFieldInput($fields[$col] ?? null, "%$val%");
-				} elseif ($op == "ILIKE %%") {
-					$cond = " ILIKE " . $this->admin->processFieldInput($fields[$col] ?? null, "%$val%");
-				} elseif ($op == "FIND_IN_SET") {
-					$prefix = "$op(" . q($val) . ", ";
-					$cond = ")";
-				} elseif (!preg_match('~NULL$~', $op)) {
-					$cond .= " " . $this->admin->processFieldInput($fields[$col] ?? null, $val);
+				foreach (($col != "" ? [$col => $fields[$col]] : $fields) as $name => $field) {
+					$prefix = "";
+					$cond = " $op";
+
+					if (preg_match('~IN$~', $op)) {
+						$in = process_length($val);
+						$cond .= " " . ($in != "" ? $in : "(NULL)");
+					} elseif ($op == "SQL") {
+						$cond = " $val"; // SQL injection
+					} elseif (preg_match('~^(I?LIKE) %%$~', $op, $match)) {
+						$cond = " $match[1] " . $this->admin->processFieldInput($field, "%$val%");
+					} elseif ($op == "FIND_IN_SET") {
+						$prefix = "$op(" . q($val) . ", ";
+						$cond = ")";
+					} elseif (!preg_match('~NULL$~', $op)) {
+						$cond .= " " . $this->admin->processFieldInput($field, $val);
+					}
+
+					if ($col != "" || (
+						// find anywhere
+						isset($field["privileges"]["where"])
+						&& (preg_match('~^[-\d.' . (preg_match('~IN$~', $op) ? ',' : '') . ']+$~', $val) || !preg_match('~' . number_type() . '|bit~', $field["type"]))
+						&& (!preg_match("~[\x80-\xFF]~", $val) || preg_match('~char|text|enum|set~', $field["type"]))
+						&& (!preg_match('~date|timestamp~', $field["type"]) || preg_match('~^\d+-\d+-\d+~', $val))
+						&& (!preg_match('~^elastic~', DRIVER) || $field["type"] != "boolean" || preg_match('~true|false~', $val)) // Elasticsearch needs boolean value properly formatted.
+						&& (!preg_match('~^elastic~', DRIVER) || strpos($op, "regexp") === false || preg_match('~text|keyword~', $field["type"])) // Elasticsearch can use regexp only on text and keyword fields.
+					)) {
+						$conditions[] = $prefix . Driver::get()->convertSearch(idf_escape($name), $where, $field) . $cond;
+					}
 				}
 
-				if ($col != "") {
-					$search = isset($fields[$col]) ? Driver::get()->convertSearch(idf_escape($col), $where, $fields[$col]) : idf_escape($col);
-					$return[] = $prefix . $search . $cond;
+				if (count($conditions) == 1) {
+					$return[] = $conditions[0];
+				} elseif ($conditions) {
+					$return[] = "(" . implode(" OR ", $conditions) . ")";
 				} else {
-					// find anywhere
-					$cols = [];
-					foreach ($fields as $name => $field) {
-						if (isset($field["privileges"]["where"])
-							&& (preg_match('~^[-\d.' . (preg_match('~IN$~', $op) ? ',' : '') . ']+$~', $val) || !preg_match('~' . number_type() . '|bit~', $field["type"]))
-							&& (!preg_match("~[\x80-\xFF]~", $val) || preg_match('~char|text|enum|set~', $field["type"]))
-							&& (!preg_match('~date|timestamp~', $field["type"]) || preg_match('~^\d+-\d+-\d+~', $val))
-							&& (!preg_match('~^elastic~', DRIVER) || $field["type"] != "boolean" || preg_match('~true|false~', $val)) // Elasticsearch needs boolean value properly formatted.
-							&& (!preg_match('~^elastic~', DRIVER) || strpos($op, "regexp") === false || preg_match('~text|keyword~', $field["type"])) // Elasticsearch can use regexp only on text and keyword fields.
-						) {
-							$cols[] = $prefix . Driver::get()->convertSearch(idf_escape($name), $where, $field) . $cond;
-						}
-					}
-					$return[] = ($cols ? "(" . implode(" OR ", $cols) . ")" : "1 = 0");
+					$return[] = "1 = 0";
 				}
 			}
 		}

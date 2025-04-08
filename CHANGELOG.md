@@ -16,6 +16,7 @@ AdminNeo 5.3.0
 - MySQL: Fix selecting routines in DB export (issue #176)
 - Fix sending DB dump in CSV format / TAR file (issue #176)
 - Fix exporting views in CSV format
+- Fix search anywhere for columns that needs value conversion (by @vrana)
 
 AdminNeo 5.2.1 (2025-12-07)
 ---------------------------
