@@ -1096,7 +1096,8 @@ function selectClick(event, text, warning) {
 	const dataset = td.firstChild ? (td.firstChild.dataset || {}) : {};
 	let value;
 	if (dataset.value !== undefined) {
-		value = (new DOMParser().parseFromString(dataset.value, "text/html")).documentElement.innerText;
+		const dom = new DOMParser().parseFromString(dataset.value, "text/html");
+		value = dom.documentElement.innerText;
 	} else {
 		value = td.innerText;
 	}
