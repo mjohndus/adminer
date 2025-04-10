@@ -204,26 +204,26 @@ MySQL: The path name to the certificate file.
 
 MySQL: The path name to the certificate authority file.
 
-### sslMode
+### sslTrustServerCertificate
 
 - Default value: `null`
 - Available in EditorNeo: YES
 
-PostgreSQL: Value for [sslmode connection parameter](https://www.postgresql.org/docs/current/libpq-connect.html#LIBPQ-CONNECT-SSLMODE).
+MySQL, MS SQL: Whether to trust server certificate. Values: `true`, `false`, `null` (connection parameter is not set).
 
 ### sslEncrypt
 
 - Default value: `null`
 - Available in EditorNeo: YES
 
-MS SQL: Value for [Encrypt connection option](https://learn.microsoft.com/en-us/sql/connect/php/connection-options).
+MS SQL: Whether the communication is encrypted. Values: `true`, `false`, `null` (connection parameter is not set).
 
-### sslTrustServerCertificate
+### sslMode
 
 - Default value: `null`
 - Available in EditorNeo: YES
 
-MS SQL: Value for [TrustServerCertificate connection option](https://www.postgresql.org/docs/current/libpq-connect.html#LIBPQ-CONNECT-SSLMODE).
+PostgreSQL: Value for [sslmode connection parameter](https://www.postgresql.org/docs/current/libpq-connect.html#LIBPQ-CONNECT-SSLMODE).
 
 ### servers
 

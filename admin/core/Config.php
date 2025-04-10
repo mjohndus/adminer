@@ -146,9 +146,9 @@ class Config
 		return $this->params["sslCaCertificate"] ?? null;
 	}
 
-	public function getSslMode(): ?string
+	public function getSslTrustServerCertificate(): ?bool
 	{
-		return $this->params["sslMode"] ?? null;
+		return $this->params["sslTrustServerCertificate"] ?? null;
 	}
 
 	public function getSslEncrypt(): ?bool
@@ -156,9 +156,9 @@ class Config
 		return $this->params["sslEncrypt"] ?? null;
 	}
 
-	public function getSslTrustServerCertificate(): ?bool
+	public function getSslMode(): ?string
 	{
-		return $this->params["sslTrustServerCertificate"] ?? null;
+		return $this->params["sslMode"] ?? null;
 	}
 
 	public function hasServers(): bool

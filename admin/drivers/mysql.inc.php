@@ -30,6 +30,9 @@ if (isset($_GET["mysql"])) {
 
 				if ($ssl_defined) {
 					$this->ssl_set($key, $certificate, $ca_certificate, null, null);
+					$flags = $admin->getConfig()->getSslTrustServerCertificate() ? MYSQLI_CLIENT_SSL_DONT_VERIFY_SERVER_CERT : MYSQLI_CLIENT_SSL;
+				} else {
+					$flags = 0;
 				}
 
 				$return = @$this->real_connect(
@@ -39,7 +42,7 @@ if (isset($_GET["mysql"])) {
 					$database,
 					(is_numeric($port) ? $port : ini_get("mysqli.default_port")),
 					(!is_numeric($port) ? $port : $socket),
-					($ssl_defined ? ($certificate ? MYSQLI_CLIENT_SSL_DONT_VERIFY_SERVER_CERT : MYSQLI_CLIENT_SSL) : 0)
+					$flags
 				);
 				$this->options(MYSQLI_OPT_LOCAL_INFILE, false);
 				return $return;
@@ -92,6 +95,11 @@ if (isset($_GET["mysql"])) {
 				$ca_certificate = $admin->getConfig()->getSslCaCertificate();
 				if ($ca_certificate) {
 					$options[PDO::MYSQL_ATTR_SSL_CA] = $ca_certificate;
+				}
+
+				$trustServerCertificate = $admin->getConfig()->getSslTrustServerCertificate();
+				if ($trustServerCertificate !== null) {
+					$options[PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT] = !$trustServerCertificate;
 				}
 
 				$this->dsn($dsn, $username, $password, $options);

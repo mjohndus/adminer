@@ -42,6 +42,7 @@ upgrade your AdminNeo installation.
 - Editor: Remove support for sending mass e-mails
 - MySQL: Drop support for MySQL 4
 - MySQL: Stop treating 'enum' and 'set' as numbers (by @vrana)
+- MySQL: Allow to trust server certificate
 - SQLite: Drop support for SQLite 2
 - Elasticsearch: Drop support for Elasticsearch 5
 - Firebird: Remove the whole driver

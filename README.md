@@ -160,9 +160,9 @@ For detailed information see [Configuration documentation](/docs/configuration.m
 | `sslKey`                    | `null`    | YES    | MySQL: The path name to the SSL key file.                                                                                                           |
 | `sslCertificate`            | `null`    | YES    | MySQL: The path name to the certificate file.                                                                                                       |
 | `sslCaCertificate`          | `null`    | YES    | MySQL: The path name to the certificate authority file.                                                                                             |
+| `sslTrustServerCertificate` | `null`    | YES    | MySQL, MS SQL: Whether to trust server certificate. Values: `true`, `false`, `null`.                                                                |
+| `sslEncrypt`                | `null`    | YES    | MS SQL: Whether the communication is encrypted. Values: `true`, `false`, `null`.                                                                    |
 | `sslMode`                   | `null`    | YES    | PostgreSQL: Value for [sslmode connection parameter](https://www.postgresql.org/docs/current/libpq-connect.html#LIBPQ-CONNECT-SSLMODE).             |
-| `sslEncrypt`                | `null`    | YES    | MS SQL: Value for [Encrypt connection option](https://learn.microsoft.com/en-us/sql/connect/php/connection-options).                                |
-| `sslTrustServerCertificate` | `null`    | YES    | MS SQL: Value for [TrustServerCertificate connection option](https://www.postgresql.org/docs/current/libpq-connect.html#LIBPQ-CONNECT-SSLMODE).     |
 | `servers`                   | `[]`      | no     | List of predefined server connections.                                                                                                              |
 
 Plugins
