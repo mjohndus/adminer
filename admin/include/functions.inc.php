@@ -1317,6 +1317,11 @@ function get_temp_dir() {
  */
 function open_file_with_lock($filename)
 {
+	// Avoid symlink following (https://cwe.mitre.org/data/definitions/61.html).
+	if (is_link($filename)) {
+		return null;
+	}
+
 	$file = fopen($filename, "c+");
 	if (!$file) {
 		return null;

@@ -89,10 +89,24 @@ function build_http_url($server, $username, $password, $defaultServer, $defaultP
 
 function add_invalid_login() {
 	global $admin;
-	$file = open_file_with_lock(get_temp_dir() . "/adminneo.invalid");
-	if (!$file) {
-		return;
+
+	$base_name = get_temp_dir() . "/adminneo.invalid";
+	// adminer.invalid may not be writable by us, try the files with random suffixes
+	$file = null;
+	foreach (glob("$base_name*") ?: [$base_name] as $filename) {
+		$file = open_file_with_lock($filename);
+		if ($file) {
+			break;
+		}
 	}
+
+	if (!$file) {
+		$file = open_file_with_lock("$base_name-" . get_random_string());
+		if (!$file) {
+			return;
+		}
+	}
+
 	$invalids = unserialize(stream_get_contents($file));
 	$time = time();
 	if ($invalids) {
@@ -113,8 +127,18 @@ function add_invalid_login() {
 function check_invalid_login() {
 	global $admin;
 
-	$filename = get_temp_dir() . "/adminneo.invalid";
-	$invalids = file_exists($filename) ? unserialize(file_get_contents($filename)) : [];
+	$base_name = get_temp_dir() . "/adminneo.invalid";
+
+	$invalids = [];
+	foreach (glob("$base_name*") as $filename) {
+		$file = open_file_with_lock($filename);
+		if ($file) {
+			$invalids = unserialize(stream_get_contents($file));
+			unlock_file($file);
+			break;
+		}
+	}
+
 	$invalid = ($invalids ? $invalids[$admin->getBruteForceKey()] : []);
 
 	$next_attempt = ($invalid && $invalid[1] > 29 ? $invalid[0] - time() : 0); // allow 30 invalid attempts
