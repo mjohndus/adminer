@@ -18,6 +18,9 @@ Requirements
 
 - PHP 7.1+ with enabled sessions, modern web browser.
 
+It is also recommend to install [OpenSSL PHP extension](https://www.php.net/manual/en/book.openssl.php) for improved
+security of stored login information.
+
 Security
 --------
 
