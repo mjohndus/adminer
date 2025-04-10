@@ -140,6 +140,9 @@ include "adminneo.php";
 
 ### Customizable functions
 
+All customization functions defined in the Admin and AdminBase classes were refactored. They have new names and strict
+types of parameters and return values.
+
 - Function `selectQueryBuild()` was removed.
 - Function `css()` was removed. CSS files can be defined by `cssUrls` configuration option. See
   [Configuration options](/docs/configuration.md) for more information.
