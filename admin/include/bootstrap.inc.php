@@ -80,7 +80,7 @@ if (isset($_GET["username"])) {
 	}
 
 	// No URL param for any driver.
-	$driver_params = array_filter(["mysql", "pgsql", "sqlite", "oracle", "mssql", "mongo", "clickhouse", "elastic", "elastic5", "firebird", "simpledb"], function ($driver) {
+	$driver_params = array_filter(["mysql", "pgsql", "sqlite", "oracle", "mssql", "mongo", "clickhouse", "elastic", "elastic5", "simpledb"], function ($driver) {
 		return isset($_GET[$driver]);
 	});
 	if (!$driver_params) {
@@ -103,7 +103,6 @@ include __DIR__ . "/../drivers/oracle.inc.php";
 include __DIR__ . "/../drivers/mongo.inc.php";
 include __DIR__ . "/../drivers/elastic.inc.php";
 include __DIR__ . "/../drivers/clickhouse.inc.php";
-include __DIR__ . "/../drivers/firebird.inc.php";
 include __DIR__ . "/../drivers/simpledb.inc.php";
 
 if (function_exists('\create_adminneo')) {

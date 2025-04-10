@@ -43,6 +43,7 @@ upgrade your AdminNeo installation.
 - MySQL: Stop treating 'enum' and 'set' as numbers (by @vrana)
 - SQLite: Drop support for SQLite 2
 - Elasticsearch: Drop support for Elasticsearch 5
+- Firebird: Remove the whole driver
 
 ### Bugfixes
 

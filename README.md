@@ -5,8 +5,7 @@ AdminNeo
 to the target server. As a companion, **EditorNeo** offers data manipulation for end-users. 
 
 Supported database drivers:
-- MySQL, MariaDB, PostgreSQL, SQLite, MS SQL, Oracle, MongoDB
-- With plugin: SimpleDB, Elasticsearch (beta), Firebird (alpha), ClickHouse (alpha)
+- MySQL, MariaDB, PostgreSQL, SQLite, MS SQL, Oracle, MongoDB, SimpleDB, Elasticsearch (beta), ClickHouse (alpha)
 
 AdminNeo is based on the [Adminer](https://www.adminer.org/) project by Jakub Vrána.
 
