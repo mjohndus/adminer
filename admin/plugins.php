@@ -39,7 +39,7 @@ function create_adminneo(): Pluginer
 	$servers = [
 		["driver" => "mysql", "name" => "Devel DB"],
 		["driver" => "pgsql", "server" => "localhost:5432", "database" => "postgres", "config" => ["colorVariant" => null]],
-		["driver" => "sqlite", "database" => "/projects/my-service/test.db", "config" => ["defaultPasswordHash" => ""]],
+		["driver" => "sqlite", "database" => "/projects/my-service/test.db"],
 	];
 
 	$config = [
@@ -51,6 +51,7 @@ function create_adminneo(): Pluginer
 		"recordsPerPage" => 30,
 		"hiddenDatabases" => ["__system"],
 		"hiddenSchemas" => ["__system"],
+		"defaultPasswordHash" => "",
 		"sslTrustServerCertificate" => true,
 		"visibleCollations" => ["utf8mb4*czech*ci", "ascii_general_ci"],
 //		"servers" => $servers,

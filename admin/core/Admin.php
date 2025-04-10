@@ -1222,11 +1222,15 @@ class Admin extends AdminBase
 	 */
 	public function printDatabaseSwitcher(?string $missing): void
 	{
-		global $admin, $connection;
+		global $admin, $connection, $jush;
 
 		$databases = $this->getDatabases();
 		if (DB && $databases && !in_array(DB, $databases)) {
 			array_unshift($databases, DB);
+		}
+
+		if (!$databases && $jush != "sqlite") {
+			return;
 		}
 
 		echo "<div class='db-selector'><form action=''>";

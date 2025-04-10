@@ -33,6 +33,7 @@ upgrade your AdminNeo installation.
 - Hide driver selection in login form if only one driver is available
 - Show collations in table structure table
 - Show engine and collation info in table structure page
+- Do not show empty database selection if no database is available
 - Display column comments as a hints in edit form
 - Unify setting NULL value for 'enum' fields in edit form
 - Upgrade encryption of stored login information to AES-256-GCM
