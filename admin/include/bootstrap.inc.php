@@ -71,23 +71,6 @@ remove_slashes([&$_GET, &$_POST, &$_COOKIE], $filter);
 @set_time_limit(0); // @ - can be disabled
 @ini_set("precision", 15); // @ - can be disabled, 15 - internal PHP precision
 
-// Migration for backward compatibility. This will keep MySQL users logged in.
-if (isset($_GET["username"])) {
-	// Old 'server' URL param.
-	if (isset($_GET["server"])) {
-		$_GET["mysql"] = $_GET["server"];
-		unset($_GET["server"]);
-	}
-
-	// No URL param for any driver.
-	$driver_params = array_filter(["mysql", "pgsql", "sqlite", "oracle", "mssql", "mongo", "clickhouse", "elastic", "elastic5", "simpledb"], function ($driver) {
-		return isset($_GET[$driver]);
-	});
-	if (!$driver_params) {
-		$_GET["mysql"] = "";
-	}
-}
-
 include __DIR__ . "/lang.inc.php";
 include __DIR__ . "/../lang/$LANG.inc.php";
 
