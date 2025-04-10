@@ -52,6 +52,7 @@ tfoot th, tfoot td {
 
 tbody th, tbody td {
 	border-bottom: 1px solid var(--table-row-border);
+	vertical-align: baseline;
 }
 
 tbody tr:last-child > th, tbody tr:last-child > td {
