@@ -104,6 +104,11 @@
 	padding: 10px 10px 0;
 }
 
+.db-selector form {
+	display: flex;
+	gap: 5px;
+}
+
 .tables-filter {
 	padding: 10px 10px 0;
 }
