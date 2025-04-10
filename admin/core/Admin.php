@@ -1225,10 +1225,6 @@ class Admin extends AdminBase
 		global $admin, $connection, $jush;
 
 		$databases = $this->getDatabases();
-		if (DB && $databases && !in_array(DB, $databases)) {
-			array_unshift($databases, DB);
-		}
-
 		if (!$databases && $jush != "sqlite") {
 			return;
 		}
