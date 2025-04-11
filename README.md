@@ -59,7 +59,7 @@ php bin/compile.php editor [drivers] [languages] [themes] [config-file.json]
 Where:
 - `drivers` is a comma-separated list of [database drivers](/admin/drivers) or the value `all-drivers`.
   The default set is: mysql, pgsql, mssql, sqlite.
-- `languages` is a comma-separated list of [languages](/admin/lang).
+- `languages` is a comma-separated list of [languages](/admin/translations).
   If not specified, all languages will be included.
 - `themes` is a comma-separated list of [themes](/admin/themes) together with specific color variant. E.g. 
   `default-blue`, `default-red`, etc. If not specified, only the `default-blue` theme will be included. The `+` 
@@ -246,7 +246,7 @@ Main project files
 - admin/sqlite.php - Development version of AdminNeo with SQLite allowed.
 - editor/sqlite.php - Development version of Editor with SQLite allowed.
 - bin/compile.php - Create a single file version.
-- bin/update-languages.php - Update language files.
+- bin/update-translations.php - Update translation files.
 - tests/katalon.html - Katalon Automation Recorder test suite.
 
 What to expect

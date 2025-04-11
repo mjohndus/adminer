@@ -8,7 +8,7 @@ $languages = find_available_languages();
 
 $lang = $argv[1] ?? null;
 if (isset($argv[2]) || ($lang && $lang != "xx" && !isset($languages[$lang]))) {
-	echo "Usage: php update-translations.php [lang]\nPurpose: Update admin/lang/*.inc.php from source code messages.\n";
+	echo "Usage: php update-translations.php [lang]\nPurpose: Update admin/translations/*.inc.php from source code messages.\n";
 	exit(1);
 }
 
@@ -41,7 +41,7 @@ foreach ($file_paths as $file_path) {
 
 // Generate language files.
 foreach ($languages as $language => $dummy) {
-	$file_path = __DIR__ . "/../admin/lang/$language.inc.php";
+	$file_path = __DIR__ . "/../admin/translations/$language.inc.php";
 	$filename = basename($file_path);
 	$messages = $all_messages;
 

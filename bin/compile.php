@@ -114,7 +114,7 @@ function put_file_lang(): string
 	$languages = array_map(function ($filename) {
 		preg_match('~/([^/.]+)\.inc\.php$~', $filename, $matches);
 		return $matches[1];
-	}, glob(__DIR__ . "/../admin/lang/*.inc.php"));
+	}, glob(__DIR__ . "/../admin/translations/*.inc.php"));
 
 	$cases = "";
 	$plurals_map = [];
@@ -128,7 +128,7 @@ function put_file_lang(): string
 
 		// Assign $translations
 		$translations = [];
-		include __DIR__ . "/../admin/lang/$language.inc.php";
+		include __DIR__ . "/../admin/translations/$language.inc.php";
 
 		$translation_ids = array_flip($lang_ids); // default translation
 		foreach ($translations as $key => $val) {
@@ -359,7 +359,7 @@ $selected_languages = [];
 if ($arguments) {
 	$params = explode(",", $arguments[0]);
 
-	if (file_exists(__DIR__ . "/../admin/lang/" . $params[0] . ".inc.php")) {
+	if (file_exists(__DIR__ . "/../admin/translations/" . $params[0] . ".inc.php")) {
 		$selected_languages = $params;
 		array_shift($arguments);
 	}

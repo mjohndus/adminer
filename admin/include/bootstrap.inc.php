@@ -74,7 +74,7 @@ remove_slashes([&$_GET, &$_POST, &$_COOKIE], $filter);
 @ini_set("precision", 15); // @ - can be disabled, 15 - internal PHP precision
 
 include __DIR__ . "/lang.inc.php";
-include __DIR__ . "/../lang/$LANG.inc.php";
+include __DIR__ . "/../translations/$LANG.inc.php";
 
 include __DIR__ . "/pdo.inc.php";
 include __DIR__ . "/driver.inc.php";
