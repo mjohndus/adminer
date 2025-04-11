@@ -223,7 +223,7 @@ abstract class AdminBase
 
 	public function printFavicons(): void
 	{
-		$colorVariant = $this->getConfig()->getColorVariant();
+		$colorVariant = validate_color_variant($this->getConfig()->getColorVariant());
 
 		// https://evilmartians.com/chronicles/how-to-favicon-in-2021-six-files-that-fit-most-needs
 		// Converting PNG to ICO: https://redketchup.io/icon-converter

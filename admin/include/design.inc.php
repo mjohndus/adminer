@@ -50,8 +50,7 @@ function page_header(string $title, string $error = "", $breadcrumb = []): void
 	<title><?= $title_page; ?></title>
 
 	<?php
-	$theme = $admin->getConfig()->getTheme();
-	$color_variant = $admin->getConfig()->getColorVariant();
+	$color_variant = validate_color_variant($admin->getConfig()->getColorVariant());
 
 	echo "<link rel='stylesheet' href='", link_files("default-$color_variant.css", [
 		"../admin/themes/default/variables.css",
@@ -77,6 +76,9 @@ function page_header(string $title, string $error = "", $breadcrumb = []): void
 		]);
 		echo "'>\n";
 	}
+
+	$theme = $admin->getConfig()->getTheme();
+	[$theme, $color_variant] = validate_theme($theme, $color_variant);
 
 	if ($theme != "default") {
 		echo "<link rel='stylesheet' href='", link_files("$theme-$color_variant.css", [
@@ -192,6 +194,29 @@ function page_header(string $title, string $error = "", $breadcrumb = []): void
 	}
 	stop_session();
 	define("AdminNeo\PAGE_HEADER", 1);
+}
+
+function validate_color_variant(string $color_variant): string
+{
+	[, $color_variant] = validate_theme("default", $color_variant);
+
+	return $color_variant;
+}
+
+function validate_theme(string $theme, string $color_variant): array
+{
+	$themes = get_available_themes(); // !compile available themes
+
+	if (!isset($themes[$theme])) {
+		$theme = "default";
+	}
+
+	if (!isset($themes[$theme][$color_variant])) {
+		reset($themes[$theme]);
+		$color_variant = key($themes[$theme]);
+	}
+
+	return [$theme, $color_variant];
 }
 
 /**

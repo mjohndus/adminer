@@ -31,15 +31,16 @@ Options
 - Default value: `default`
 - Available in EditorNeo: YES
 
-Theme code. Available themes are: `default`. Please, be sure that the theme is compiled into the final single file.
+Theme code. Available themes are: `default`. Make sure that the theme is compiled into the final single file. If the
+theme is not found, the default theme will be used.
 
 ### colorVariant
 
 - Default value: `blue`
 - Available in EditorNeo: YES
 
-Theme color code. Available variants are: `blue`, `green`, `red`. Please, be sure that the color variant is compiled 
-into the final single file together with selected theme.
+Theme color code. Available variants are: `blue`, `green`, `red`. Make sure that the color variant is compiled into the 
+final single file together with the selected theme. If the color variant is not found, blue color will be used.
 
 ### cssUrls
 

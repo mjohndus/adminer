@@ -486,8 +486,9 @@ if ($single_driver) {
 // Compile files included into the index.php.
 $file = preg_replace_callback('~\binclude (__DIR__ \. )?"([^"]*)";~', 'AdminNeo\put_file', $file);
 
-// Remove including devel files.
+// Remove including unneeded code.
 $file = str_replace('include __DIR__ . "/debug.inc.php"', '', $file);
+$file = str_replace('include __DIR__ . "/available.inc.php";', '', $file);
 $file = str_replace('include __DIR__ . "/compile.inc.php";', '', $file);
 $file = str_replace('include __DIR__ . "/coverage.inc.php";', '', $file);
 
@@ -540,6 +541,8 @@ preg_match_all('~link_files\("([^"]+)", \[([^]]+)]\)~', $file, $matches);
 
 $name_cases = "";
 $data_cases = "";
+$available_themes = [];
+
 for ($i = 0; $i < count($matches[0]); $i++) {
 	$name = $matches[1][$i];
 	$files = trim($matches[2][$i], " \n\r\t\",");
@@ -547,11 +550,13 @@ for ($i = 0; $i < count($matches[0]); $i++) {
 	// Default theme.
 	if (str_starts_with($name, 'default-$color_variant')) {
 		foreach ($selected_themes as $theme) {
-			if (str_starts_with($theme, "default-")) {
+			if (preg_match('~^default-(blue|green|red)$~', $theme, $matches2)) {
 				$name2 = str_replace('default-$color_variant', $theme, $name);
 				$files2 = str_replace('default-$color_variant', $theme, $files);
 
 				append_linked_files_cases($name2, $files2, $name_cases, $data_cases);
+
+				$available_themes["default"][$matches2[1]] = true;
 			}
 		}
 
@@ -569,6 +574,8 @@ for ($i = 0; $i < count($matches[0]); $i++) {
 				$files2 = str_replace('$theme', $matches2[1], $files2);
 
 				append_linked_files_cases($name2, $files2, $name_cases, $data_cases);
+
+				$available_themes[$matches2[1]][$matches2[2]] = true;
 			}
 		}
 
@@ -601,6 +608,12 @@ $file = str_replace(
 $file = str_replace(
 	'$data = read_compiled_file($filename); // !compile: get compiled file',
 	'switch ($filename) {' . $data_cases . ' default: $data = null; break; }',
+	$file
+);
+
+$file = str_replace(
+	'$themes = get_available_themes(); // !compile available themes',
+	'$themes = ' . var_export($available_themes, true) . ';',
 	$file
 );
 

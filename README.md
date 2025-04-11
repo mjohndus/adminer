@@ -61,9 +61,9 @@ Where:
   The default set is: mysql, pgsql, mssql, sqlite.
 - `languages` is a comma-separated list of [languages](/admin/lang).
   If not specified, all languages will be included.
-- `themes` is a comma-separated list of [themes](/admin/themes).
-  If not specified, only the default theme with blue color variant will be included. The `+` character can be used as 
-  a wildcard in the theme name.
+- `themes` is a comma-separated list of [themes](/admin/themes) together with specific color variant. E.g. 
+  `default-blue`, `default-red`, etc. If not specified, only the `default-blue` theme will be included. The `+` 
+  character can be used as a wildcard in the theme name.
 - `config-file.json` is a path to the custom JSON configuration file. It contains a class with [the same parameters](#configuration) 
   that can be configured in Admin constructor.
 
@@ -72,16 +72,17 @@ will be included automatically.
 
 For examples:
 ```shell
-# Default set of drivers, all languages, default theme (without color variants).
+# Default set of drivers, all languages, only default-blue theme.
 php bin/compile.php
 
-# Only pgsql driver, only EN language, default theme.
+# Only pgsql driver, only EN language, only default-blue theme.
 php bin/compile.php pgsql en
 
-# Only mysql and pgsql driver, selected languages, default theme.
+# Only mysql and pgsql driver, selected languages, only default-blue theme.
 php bin/compile.php mysql,pgsql en,de,cs,sk
 
-# Default set of drivers, all languages, green and red color variants of the default theme.
+# Default set of drivers, all languages, green and red color variants of the default theme. 
+# Blue color variant will be not available.
 php bin/compile.php default-green,default-red
 
 # Default theme together with all color variants.
