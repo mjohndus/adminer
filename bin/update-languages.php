@@ -1,17 +1,21 @@
 <?php
 
+use function AdminNeo\find_available_languages;
+
+include __DIR__ . "/../admin/include/available.inc.php";
+
+$languages = find_available_languages();
+
 $lang = $argv[1] ?? null;
+if (isset($argv[2]) || ($lang && $lang != "xx" && !isset($languages[$lang]))) {
+	echo "Usage: php update-translations.php [lang]\nPurpose: Update admin/lang/*.inc.php from source code messages.\n";
+	exit(1);
+}
+
 if ($lang) {
-	// Modify session and cookie to skip processing in language detection.
-	unset($_COOKIE["neo_lang"]);
-	$_SESSION["lang"] = $lang;
-
-	include __DIR__ . "/../admin/include/lang.inc.php";
-
-	if (isset($argv[2]) || (!isset($languages[$lang]) && $lang != "xx")) {
-		echo "Usage: php update-translations.php [lang]\nPurpose: Update admin/lang/*.inc.php from source code messages.\n";
-		exit(1);
-	}
+	$languages = [
+		$lang => true,
+	];
 }
 
 // Get all texts from the source code.
@@ -35,8 +39,9 @@ foreach ($file_paths as $file_path) {
 	}
 }
 
-// Generate language file.
-foreach (glob(__DIR__ . "/../admin/lang/" . ($_SESSION["lang"] ?? "*") . ".inc.php") as $file_path) {
+// Generate language files.
+foreach ($languages as $language => $dummy) {
+	$file_path = __DIR__ . "/../admin/lang/$language.inc.php";
 	$filename = basename($file_path);
 	$messages = $all_messages;
 

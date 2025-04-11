@@ -2,8 +2,6 @@
 
 namespace AdminNeo;
 
-// TODO: Extract list of available languages to separated file.
-// Then it can be included into the update-translations.php without running unwanted code.
 $languages = [
 	'en' => 'English', // Jakub Vrána - https://www.vrana.cz
 	'ar' => 'العربية', // Y.M Amine - Algeria - nbr7@live.fr
