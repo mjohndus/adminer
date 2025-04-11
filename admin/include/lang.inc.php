@@ -53,14 +53,12 @@ $languages = [
 
 /**
  * Returns the list of available languages.
- * In compiled version, only selected languages are returned.
  *
- * @return array
+ * @return bool[]
  */
-function get_available_languages()
+function get_available_languages(): array
 {
-	global $languages;
-	return $languages; // !compile: available languages
+	return find_available_languages(); // !compile: available languages
 }
 
 /**

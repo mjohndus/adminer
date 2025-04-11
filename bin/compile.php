@@ -9,6 +9,7 @@ set_error_handler(function ($errno, $errstr) {
 
 include __DIR__ . "/../admin/include/version.inc.php";
 include __DIR__ . "/../admin/include/debug.inc.php";
+include __DIR__ . "/../admin/include/available.inc.php";
 include __DIR__ . "/../admin/include/compile.inc.php";
 
 function is_dev_version(): bool
@@ -48,7 +49,7 @@ function append_linked_files_cases(string $name, string $files, string &$name_ca
 
 function put_file(array $match, string $current_path = ""): string
 {
-	global $project, $selected_languages, $single_driver;
+	global $project, $selected_languages;
 
 	$filename = basename($match[2]);
 	$file_path = ltrim($match[2], "/");
@@ -89,12 +90,15 @@ function put_file(array $match, string $current_path = ""): string
 
 		if ($selected_languages) {
 			$available_languages = array_fill_keys($selected_languages, true);
-			$content = str_replace(
-				'return $languages; // !compile: available languages',
-				'return ' . var_export($available_languages, true) . ';',
-				$content
-			);
+		} else {
+			$available_languages = find_available_languages();
 		}
+
+		$content = str_replace(
+			'return find_available_languages(); // !compile: available languages',
+			'return ' . var_export($available_languages, true) . ';',
+			$content
+		);
 	}
 
 	$tokens = token_get_all($content); // to find out the last token
@@ -612,8 +616,8 @@ $file = str_replace(
 );
 
 $file = str_replace(
-	'$themes = get_available_themes(); // !compile available themes',
-	'$themes = ' . var_export($available_themes, true) . ';',
+	'return find_available_themes(); // !compile available themes',
+	'return ' . var_export($available_themes, true) . ';',
 	$file
 );
 

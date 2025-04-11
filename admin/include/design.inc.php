@@ -205,7 +205,7 @@ function validate_color_variant(string $color_variant): string
 
 function validate_theme(string $theme, string $color_variant): array
 {
-	$themes = get_available_themes(); // !compile available themes
+	$themes = get_available_themes();
 
 	if (!isset($themes[$theme])) {
 		$theme = "default";
@@ -217,6 +217,16 @@ function validate_theme(string $theme, string $color_variant): array
 	}
 
 	return [$theme, $color_variant];
+}
+
+/**
+ * Returns the list of available themes and color variants.
+ *
+ * @return bool[][]
+ */
+function get_available_themes(): array
+{
+	return find_available_themes(); // !compile available themes
 }
 
 /**
