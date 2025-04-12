@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "266397aec06cbefbb669896eebf34081",
+    "content-hash": "2e3cdfa7512487c6ba0538495f6fbc9d",
     "packages": [
         {
             "name": "vrana/jsshrink",
@@ -98,7 +98,6 @@
     "prefer-lowest": false,
     "platform": {
         "php": "7.1 - 8.4",
-        "ext-pdo": "*",
         "ext-json": "*"
     },
     "platform-dev": {},
