@@ -164,6 +164,7 @@ class Admin extends Origin
 			$links["select"] = [lang('Select data'), "data"];
 		}
 
+		$table = $tableStatus["Name"];
 		$is_view = false;
 		if (support("table")) {
 			$is_view = is_view($tableStatus);
@@ -178,7 +179,6 @@ class Admin extends Origin
 			$links["edit"] = [lang('New item'), "item-add"];
 		}
 
-		$table = $tableStatus["Name"];
 		foreach ($links as $key => $val) {
 			echo " <a href='", h(ME), "$key=", urlencode($table), ($key == "edit" ? $set : ""), "'", bold(isset($_GET[$key])), ">", icon($val[1]), "$val[0]</a>";
 		}

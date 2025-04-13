@@ -433,6 +433,26 @@ abstract class Driver
 	}
 
 	/**
+	 * Returns inherited tables.
+	 *
+	 * @return list<string>
+	 */
+	public function inheritedTables(string $table): array
+	{
+		return [];
+	}
+
+	/**
+	 * Returns tables this table inherits from.
+	 *
+	 * @return list<string>
+	 */
+	function inheritsFrom(string $table): array
+	{
+		return [];
+	}
+
+	/**
 	 * Checks if C-style escapes are supported.
 	 */
 	public function hasCStyleEscapes(): bool

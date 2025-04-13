@@ -479,6 +479,28 @@ if (isset($_GET["pgsql"])) {
 			return null;
 		}
 
+		function inheritedTables(string $table): array
+		{
+			return get_vals("SELECT c.relname
+FROM pg_class p
+JOIN pg_namespace n ON n.nspname = current_schema() AND n.oid = p.relnamespace
+JOIN pg_inherits ON inhparent = p.oid
+JOIN pg_class c ON inhrelid = c.oid
+WHERE p.relname = " . q($table) . " AND p.relkind = 'p'
+ORDER BY 1");
+		}
+
+		function inheritsFrom(string $table): array
+		{
+			return get_vals("SELECT p.relname
+FROM pg_class c
+JOIN pg_namespace n ON n.nspname = current_schema() AND n.oid = c.relnamespace
+JOIN pg_inherits ON inhrelid = c.oid
+JOIN pg_class p ON inhparent = p.oid
+WHERE c.relname = " . q($table) . " AND c.relkind = 'r'
+ORDER BY 1");
+		}
+
 		public function supportsIndex(array $tableStatus): bool
 		{
 			// Returns true for "materialized view".
@@ -681,7 +703,7 @@ ORDER BY 1";
 		foreach (
 			get_rows("SELECT
 	c.relname AS \"Name\",
-	CASE c.relkind WHEN 'r' THEN 'table' WHEN 'm' THEN 'materialized view' ELSE 'view' END AS \"Engine\"" . ($has_size ? ",
+	CASE c.relkind WHEN 'v' THEN 'view' WHEN 'm' THEN 'materialized view' ELSE 'table' END AS \"Engine\"" . ($has_size ? ",
 	pg_table_size(c.oid) AS \"Data_length\",
 	pg_indexes_size(c.oid) AS \"Index_length\"" : "") . ",
 	obj_description(c.oid, 'pg_class') AS \"Comment\",
@@ -689,10 +711,11 @@ ORDER BY 1";
 	c.reltuples as \"Rows\",
 	n.nspname
 FROM pg_class c
-JOIN pg_namespace n ON(n.nspname = current_schema() AND n.oid = c.relnamespace)
+JOIN pg_namespace n ON n.nspname = current_schema() AND n.oid = c.relnamespace
+LEFT JOIN pg_inherits ON inhrelid = c.oid
 WHERE relkind IN ('r', 'm', 'v', 'f', 'p')
-" . ($name != "" ? "AND relname = " . q($name) : "ORDER BY relname")
-		) as $row) { //! Index_length, Auto_increment
+" . ($name != "" ? "AND relname = " . q($name) : "AND inhparent IS NULL ORDER BY relname")
+		) as $row) { //! Auto_increment
 			$return[$row["Name"]] = $row;
 		}
 

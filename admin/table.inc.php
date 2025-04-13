@@ -55,6 +55,12 @@ if ($info || $fields || $comment != "") {
 	echo $editLink;
 }
 
+$inherits = Driver::get()->inheritsFrom($TABLE);
+if ($inherits) {
+	echo "<h2>" . lang('Inherited from') . "</h2>\n";
+	tables_links($inherits);
+}
+
 if (support("partitioning") && preg_match("~partitioned~", $table_status["Create_options"])) {
 	echo "<h2 id='partition-by'>" . lang('Partition by') . "</h2>\n";
 
@@ -128,4 +134,19 @@ if (support(is_view($table_status) ? "view_trigger" : "trigger")) {
 		echo "</table>\n";
 	}
 	echo '<p class="links"><a href="' . h(ME) . 'trigger=' . urlencode($TABLE) . '">' . icon("add") . lang('Add trigger') . "</a>\n";
+}
+
+$inherited = Driver::get()->inheritedTables($TABLE);
+if ($inherited) {
+	echo "<h2 id='inherited'>" . lang('Inherited tables') . "</h2>\n";
+	tables_links($inherited);
+}
+
+function tables_links(array $tables): void
+{
+	echo "<ul>\n";
+	foreach ($tables as $table) {
+		echo "<li><a href='" . h(ME . "table=" . urlencode($table)) . "'>" . h($table) . "</a>";
+	}
+	echo "</ul>\n";
 }

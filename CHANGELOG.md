@@ -10,6 +10,7 @@ AdminNeo 5.4.0
 - Do not highlight table with name "0" as active everywhere (by @vrana)
 - PostgreSQL: Format array and vector values in select table
 - PostgreSQL: Support COPY FROM stdin in SQL query (by @vrana)
+- PostgreSQL: Move partitioned tables from table list to parent table (by @vrana)
 - MS SQL: Limit one INSERT in export to 1000 rows (by @vrana)
 - non-MySQL: Parse '--' without trailing space as comment in SQL command (by @vrana)
 - Update Dutch translations (by @wintstar)
