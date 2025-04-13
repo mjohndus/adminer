@@ -408,6 +408,11 @@ if (isset($_GET["pgsql"])) {
 			$this->systemSchemas = ["information_schema", "pg_catalog", "pg_toast", "pg_temp_*", "pg_toast_temp_*"];
 		}
 
+		public function getNsOidSql(): string
+		{
+			return "(SELECT oid FROM pg_namespace WHERE nspname = current_schema())";
+		}
+
 		public function getInsertReturningSql(string $table): string
 		{
 			$autoIncrement = array_filter(fields($table), function ($field) {
@@ -481,24 +486,17 @@ if (isset($_GET["pgsql"])) {
 
 		function inheritedTables(string $table): array
 		{
-			return get_vals("SELECT c.relname
-FROM pg_class p
-JOIN pg_namespace n ON n.nspname = current_schema() AND n.oid = p.relnamespace
-JOIN pg_inherits ON inhparent = p.oid
-JOIN pg_class c ON inhrelid = c.oid
-WHERE p.relname = " . q($table) . " AND p.relkind = 'p'
-ORDER BY 1");
+			return get_vals("SELECT relname FROM pg_inherits JOIN pg_class ON inhrelid = oid WHERE inhparent = " . $this->tableOid($table) . " ORDER BY 1");
 		}
 
 		function inheritsFrom(string $table): array
 		{
-			return get_vals("SELECT p.relname
-FROM pg_class c
-JOIN pg_namespace n ON n.nspname = current_schema() AND n.oid = c.relnamespace
-JOIN pg_inherits ON inhrelid = c.oid
-JOIN pg_class p ON inhparent = p.oid
-WHERE c.relname = " . q($table) . " AND c.relkind = 'r'
-ORDER BY 1");
+			return get_vals("SELECT relname FROM pg_class JOIN pg_inherits ON inhparent = oid WHERE inhrelid = " . $this->tableOid($table) . " ORDER BY 1");
+		}
+
+		function tableOid(string $table): string
+		{
+			return "(SELECT oid FROM pg_class WHERE relnamespace = " . $this->getNsOidSql() . " AND relname = " . q($table) . " AND relkind IN ('r', 'm', 'v', 'f', 'p'))";
 		}
 
 		public function supportsIndex(array $tableStatus): bool
@@ -709,12 +707,12 @@ ORDER BY 1";
 	obj_description(c.oid, 'pg_class') AS \"Comment\",
 	" . (Connection::get()->isMinVersion("12") ? "''" : "CASE WHEN c.relhasoids THEN 'oid' ELSE '' END") . " AS \"Oid\",
 	c.reltuples as \"Rows\",
-	n.nspname
+	current_schema() AS nspname
 FROM pg_class c
-JOIN pg_namespace n ON n.nspname = current_schema() AND n.oid = c.relnamespace
 LEFT JOIN pg_inherits ON inhrelid = c.oid
 WHERE relkind IN ('r', 'm', 'v', 'f', 'p')
-" . ($name != "" ? "AND relname = " . q($name) : "AND inhparent IS NULL ORDER BY relname")
+AND c.relnamespace = " . Driver::get()->getNsOidSql() . "
+AND " . ($name != "" ? "relname = " . q($name) : "inhparent IS NULL ORDER BY relname")
 		) as $row) { //! Auto_increment
 			$return[$row["Name"]] = $row;
 		}
@@ -736,13 +734,17 @@ WHERE relkind IN ('r', 'm', 'v', 'f', 'p')
 			'timestamp without time zone' => 'timestamp',
 			'timestamp with time zone' => 'timestamptz',
 		];
-		foreach (get_rows("SELECT a.attname AS field, format_type(a.atttypid, a.atttypmod) AS full_type, a.attndims, pg_get_expr(d.adbin, d.adrelid) AS default, a.attnotnull::int, col_description(c.oid, a.attnum) AS comment" . (Connection::get()->isMinVersion("10") ? ", a.attidentity" . (Connection::get()->isMinVersion("12") ? ", a.attgenerated" : "") : "") . "
-FROM pg_class c
-JOIN pg_namespace n ON c.relnamespace = n.oid
-JOIN pg_attribute a ON c.oid = a.attrelid
-LEFT JOIN pg_attrdef d ON c.oid = d.adrelid AND a.attnum = d.adnum
-WHERE c.relname = " . q($table) . "
-AND n.nspname = current_schema()
+		foreach (get_rows("SELECT
+	a.attname AS field,
+	format_type(a.atttypid, a.atttypmod) AS full_type,
+	a.attndims, pg_get_expr(d.adbin, d.adrelid) AS default,
+	a.attnotnull::int,
+	col_description(a.attrelid, a.attnum) AS comment" . (Connection::get()->isMinVersion("10") ? ",
+	a.attidentity" . (Connection::get()->isMinVersion("12") ? ",
+	a.attgenerated" : "") : "") . "
+FROM pg_attribute a
+LEFT JOIN pg_attrdef d ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+WHERE a.attrelid = " . Driver::get()->tableOid($table) . "
 AND NOT a.attisdropped
 AND a.attnum > 0
 ORDER BY a.attnum"
@@ -784,9 +786,14 @@ ORDER BY a.attnum"
 			$connection = Connection::get();
 		}
 		$return = [];
-		$table_oid = $connection->getValue("SELECT oid FROM pg_class WHERE relnamespace = (SELECT oid FROM pg_namespace WHERE nspname = current_schema()) AND relname = " . q($table));
+		$table_oid = Driver::get()->tableOid($table);
 		$columns = get_key_vals("SELECT attnum, attname FROM pg_attribute WHERE attrelid = $table_oid AND attnum > 0", $connection);
-		foreach (get_rows("SELECT relname, indisunique::int, indisprimary::int, indkey, indoption, (indpred IS NOT NULL)::int as indispartial FROM pg_index i, pg_class ci WHERE i.indrelid = $table_oid AND ci.oid = i.indexrelid ORDER BY indisprimary DESC, indisunique DESC", $connection) as $row) {
+		foreach (get_rows("SELECT relname, indisunique::int, indisprimary::int, indkey, indoption, (indpred IS NOT NULL)::int as indispartial
+FROM pg_index i
+JOIN pg_class c ON i.indexrelid = c.oid
+WHERE i.indrelid = $table_oid
+ORDER BY indisprimary DESC, indisunique DESC", $connection
+         ) as $row) {
 			$relname = $row["relname"];
 			$return[$relname]["type"] = ($row["indispartial"] ? "INDEX" : ($row["indisprimary"] ? "PRIMARY" : ($row["indisunique"] ? "UNIQUE" : "INDEX")));
 			$return[$relname]["columns"] = [];
@@ -810,7 +817,7 @@ ORDER BY a.attnum"
 		$return = [];
 		foreach (get_rows("SELECT conname, condeferrable::int AS deferrable, pg_get_constraintdef(oid) AS definition
 FROM pg_constraint
-WHERE conrelid = (SELECT pc.oid FROM pg_class AS pc INNER JOIN pg_namespace AS pn ON (pn.oid = pc.relnamespace) WHERE pc.relname = " . q($table) . " AND pn.nspname = current_schema())
+WHERE conrelid = " . Driver::get()->tableOid($table) . "
 AND contype = 'f'::char
 ORDER BY conkey, conname") as $row) {
 			if (preg_match('~FOREIGN KEY\s*\((.+)\)\s*REFERENCES (.+)\((.+)\)(.*)$~iA', $row['definition'], $match)) {
@@ -846,7 +853,7 @@ ORDER BY s.ordinal_position";
 	}
 
 	function view($name) {
-		return ["select" => trim(Connection::get()->getValue("SELECT pg_get_viewdef(" . Connection::get()->getValue("SELECT oid FROM pg_class WHERE relnamespace = (SELECT oid FROM pg_namespace WHERE nspname = current_schema()) AND relname = " . q($name)) . ")"))];
+		return ["select" => trim(Connection::get()->getValue("SELECT pg_get_viewdef(" . Driver::get()->tableOid($name) . ")"))];
 	}
 
 	function collations() {
@@ -1142,7 +1149,7 @@ ORDER BY s.ordinal_position";
 	{
 		return get_key_vals("SELECT oid, typname
 FROM pg_type
-WHERE typnamespace = (SELECT oid FROM pg_namespace WHERE nspname = current_schema())
+WHERE typnamespace = " . Driver::get()->getNsOidSql() . "
 AND typtype IN ('b','d','e')
 AND typelem = 0"
 		);
