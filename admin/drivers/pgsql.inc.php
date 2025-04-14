@@ -707,12 +707,13 @@ ORDER BY 1";
 	obj_description(oid, 'pg_class') AS \"Comment\",
 	" . (Connection::get()->isMinVersion("12") ? "''" : "CASE WHEN relhasoids THEN 'oid' ELSE '' END") . " AS \"Oid\",
 	reltuples as \"Rows\",
+	inhparent AS \"Inherited\",
 	current_schema() AS nspname
 FROM pg_class
 LEFT JOIN pg_inherits ON inhrelid = oid
 WHERE relkind IN ('r', 'm', 'v', 'f', 'p')
 AND relnamespace = " . Driver::get()->getNsOidSql() . "
-AND " . ($name != "" ? "relname = " . q($name) : "inhparent IS NULL ORDER BY relname")
+" . ($name != "" ? "AND relname = " . q($name) : "ORDER BY relname")
 		) as $row) { //! Auto_increment
 			$return[$row["Name"]] = $row;
 		}

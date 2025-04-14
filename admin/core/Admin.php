@@ -1280,7 +1280,7 @@ class Admin extends Origin
 		foreach ($tables as $table => $status) {
 			$table = "$table"; // do not highlight "0" as active everywhere
 			$name = $this->admin->getTableName($status);
-			if ($name == "") {
+			if ($name == "" || ($status["Inherited"] ?? false)) {
 				continue;
 			}
 
