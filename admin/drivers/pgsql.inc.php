@@ -1288,7 +1288,18 @@ AND typelem = 0"
 			$return_parts[] = "CONSTRAINT " . idf_escape($conname) . " CHECK $consrc";
 		}
 
-		$return .= implode(",\n    ", $return_parts) . "\n) WITH (oids = " . ($status['Oid'] ? 'true' : 'false') . ");";
+		$return .= implode(",\n    ", $return_parts) . "\n)";
+
+		$table_oid = Driver::get()->tableOid($status['Name']);
+		$row = Connection::get()->query("SELECT * FROM pg_partitioned_table WHERE partrelid = $table_oid")->fetchAssoc();
+		if ($row) {
+			$attrs = get_vals("SELECT attname FROM pg_attribute WHERE attrelid = {$row["partrelid"]} AND attnum IN (" . str_replace(" ", ", ", $row["partattrs"]) . ")"); //! ordering
+			$by = ['h' => 'HASH', 'l' => 'LIST', 'r' => 'RANGE'];
+			$return .= "\nPARTITION BY {$by[$row["partstrat"]]}(" . implode(", ", array_map('AdminNeo\idf_escape', $attrs)) . ")";
+		}
+		//! parse pg_class.relpartbound to create PARTITION OF
+
+		$return .= "\nWITH (oids = " . ($status['Oid'] ? 'true' : 'false') . ");";
 
 		// comments for table & fields
 		if ($status['Comment']) {
