@@ -393,6 +393,8 @@ if (isset($_GET["pgsql"])) {
 				"count", "count distinct",
 			];
 
+			$this->partitionBy = ["RANGE", "LIST", "HASH"];
+
 			$this->insertFunctions = [
 				"char" => "md5",
 				"date|time" => "now",
@@ -945,7 +947,29 @@ ORDER BY s.ordinal_position";
 		}
 		$alter = array_merge($alter, $foreign);
 		if ($table == "") {
-			array_unshift($queries, "CREATE TABLE " . table($name) . " (\n" . implode(",\n", $alter) . "\n)");
+			$status = "";
+			if ($partitioning) {
+				$status = " PARTITION BY {$partitioning["partition_by"]}({$partitioning["partition"]})";
+				$partition_names = array_values($partitioning["partition_names"]);
+				$partition_values = array_values($partitioning["partition_values"]);
+
+				if ($partitioning["partition_by"] == 'HASH') {
+					$partitions = (int)$partitioning["partitions"];
+					for ($i = 0; $i < $partitions; $i++) {
+						$queries[] = "CREATE TABLE " . idf_escape($name . "_$i") . " PARTITION OF " . idf_escape($name) . " FOR VALUES WITH (MODULUS $partitions, REMAINDER $i)";
+					}
+				} else {
+					foreach ($partition_names as $i => $val) {
+						$value = $partition_values[$i];
+						$queries[] = "CREATE TABLE " . idf_escape($name . "_$val") . " PARTITION OF " . idf_escape($name) . " FOR VALUES " .
+							($partitioning["partition_by"] == 'LIST' ?
+								"IN ($value)" :
+								"FROM (" . ($i ? $partition_values[$i - 1] : "MINVALUE") . ") TO ($value)");
+					}
+				}
+			}
+
+			array_unshift($queries, "CREATE TABLE " . table($name) . " (\n" . implode(",\n", $alter) . "\n)$status");
 		} elseif ($alter) {
 			array_unshift($queries, "ALTER TABLE " . table($table) . "\n" . implode(",\n", $alter));
 		}
