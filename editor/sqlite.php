@@ -1,21 +1,27 @@
 <?php
-function adminer_object() {
-	include_once "../plugins/plugin.php";
-	include_once "../plugins/login-password-less.php";
 
-	class AdminerCustomization extends AdminerPlugin {
-		function loginFormField($name, $heading, $value) {
-			return parent::loginFormField($name, $heading, str_replace('value="mysql"', 'value="sqlite"', $value));
-		}
-		function database() {
+use AdminNeo\Admin;
+
+function create_adminneo(): Admin
+{
+	include "../plugins/Pluginer.php";
+
+	class CustomAdmin extends Admin
+	{
+		public function getDatabase(): ?string
+		{
 			return "PATH_TO_YOUR_SQLITE_HERE";
 		}
 	}
 
-	return new AdminerCustomization(array(
-		// TODO: inline the result of password_hash() so that the password is not visible in source codes
-		new AdminerLoginPasswordLess(password_hash("YOUR_PASSWORD_HERE", PASSWORD_DEFAULT)),
-	));
+	$config = [
+		"colorVariant" => "green",
+		"defaultDriver" => "sqlite",
+		// Warning! Inline the result of password_hash() so that the password is not visible in the source code.
+		"defaultPasswordHash" => password_hash("YOUR_PASSWORD_HERE", PASSWORD_DEFAULT),
+	];
+
+	return new CustomAdmin($config);
 }
 
-include "./index.php";
+include "index.php";

@@ -1,12 +1,68 @@
 Changelog
 =========
 
+AdminNeo 5.0
+------------
+
+This is the first release of AdminNeo and EditorNeo as standalone products. It mainly brings the brand new responsive
+theme with dark mode support and color variants, easy to use [configuration](docs/configuration.md), several UX 
+improvements and reviewed plugins and customizable functions. Please consult the [Upgrade guide](docs/upgrade.md) to 
+upgrade your AdminNeo installation.
+
+### Changes
+
+- Minimal supported PHP version is 7.1
+- Add AdminNeo namespace
+- Rename core classes to Admin and Pluginer
+- Rename public customizable functions in Admin class
+- Rename cookies and storage parameters to have neo_ prefix
+- Rename local temporary files
+- Add new default theme (blue, green and red variants)
+- Add new logo and favicons
+- Remove all alternative designs
+- Add new configuration system that brings new customization possibilities
+- Plugins: Remove plugins replaced by new configuration options or integrated to the core code
+- Plugins: Remove plugins using historical abandoned external libraries
+- Plugins: Remove plugins with very small added value or too specific complex functionality
+- Plugins: Rename and enhance remaining plugins
+- Compiler: Rename compiled filename to adminneo.php / editorneo.php
+- Compiler: Allow to compile selected themes together with favicon color variants
+- Compiler: Add ability to compile custom configuration directly into the single file
+- Unify positions of links for creating databases, schemas and tables
+- Unify logic of breadcrumb navigation
+- Hide driver selection in login form if only one driver is available
+- Show collations in table structure table
+- Show engine and collation info in table structure page
+- Do not show empty database selection if no database is available
+- Display column comments as a hints in edit form
+- Unify setting NULL value for 'enum' fields in edit form
+- Upgrade encryption of stored login information to AES-256-GCM
+- Editor: Remove displaying comments instead of table and field names  
+- Editor: Remove password input for fields that end with _md5 and _sha1
+- Editor: Remove support for sending mass e-mails
+- MySQL: Drop support for MySQL 4
+- MySQL: Stop treating 'enum' and 'set' as numbers (by @vrana)
+- MySQL: Allow to trust server certificate
+- SQLite: Drop support for SQLite 2
+- Elasticsearch: Drop support for Elasticsearch 5
+- Firebird: Remove the whole driver
+
+### Bugfixes
+
+- Fix displaying query delimiters in 'SQL command' page
+- Fix displaying edit actions if editing is not allowed
+- MS SQL: Fix escaping UTF-8 strings in PDO drivers
+- Security: Disallow writing temporary files to symlinks (by @vrana)
+
+A huge thanks to everyone who helped (alphabetically): @adrianbj, @devinemke, @Lumeriol, @wintstar
+(If I missed anyone, just ping me.)
+
 AdminNeo 4.17.2
 ---------------
 
 ### Changes
 
-- Use textarea for editing JSON values.
+- Use textarea for editing JSON values
 
 ### Bugfixes
 
@@ -1227,7 +1283,7 @@ Adminer 2.2.0 (2009-10-20)
 - Optional year in date (Editor)
 - Search operators (Editor)
 - Align numbers to right in select (Editor)
-- Move `<h1>` to $adminer->navigation (customization)
+- Move `<h1>` to $admin->navigation (customization)
 - Rename get_dbh to connection (customization)
 
 Adminer 2.1.0 (2009-09-12)

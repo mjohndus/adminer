@@ -1,52 +1,68 @@
 <?php
-function adminer_object() {
 
-	class AdminerCds extends Adminer {
+use AdminNeo\Admin;
+use function AdminNeo\h;
 
-		function name() {
+function create_adminneo(): Admin
+{
+	class CdsEditor extends Admin
+	{
+		function name()
+		{
 			// custom name in title and heading
 			return 'CDs';
 		}
 
-		function credentials() {
+		public function getCredentials(): array
+		{
 			// ODBC user with password ODBC on localhost
-			return array('localhost', 'ODBC', 'ODBC');
+			return ['localhost', 'ODBC', 'ODBC'];
 		}
 
-		function database() {
-			// will be escaped by Adminer
-			return 'adminer_test';
-		}
-
-		function login($login, $password) {
+		public function authenticate(string $username, string $password)
+		{
 			// username: 'admin', password: anything
-			return ($login == 'admin');
+			return ($username == 'admin');
 		}
 
-		function tableName($tableStatus) {
-			// tables without comments would return empty string and will be ignored by Adminer
-			return h($tableStatus["Comment"]);
+		public function getDatabase(): ?string
+		{
+			// will be escaped by Admin
+			return 'adminneo_test';
 		}
 
-		function fieldName($field, $order = 0) {
+		public function getTableName(array $tableStatus): string
+		{
+			// Tables without comments would return empty string and will be ignored by Editor.
+			return $tableStatus["Comment"] ? h($tableStatus["Name"]) : "";
+		}
+
+		public function getFieldName(array $field, int $order = 0): string
+		{
+			// Hide hashes in select.
 			if ($order && preg_match('~_(md5|sha1)$~', $field["field"])) {
-				return ""; // hide hashes in select
+				return "";
 			}
-			// display only column with comments, first five of them plus searched columns
+
+			// Display only column with comments, first five of them plus searched columns.
 			if ($order < 5) {
-				return h($field["comment"]);
+				return h($field["field"]);
 			}
-			foreach ((array) $_GET["where"] as $key => $where) {
+
+			foreach ((array)$_GET["where"] as $key => $where) {
 				if ($where["col"] == $field["field"] && ($key >= 0 || $where["val"] != "")) {
-					return h($field["comment"]);
+					return h($field["field"]);
 				}
 			}
+
 			return "";
 		}
 
 	}
 
-	return new AdminerCds;
+	return new CdsEditor([
+		"colorVariant" => "green",
+	]);
 }
 
-include "./index.php";
+include "index.php";

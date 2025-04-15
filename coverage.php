@@ -10,7 +10,7 @@
 <?php
 function xhtml_open_tags($s) {
 	// returns array of opened tags in $s
-	$return = array();
+	$return = [];
 	preg_match_all('~<([^>]+)~', $s, $matches);
 	foreach ($matches[1] as $val) {
 		if ($val[0] == "/") {
@@ -22,16 +22,16 @@ function xhtml_open_tags($s) {
 	return $return;
 }
 
-$coverage_filename = sys_get_temp_dir() . "/adminer_coverage.ser";
+$coverage_filename = sys_get_temp_dir() . "/adminneo_coverage.ser";
 if (!extension_loaded("xdebug")) {
 	echo "<p class='error'>Xdebug has to be enabled.</p>\n";
-} elseif ($_GET["coverage"] === "0") {
-	file_put_contents($coverage_filename, serialize(array()));
+} elseif (($_GET["coverage"] ?? null) === "0") {
+	file_put_contents($coverage_filename, serialize([]));
 	echo "<p class='message'>Coverage started.</p>\n";
-} elseif (preg_match('~^(adminer|editor)/(include/)?[-_.a-z0-9]+$~i', $_GET["coverage"])) {
+} elseif (preg_match('~^(admin|editor)/(include/)?[-_.a-z0-9]+$~i', $_GET["coverage"] ?? null)) {
 	// highlight single file
-	$filename = $_GET["coverage"];
-	$coverage = (file_exists($coverage_filename) ? unserialize(file_get_contents($coverage_filename)) : array());
+	$filename = $_GET["coverage"] ?? null;
+	$coverage = (file_exists($coverage_filename) ? unserialize(file_get_contents($coverage_filename)) : []);
 	$file = explode("<br />", highlight_file($filename, true));
 	$prev_color = null;
 	$s = "";
@@ -63,7 +63,7 @@ if (!extension_loaded("xdebug")) {
 		// display list of files
 		$coverage = unserialize(file_get_contents($coverage_filename));
 		echo "<table>\n";
-		foreach (array_merge(glob("adminer/*.php"), glob("adminer/include/*.php"), glob("editor/*.php"), glob("editor/include/*.php")) as $filename) {
+		foreach (array_merge(glob("admin/*.php"), glob("admin/include/*.php"), glob("editor/*.php"), glob("editor/include/*.php")) as $filename) {
 			$cov = $coverage[realpath($filename)];
 			$ratio = 0;
 			if (is_array($cov)) {

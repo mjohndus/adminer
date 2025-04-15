@@ -1,2 +1,5 @@
 <?php
-$connection->select_db($adminer->database());
+
+namespace AdminNeo;
+
+$connection->select_db(admin()->getDatabase());

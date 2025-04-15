@@ -1,7 +1,8 @@
-/adminer/adminer.css
-/adminer*.php
-/editor*.php
-/**/compiled
-/vendor/
-/composer.lock
-/export/
+/**/compiled/*
+/**/adminneo.css
+/**/adminneo-light.css
+/**/adminneo-dark.css
+/**/adminneo.js
+/export
+/externals
+/vendor

@@ -1,0 +1,105 @@
+{
+    "_readme": [
+        "This file locks the dependencies of your project to a known state",
+        "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
+        "This file is @generated automatically"
+    ],
+    "content-hash": "2e3cdfa7512487c6ba0538495f6fbc9d",
+    "packages": [
+        {
+            "name": "vrana/jsshrink",
+            "version": "dev-master",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/peterpp/js-shrink.git",
+                "reference": "96a466fa4cef74ba8362f4bc4b1bb17b2c9ecbcc"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/peterpp/js-shrink/zipball/96a466fa4cef74ba8362f4bc4b1bb17b2c9ecbcc",
+                "reference": "96a466fa4cef74ba8362f4bc4b1bb17b2c9ecbcc",
+                "shasum": ""
+            },
+            "default-branch": true,
+            "type": "library",
+            "extra": {
+                "component": {
+                    "scripts": [
+                        "jsShrink.js"
+                    ]
+                }
+            },
+            "autoload": {
+                "files": [
+                    "jsShrink.js"
+                ]
+            },
+            "license": [
+                "Apache-2.0",
+                "GPL-2.0"
+            ],
+            "authors": [
+                {
+                    "name": "Jakub Vrána",
+                    "homepage": "http://www.vrana.cz"
+                }
+            ],
+            "description": "Remove spaces and comments from JavaScript code (available in PHP and JavaScript).",
+            "homepage": "https://github.com/vrana/JsShrink",
+            "support": {
+                "source": "https://github.com/peterpp/js-shrink/tree/master"
+            },
+            "time": "2014-10-25T23:40:07+00:00"
+        },
+        {
+            "name": "vrana/jush",
+            "version": "v2.1.3",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/peterpp/jush.git",
+                "reference": "bddd8a9df2177582426363899fd3b86cdd5e9dd9"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/peterpp/jush/zipball/bddd8a9df2177582426363899fd3b86cdd5e9dd9",
+                "reference": "bddd8a9df2177582426363899fd3b86cdd5e9dd9",
+                "shasum": ""
+            },
+            "type": "library",
+            "license": [
+                "Apache-2.0",
+                "GPL-2.0-only"
+            ],
+            "authors": [
+                {
+                    "name": "Jakub Vrána",
+                    "homepage": "https://www.vrana.cz/"
+                }
+            ],
+            "description": "JUSH - JavaScript Syntax Highlighter",
+            "homepage": "https://jush.sourceforge.io/",
+            "keywords": [
+                "javascript",
+                "syntax highlighter"
+            ],
+            "support": {
+                "source": "https://github.com/vrana/jush/"
+            },
+            "time": "2025-03-23T22:20:39+00:00"
+        }
+    ],
+    "packages-dev": [],
+    "aliases": [],
+    "minimum-stability": "stable",
+    "stability-flags": {
+        "vrana/jsshrink": 20
+    },
+    "prefer-stable": false,
+    "prefer-lowest": false,
+    "platform": {
+        "php": "7.1 - 8.4",
+        "ext-json": "*"
+    },
+    "platform-dev": {},
+    "plugin-api-version": "2.6.0"
+}
