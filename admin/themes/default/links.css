@@ -25,15 +25,11 @@ ul.links {
 }
 
 .top-links {
-	margin: 20px;
-}
-
-.top-links {
-	margin: 20px 20px 25px;
+	margin: 25px 20px;
 }
 
 .top-tabs {
-	margin: 20px 20px 25px;
+	margin: 25px 20px;
 	gap: 7px 5px;
 }
 
@@ -45,4 +41,9 @@ ul.links {
 .top-tabs a.active {
 	background: var(--list-active);
 	border-radius: var(--input-border-radius);
+}
+
+#ajaxstatus.hidden + .top-links,
+#ajaxstatus.hidden + .top-tabs {
+	margin-top: 20px;
 }
