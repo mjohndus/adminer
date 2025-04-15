@@ -94,6 +94,9 @@ if ($_POST && !process_fields($row["fields"]) && !Admin::get()->getErrors()) {
 				}
 			}
 
+			$partitioning["partition_names"] = array_values($partitioning["partition_names"]);
+			$partitioning["partition_values"] = array_values($partitioning["partition_values"]);
+
 			if ($partitioning == $partitions_info) {
 				$partitioning = [];
 			}

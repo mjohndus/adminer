@@ -950,8 +950,6 @@ ORDER BY s.ordinal_position";
 			$status = "";
 			if ($partitioning) {
 				$status = " PARTITION BY {$partitioning["partition_by"]}({$partitioning["partition"]})";
-				$partition_names = array_values($partitioning["partition_names"]);
-				$partition_values = array_values($partitioning["partition_values"]);
 
 				if ($partitioning["partition_by"] == 'HASH') {
 					$partitions = (int)$partitioning["partitions"];
@@ -959,12 +957,12 @@ ORDER BY s.ordinal_position";
 						$queries[] = "CREATE TABLE " . idf_escape($name . "_$i") . " PARTITION OF " . idf_escape($name) . " FOR VALUES WITH (MODULUS $partitions, REMAINDER $i)";
 					}
 				} else {
-					foreach ($partition_names as $i => $val) {
-						$value = $partition_values[$i];
+					$prev = "MINVALUE";
+					foreach ($partitioning["partition_names"] as $i => $val) {
+						$value = $partitioning["partition_values"][$i];
 						$queries[] = "CREATE TABLE " . idf_escape($name . "_$val") . " PARTITION OF " . idf_escape($name) . " FOR VALUES " .
-							($partitioning["partition_by"] == 'LIST' ?
-								"IN ($value)" :
-								"FROM (" . ($i ? $partition_values[$i - 1] : "MINVALUE") . ") TO ($value)");
+							($partitioning["partition_by"] == 'LIST' ? "IN ($value)" : "FROM ($prev) TO ($value)");
+						$prev = $value;
 					}
 				}
 			}
