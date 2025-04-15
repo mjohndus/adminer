@@ -91,7 +91,11 @@ class Config
 
 	public function getEnumAsSelectThreshold(): ?int
 	{
-		return array_key_exists("enumAsSelectThreshold", $this->params) ? $this->params["enumAsSelectThreshold"] : 5;
+		if (array_key_exists("enumAsSelectThreshold", $this->params)) {
+			return $this->params["enumAsSelectThreshold"] !== null ? (int)$this->params["enumAsSelectThreshold"] : null;
+		} else {
+			return 5;
+		}
 	}
 
 	public function getRecordsPerPage(): int
