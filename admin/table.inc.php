@@ -138,7 +138,11 @@ if (support(is_view($table_status) ? "view_trigger" : "trigger")) {
 
 $inherited = Driver::get()->inheritedTables($TABLE);
 if ($inherited) {
-	echo "<h2 id='inherited'>" . lang('Inherited tables') . "</h2>\n";
+	echo "<h2 id='partitions'>" . lang('Partitions') . "</h2>\n";
+	$partition = Driver::get()->getPartitionsInfo($TABLE);
+	if ($partition) {
+		echo "<p><code class='jush-" . DIALECT . "'>BY " . h("{$partition["partition_by"]}({$partition["partition"]})") . "</code>\n";
+	}
 	tables_links($inherited);
 }
 

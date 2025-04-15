@@ -499,6 +499,21 @@ if (isset($_GET["pgsql"])) {
 			return get_vals("SELECT relname FROM pg_class JOIN pg_inherits ON inhparent = oid WHERE inhrelid = " . $this->tableOid($table) . " ORDER BY 1");
 		}
 
+		function getPartitionsInfo(string $table): array
+		{
+			$row = $this->connection->query("SELECT * FROM pg_partitioned_table WHERE partrelid = " . $this->tableOid($table))->fetchAssoc();
+			if (!$row) {
+				return [];
+			}
+
+			$attrs = get_vals("SELECT attname FROM pg_attribute WHERE attrelid = {$row["partrelid"]} AND attnum IN (" . str_replace(" ", ", ", $row["partattrs"]) . ")"); //! ordering
+			$by = ['h' => 'HASH', 'l' => 'LIST', 'r' => 'RANGE'];
+			return [
+				"partition_by" => $by[$row["partstrat"]],
+				"partition" => implode(", ", array_map('AdminNeo\idf_escape', $attrs)),
+			];
+		}
+
 		function tableOid(string $table): string
 		{
 			return "(SELECT oid FROM pg_class WHERE relnamespace = " . $this->getNsOidSql() . " AND relname = " . q($table) . " AND relkind IN ('r', 'm', 'v', 'f', 'p'))";
@@ -1301,12 +1316,9 @@ AND typelem = 0"
 
 		$return .= implode(",\n    ", $return_parts) . "\n)";
 
-		$table_oid = Driver::get()->tableOid($status['Name']);
-		$row = Connection::get()->query("SELECT * FROM pg_partitioned_table WHERE partrelid = $table_oid")->fetchAssoc();
-		if ($row) {
-			$attrs = get_vals("SELECT attname FROM pg_attribute WHERE attrelid = {$row["partrelid"]} AND attnum IN (" . str_replace(" ", ", ", $row["partattrs"]) . ")"); //! ordering
-			$by = ['h' => 'HASH', 'l' => 'LIST', 'r' => 'RANGE'];
-			$return .= "\nPARTITION BY {$by[$row["partstrat"]]}(" . implode(", ", array_map('AdminNeo\idf_escape', $attrs)) . ")";
+		$partition = Driver::get()->getPartitionsInfo($status['Name']);
+		if ($partition) {
+			$return .= "\nPARTITION BY {$partition["partition_by"]}({$partition["partition"]})";
 		}
 		//! parse pg_class.relpartbound to create PARTITION OF
 

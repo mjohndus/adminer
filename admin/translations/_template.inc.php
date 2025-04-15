@@ -227,7 +227,6 @@ return [
 	'Partitions' => 'Xx',
 	'Partition name' => 'Xx',
 	'Values' => 'Xx',
-	'Inherited tables' => 'Xx',
 	'Inherited from' => 'Xx',
 
 	// Indexes.
