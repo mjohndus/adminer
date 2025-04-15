@@ -393,7 +393,10 @@ if (isset($_GET["pgsql"])) {
 				"count", "count distinct",
 			];
 
-			$this->partitionBy = ["RANGE", "LIST", "HASH"];
+			$this->partitionBy = ["RANGE", "LIST"];
+			if (!$connection->isCockroachDB()) {
+				$this->partitionBy[] = "HASH";
+			}
 
 			$this->insertFunctions = [
 				"char" => "md5",
@@ -957,13 +960,23 @@ ORDER BY s.ordinal_position";
 						$queries[] = "CREATE TABLE " . idf_escape($name . "_$i") . " PARTITION OF " . idf_escape($name) . " FOR VALUES WITH (MODULUS $partitions, REMAINDER $i)";
 					}
 				} else {
+					$cockroach = Connection::get()->isCockroachDB();
 					$prev = "MINVALUE";
+
 					foreach ($partitioning["partition_names"] as $i => $val) {
 						$value = $partitioning["partition_values"][$i];
-						$queries[] = "CREATE TABLE " . idf_escape($name . "_$val") . " PARTITION OF " . idf_escape($name) . " FOR VALUES " .
-							($partitioning["partition_by"] == 'LIST' ? "IN ($value)" : "FROM ($prev) TO ($value)");
+						$partition = " VALUES " . ($partitioning["partition_by"] == 'LIST' ? "IN ($value)" : "FROM ($prev) TO ($value)");
+
+						if ($cockroach) {
+							$status .= ($i ? "," : " (") . "\n  PARTITION " . (preg_match('~^DEFAULT$~i', $val) ? $val : idf_escape($val)) . $partition;
+						} else {
+							$queries[] = "CREATE TABLE " . idf_escape($name . "_$val") . " PARTITION OF " . idf_escape($name) . " FOR$partition";
+						}
+
 						$prev = $value;
 					}
+
+					$status .= $cockroach ? "\n)" : "";
 				}
 			}
 
