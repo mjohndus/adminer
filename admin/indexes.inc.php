@@ -32,6 +32,7 @@ if ($_POST && !$_POST["add"] && !$_POST["drop_col"]) {
 			$columns = [];
 			$lengths = [];
 			$descs = [];
+			$index_algorithm = (in_array($index["algorithm"], Driver::get()->getIndexMethods()) ? $index["algorithm"] : "");
 			$set = [];
 			ksort($index["columns"]);
 			foreach ($index["columns"] as $key => $column) {
@@ -54,6 +55,7 @@ if ($_POST && !$_POST["add"] && !$_POST["drop_col"]) {
 					&& array_values($existing["columns"]) === $columns
 					&& (!$existing["lengths"] || array_values($existing["lengths"]) === $lengths)
 					&& array_values($existing["descs"]) === $descs
+					&& $existing["algorithm"] === $index_algorithm
 				) {
 					// skip existing index
 					unset($indexes[$name]);
@@ -61,7 +63,7 @@ if ($_POST && !$_POST["add"] && !$_POST["drop_col"]) {
 				}
 			}
 			if ($columns) {
-				$alter[] = [$index["type"], $name, $set];
+				$alter[] = [$index["type"], $name, $set, $index_algorithm];
 			}
 		}
 	}
@@ -107,6 +109,9 @@ echo "<div class='scrollable'>\n";
 echo "<table class='nowrap'>\n";
 echo "<thead><tr>";
 echo "<th id='label-type'>", lang('Index Type'), "</th>";
+if (Driver::get()->getIndexMethods()) {
+	echo "<th id='label-method' class='idxopts",  ($show_options ? "" : " hidden"), "'>", lang('Algorithm'), "</th>";
+}
 
 echo "<th><input type='submit' class='button invisible'>";
 echo lang('Columns') . ($lengths ? "<span class='idxopts" . ($show_options ? "" : " hidden") . "'> (" . lang('length') . ")</span>" : "");
@@ -124,7 +129,7 @@ echo "</tr></thead>\n";
 
 if ($primary) {
 	echo "<tr><td>PRIMARY<td>";
-	foreach ($primary["columns"] as $key => $column) {
+	foreach ($primary["columns"] as $column) {
 		echo select_input(" disabled", $fields, $column);
 		echo "<label><input type='checkbox' disabled>" . lang('descending') . "</label> ";
 	}
@@ -136,6 +141,12 @@ foreach ($row["indexes"] as $index) {
 		echo "<tr><td>",
 			html_select("indexes[$j][type]", [-1 => ""] + $index_types, $index["type"], ($j == count($row["indexes"]) ? "indexesAddRow.call(this);" : ""), "label-type"),
 			"</td>";
+
+		if (Driver::get()->getIndexMethods()) {
+			echo "<td class='idxopts",  ($show_options ? "" : " hidden"), "'>",
+				html_select("indexes[$j][algorithm]", array_merge([""], Driver::get()->getIndexMethods()), $index['algorithm'], "label-method"),
+				"</td>";
+		}
 
 		echo "<td>";
 		ksort($index["columns"]);

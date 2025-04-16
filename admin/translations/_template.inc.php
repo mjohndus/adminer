@@ -236,6 +236,7 @@ return [
 	'Add next' => 'Xx',
 	'Index Type' => 'Xx',
 	'length' => 'xx',
+	'Algorithm' => 'Xx',
 
 	// Foreign keys.
 	'Foreign keys' => 'Xx',

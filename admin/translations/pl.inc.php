@@ -255,6 +255,7 @@ return [
 	'Add next' => 'Dodaj następny',
 	'Index Type' => 'Typ indeksu',
 	'length' => 'długość',
+	'Algorithm' => 'Algorytm',
 
 	// Foreign keys.
 	'Foreign keys' => 'Klucze obce',

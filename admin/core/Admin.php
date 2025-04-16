@@ -474,6 +474,8 @@ class Admin extends Origin
 	 */
 	public function printTableIndexes(array $indexes): void
 	{
+		$defaultAlgorithm = first(Driver::get()->getIndexMethods());
+
 		echo "<table>\n";
 		echo "<thead><tr><th>" . lang('Type') . "</th><td>" . lang('Columns') . " (" . lang('length') . ")</td></tr></thead>\n";
 
@@ -486,7 +488,15 @@ class Admin extends Origin
 					. ($index["lengths"][$key] ? "(" . $index["lengths"][$key] . ")" : "")
 					. ($index["descs"][$key] ? " DESC" : "");
 			}
-			echo "<tr title='" . h($name) . "'><th>$index[type]<td>" . implode(", ", $print) . "\n";
+
+			echo "<tr title='", h($name), "'>";
+			echo "<th>", $index["type"];
+			if (isset($index['algorithm']) && $index['algorithm'] != $defaultAlgorithm) {
+				 echo " ({$index["algorithm"]})";
+			}
+			echo "</th>";
+			echo "<td>", implode(", ", $print), "</td>";
+			echo "</tr>\n";
 		}
 
 		echo "</table>\n";

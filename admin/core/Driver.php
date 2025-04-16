@@ -444,6 +444,16 @@ abstract class Driver
 	}
 
 	/**
+	 * Returns list of supported index methods, first one is the default.
+	 *
+	 * @return list<string>
+	 */
+	function getIndexMethods(): array
+	{
+		return [];
+	}
+
+	/**
 	 * Returns inherited tables.
 	 *
 	 * @return list<string>

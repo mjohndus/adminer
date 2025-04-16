@@ -248,6 +248,7 @@ return [
 	'Partition name' => 'Název oddílu',
 	'Values' => 'Hodnoty',
 	'Inherited from' => 'Zděděná z',
+	'Algorithm' => 'Algoritmus',
 
 	// Indexes.
 	'Indexes' => 'Indexy',

@@ -256,6 +256,7 @@ return [
 	'Add next' => 'Pridať ďalší',
 	'Index Type' => 'Typ indexu',
 	'length' => 'dĺžka',
+	'Algorithm' => 'Algoritmus',
 
 	// Foreign keys.
 	'Foreign keys' => 'Cudzie kľúče',
