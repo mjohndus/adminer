@@ -450,8 +450,10 @@ if (!$columns && support("table")) {
 					}
 				}
 
+				reset($select);
 				foreach ($row as $key => $val) {
 					if (isset($names[$key])) {
+						$column = current($select);
 						$field = $fields[$key] ?? null;
 						$val = $field ? Connection::get()->formatValue($val, $field) : $val;
 
@@ -476,7 +478,7 @@ if (!$columns && support("table")) {
 								}
 							}
 						}
-						if ($key == "COUNT(*)") { //! columns looking like functions
+						if ($column == "COUNT(*)") {
 							$link = ME . "select=" . urlencode($TABLE);
 							$i = 0;
 							foreach ((array) $_GET["where"] as $v) {
@@ -511,6 +513,7 @@ if (!$columns && support("table")) {
 							;
 						}
 					}
+					next($select);
 				}
 
 				if ($backward_keys) {
