@@ -519,7 +519,7 @@ if (isset($_GET["pgsql"])) {
 			return "(SELECT oid FROM pg_class WHERE relnamespace = " . $this->getNsOidSql() . " AND relname = " . q($table) . " AND relkind IN ('r', 'm', 'v', 'f', 'p'))";
 		}
 
-		function getIndexMethods(): array
+		public function getIndexAlgorithms(array $tableStatus): array
 		{
 			static $methods = [];
 

@@ -191,7 +191,7 @@ class Admin extends Origin
 		//
 	}
 
-	public function printTableIndexes(array $indexes): void
+	public function printTableIndexes(array $indexes, array $tableStatus): void
 	{
 		//
 	}

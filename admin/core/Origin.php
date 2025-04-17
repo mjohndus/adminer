@@ -585,7 +585,7 @@ abstract class Origin extends Plugin
 
 	public abstract function printTablePartitions(array $partitionInfo, array $inheritedTables): void;
 
-	public abstract function printTableIndexes(array $indexes): void;
+	public abstract function printTableIndexes(array $indexes, array $tableStatus): void;
 
 	public abstract function printSelectionColumns(array $select, array $columns): void;
 

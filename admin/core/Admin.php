@@ -472,9 +472,9 @@ class Admin extends Origin
 	 *
 	 * @param array[] $indexes Data about all indexes on a table.
 	 */
-	public function printTableIndexes(array $indexes): void
+	public function printTableIndexes(array $indexes, array $tableStatus): void
 	{
-		$defaultAlgorithm = first(Driver::get()->getIndexMethods());
+		$defaultAlgorithm = first(Driver::get()->getIndexAlgorithms($tableStatus));
 
 		echo "<table>\n";
 		echo "<thead><tr><th>" . lang('Type') . "</th><td>" . lang('Columns') . " (" . lang('length') . ")</td></tr></thead>\n";

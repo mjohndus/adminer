@@ -5,6 +5,7 @@ namespace AdminNeo;
 $TABLE = $_GET["indexes"];
 $index_types = ["PRIMARY", "UNIQUE", "INDEX"];
 $table_status = table_status1($TABLE, true);
+$index_algorithms = Driver::get()->getIndexAlgorithms($table_status);
 $connection = Connection::get();
 $maria = $connection->isMariaDB();
 if (preg_match('~MyISAM|M?aria' . ($connection->isMinVersion($maria ? "10.0.5" : "5.6") ? '|InnoDB' : '') . '~i', $table_status["Engine"])) {
@@ -32,7 +33,7 @@ if ($_POST && !$_POST["add"] && !$_POST["drop_col"]) {
 			$columns = [];
 			$lengths = [];
 			$descs = [];
-			$index_algorithm = (in_array($index["algorithm"], Driver::get()->getIndexMethods()) ? $index["algorithm"] : "");
+			$index_algorithm = (in_array($index["algorithm"], $index_algorithms) ? $index["algorithm"] : "");
 			$set = [];
 			ksort($index["columns"]);
 			foreach ($index["columns"] as $key => $column) {
@@ -109,7 +110,7 @@ echo "<div class='scrollable'>\n";
 echo "<table class='nowrap'>\n";
 echo "<thead><tr>";
 echo "<th id='label-type'>", lang('Index Type'), "</th>";
-if (Driver::get()->getIndexMethods()) {
+if ($index_algorithms) {
 	echo "<th id='label-method' class='idxopts",  ($show_options ? "" : " hidden"), "'>", lang('Algorithm'), "</th>";
 }
 
@@ -142,9 +143,9 @@ foreach ($row["indexes"] as $index) {
 			html_select("indexes[$j][type]", [-1 => ""] + $index_types, $index["type"], ($j == count($row["indexes"]) ? "indexesAddRow.call(this);" : ""), "label-type"),
 			"</td>";
 
-		if (Driver::get()->getIndexMethods()) {
+		if ($index_algorithms) {
 			echo "<td class='idxopts",  ($show_options ? "" : " hidden"), "'>",
-				html_select("indexes[$j][algorithm]", array_merge([""], Driver::get()->getIndexMethods()), $index['algorithm'], "label-method"),
+				html_select("indexes[$j][algorithm]", array_merge([""], $index_algorithms), $index['algorithm'], "label-method"),
 				"</td>";
 		}
 

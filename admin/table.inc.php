@@ -81,7 +81,7 @@ if (support("indexes") && Driver::get()->supportsIndex($table_status)) {
 	echo "<h2 id='indexes'>" . lang('Indexes') . "</h2>\n";
 	$indexes = indexes($TABLE);
 	if ($indexes) {
-		Admin::get()->printTableIndexes($indexes);
+		Admin::get()->printTableIndexes($indexes, $table_status);
 	}
 	echo '<p class="links"><a href="' . h(ME) . 'indexes=' . urlencode($TABLE) . '">' . icon("edit") . lang('Alter indexes') . "</a>\n";
 }

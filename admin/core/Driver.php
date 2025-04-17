@@ -444,11 +444,11 @@ abstract class Driver
 	}
 
 	/**
-	 * Returns list of supported index methods, first one is the default.
+	 * Returns list of supported index algorithms, first one is the default.
 	 *
 	 * @return list<string>
 	 */
-	function getIndexMethods(): array
+	public function getIndexAlgorithms(array $tableStatus): array
 	{
 		return [];
 	}
