@@ -229,12 +229,13 @@ include "adminneo.php";
 Custom CSS and Javascript
 -------------------------
 
-It is possible to modify the appearance and functionality by creating a custom CSS or Javasrtipt file. AdminNeo will
-automatically include files **adminneo.css**, **adminneo-light.css**, **adminneo-dark.css** and **adminneo.js** that are
+It is possible to modify the appearance and functionality by creating a custom CSS or Javascript file. AdminNeo will
+automatically include files `adminneo.css`, `adminneo-light.css`, `adminneo-dark.css` and `adminneo.js` that are
 placed in the AdminNeo's current working directory (typically next to the index.php).
 
-Custom adminneo.css should be compatible with automatic switching to dark mode. File adminneo-light.css will force 
-AdminNeo to use only light mode, file adminneo-dark.css will force dark mode.
+- adminneo.css - Should be compatible with automatic switching to dark mode.
+- adminneo-light.css - Will force AdminNeo to use only the light mode.
+- adminneo-dark.css - Will force the dark mode.
 
 Main project files
 ------------------
