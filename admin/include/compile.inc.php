@@ -6,61 +6,64 @@ include __DIR__ . "/../../vendor/vrana/jsshrink/jsShrink.php";
 
 function read_compiled_file(string $filename): ?string
 {
-	$file_path = getcwd() . "/compiled/$filename";
+	$file_path = get_temp_dir() . "/adminneo/$filename";
 
-	if (!file_exists($file_path)) {
-		return null;
-	}
-
-	return file_get_contents($file_path);
+	return file_exists($file_path) ? file_get_contents($file_path) : null;
 }
 
 function generate_linked_file(string $name, array $file_paths): ?string
 {
 	static $links = [];
 
-	if (isset($links[$name])) {
+	if (array_key_exists($name, $links)) {
 		return $links[$name];
 	}
 
 	$linked_filename = linked_filename($name, $file_paths);
 	if (!$linked_filename) {
-		return null;
+		return $links[$name] = null;
 	}
 
-	if (!file_exists("compiled/$linked_filename")) {
+	$temp_dir = get_temp_dir(). "/adminneo";
+	if (!file_exists($temp_dir)) {
+		mkdir($temp_dir);
+	}
+
+	if (!file_exists("$temp_dir/$linked_filename")) {
 		// Delete old compiled files.
-		$name_pattern = preg_replace('~\.[^.]+$~', "-*$0", $name);
-		foreach (glob("compiled/$name_pattern") as $filename) {
+		$name_pattern = preg_replace('~\.[^.]+$~', "__*$0", $name);
+		foreach (glob("$temp_dir/$name_pattern") as $filename) {
 			unlink($filename);
 		}
 
 		// Compile and save the file.
 		if ($data = compile_file($name, $file_paths)) {
-			file_put_contents("compiled/$linked_filename", $data);
+			file_put_contents("$temp_dir/$linked_filename", $data);
 		}
 	}
 
-	return $linked_filename;
+	return $links[$name] = $linked_filename;
 }
 
 function linked_filename(string $name, array $file_paths): ?string
 {
-	$version = "";
+	$pathString = $timeString = "";
+
 	foreach ($file_paths as $file_path) {
-		$full_path = getcwd() . "/$file_path";
+		$full_path = realpath(getcwd() . "/$file_path");
 
 		if (file_exists($full_path)) {
-			$version .= $file_path . filemtime($full_path);
+			$pathString .= $full_path;
+			$timeString .= filemtime($full_path);
 		} elseif (PHP_SAPI == "cli") {
 			echo "⚠️ File does not exist: $file_path\n";
 		}
 	}
-	if (!$version) {
+	if (!$pathString) {
 		return null;
 	}
 
-	$version = substr(md5($version), 0, 8);
+	$version = md5($pathString) . "__" . substr(md5($timeString), 0, 8);
 
 	return preg_replace('~\.[^.]+$~', "-$version$0", $name);
 }
