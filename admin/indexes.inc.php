@@ -110,12 +110,13 @@ echo "<div class='scrollable'>\n";
 echo "<table class='nowrap'>\n";
 echo "<thead><tr>";
 echo "<th id='label-type'>", lang('Index Type'), "</th>";
+$options_class = "class='idxopts" . ($show_options ? "" : " hidden") . "'";
 if (count($index_algorithms) > 1) {
-	echo "<th id='label-method' class='idxopts",  ($show_options ? "" : " hidden"), "'>", lang('Algorithm'), "</th>";
+	echo "<th id='label-method' $options_class>", lang('Algorithm'), "</th>";
 }
 
 echo "<th><input type='submit' class='button invisible'>";
-echo lang('Columns') . ($lengths ? "<span class='idxopts" . ($show_options ? "" : " hidden") . "'> (" . lang('length') . ")</span>" : "");
+echo lang('Columns') . ($lengths ? "<span $options_class> (" . lang('length') . ")</span>" : "");
 if ($lengths || support("descidx")) {
 	echo checkbox("options", 1, $show_options, lang('Options'), "indexOptionsShow(this.checked)", "jsonly") . "\n";
 }
@@ -144,7 +145,7 @@ foreach ($row["indexes"] as $index) {
 			"</td>";
 
 		if (count($index_algorithms) > 1) {
-			echo "<td class='idxopts",  ($show_options ? "" : " hidden"), "'>",
+			echo "<td $options_class>",
 				html_select("indexes[$j][algorithm]", array_merge([""], $index_algorithms), $index['algorithm'], "label-method"),
 				"</td>";
 		}
@@ -159,7 +160,7 @@ foreach ($row["indexes"] as $index) {
 				$column,
 				"partial(" . ($i == count($index["columns"]) ? "indexesAddColumn" : "indexesChangeColumn") . ", '" . js_escape(DIALECT == "sql" ? "" : $_GET["indexes"] . "_") . "')"
 			);
-			echo "<span class='idxopts" . ($show_options ? "" : " hidden") . "'>";
+			echo "<span $options_class>";
 			if ($lengths) {
 				echo "<input type='number' name='indexes[$j][lengths][$i]' class='input size' value='". (h($index["lengths"][$key] ?? "")), "' title='" . lang('Length'), "'>";
 			}
