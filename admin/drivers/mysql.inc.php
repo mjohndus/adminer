@@ -456,6 +456,11 @@ if (isset($_GET["mysql"])) {
 			return $info;
 		}
 
+		function getIndexAlgorithms(array $tableStatus): array
+		{
+			return preg_match('~^(MEMORY|NDB)$~', $tableStatus["Engine"]) ? ["BTREE", "HASH"] : ["BTREE"];
+		}
+
 		public function hasCStyleEscapes(): bool
         {
 			static $c_style;
@@ -755,6 +760,7 @@ if (isset($_GET["mysql"])) {
 			$return[$name]["columns"][] = $row["Column_name"];
 			$return[$name]["lengths"][] = ($row["Index_type"] == "SPATIAL" ? null : $row["Sub_part"]);
 			$return[$name]["descs"][] = null;
+			$return[$name]["algorithm"] = $row["Index_type"];
 		}
 		return $return;
 	}

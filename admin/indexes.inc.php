@@ -110,7 +110,7 @@ echo "<div class='scrollable'>\n";
 echo "<table class='nowrap'>\n";
 echo "<thead><tr>";
 echo "<th id='label-type'>", lang('Index Type'), "</th>";
-if ($index_algorithms) {
+if (count($index_algorithms) > 1) {
 	echo "<th id='label-method' class='idxopts",  ($show_options ? "" : " hidden"), "'>", lang('Algorithm'), "</th>";
 }
 
@@ -143,7 +143,7 @@ foreach ($row["indexes"] as $index) {
 			html_select("indexes[$j][type]", [-1 => ""] + $index_types, $index["type"], ($j == count($row["indexes"]) ? "indexesAddRow.call(this);" : ""), "label-type"),
 			"</td>";
 
-		if ($index_algorithms) {
+		if (count($index_algorithms) > 1) {
 			echo "<td class='idxopts",  ($show_options ? "" : " hidden"), "'>",
 				html_select("indexes[$j][algorithm]", array_merge([""], $index_algorithms), $index['algorithm'], "label-method"),
 				"</td>";

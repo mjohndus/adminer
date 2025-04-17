@@ -8,12 +8,12 @@ AdminNeo 5.4.0
 
 - Do not edit NULL values by Modify (by @vrana)
 - Do not highlight table with name "0" as active everywhere (by @vrana)
+- MySQL, PostgreSQL: Support index algorithms (by @salacr, @vrana)
 - PostgreSQL: Format array and vector values in select table
 - PostgreSQL: Support COPY FROM stdin in SQL query (by @vrana)
 - PostgreSQL: Move partitioned tables from table list to parent table (by @vrana)
 - PostgreSQL, CockroachDB: Creating partitioned tables (by @vrana)
 - PostgreSQL: Support calling functions returning table (by @vrana)
-- PostgreSQL: Support index algorithms (by @salacr)
 - MS SQL: Limit one INSERT in export to 1000 rows (by @vrana)
 - non-MySQL: Parse '--' without trailing space as comment in SQL command (by @vrana)
 - Update Dutch translations (by @wintstar)
