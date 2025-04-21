@@ -106,6 +106,12 @@
 
 .db-selector form {
 	display: flex;
+	flex-flow: column;
+	gap: 5px;
+}
+
+.db-selector div {
+	display: flex;
 	gap: 5px;
 }
 

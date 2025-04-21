@@ -1232,6 +1232,7 @@ class Admin extends AdminBase
 		echo "<div class='db-selector'><form action=''>";
 		hidden_fields_get();
 
+		echo "<div>";
 		if ($databases) {
 			echo "<select id='database-select' name='db'>" . optionlist(["" => lang('Database')] + $databases, DB) . "</select>"
 				. script("mixin(gid('database-select'), {onmousedown: dbMouseDown, onchange: dbChange});");
@@ -1239,10 +1240,13 @@ class Admin extends AdminBase
 			echo "<input id='database-select' class='input' name='db' value='" . h(DB) . "' autocapitalize='off'>\n";
 		}
 		echo "<input type='submit' value='" . lang('Use') . "' class='button " . ($databases ? "hidden" : "") . "'>\n";
+		echo "</div>";
 
 		if (support("scheme") && $missing != "db" && DB != "" && $connection->select_db(DB)) {
-			echo "<br><select id='scheme-select' name='ns'>" . optionlist(["" => lang('Schema')] + $admin->getSchemas(), $_GET["ns"]) . "</select>"
+			echo "<div>";
+			echo "<select id='scheme-select' name='ns'>" . optionlist(["" => lang('Schema')] + $admin->getSchemas(), $_GET["ns"]) . "</select>"
 				. script("mixin(gid('scheme-select'), {onmousedown: dbMouseDown, onchange: dbChange});");
+			echo "</div>";
 
 			if ($_GET["ns"] != "") {
 				set_schema($_GET["ns"]);
