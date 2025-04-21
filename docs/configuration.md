@@ -255,6 +255,8 @@ $config = [
 ```
 
 Username and password are used to log in to the database if the login form is submitted with empty credentials. This can
-be used to simplify the login process on a development environment.
+be used to:
+- simplify the login process on a development environment,
+- provide the credentials for `ExternalLoginPlugin`.
 
 Global parameters that can't be overridden by server connection: `servers`.

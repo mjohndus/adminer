@@ -26,6 +26,7 @@ upgrade your AdminNeo installation.
 - Plugins: Remove plugins using historical abandoned external libraries
 - Plugins: Remove plugins with very small added value or too specific complex functionality
 - Plugins: Rename and enhance remaining plugins
+- Plugins: Add ExternalLoginPlugin
 - Compiler: Rename compiled filename to adminneo.php / editorneo.php
 - Compiler: Allow to compile selected themes together with favicon color variants
 - Compiler: Add ability to compile custom configuration directly into the single file
