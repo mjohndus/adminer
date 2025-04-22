@@ -79,6 +79,7 @@ class Admin extends AdminBase
 			"../vendor/vrana/jush/modules/jush-sql.js",
 			"../vendor/vrana/jush/modules/jush-pgsql.js",
 			"../vendor/vrana/jush/modules/jush-mssql.js",
+			"../vendor/vrana/jush/modules/jush-sqlite.js",
 			"../vendor/vrana/jush/modules/jush-oracle.js",
 			"../vendor/vrana/jush/modules/jush-simpledb.js",
 			"../vendor/vrana/jush/modules/jush-js.js",
