@@ -215,6 +215,12 @@ if ($auth) {
 	$server = $server_obj ? $server : trim($server);
 	$username = $auth["username"] ?? "";
 	$password = $auth["password"] ?? "";
+
+	if ($server_obj && $server_obj->hasCredentials() && $username == "" && $password == "") {
+		$username = $server_obj->getUsername();
+		$password = $server_obj->getPassword();
+	}
+
 	$db = $server_obj ? $server_obj->getDatabase() : ($auth["db"] ?? "");
 
 	set_password($driver, $server, $username, $password);
