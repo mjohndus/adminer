@@ -37,6 +37,14 @@ abstract class AdminBase
 		$this->systemSchemas = $schemas;
 	}
 
+	/**
+	 * Initializes the Admin. This method is called right before the authentication process.
+	 */
+	public function init(): void
+	{
+		//
+	}
+
 	public abstract function name();
 
 	/**

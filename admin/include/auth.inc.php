@@ -200,12 +200,14 @@ function connection_error($result): void
 	auth_error($error);
 }
 
+/** @var Admin $admin */
+$admin->init();
+
 $auth = $_POST["auth"] ?? null;
 if ($auth) {
 	// Defense against session fixation.
 	session_regenerate_id();
 
-	/** @var Admin $admin */
 	$server = $auth["server"] ?? "";
 	$server_obj = $admin->getConfig()->getServer($server);
 

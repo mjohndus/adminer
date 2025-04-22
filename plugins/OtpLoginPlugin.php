@@ -23,10 +23,15 @@ class OtpLoginPlugin
 	public function __construct(string $secret)
 	{
 		$this->secret = $secret;
+	}
 
+	public function init(): ?bool
+	{
 		if (isset($_POST["auth"])) {
 			$_SESSION["otp"] = (string)$_POST["auth"]["otp"];
 		}
+
+		return null;
 	}
 
 	public function getLoginFormRow(string $fieldName, string $label, string $field): ?string

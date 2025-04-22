@@ -17,6 +17,7 @@ upgrade your AdminNeo installation.
 - Rename public customizable functions in Admin class
 - Rename cookies and storage parameters to have neo_ prefix
 - Rename local temporary files
+- Add init() customizable function
 - Add new default theme (blue, green and red variants)
 - Add new logo and favicons
 - Remove all alternative designs
