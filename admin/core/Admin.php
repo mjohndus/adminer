@@ -476,8 +476,22 @@ class Admin extends Origin
 	{
 		$defaultAlgorithm = first(Driver::get()->getIndexAlgorithms($tableStatus));
 
+		$partial = false;
+		foreach ($indexes as $index) {
+			if ($index["partial"] ?? false) {
+				$partial = true;
+				break;
+			}
+		}
+
 		echo "<table>\n";
-		echo "<thead><tr><th>" . lang('Type') . "</th><td>" . lang('Columns') . " (" . lang('length') . ")</td></tr></thead>\n";
+		echo "<thead><tr>";
+		echo "<th>", lang('Type'), "</th>";
+		echo "<td>", lang('Columns'), " (", lang('length'), ")</td>";
+		if ($partial) {
+			echo "<td>", lang('Condition'), "</td>";
+		}
+		echo "</tr></thead>\n";
 
 		foreach ($indexes as $name => $index) {
 			ksort($index["columns"]); // enforce correct columns order
@@ -496,6 +510,15 @@ class Admin extends Origin
 			}
 			echo "</th>";
 			echo "<td>", implode(", ", $print), "</td>";
+
+			if ($partial) {
+				echo "<td>";
+				if ($index['partial']) {
+					echo "<code class='jush-", DIALECT, "'>WHERE ", h($index['partial']), "</code>";
+				}
+				echo "</td>";
+			}
+
 			echo "</tr>\n";
 		}
 

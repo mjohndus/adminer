@@ -34,6 +34,7 @@ if ($_POST && !$_POST["add"] && !$_POST["drop_col"]) {
 			$lengths = [];
 			$descs = [];
 			$index_algorithm = (in_array($index["algorithm"], $index_algorithms) ? $index["algorithm"] : "");
+			$index_condition = (support("partial_indexes") ? $index["partial"] : "");
 			$set = [];
 			ksort($index["columns"]);
 			foreach ($index["columns"] as $key => $column) {
@@ -57,6 +58,7 @@ if ($_POST && !$_POST["add"] && !$_POST["drop_col"]) {
 					&& (!$existing["lengths"] || array_values($existing["lengths"]) === $lengths)
 					&& array_values($existing["descs"]) === $descs
 					&& $existing["algorithm"] === $index_algorithm
+					&& $existing["partial"] == $index_condition
 				) {
 					// skip existing index
 					unset($indexes[$name]);
@@ -64,7 +66,7 @@ if ($_POST && !$_POST["add"] && !$_POST["drop_col"]) {
 				}
 			}
 			if ($columns) {
-				$alter[] = [$index["type"], $name, $set, $index_algorithm];
+				$alter[] = [$index["type"], $name, $set, $index_algorithm, $index_condition];
 			}
 		}
 	}
@@ -123,6 +125,9 @@ if ($lengths || support("descidx")) {
 echo "</th>";
 
 echo "<th id='label-name'>", lang('Name'), "</th>";
+if (support("partial_indexes")) {
+	echo "<th id='label-condition' $options_class>", lang('Condition'), "</th>";
+}
 echo "<th>";
 echo "<button name='add[0]' value='1' title='", lang('Add next'), "' class='button light hidden'>", icon_solo("add"), "</button>";
 echo "</th>";
@@ -172,8 +177,11 @@ foreach ($row["indexes"] as $index) {
 		}
 		echo "</td>";
 
-		echo "<td><input name='indexes[$j][name]' value='", h($index["name"]), "' class='input' autocapitalize='off' aria-labelledby='label-name'></td>\n",
-			"<td>",
+		echo "<td><input name='indexes[$j][name]' value='", h($index["name"]), "' class='input' autocapitalize='off' aria-labelledby='label-name'></td>\n";
+		if (support("partial_indexes")) {
+			echo "<td $options_class><input name='indexes[$j][partial]' value='" . h($index["partial"]) . "' autocapitalize='off' aria-labelledby='label-condition'>\n";
+		}
+		echo "<td>",
 			"<button name='drop_col[$j]' value='1' title='", h(lang('Remove')), "' class='button light'>", icon_solo("remove"), "</button>",
 			script("qsl('button').onclick = onRemoveIndexRowClick;"),
 			"</td>\n";

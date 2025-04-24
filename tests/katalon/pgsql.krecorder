@@ -58,11 +58,16 @@
 <tr><td>clickAndWait</td><td>//input[@value='Save']</td><td></td></tr>
 <tr><td>verifyTextPresent</td><td>multiple primary keys for table "interprets" are not allowed</td><td></td></tr>
 <tr><td>select</td><td>indexes[2][type]</td><td>label=INDEX</td></tr>
-<tr><td>click</td><td>//input[@name='options']</td><td></td></tr>
+<tr><td>uncheck</td><td>name=options</td><td></td></tr>
+<tr><td>clickAndWait</td><td>name=options</td><td></td></tr>
 <tr><td>select</td><td>indexes[3][type]</td><td>label=INDEX</td></tr>
 <tr><td>select</td><td>indexes[3][columns][1]</td><td>label=surname</td></tr>
+<tr><td>select</td><td>indexes[3][algorithm]</td><td>label=hash</td></tr>
+<tr><td>type</td><td>indexes[3][partial]</td><td>surname IS NOT NULL</td></tr>
 <tr><td>clickAndWait</td><td>//input[@value='Save']</td><td></td></tr>
 <tr><td>verifyTextPresent</td><td>Indexes have been altered.</td><td></td></tr>
+<tr><td>verifyText</td><td>//tr[@title='interprets_surname']/th</td><td>INDEX (hash)</td></tr>
+<tr><td>verifyText</td><td>//tr[@title='interprets_surname']/td[2]</td><td>WHERE surname IS NOT NULL</td></tr>
 </tbody></table>
 <table cellpadding="1" cellspacing="1" border="1">
 <thead>

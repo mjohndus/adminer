@@ -257,6 +257,7 @@ return [
 	'Index Type' => 'Typ indexu',
 	'length' => 'dĺžka',
 	'Algorithm' => 'Algoritmus',
+	'Condition' => 'Podmienka',
 
 	// Foreign keys.
 	'Foreign keys' => 'Cudzie kľúče',

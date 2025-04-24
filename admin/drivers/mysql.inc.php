@@ -1000,7 +1000,7 @@ ORDER BY ordinal_position";
 
 	/** Run commands to alter indexes
 	* @param string escaped table name
-	* @param list<array{string, string, 'DROP'|list<string>, 3?: string}> of ["index type", "name", ["column definition", ...], "algorithm"] or ["index type", "name", "DROP"]
+	* @param list<array{string, string, 'DROP'|list<string>, 3?: string, 4?: string}> of ["index type", "name", ["column definition", ...], "algorithm", "condition"] or ["index type", "name", "DROP"]
 	* @return bool
 	*/
 	function alter_indexes($table, $alter): bool

@@ -249,6 +249,7 @@ return [
 	'Values' => 'Hodnoty',
 	'Inherited from' => 'Zděděná z',
 	'Algorithm' => 'Algoritmus',
+	'Condition' => 'Podmínka',
 
 	// Indexes.
 	'Indexes' => 'Indexy',

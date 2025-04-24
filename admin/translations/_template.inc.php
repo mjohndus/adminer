@@ -237,6 +237,7 @@ return [
 	'Index Type' => 'Xx',
 	'length' => 'xx',
 	'Algorithm' => 'Xx',
+	'Condition' => 'Xx',
 
 	// Foreign keys.
 	'Foreign keys' => 'Xx',
