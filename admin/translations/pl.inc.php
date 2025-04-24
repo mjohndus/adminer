@@ -256,6 +256,7 @@ return [
 	'Index Type' => 'Typ indeksu',
 	'length' => 'długość',
 	'Algorithm' => 'Algorytm',
+	'Condition' => 'Warunek',
 
 	// Foreign keys.
 	'Foreign keys' => 'Klucze obce',
