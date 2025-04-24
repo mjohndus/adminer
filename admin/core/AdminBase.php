@@ -45,7 +45,7 @@ abstract class AdminBase
 		//
 	}
 
-	public abstract function name();
+	public abstract function getServiceTitle(): string;
 
 	/**
 	 * Returns connection parameters.
@@ -531,7 +531,7 @@ abstract class AdminBase
 ?>
 
 <div class="header">
-	<?= $this->name(); ?>
+	<?= $this->getServiceTitle(); ?>
 
 	<?php if ($missing != "auth"): ?>
 		<span class="version">

@@ -25,7 +25,7 @@ function page_header(string $title, string $error = "", $breadcrumb = []): void
 
 	$title = strip_tags($title);
 	$server_part = $breadcrumb !== false && $breadcrumb !== null && SERVER != "" ? " - " . h($admin->getServerName(SERVER)) : "";
-	$service_title = strip_tags($admin->name());
+	$service_title = strip_tags($admin->getServiceTitle());
 
 	$title_page = $title . $server_part . " - " . ($service_title != "" ? $service_title : "AdminNeo");
 

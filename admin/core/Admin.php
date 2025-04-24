@@ -33,10 +33,11 @@ class Admin extends AdminBase
 		return $this->regexpOperator;
 	}
 
-	/** Name in title and navigation
-	* @return string HTML code
-	*/
-	function name() {
+	/**
+	 * Returns HTML code for the service title.
+	 */
+	public function getServiceTitle(): string
+	{
 		return "<a href='" . h(HOME_URL) . "'><svg role='img' class='logo' width='133' height='28'><desc>AdminNeo</desc><use href='" . link_files("logo.svg", ["images/logo.svg"]) . "#logo'/></svg></a>";
 	}
 

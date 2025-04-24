@@ -47,7 +47,7 @@ class Pluginer extends Admin
 		$this->applyPlugin(__FUNCTION__, func_get_args());
 	}
 
-	public function name()
+	public function getServiceTitle(): string
 	{
 		return $this->applyPlugin(__FUNCTION__, func_get_args());
 	}

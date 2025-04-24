@@ -7,7 +7,7 @@ function create_adminneo(): Admin
 {
 	class CdsEditor extends Admin
 	{
-		function name()
+		public function getServiceTitle(): string
 		{
 			// custom name in title and heading
 			return 'CDs';
