@@ -17,6 +17,7 @@
 namespace AdminNeo;
 
 include "core/AdminBase.php";
+include "core/Pluginer.php";
 include "core/Admin.php";
 include "core/TmpFile.php";
 

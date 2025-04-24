@@ -177,14 +177,13 @@ Plugins
 
 AdminNeo functions can be changed or extended by plugins. Plugins are managed by `Pluginer` customization class. 
 
-* Download `Pluginer.php` and plugins you want and place them into the `plugins` folder.
+* Download plugins you want and place them into the `plugins` folder.
 * Create `index.php` file implementing `create_adminneo()` method that returns Pluginer instance.
 
 File structure will be:
 
 ```
 - plugins
-    - Pluginer.php
     - dump-xml.php
     - tinymce.php
     - file-upload.php
@@ -202,9 +201,6 @@ use AdminNeo\Pluginer;
 
 function create_adminneo(): Pluginer
 {
-    // Required to run any plugin.
-    include "plugins/Pluginer.php";
-    
     // Include plugins.
     include "plugins/dump-xml.php";
     include "plugins/tinymce.php.php";

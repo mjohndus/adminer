@@ -4,8 +4,6 @@ use AdminNeo\Admin;
 
 function create_adminneo(): Admin
 {
-	include "../plugins/Pluginer.php";
-
 	class CustomAdmin extends Admin
 	{
 		public function getDatabase(): ?string
