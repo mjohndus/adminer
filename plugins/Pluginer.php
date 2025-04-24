@@ -97,7 +97,7 @@ class Pluginer extends Admin
 		return $this->applyPlugin(__FUNCTION__, func_get_args());
 	}
 
-	public function queryTimeout()
+	public function getQueryTimeout(): int
 	{
 		return $this->applyPlugin(__FUNCTION__, func_get_args());
 	}
