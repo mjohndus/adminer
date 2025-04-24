@@ -19,14 +19,6 @@
             "homepage": "https://www.vrana.cz/"
         }
     ],
-    "autoload": {
-        "exclude-from-classmap": [
-            "admin/drivers/"
-        ],
-        "classmap": [
-            "plugins/"
-        ]
-    },
     "license": [
         "Apache-2.0",
         "GPL-2.0-only"
