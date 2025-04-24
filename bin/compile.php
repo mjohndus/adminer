@@ -502,6 +502,13 @@ $file = preg_replace_callback('~\binclude __DIR__ \. "/../drivers/([^.]+).*\n~',
 	return in_array($match[1], $selected_drivers) ? $match[0] : "";
 }, $file);
 
+// Change plugins directory.
+$file = str_replace(
+	'$plugins_dir = __DIR__ . "/../../plugins"; // !compile: plugins directory',
+	'$plugins_dir = "adminneo-plugins";',
+	$file
+);
+
 // Compile files included into the /admin/include/bootstrap.inc.php.
 $file = preg_replace_callback('~\binclude (__DIR__ \. )?"([^"]*)";~', function ($match) {
 	return put_file($match, "../admin/include");

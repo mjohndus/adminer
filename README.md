@@ -177,16 +177,17 @@ Plugins
 
 AdminNeo functions can be changed or extended by plugins. Plugins are managed by `Pluginer` customization class. 
 
-* Download plugins you want and place them into the `plugins` folder.
-* Create `index.php` file implementing `create_adminneo()` method that returns Pluginer instance.
+* Download plugins you want and place them into the `adminneo-plugins` folder. All plugins in this folder will be
+  autoloaded (but not enabled).
+* Create `index.php` file implementing `create_adminneo()` method that returns `Pluginer` instance.
 
 File structure will be:
 
 ```
-- plugins
-    - dump-xml.php
-    - tinymce.php
-    - file-upload.php
+- adminneo-plugins
+    - JsonPreviewPlugin.php
+    - TinyMcePlugin.php
+    - FileUpload.php
     - ...
 - adminneo.php
 - index.php
@@ -197,20 +198,14 @@ Index.php:
 ```php
 <?php
 
-use AdminNeo\Pluginer;
-
-function create_adminneo(): Pluginer
+function create_adminneo(): \AdminNeo\Pluginer
 {
-    // Include plugins.
-    include "plugins/dump-xml.php";
-    include "plugins/tinymce.php.php";
-    include "plugins/file-upload.php";
-    
     // Enable plugins.
+    // Files in `adminneo-plugins` are autoloaded, so including source files is not necessary.
     $plugins = [
-        new XmlDumpPlugin(),
-        new TinyMcePlugin(),
-        new FileUploadPlugin("data/"),
+        new \AdminNeo\XmlDumpPlugin(),
+        new \AdminNeo\TinyMcePlugin(),
+        new \AdminNeo\FileUploadPlugin("data/"),
         // ...
     ];
     
@@ -219,7 +214,7 @@ function create_adminneo(): Pluginer
         "colorVariant" => "green",
     ];
     
-    return new Pluginer($plugins, $config);
+    return new \AdminNeo\Pluginer($plugins, $config);
 }
 
 // Include AdminNeo or EditorNeo.

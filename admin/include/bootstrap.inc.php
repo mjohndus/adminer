@@ -90,6 +90,13 @@ include __DIR__ . "/../drivers/elastic.inc.php";
 include __DIR__ . "/../drivers/clickhouse.inc.php";
 include __DIR__ . "/../drivers/simpledb.inc.php";
 
+$plugins_dir = __DIR__ . "/../../plugins"; // !compile: plugins directory
+if (is_dir($plugins_dir)) {
+	foreach (glob("$plugins_dir/*.php") as $filename) {
+		include_once $filename;
+	}
+}
+
 if (function_exists('\create_adminneo')) {
 	$admin = \create_adminneo();
 } elseif (function_exists('AdminNeo\create_adminneo')) {
