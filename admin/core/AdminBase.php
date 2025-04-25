@@ -231,7 +231,7 @@ abstract class AdminBase
 
 	public function printFavicons(): void
 	{
-		$colorVariant = validate_color_variant($this->getConfig()->getColorVariant());
+		$colorVariant = validate_color_variant($this->config->getColorVariant());
 
 		// https://evilmartians.com/chronicles/how-to-favicon-in-2021-six-files-that-fit-most-needs
 		// Converting PNG to ICO: https://redketchup.io/icon-converter
@@ -449,7 +449,7 @@ abstract class AdminBase
 	 */
 	public function getFieldInputHint(string $table, array $field, ?string $value): string
 	{
-		return support("comment") ? $this->formatComment($field["comment"]) : "";
+		return support("comment") ? admin()->formatComment($field["comment"]) : "";
 	}
 
 	public abstract function processFieldInput(?array $field, string $value, string $function = ""): string;
@@ -466,7 +466,7 @@ abstract class AdminBase
 	public function detectJson(string $fieldType, &$value, ?bool $pretty = null): bool
 	{
 		if (is_array($value)) {
-			$flags = JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | ($this->getConfig()->isJsonValuesAutoFormat() ? JSON_PRETTY_PRINT : 0);
+			$flags = JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | ($this->config->isJsonValuesAutoFormat() ? JSON_PRETTY_PRINT : 0);
 			$value = json_encode($value, $flags);
 			return true;
 		}
@@ -474,7 +474,7 @@ abstract class AdminBase
 		$flags = JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | ($pretty ? JSON_PRETTY_PRINT : 0);
 
 		if (str_contains($fieldType, "json")) {
-			if ($pretty !== null && $this->getConfig()->isJsonValuesAutoFormat()) {
+			if ($pretty !== null && $this->config->isJsonValuesAutoFormat()) {
 				$value = json_encode(json_decode($value), $flags);
 			}
 
@@ -491,7 +491,7 @@ abstract class AdminBase
 			($value[0] == "{" || $value[0] == "[") &&
 			($json = json_decode($value))
 		) {
-			if ($pretty !== null && $this->getConfig()->isJsonValuesAutoFormat()) {
+			if ($pretty !== null && $this->config->isJsonValuesAutoFormat()) {
 				$value = json_encode($json, $flags);
 			}
 
@@ -531,7 +531,7 @@ abstract class AdminBase
 ?>
 
 <div class="header">
-	<?= $this->getServiceTitle(); ?>
+	<?= admin()->getServiceTitle(); ?>
 
 	<?php if ($missing != "auth"): ?>
 		<span class="version">
@@ -557,7 +557,7 @@ abstract class AdminBase
 	{
 		echo "<div class='tables-filter jsonly'>"
 			. "<input id='tables-filter' type='search' class='input' autocomplete='off' placeholder='" . lang('Table') . "'>"
-			. script("initTablesFilter(" . json_encode($this->getDatabase()) . ");")
+			. script("initTablesFilter(" . json_encode(admin()->getDatabase()) . ");")
 			. "</div>\n";
 	}
 
