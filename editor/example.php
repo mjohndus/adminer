@@ -3,7 +3,7 @@
 use AdminNeo\Admin;
 use function AdminNeo\h;
 
-function create_adminneo(): Admin
+function create_adminneo()
 {
 	class ExampleEditor extends Admin
 	{
@@ -60,9 +60,11 @@ function create_adminneo(): Admin
 
 	}
 
-	return new ExampleEditor([
+	$config = [
 		"colorVariant" => "green",
-	]);
+	];
+
+	return ExampleEditor::create($config);
 }
 
 include "index.php";

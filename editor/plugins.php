@@ -1,14 +1,14 @@
 <?php
 
+use AdminNeo\Admin;
 use AdminNeo\FrameSupportPlugin;
 use AdminNeo\JsonPreviewPlugin;
-use AdminNeo\Pluginer;
 use AdminNeo\SlugifyEditPlugin;
 use AdminNeo\TranslationPlugin;
 
-function create_adminneo(): Pluginer
+function create_adminneo()
 {
-	class PluginsEditor extends Pluginer
+	class PluginsEditor extends Admin
 	{
 		public function getServiceTitle(): string
 		{
@@ -34,7 +34,7 @@ function create_adminneo(): Pluginer
 		"jsonValuesAutoFormat" => true,
 	];
 
-	return new PluginsEditor($plugins, $config);
+	return PluginsEditor::create($config, $plugins);
 }
 
 include "index.php";

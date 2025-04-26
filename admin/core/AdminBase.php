@@ -13,6 +13,36 @@ abstract class AdminBase
 	/** @var array */
 	private $systemSchemas;
 
+	/** @var static|Pluginer */
+	private static $instance;
+
+	/**
+	 * @param array $config Configuration array.
+	 * @param object[] $plugins List of plugin instances.
+	 *
+	 * @return static|Pluginer
+	 */
+	public static function create(array $config = [], array $plugins = [])
+	{
+		$admin = new static($config);
+
+		self::$instance = $plugins ? new Pluginer($admin, $plugins) : $admin;
+
+		return self::$instance;
+	}
+
+	/**
+	 * @return static|Pluginer
+	 */
+	public static function get()
+	{
+		if (!isset(self::$instance)) {
+			die("Admin instance not found. Create instance by Admin::create() method at first.\n");
+		}
+
+		return self::$instance;
+	}
+
 	public function __construct(array $config = [])
 	{
 		$this->config = new Config($config);

@@ -1,19 +1,19 @@
 <?php
 
+use AdminNeo\Admin;
 use AdminNeo\Bz2OutputPlugin;
 use AdminNeo\FileUploadPlugin;
 use AdminNeo\ForeignEditPlugin;
 use AdminNeo\FrameSupportPlugin;
 use AdminNeo\JsonDumpPlugin;
 use AdminNeo\JsonPreviewPlugin;
-use AdminNeo\Pluginer;
 use AdminNeo\SlugifyEditPlugin;
 use AdminNeo\SystemForeignKeysPlugin;
 use AdminNeo\TranslationPlugin;
 use AdminNeo\XmlDumpPlugin;
 use AdminNeo\ZipOutputPlugin;
 
-function create_adminneo(): Pluginer
+function create_adminneo()
 {
 	$plugins = [
 		//new OtpLoginPlugin(base64_decode('RXiwXQLdoq7jVQ==')),
@@ -53,7 +53,7 @@ function create_adminneo(): Pluginer
 //		"servers" => $servers,
 	];
 
-	return new Pluginer($plugins, $config);
+	return Admin::create($config, $plugins);
 }
 
 include "index.php";

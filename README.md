@@ -123,16 +123,14 @@ method that returns configured `Admin` instance.
 ```php
 <?php
 
-use AdminNeo\Admin;
-
-function create_adminneo(): Admin 
+function create_adminneo() 
 {
     // Define configuration.
     $config = [
         "colorVariant" => "green",
     ];
 	
-    return new Admin($config);
+    return \AdminNeo\Admin::create($config);
 }
 
 // Include AdminNeo file.
@@ -175,11 +173,11 @@ For detailed information see [Configuration documentation](/docs/configuration.m
 Plugins
 -------
 
-AdminNeo functions can be changed or extended by plugins. Plugins are managed by `Pluginer` customization class. 
+AdminNeo functions can be changed or extended by plugins. 
 
 * Download plugins you want and place them into the `adminneo-plugins` folder. All plugins in this folder will be
   autoloaded (but not enabled).
-* Create `index.php` file implementing `create_adminneo()` method that returns `Pluginer` instance.
+* Create `index.php` file implementing `create_adminneo()` method as in the following example.
 
 File structure will be:
 
@@ -198,7 +196,7 @@ Index.php:
 ```php
 <?php
 
-function create_adminneo(): \AdminNeo\Pluginer
+function create_adminneo()
 {
     // Enable plugins.
     // Files in `adminneo-plugins` are autoloaded, so including source files is not necessary.
@@ -214,10 +212,10 @@ function create_adminneo(): \AdminNeo\Pluginer
         "colorVariant" => "green",
     ];
     
-    return new \AdminNeo\Pluginer($plugins, $config);
+    return \AdminNeo\Admin::create($config, $plugins);
 }
 
-// Include AdminNeo or EditorNeo.
+// Include AdminNeo.
 include "adminneo.php";
 ```
 

@@ -7,16 +7,14 @@ method that returns configured Admin instance.
 ```php
 <?php
 
-use AdminNeo\Admin;
-
-function create_adminneo(): Admin 
+function create_adminneo() 
 {
     // Define configuration.
     $config = [
         "colorVariant" => "green",
     ];
 	
-    return new Admin($config);
+    return \AdminNeo\Admin::create($config);
 }
 
 // Include original AdminNeo.

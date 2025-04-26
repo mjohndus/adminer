@@ -2,7 +2,7 @@
 
 use AdminNeo\Admin;
 
-function create_adminneo(): Admin
+function create_adminneo()
 {
 	$config = [
 		"colorVariant" => "green",
@@ -14,7 +14,7 @@ function create_adminneo(): Admin
 //		"defaultPasswordHash" => password_hash("YOUR_PASSWORD_HERE", PASSWORD_DEFAULT),
 	];
 
-	return new Admin($config);
+	return Admin::create($config);
 }
 
 include "index.php";

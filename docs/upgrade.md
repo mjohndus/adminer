@@ -24,11 +24,9 @@ include "adminneo.php";
 ```php
 <?php
 
-use AdminNeo\Admin;
-
-function create_adminneo(): Admin 
+function create_adminneo() 
 {
-    return new Admin();
+    return \AdminNeo\Admin::create();
 }
 
 include "adminneo.php";
