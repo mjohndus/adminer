@@ -114,7 +114,13 @@ echo "<thead><tr>";
 echo "<th id='label-type'>", lang('Index Type'), "</th>";
 $options_class = "class='idxopts" . ($show_options ? "" : " hidden") . "'";
 if (count($index_algorithms) > 1) {
-	echo "<th id='label-method' $options_class>", lang('Algorithm'), "</th>";
+	echo "<th id='label-method' $options_class>", lang('Algorithm');
+	echo doc_link([
+		'sql' => 'create-index.html#create-index-storage-engine-index-types',
+		'mariadb' => 'storage-engine-index-types/',
+		'pgsql' => 'indexes-types.html',
+	]);
+	echo "</th>";
 }
 
 echo "<th><input type='submit' class='button invisible'>";
