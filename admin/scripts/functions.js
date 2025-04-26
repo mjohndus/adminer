@@ -461,6 +461,26 @@ function initFieldset(id) {
 }
 
 /**
+ * Installs toggle handler.
+ *
+ * @param {HTMLElement} parent
+ */
+function initToggles(parent) {
+	const links = qsa('.toggle', parent);
+
+	for (let i = 0; i < links.length; i++) {
+		links[i].addEventListener("click", (event) => {
+			const id = links[i].getAttribute('href').substring(1);
+
+			gid(id).classList.toggle("hidden");
+			links[i].classList.toggle("opened");
+
+			event.preventDefault();
+		});
+	}
+}
+
+/**
  * Adds row in select fieldset.
  *
  * @param {Event} event

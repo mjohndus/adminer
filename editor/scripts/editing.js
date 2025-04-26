@@ -1,8 +1,5 @@
 // Editor specific functions
 
-function initToggles(parent) {
-}
-
 function selectFieldChange() {
 }
 
