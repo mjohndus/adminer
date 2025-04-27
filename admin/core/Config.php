@@ -8,8 +8,6 @@ class Config
 	public const NavigationDual = "dual";
 	public const NavigationReversed = "reversed";
 
-	public const SelfSource = "self";
-
 	/** @var array */
 	private $params;
 
