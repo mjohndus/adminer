@@ -55,7 +55,6 @@ class JsonPreviewPlugin
 		<style>
 			/* Table */
 			.json {
-				/*display: none;*/
 				width: auto;
 				margin: 4px 0;
 				border-color: var(--code-border);
@@ -89,7 +88,7 @@ class JsonPreviewPlugin
 				margin: 0;
 			}
 
-			.json:not(.hidden) + textarea {
+			.json + textarea {
 				margin-top: 3px;
 			}
 		</style>
