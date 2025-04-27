@@ -13,6 +13,12 @@ namespace AdminNeo;
  */
 class Pluginer
 {
+	/** @var true[] Map of methods that plugins cannot customize. */
+	private const InternalMethods = [
+		"inject" => true,
+		"getConfig" => true,
+	];
+
 	/** @var true[] Map of methods that expect the value to be appended to the result. */
 	private const AppendMethods = [
 		"editRowPrint" => true,
@@ -21,15 +27,15 @@ class Pluginer
 		"getDumpFormats" => true
 	];
 
-	/** @var object[] */
+	/** @var Plugin[] */
 	private $plugins;
 
-	/** @var object[][] List of plugins for each method. */
+	/** @var Plugin[][] List of plugins for each method. */
 	private $hooks = [];
 
 	/**
 	 * @param AdminBase $admin Admin or Editor instance.
-	 * @param object[] $plugins List of plugin instances.
+	 * @param Plugin[] $plugins List of plugin instances.
 	 */
 	public function __construct(AdminBase $admin, array $plugins)
 	{
@@ -39,7 +45,7 @@ class Pluginer
 		foreach (get_class_methods(AdminBase::class) as $method) {
 			$this->hooks[$method] = [];
 
-			if ($method != "getConfig") {
+			if (!(self::InternalMethods[$method] ?? false)) {
 				foreach ($plugins as $plugin) {
 					if (method_exists($plugin, $method)) {
 						$this->hooks[$method][] = $plugin;
@@ -56,7 +62,7 @@ class Pluginer
 	}
 
 	/**
-	 * @return object[]
+	 * @return Plugin[]
 	 */
 	public function getPlugins(): array
 	{

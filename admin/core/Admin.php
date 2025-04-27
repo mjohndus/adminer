@@ -68,8 +68,8 @@ class Admin extends AdminBase
 	{
 		echo "<link rel='stylesheet' href='", link_files("jush.css", ["../vendor/vrana/jush/jush.css"]), "'>";
 
-		if (!admin()->isLightModeForced()) {
-			echo "<link rel='stylesheet' " . (!admin()->isDarkModeForced() ? "media='(prefers-color-scheme: dark)' " : "") . "href='";
+		if (!$this->admin->isLightModeForced()) {
+			echo "<link rel='stylesheet' " . (!$this->admin->isDarkModeForced() ? "media='(prefers-color-scheme: dark)' " : "") . "href='";
 			echo link_files("jush-dark.css", ["../vendor/vrana/jush/jush-dark.css"]);
 			echo "'>\n";
 		}
@@ -98,24 +98,24 @@ class Admin extends AdminBase
 
 		echo "<table class='box'>\n";
 		if ($serverPairs) {
-			echo admin()->getLoginFormRow('server', lang('Server'), "<select name='auth[server]'>" . optionlist($serverPairs, SERVER, true) . "</select>");
+			echo $this->admin->getLoginFormRow('server', lang('Server'), "<select name='auth[server]'>" . optionlist($serverPairs, SERVER, true) . "</select>");
 		} else {
 			$driver = DRIVER ?: $this->config->getDefaultDriver($drivers);
 
 			if (count($drivers) > 1) {
-				echo admin()->getLoginFormRow('driver', lang('System'), html_select("auth[driver]", $drivers, $driver) . script("initLoginDriver(qsl('select'));", ""));
+				echo $this->admin->getLoginFormRow('driver', lang('System'), html_select("auth[driver]", $drivers, $driver) . script("initLoginDriver(qsl('select'));", ""));
 			} else {
-				echo admin()->getLoginFormRow('driver', '', '<input type="hidden" name="auth[driver]" value="' . h($driver) . '">');
+				echo $this->admin->getLoginFormRow('driver', '', '<input type="hidden" name="auth[driver]" value="' . h($driver) . '">');
 			}
 
-			echo admin()->getLoginFormRow('server', lang('Server'), '<input class="input" name="auth[server]" value="' . h(SERVER) . '" title="hostname[:port]" placeholder="localhost" autocapitalize="off">');
+			echo $this->admin->getLoginFormRow('server', lang('Server'), '<input class="input" name="auth[server]" value="' . h(SERVER) . '" title="hostname[:port]" placeholder="localhost" autocapitalize="off">');
 		}
 
-		echo admin()->getLoginFormRow('username', lang('Username'), '<input class="input" name="auth[username]" id="username" value="' . h($_GET["username"]) . '" autocomplete="username" autocapitalize="off">');
-		echo admin()->getLoginFormRow('password', lang('Password'), '<input type="password" class="input" name="auth[password]" autocomplete="current-password">');
+		echo $this->admin->getLoginFormRow('username', lang('Username'), '<input class="input" name="auth[username]" id="username" value="' . h($_GET["username"]) . '" autocomplete="username" autocapitalize="off">');
+		echo $this->admin->getLoginFormRow('password', lang('Password'), '<input type="password" class="input" name="auth[password]" autocomplete="current-password">');
 
 		if (!$serverPairs) {
-			echo admin()->getLoginFormRow('db', lang('Database'), '<input class="input" name="auth[db]" value="' . h($_GET["db"]) . '" autocapitalize="off">');
+			echo $this->admin->getLoginFormRow('db', lang('Database'), '<input class="input" name="auth[db]" value="' . h($_GET["db"]) . '" autocapitalize="off">');
 		}
 		echo "</table>\n";
 
@@ -194,7 +194,7 @@ class Admin extends AdminBase
 	/**
 	 * Returns backward keys for given table.
 	 *
-	 * @return array $return[$target_table]["keys"][$key_name][$target_column] = $source_column; $return[$target_table]["name"] = admin()->getTableName($target_table);
+	 * @return array $return[$target_table]["keys"][$key_name][$target_column] = $source_column; $return[$target_table]["name"] = $this->admin->getTableName($target_table);
 	 */
 	public function getBackwardKeys(string $table, string $tableName): array
 	{
@@ -363,7 +363,7 @@ class Admin extends AdminBase
 			$text = "<code>$val</code>";
 		} elseif (preg_match('~blob|bytea|raw|file~', $field["type"]) && !is_utf8($val)) {
 			$text = "<i>" . lang('%d byte(s)', strlen($original)) . "</i>";
-		} elseif (admin()->detectJson($field["type"], $original)) {
+		} elseif ($this->admin->detectJson($field["type"], $original)) {
 			$text = "<code class='jush-js'>$val</code>";
 		} else {
 			$text = $val;
@@ -440,7 +440,7 @@ class Admin extends AdminBase
 			echo "<td>", h($field["collation"]), "</td>";
 
 			if (support("comment")) {
-				echo "<td>", admin()->formatComment($field["comment"]), "</td>";
+				echo "<td>", $this->admin->formatComment($field["comment"]), "</td>";
 			}
 
 			echo "\n";
@@ -728,14 +728,14 @@ class Admin extends AdminBase
 				} elseif ($op == "SQL") {
 					$cond = " $val"; // SQL injection
 				} elseif ($op == "LIKE %%") {
-					$cond = " LIKE " . admin()->processFieldInput($fields[$col] ?? null, "%$val%");
+					$cond = " LIKE " . $this->admin->processFieldInput($fields[$col] ?? null, "%$val%");
 				} elseif ($op == "ILIKE %%") {
-					$cond = " ILIKE " . admin()->processFieldInput($fields[$col] ?? null, "%$val%");
+					$cond = " ILIKE " . $this->admin->processFieldInput($fields[$col] ?? null, "%$val%");
 				} elseif ($op == "FIND_IN_SET") {
 					$prefix = "$op(" . q($val) . ", ";
 					$cond = ")";
 				} elseif (!preg_match('~NULL$~', $op)) {
-					$cond .= " " . admin()->processFieldInput($fields[$col] ?? null, $val);
+					$cond .= " " . $this->admin->processFieldInput($fields[$col] ?? null, $val);
 				}
 
 				if ($col != "") {
@@ -859,7 +859,7 @@ class Admin extends AdminBase
 			return q($value);
 		}
 
-		admin()->detectJson($field["type"], $value, false);
+		$this->admin->detectJson($field["type"], $value, false);
 
 		$name = $field["field"];
 		$return = q($value);
@@ -1138,7 +1138,7 @@ class Admin extends AdminBase
 						if ($password !== null) {
 							$dbs = $_SESSION["db"][$vendor][$server][$username];
 							foreach (($dbs ? array_keys($dbs) : [""]) as $db) {
-								$server_name = admin()->getServerName($server);
+								$server_name = $this->admin->getServerName($server);
 								$title = h($drivers[$vendor])
 									. ($username != "" || $server_name != "" ? " - " : "")
 									. h($username)
@@ -1156,7 +1156,7 @@ class Admin extends AdminBase
 				echo "<nav id='logins'><menu>\n$output</menu></nav>\n";
 			}
 		} else {
-			admin()->printDatabaseSwitcher($missing);
+			$this->admin->printDatabaseSwitcher($missing);
 
 			$actions = [];
 			if (DB == null || !$missing) {
@@ -1188,8 +1188,8 @@ class Admin extends AdminBase
 
 			if ($_GET["ns"] !== "" && !$missing && DB != "") {
 				if ($tables) {
-					admin()->printTablesFilter();
-					admin()->printTableList($tables);
+					$this->admin->printTablesFilter();
+					$this->admin->printTableList($tables);
 				} else {
 					echo "<p class='message'>" . lang('No tables.') . "</p>\n";
 				}
@@ -1226,7 +1226,7 @@ class Admin extends AdminBase
 	{
 		global $admin, $connection, $jush;
 
-		$databases = admin()->getDatabases();
+		$databases = $this->admin->getDatabases();
 		if (!$databases && $jush != "sqlite") {
 			return;
 		}
@@ -1277,7 +1277,7 @@ class Admin extends AdminBase
 		echo "<nav id='tables'><menu $menuClass>";
 
 		foreach ($tables as $table => $status) {
-			$name = admin()->getTableName($status);
+			$name = $this->admin->getTableName($status);
 			if ($name == "") {
 				continue;
 			}

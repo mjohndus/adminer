@@ -2,11 +2,8 @@
 
 namespace AdminNeo;
 
-abstract class AdminBase
+abstract class AdminBase extends Plugin
 {
-	/** @var Config */
-	protected $config;
-
 	/** @var array */
 	private $systemDatabases;
 
@@ -18,20 +15,27 @@ abstract class AdminBase
 
 	/**
 	 * @param array $config Configuration array.
-	 * @param object[] $plugins List of plugin instances.
+	 * @param Plugin[] $plugins List of plugin instances.
 	 *
 	 * @return static|Pluginer
 	 */
 	public static function create(array $config = [], array $plugins = [])
 	{
-		$admin = new static($config);
-
+		$config = new Config($config);
+		$admin = new static();
 		self::$instance = $plugins ? new Pluginer($admin, $plugins) : $admin;
+
+		$admin->inject(self::$instance, $config);
+		foreach ($plugins as $plugin) {
+			$plugin->inject(self::$instance, $config);
+		}
 
 		return self::$instance;
 	}
 
 	/**
+	 * TODO: Eliminate singleton.
+	 *
 	 * @return static|Pluginer
 	 */
 	public static function get()
@@ -43,11 +47,9 @@ abstract class AdminBase
 		return self::$instance;
 	}
 
-	public function __construct(array $config = [])
-	{
-		$this->config = new Config($config);
-	}
-
+	/**
+	 * TODO: Do not get config from Admin, but inject Config where needed.
+	 */
 	public function getConfig(): Config
 	{
 		return $this->config;
@@ -479,7 +481,7 @@ abstract class AdminBase
 	 */
 	public function getFieldInputHint(string $table, array $field, ?string $value): string
 	{
-		return support("comment") ? admin()->formatComment($field["comment"]) : "";
+		return support("comment") ? $this->admin->formatComment($field["comment"]) : "";
 	}
 
 	public abstract function processFieldInput(?array $field, string $value, string $function = ""): string;
@@ -561,7 +563,7 @@ abstract class AdminBase
 ?>
 
 <div class="header">
-	<?= admin()->getServiceTitle(); ?>
+	<?= $this->admin->getServiceTitle(); ?>
 
 	<?php if ($missing != "auth"): ?>
 		<span class="version">
@@ -587,7 +589,7 @@ abstract class AdminBase
 	{
 		echo "<div class='tables-filter jsonly'>"
 			. "<input id='tables-filter' type='search' class='input' autocomplete='off' placeholder='" . lang('Table') . "'>"
-			. script("initTablesFilter(" . json_encode(admin()->getDatabase()) . ");")
+			. script("initTablesFilter(" . json_encode($this->admin->getDatabase()) . ");")
 			. "</div>\n";
 	}
 

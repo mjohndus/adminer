@@ -136,6 +136,8 @@ include "adminneo.php";
     - `AdminerTinymce` to `TinyMcePlugin`
     - `AdminerTranslation` to `TranslationPlugin`
 
+- All plugins now extend `Plugin` class.
+
 ### Customizable functions
 
 All customization functions defined in the Admin and AdminBase classes were refactored. They have new names and strict

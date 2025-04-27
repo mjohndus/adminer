@@ -40,7 +40,7 @@ class Admin extends AdminBase
 		}
 
 		// Returns the first available database.
-		$databases = admin()->getDatabases(false);
+		$databases = $this->admin->getDatabases(false);
 		if ($databases) {
 			return $databases[(information_schema($databases[0]) ? 1 : 0)];
 		} else {
@@ -65,9 +65,9 @@ class Admin extends AdminBase
 		$driver = $this->config->getDefaultDriver($drivers);
 
 		echo "<table class='box'>\n";
-		echo admin()->getLoginFormRow('driver', '', '<input type="hidden" name="auth[driver]" value="' . h($driver) . '">');
-		echo admin()->getLoginFormRow('username', lang('Username'), '<input class="input" name="auth[username]" id="username" value="' . h($_GET["username"]) . '" autocomplete="username" autocapitalize="off">');
-		echo admin()->getLoginFormRow('password', lang('Password'), '<input type="password" class="input" name="auth[password]" autocomplete="current-password">');
+		echo $this->admin->getLoginFormRow('driver', '', '<input type="hidden" name="auth[driver]" value="' . h($driver) . '">');
+		echo $this->admin->getLoginFormRow('username', lang('Username'), '<input class="input" name="auth[username]" id="username" value="' . h($_GET["username"]) . '" autocomplete="username" autocapitalize="off">');
+		echo $this->admin->getLoginFormRow('password', lang('Password'), '<input type="password" class="input" name="auth[password]" autocomplete="current-password">');
 		echo "</table>\n";
 
 		echo "<p>";
@@ -95,15 +95,15 @@ class Admin extends AdminBase
 
 		foreach (get_rows("SELECT TABLE_NAME, CONSTRAINT_NAME, COLUMN_NAME, REFERENCED_COLUMN_NAME
 FROM information_schema.KEY_COLUMN_USAGE
-WHERE TABLE_SCHEMA = " . q(admin()->getDatabase()) . "
-AND REFERENCED_TABLE_SCHEMA = " . q(admin()->getDatabase()) . "
+WHERE TABLE_SCHEMA = " . q($this->admin->getDatabase()) . "
+AND REFERENCED_TABLE_SCHEMA = " . q($this->admin->getDatabase()) . "
 AND REFERENCED_TABLE_NAME = " . q($table) . "
 ORDER BY ORDINAL_POSITION", null, "") as $row) { //! requires MySQL 5
 			$keys[$row["TABLE_NAME"]]["keys"][$row["CONSTRAINT_NAME"]][$row["COLUMN_NAME"]] = $row["REFERENCED_COLUMN_NAME"];
 		}
 
 		foreach ($keys as $key => $val) {
-			$name = admin()->getTableName(table_status($key, true));
+			$name = $this->admin->getTableName(table_status($key, true));
 			if ($name != "") {
 				$search = preg_quote($tableName);
 				$separator = "(:|\\s*-)?\\s+";
@@ -165,7 +165,7 @@ ORDER BY ORDINAL_POSITION", null, "") as $row) { //! requires MySQL 5
 	{
 		$return = $rows;
 		foreach ($rows[0] as $key => $val) {
-			if (list($table, $id, $name) = admin()->getForeignColumnInfo($foreignKeys, $key)) {
+			if (list($table, $id, $name) = $this->admin->getForeignColumnInfo($foreignKeys, $key)) {
 				// find all used ids
 				$ids = [];
 				foreach ($rows as $row) {
@@ -285,7 +285,7 @@ ORDER BY ORDINAL_POSITION", null, "") as $row) { //! requires MySQL 5
 		foreach ($where as $val) {
 			if (($val["col"] == "" || $columns[$val["col"]]) && "$val[col]$val[val]" != "") {
 				echo "<div><select name='where[$i][col]'><option value=''>(" . lang('anywhere') . ")" . optionlist($columns, $val["col"], true) . "</select>";
-				echo html_select("where[$i][op]", [-1 => ""] + admin()->getOperators(), $val["op"]);
+				echo html_select("where[$i][op]", [-1 => ""] + $this->admin->getOperators(), $val["op"]);
 				echo "<input type='search' class='input' name='where[$i][val]' value='" . h($val["val"]) . "'>" . script("mixin(qsl('input'), {onkeydown: selectSearchKeydown, onsearch: selectSearchSearch});", "");
 				echo " <button class='button light remove jsonly' title='" . h(lang('Remove')) . "'>", icon_solo("remove"), "</button>";
 				echo script('qsl("#fieldset-search .remove").onclick = selectRemoveRow;', "");
@@ -295,7 +295,7 @@ ORDER BY ORDINAL_POSITION", null, "") as $row) { //! requires MySQL 5
 		}
 		echo "<div><select name='where[$i][col]'><option value=''>(" . lang('anywhere') . ")" . optionlist($columns, null, true) . "</select>";
 		echo script("qsl('select').onchange = selectAddRow;", "");
-		echo html_select("where[$i][op]", [-1 => ""] + admin()->getOperators());
+		echo html_select("where[$i][op]", [-1 => ""] + $this->admin->getOperators());
 		echo "<input type='search' class='input' name='where[$i][val]'>";
 		echo script("mixin(qsl('input'), {onchange: function () { this.parentNode.firstChild.onchange(); }, onsearch: selectSearchSearch});");
 		echo " <button class='button light remove jsonly' title='" . h(lang('Remove')) . "'>", icon_solo("remove"), "</button>";
@@ -376,10 +376,10 @@ ORDER BY ORDINAL_POSITION", null, "") as $row) { //! requires MySQL 5
 							$conds[] = (in_array(0, $val) ? "$name IS NULL OR " : "") . "$name IN (" . implode(", ", array_map('AdminNeo\q', $val)) . ")";
 						} else {
 							$text_type = preg_match('~char|text|enum|set~', $field["type"]);
-							$value = admin()->processFieldInput($field, (!$op && $text_type && preg_match('~^[^%]+$~', $val) ? "%$val%" : $val));
+							$value = $this->admin->processFieldInput($field, (!$op && $text_type && preg_match('~^[^%]+$~', $val) ? "%$val%" : $val));
 
 							$conds[] = $driver->convertSearch($name, $where, $field) . ($value == "NULL" ? " IS" . ($op == ">=" ? " NOT" : "") . " $value"
-								: (in_array($op, admin()->getOperators()) || $op == "=" ? " $op $value"
+								: (in_array($op, $this->admin->getOperators()) || $op == "=" ? " $op $value"
 								: ($text_type ? " LIKE $value"
 								: " IN (" . str_replace(",", "', '", $value) . ")"
 							)));
@@ -500,7 +500,7 @@ ORDER BY ORDINAL_POSITION", null, "") as $row) { //! requires MySQL 5
 		}
 
 		if ($format) {
-			$hint .= ($hint != "" ? "<br>" : "") . admin()->formatComment($format);
+			$hint .= ($hint != "" ? "<br>" : "") . $this->admin->formatComment($format);
 		}
 
 		return $hint;
@@ -601,14 +601,14 @@ ORDER BY ORDINAL_POSITION", null, "") as $row) { //! requires MySQL 5
 				echo "</menu></nav>\n";
 			}
 		} else {
-			admin()->printDatabaseSwitcher($missing);
+			$this->admin->printDatabaseSwitcher($missing);
 			if ($missing != "db" && $missing != "ns") {
 				$table_status = table_status('', true);
 				if (!$table_status) {
 					echo "<p class='message'>" . lang('No tables.') . "</p>\n";
 				} else {
-					admin()->printTablesFilter();
-					admin()->printTableList($table_status);
+					$this->admin->printTablesFilter();
+					$this->admin->printTableList($table_status);
 				}
 			}
 		}
@@ -625,7 +625,7 @@ ORDER BY ORDINAL_POSITION", null, "") as $row) { //! requires MySQL 5
 
 		foreach ($tables as $row) {
 			// Skip views and tables without a name.
-			if (!isset($row["Engine"]) || ($name = admin()->getTableName($row)) == "") {
+			if (!isset($row["Engine"]) || ($name = $this->admin->getTableName($row)) == "") {
 				continue;
 			}
 
@@ -644,7 +644,7 @@ ORDER BY ORDINAL_POSITION", null, "") as $row) { //! requires MySQL 5
 	{
 		foreach ((array) $foreignKeys[$column] as $foreignKey) {
 			if (count($foreignKey["source"]) == 1) {
-				$name = admin()->getTableDescriptionFieldName($foreignKey["table"]);
+				$name = $this->admin->getTableDescriptionFieldName($foreignKey["table"]);
 				if ($name != "") {
 					$id = idf_escape($foreignKey["target"][0]);
 					return [$foreignKey["table"], $id, $name];
@@ -657,7 +657,7 @@ ORDER BY ORDINAL_POSITION", null, "") as $row) { //! requires MySQL 5
 
 	private function foreignKeyOptions($table, $column, $value = null) {
 		global $connection;
-		if (list($target, $id, $name) = admin()->getForeignColumnInfo(column_foreign_keys($table), $column)) {
+		if (list($target, $id, $name) = $this->admin->getForeignColumnInfo(column_foreign_keys($table), $column)) {
 			$return = &$this->values[$target];
 			if ($return === null) {
 				$table_status = table_status($target);

@@ -16,8 +16,9 @@
 
 namespace AdminNeo;
 
-include "../admin/core/AdminBase.php";
+include "../admin/core/Plugin.php";
 include "../admin/core/Pluginer.php";
+include "../admin/core/AdminBase.php";
 include "core/Admin.php";
 
 include "../admin/include/bootstrap.inc.php";
