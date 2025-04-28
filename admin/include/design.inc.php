@@ -282,17 +282,23 @@ function get_nonce()
 	return $nonce;
 }
 
-/** Print flash and error messages
-* @param string
-* @return null
-*/
-function page_messages($error) {
+/**
+ * Prints flash and error messages.
+ */
+function page_messages(string $error): void
+{
 	$uri = preg_replace('~^[^?]*~', '', $_SERVER["REQUEST_URI"]);
+
 	$messages = $_SESSION["messages"][$uri] ?? null;
 	if ($messages) {
-		echo "<div class='message'>" . implode("</div>\n<div class='message'>", $messages) . "</div>" . script("initToggles();");
+		foreach ($messages as $message) {
+			echo "<div class='message'>$message</div>\n";
+			echo script("initToggles(qsl('div'));");
+		}
+
 		unset($_SESSION["messages"][$uri]);
 	}
+
 	if ($error) {
 		echo "<div class='error'>$error</div>\n";
 	}
