@@ -3,7 +3,7 @@
 use AdminNeo\Admin;
 use function AdminNeo\h;
 
-function create_adminneo()
+function adminneo_instance()
 {
 	class ExampleEditor extends Admin
 	{

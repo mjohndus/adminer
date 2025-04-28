@@ -96,10 +96,10 @@ if (is_dir($plugins_dir)) {
 	}
 }
 
-if (function_exists('\create_adminneo')) {
-	\create_adminneo();
-} elseif (function_exists('AdminNeo\create_adminneo')) {
-	create_adminneo();
+if (function_exists('\adminneo_instance')) {
+	\adminneo_instance();
+} elseif (file_exists("adminneo-instance.php")) {
+	include_once "adminneo-instance.php";
 } else {
 	Admin::create();
 }

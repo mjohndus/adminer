@@ -1,24 +1,28 @@
 Configuration
 =============
 
-You can define a configuration as a constructor parameter. Create `index.php` file implementing `create_adminneo()`
-method that returns configured Admin instance.
+You can define a configuration array while creating the `Admin` instance in `adminneo-instance.php` file placed in the
+AdminNeo's current working directory. A simple file structure will be:
+
+```
+– adminneo.php
+– adminneo-instance.php
+```
+
+You can freely rename adminneo.php to index.php.
+
+The file adminneo-instance.php will contain:
 
 ```php
 <?php
 
-function create_adminneo() 
-{
-    // Define configuration.
-    $config = [
-        "colorVariant" => "green",
-    ];
-	
-    return \AdminNeo\Admin::create($config);
-}
-
-// Include original AdminNeo.
-include "adminneo.php";
+// Define configuration.
+$config = [
+    "colorVariant" => "green",
+];
+    
+// Use factory method to create Admin instance.
+return \AdminNeo\Admin::create($config);
 ```
 
 Options

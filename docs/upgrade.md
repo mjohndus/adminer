@@ -14,9 +14,9 @@ Migrating to 5.0
 include "adminneo.php";
 ```
 
-- Function for creating Admin instance was renamed form `adminer_object` to `create_adminneo`.
+- Function for creating Admin instance was renamed form `adminer_object()` to `adminneo_instance()`.
 
-- Core classes has been renamed: `Adminer` -> `Admin`, `AdminerPlugin` -> `Pluginer`.
+- Core classes have been renamed: `Adminer` -> `Admin`, `AdminerPlugin` -> `Pluginer`.
 
 - Project's code and official plugins are in `AdminNeo` namespace now. Update your index.php and custom plugins by
   using this new namespace. Simple index.php will look like this:
@@ -24,13 +24,16 @@ include "adminneo.php";
 ```php
 <?php
 
-function create_adminneo() 
+function adminneo_instance() 
 {
     return \AdminNeo\Admin::create();
 }
 
 include "adminneo.php";
 ```
+
+- It is recommended to define custom modifications in `adminneo-instance.php` file. More information can be found in the 
+  [README file](../README.md#configuration).
 
 - AdminNeo has a brand-new default design that is incompatible with the previous one. All alternative designs was
   removed. If you use custom `adminer.css` file, you can delete it. If you use

@@ -2,7 +2,7 @@
 
 use AdminNeo\Admin;
 
-function create_adminneo()
+function adminneo_instance()
 {
 	$config = [
 		"colorVariant" => "green",

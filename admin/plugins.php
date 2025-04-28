@@ -13,7 +13,7 @@ use AdminNeo\TranslationPlugin;
 use AdminNeo\XmlDumpPlugin;
 use AdminNeo\ZipOutputPlugin;
 
-function create_adminneo()
+function adminneo_instance()
 {
 	$plugins = [
 		//new OtpLoginPlugin(base64_decode('RXiwXQLdoq7jVQ==')),

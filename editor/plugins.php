@@ -6,7 +6,7 @@ use AdminNeo\JsonPreviewPlugin;
 use AdminNeo\SlugifyEditPlugin;
 use AdminNeo\TranslationPlugin;
 
-function create_adminneo()
+function adminneo_instance()
 {
 	class PluginsEditor extends Admin
 	{
