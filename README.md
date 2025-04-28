@@ -117,50 +117,25 @@ JSON configuration file example:
 Configuration
 -------------
 
-You can define a configuration array while creating the `Admin` instance in `adminneo-instance.php` file placed in the 
-AdminNeo's current working directory. A simple file structure will be:
+Configuration can be defined in `adminneo-config.php` file placed in the AdminNeo's current working directory. 
+A simple file structure will be:
 
 ```
 – adminneo.php
-– adminneo-instance.php
+– adminneo-config.php
 ```
 
 You can freely rename adminneo.php to index.php.
 
-The file adminneo-instance.php will contain:
+The file adminneo-config.php will just return the configuration array:
 
 ```php
 <?php
 
 // Define configuration.
-$config = [
+return [
     "colorVariant" => "green",
 ];
-    
-// Use factory method to create Admin instance.
-return \AdminNeo\Admin::create($config);
-```
-
-### Custom index.php
-It is also possible to create `Admin` instance inside your own index.php file. In this case, implement `create_adminneo()`
-function in the global namespace and include AdminNeo file placed in the **non-public** directory:
-
-```php
-<?php
-
-function adminneo_instance() 
-{
-    // Define configuration.
-    $config = [
-        "colorVariant" => "green",
-    ];
-	
-    // Use factory method to create Admin instance.
-    return \AdminNeo\Admin::create($config);
-}
-
-// Include AdminNeo file.
-include "/non-public-path/adminneo.php";
 ```
 
 ### Configuration parameters
@@ -199,20 +174,48 @@ For detailed information see [Configuration documentation](/docs/configuration.m
 Plugins
 -------
 
-AdminNeo functions can be changed or extended by plugins. 
+AdminNeo functions can be modified or extended by plugins. 
 
 * Download plugins you want and place them into the `adminneo-plugins` folder. All plugins in this folder will be
   autoloaded (but not enabled).
-* Define the list of enabled plugins as in the following example.
+* Define the list of enabled plugins in `adminneo-plugins.php` file.
 
 File structure will be:
 
 ```
 - adminneo-plugins
     - JsonPreviewPlugin.php
-    - TinyMcePlugin.php
-    - FileUpload.php
+    - XmlDumpPlugin.php
+    - FileUploadPlugin.php
     - ...
+- adminneo.php
+- adminneo-plugins.php
+```
+
+adminneo-plugins.php:
+
+```php
+<?php
+  
+// Enable plugins. Files in `adminneo-plugins` are autoloaded, so including the source files is not necessary.
+return [
+    new \AdminNeo\JsonPreviewPlugin(),
+    new \AdminNeo\XmlDumpPlugin(),
+    new \AdminNeo\FileUploadPlugin("data/"),
+    // ...
+];
+```
+
+[Available plugins](plugins).
+
+Advanced customizations
+-----------------------
+
+The final option is overriding methods in the `Admin` class. It can be done in `adminneo-instance.php` file.
+
+File structure will be:
+
+```
 - adminneo.php
 - adminneo-instance.php
 ```
@@ -221,31 +224,20 @@ adminneo-instance.php:
 
 ```php
 <?php
-  
-// Define configuration.
-$config = [
-    "colorVariant" => "green",
-];
+class CustomAdmin extends \AdminNeo\Admin
+{
+    public function getServiceTitle(): string
+    {
+        return "Custom Service";
+    }
+}
 
-// Enable plugins.
-// Files in `adminneo-plugins` are autoloaded, so including source files is not necessary.
-$plugins = [
-    new \AdminNeo\JsonPreviewPlugin(),
-    new \AdminNeo\XmlDumpPlugin(),
-    new \AdminNeo\FileUploadPlugin("data/"),
-    // ...
-];
-
-// Use factory method to create Admin instance.
-return \AdminNeo\Admin::create($config, $plugins);
+// Use factory method to create CustomAdmin instance.
+return CustomAdmin::create();
 ```
 
-[Available plugins](plugins).
-
-Advanced customizations
------------------------
-
-The final option is overriding methods in the `Admin` class. For example:
+Factory method create() accepts also configuration and plugins, so everything can be defined in one 
+`adminneo-instance.php` file:
 
 ```php
 <?php
@@ -273,6 +265,65 @@ $plugins = [
     
 // Use factory method to create CustomAdmin instance.
 return CustomAdmin::create($config, $plugins);
+```
+
+### Custom index.php
+
+It is also possible to create `Admin` instance inside your own index.php file. In this case, implement
+`adminneo_instance()` function in the global namespace and include AdminNeo file placed in the **non-public** directory:
+
+```php
+<?php
+
+function adminneo_instance() 
+{
+    // Define configuration.
+    $config = [
+        "colorVariant" => "green",
+    ];
+	
+    // Use factory method to create Admin instance.
+    return \AdminNeo\Admin::create($config);
+}
+
+// Include AdminNeo file.
+include "/non-public-path/adminneo.php";
+```
+
+Or with derived class and plugins:
+
+```php
+<?php
+
+function adminneo_instance() 
+{
+    class CustomAdmin extends \AdminNeo\Admin
+    {
+        public function getServiceTitle(): string
+        {
+            return "Custom Service";
+        }
+    }
+
+    // Define configuration.
+    $config = [
+        "colorVariant" => "green",
+    ];
+    
+    // Enable plugins.
+    $plugins = [
+        new \AdminNeo\JsonPreviewPlugin(),
+        new \AdminNeo\XmlDumpPlugin(),
+        new \AdminNeo\FileUploadPlugin("data/"),
+        // ...
+    ];
+	
+    // Use factory method to create Admin instance.
+    return CustomAdmin::create($config, $plugins);
+}
+
+// Include AdminNeo file.
+include "/non-public-path/adminneo.php";
 ```
 
 Custom CSS and JavaScript

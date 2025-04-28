@@ -300,6 +300,13 @@ function page_messages(string $error): void
 	if ($error) {
 		echo "<div class='error'>$error</div>\n";
 	}
+
+	$errors = Admin::get()->getErrors();
+	if ($errors) {
+		foreach ($errors as $error) {
+			echo "<div class='error'>$error</div>\n";
+		}
+	}
 }
 
 /**

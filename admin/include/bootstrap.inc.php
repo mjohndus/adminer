@@ -96,12 +96,23 @@ if (is_dir($plugins_dir)) {
 	}
 }
 
+$admin = null;
+$errors = [];
+
 if (function_exists('\adminneo_instance')) {
-	\adminneo_instance();
+	$admin = \adminneo_instance();
 } elseif (file_exists("adminneo-instance.php")) {
-	include_once "adminneo-instance.php";
-} else {
-	Admin::create();
+	$admin = include_once "adminneo-instance.php";
+}
+
+if (!$admin instanceof Admin && !$admin instanceof Pluginer) {
+	$admin = null;
+	$linkParams = "href=https://github.com/adminneo-org/adminneo#advanced-customizations " . target_blank();
+	$errors[] = lang('%s and %s must return an object created by %s method. <a %s>More information.</a>', "<b>adminneo-instance.php</b>", "<b>adminneo_instance()</b>", "Admin::create()", $linkParams);
+}
+
+if (!$admin) {
+	Admin::create([], [], $errors);
 }
 
 if (defined("AdminNeo\DRIVER")) {

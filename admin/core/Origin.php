@@ -10,6 +10,9 @@ abstract class Origin extends Plugin
 	/** @var array */
 	private $systemSchemas;
 
+	/** @var string[] */
+	private $errors;
+
 	/** @var static|Pluginer */
 	private static $instance;
 
@@ -19,14 +22,32 @@ abstract class Origin extends Plugin
 	 *
 	 * @return static|Pluginer
 	 */
-	public static function create(array $config = [], array $plugins = [])
+	public static function create(array $config = [], array $plugins = [], array $errors = [])
 	{
 		if (isset(self::$instance)) {
 			die("Admin instance already exists.\n");
 		}
 
+		if (!$config && file_exists("adminneo-config.php")) {
+			$config = include_once("adminneo-config.php");
+			if (!is_array($config)) {
+				$config = [];
+				$linkParams = "href=https://github.com/adminneo-org/adminneo#configuration " . target_blank();
+				$errors[] = lang('%s must return an array. <a %s>More information.</a>', "<b>adminneo-config.php</b>", $linkParams);
+			}
+		}
+
+		if (!$plugins && file_exists("adminneo-plugins.php")) {
+			$plugins = include_once("adminneo-plugins.php");
+			if (!is_array($plugins)) {
+				$plugins = [];
+				$linkParams = "href=https://github.com/adminneo-org/adminneo#plugins " . target_blank();
+				$errors[] = lang('%s must return an array. <a %s>More information.</a>', "<b>adminneo-plugins.php</b>", $linkParams);
+			}
+		}
+
 		$config = new Config($config);
-		$admin = new static();
+		$admin = new static($errors);
 		self::$instance = $plugins ? new Pluginer($admin, $plugins) : $admin;
 
 		$admin->inject(self::$instance, $config);
@@ -47,6 +68,14 @@ abstract class Origin extends Plugin
 		}
 
 		return self::$instance;
+	}
+
+	/**
+	 * @param string[] $errors
+	 */
+	public function __construct(array $errors = [])
+	{
+		$this->errors = $errors;
 	}
 
 	/**
@@ -77,6 +106,16 @@ abstract class Origin extends Plugin
 	public function init(): void
 	{
 		//
+	}
+
+	/**
+	 * Returns the array of HTML-formatted error messages.
+	 *
+	 * @return string[]
+	 */
+	public function getErrors(): array
+	{
+		return $this->errors;
 	}
 
 	public abstract function getServiceTitle(): string;
