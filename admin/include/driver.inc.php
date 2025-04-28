@@ -36,28 +36,33 @@ function get_driver_name(string $id): ?string
 }
 
 abstract class Min_SQL {
-	var $_conn;
+	protected $_conn;
 
-	/** Create object for performing database operations
-	* @param Min_DB
-	*/
-	function __construct($connection) {
+	/** @var Origin|Pluginer */
+	protected $admin;
+
+	/**
+	 * @param Min_DB $connection
+	 * @param Origin|Pluginer $admin
+	 */
+	function __construct($connection, $admin) {
 		$this->_conn = $connection;
+		$this->admin = $admin;
 	}
 
 	/** Select data from table
 	* @param string
-	* @param array result of $admin->processSelectionColumns()[0]
-	* @param array result of $admin->processSelectionSearch()
-	* @param array result of $admin->processSelectionColumns()[1]
-	* @param array result of $admin->processSelectionOrder()
-	* @param ?int result of $admin->processSelectionLimit()
+	* @param array result of Admin::get()->processSelectionColumns()[0]
+	* @param array result of Admin::get()->processSelectionSearch()
+	* @param array result of Admin::get()->processSelectionColumns()[1]
+	* @param array result of Admin::get()->processSelectionOrder()
+	* @param ?int result of Admin::get()->processSelectionLimit()
 	* @param int index of page starting at zero
 	* @param bool whether to print the query
 	* @return Min_Result
 	*/
 	function select($table, $select, $where, $group, $order = [], ?int $limit = 1, $page = 0, $print = false) {
-		global $admin, $jush;
+		global $jush;
 		$is_group = (count($group) < count($select));
 
 		$query = "SELECT" . limit(
@@ -71,7 +76,7 @@ abstract class Min_SQL {
 		$start = microtime(true);
 		$return = $this->_conn->query($query);
 		if ($print) {
-			echo $admin->formatSelectQuery($query, $start, !$return);
+			echo Admin::get()->formatSelectQuery($query, $start, !$return);
 		}
 		return $return;
 	}

@@ -12,14 +12,6 @@ function connection() {
 	return $connection;
 }
 
-/** Get Admin object
-* @return Admin
-*/
-function admin() {
-	global $admin;
-	return $admin;
-}
-
 /** Get AdminNeo version
 * @return string
 */
@@ -667,7 +659,7 @@ function redirect($location, $message = null) {
 * @return bool
 */
 function query_redirect($query, $location, $message, $redirect = true, $execute = true, $failed = false, $time = "") {
-	global $connection, $error, $admin;
+	global $connection, $error;
 	if ($execute) {
 		$start = microtime(true);
 		$failed = !$connection->query($query);
@@ -675,7 +667,7 @@ function query_redirect($query, $location, $message, $redirect = true, $execute 
 	}
 	$sql = "";
 	if ($query) {
-		$sql = $admin->formatMessageQuery($query, $time, $failed);
+		$sql = Admin::get()->formatMessageQuery($query, $time, $failed);
 	}
 	if ($failed) {
 		$error = error() . $sql . script("initToggles();");
@@ -923,9 +915,8 @@ function table_status1($table, $fast = false) {
 * @return array [$col => []]
 */
 function column_foreign_keys($table) {
-	global $admin;
 	$return = [];
-	foreach ($admin->getForeignKeys($table) as $foreign_key) {
+	foreach (Admin::get()->getForeignKeys($table) as $foreign_key) {
 		foreach ($foreign_key["source"] as $val) {
 			$return[$val][] = $foreign_key;
 		}
@@ -940,12 +931,10 @@ function column_foreign_keys($table) {
  */
 function enum_input(string $attrs, array $field, $value, ?string $empty = null, bool $checkboxes = false): string
 {
-	global $admin;
-
 	preg_match_all("~'((?:[^']|'')*)'~", $field["length"], $matches);
 	$values = $matches[1];
 
-	$threshold = $admin->getConfig()->getEnumAsSelectThreshold();
+	$threshold = Admin::get()->getConfig()->getEnumAsSelectThreshold();
 	$select = !$checkboxes && $threshold !== null && count($values) > $threshold;
 	$type = $checkboxes ? "checkbox" : "radio";
 	$active_param = $select ? "selected" : "checked";
@@ -978,7 +967,7 @@ function enum_input(string $attrs, array $field, $value, ?string $empty = null, 
 
 		$checked = is_array($value) ? in_array($val, $value) : $value === $val;
 		$checked = $checked ? $active_param : "";
-		$formatted_value = $val === "" ? ("<i>" . lang('empty') . "</i>") : h($admin->formatFieldValue($val, $field));
+		$formatted_value = $val === "" ? ("<i>" . lang('empty') . "</i>") : h(Admin::get()->formatFieldValue($val, $field));
 
 		if ($select) {
 			$result .= "<option value='" . h($val) . "' $checked>$formatted_value</option>";
@@ -999,11 +988,11 @@ function enum_input(string $attrs, array $field, $value, ?string $empty = null, 
 * @return null
 */
 function input($field, $value, $function) {
-	global $types, $structured_types, $admin, $jush;
+	global $types, $structured_types, $jush;
 
 	$name = h(bracket_escape($field["field"]));
 
-	$json_type = $admin->detectJson($field["type"], $value, true);
+	$json_type = Admin::get()->detectJson($field["type"], $value, true);
 
 	$reset = ($jush == "mssql" && $field["auto_increment"]);
 	if ($reset && !$_POST["save"]) {
@@ -1023,7 +1012,7 @@ function input($field, $value, $function) {
 	$attrs = " name='fields[$name]' $disabled";
 
 	// Function list.
-	$functions = (isset($_GET["select"]) || $reset ? ["orig" => lang('original')] : []) + $admin->editFunctions($field);
+	$functions = (isset($_GET["select"]) || $reset ? ["orig" => lang('original')] : []) + Admin::get()->editFunctions($field);
 	$has_function = (in_array($function, $functions) || isset($functions[$function]));
 
 	echo "<td class='function'>";
@@ -1041,7 +1030,7 @@ function input($field, $value, $function) {
 	echo "</td><td>";
 
 	// Input field.
-	$input = $admin->getFieldInput($_GET["edit"], $field, $attrs, $value, $function);
+	$input = Admin::get()->getFieldInput($_GET["edit"], $field, $attrs, $value, $function);
 
 	if ($input != "") {
 		echo $input;
@@ -1059,7 +1048,7 @@ function input($field, $value, $function) {
 			$val = stripcslashes(str_replace("''", "'", $val));
 			$checked = $value !== null && in_array($val, explode(",", $value), true);
 			$checked = $checked ? "checked" : "";
-			$formatted_value = $val === "" ? ("<i>" . lang('empty') . "</i>") : h($admin->formatFieldValue($val, $field));
+			$formatted_value = $val === "" ? ("<i>" . lang('empty') . "</i>") : h(Admin::get()->formatFieldValue($val, $field));
 
 			echo " <label><input type='checkbox' name='fields[$name][]' value='" . h($val) . "' $checked>$formatted_value</label>";
 		}
@@ -1096,7 +1085,7 @@ function input($field, $value, $function) {
 	}
 
 	// Hint.
-	$hint = $admin->getFieldInputHint($_GET["edit"], $field, $value);
+	$hint = Admin::get()->getFieldInputHint($_GET["edit"], $field, $value);
 	if ($hint != "") {
 		echo " <span class='input-hint'>$hint</span>";
 	}
@@ -1118,7 +1107,7 @@ function input($field, $value, $function) {
 * @return string|array|false|null False to leave the original value (copy original while cloning), null to skip the column
 */
 function process_input($field) {
-	global $admin, $driver;
+	global $driver;
 
 	if (stripos($field["default"], "GENERATED ALWAYS AS ") === 0) {
 		return null;
@@ -1155,7 +1144,7 @@ function process_input($field) {
 		}
 		return $driver->quoteBinary($file);
 	}
-	return $admin->processFieldInput($field, $value, $function);
+	return Admin::get()->processFieldInput($field, $value, $function);
 }
 
 /** Compute fields() from $_POST edit data
@@ -1191,20 +1180,20 @@ function fields_from_edit() {
  */
 function search_tables(): void
 {
-	global $admin, $connection;
+	global $connection;
 
 	$_GET["where"][0]["val"] = $_POST["query"];
 
 	$results = $errors = [];
 
 	foreach (table_status("", true) as $table => $table_status) {
-		$table_name = $admin->getTableName($table_status);
+		$table_name = Admin::get()->getTableName($table_status);
 
 		if (!isset($table_status["Engine"]) || $table_name == "" || ($_POST["tables"] && !in_array($table, $_POST["tables"]))) {
 			continue;
 		}
 
-		$result = $connection->query("SELECT" . limit("1 FROM " . table($table), " WHERE " . implode(" AND ", $admin->processSelectionSearch(fields($table), [])), 1));
+		$result = $connection->query("SELECT" . limit("1 FROM " . table($table), " WHERE " . implode(" AND ", Admin::get()->processSelectionSearch(fields($table), [])), 1));
 		if ($result && !$result->fetch_row()) {
 			continue;
 		}
@@ -1235,11 +1224,9 @@ function search_tables(): void
  */
 function dump_headers(string $identifier, bool $multi_table = false): string
 {
-	global $admin;
-
 	$identifier = friendly_url($identifier) . date("-Ymd-His");
 
-	$extension = $admin->sendDumpHeaders($identifier, $multi_table);
+	$extension = Admin::get()->sendDumpHeaders($identifier, $multi_table);
 
 	$output = $_POST["output"];
 	if ($output != "text") {
@@ -1395,7 +1382,6 @@ function get_random_string($binary = false)
 * @return string HTML
 */
 function select_value($val, $link, $field, $text_length) {
-	global $admin;
 	if (is_array($val)) {
 		$return = "";
 		foreach ($val as $k => $v) {
@@ -1407,9 +1393,9 @@ function select_value($val, $link, $field, $text_length) {
 		return "<table>$return</table>";
 	}
 	if (!$link) {
-		$link = $admin->getFieldValueLink($val, $field);
+		$link = Admin::get()->getFieldValueLink($val, $field);
 	}
-	$return = $field ? $admin->formatFieldValue($val, $field) : $val;
+	$return = $field ? Admin::get()->formatFieldValue($val, $field) : $val;
 	if ($return !== null) {
 		if (!is_utf8($return)) {
 			$return = "\0"; // htmlspecialchars of binary data returns an empty string
@@ -1419,7 +1405,7 @@ function select_value($val, $link, $field, $text_length) {
 			$return = h($return);
 		}
 	}
-	return $admin->formatSelectionValue($return, $link, $field, $val);
+	return Admin::get()->formatSelectionValue($return, $link, $field, $val);
 }
 
 /** Check whether the string is e-mail address
@@ -1483,9 +1469,9 @@ function count_rows($table, $where, $is_group, $group) {
 * @return array of strings
 */
 function slow_query($query) {
-	global $admin, $token, $driver;
-	$db = $admin->getDatabase();
-	$timeout = $admin->getQueryTimeout();
+	global $token, $driver;
+	$db = Admin::get()->getDatabase();
+	$timeout = Admin::get()->getQueryTimeout();
 	$slow_query = $driver->slowQuery($query, $timeout);
 	if (!$slow_query && support("kill") && is_object($connection2 = connect()) && ($db == "" || $connection2->select_db($db))) {
 		$kill = $connection2->result(connection_id()); // MySQL and MySQLi can use thread_id but it's not in PDO_MySQL
@@ -1603,12 +1589,12 @@ function help_script_command($command, $side = false)
 * @return null
 */
 function edit_form($table, $fields, $row, $update) {
-	global $admin, $jush, $token, $error;
-	$table_name = $admin->getTableName(table_status1($table, true));
+	global $jush, $token, $error;
+	$table_name = Admin::get()->getTableName(table_status1($table, true));
 	$title = $update ? lang('Edit') : lang('Insert');
 
 	page_header("$title: $table_name", $error, ["select" => [$table, $table_name], $title]);
-	$admin->editRowPrint($table, $fields, $row, $update);
+	Admin::get()->editRowPrint($table, $fields, $row, $update);
 	if ($row === false) {
 		echo "<p class='error'>" . lang('No rows.') . "\n";
 		return;
@@ -1623,7 +1609,7 @@ function edit_form($table, $fields, $row, $update) {
 
 		$first = 0;
 		foreach ($fields as $name => $field) {
-			echo "<tr><th>" . $admin->getFieldName($field);
+			echo "<tr><th>" . Admin::get()->getFieldName($field);
 			$default = $_GET["set"][bracket_escape($name)] ?? null;
 			if ($default === null) {
 				$default = $field["default"];
@@ -1645,7 +1631,7 @@ function edit_form($table, $fields, $row, $update) {
 				)
 			);
 			if (!$_POST["save"] && is_string($value)) {
-				$value = $admin->formatFieldValue($value, $field);
+				$value = Admin::get()->formatFieldValue($value, $field);
 			}
 			$function = ($_POST["save"]
 				? $_POST["function"][$name] ?? ""
@@ -1675,7 +1661,7 @@ function edit_form($table, $fields, $row, $update) {
 			echo "<tr>"
 				. "<th><input class='input' name='field_keys[]'>"
 				. script("qsl('input').oninput = fieldChange;")
-				. "<td class='function'>" . html_select("field_funs[]", $admin->editFunctions(["null" => isset($_GET["select"])]))
+				. "<td class='function'>" . html_select("field_funs[]", Admin::get()->editFunctions(["null" => isset($_GET["select"])]))
 				. "<td><input class='input' name='field_vals[]'>"
 				. "\n"
 			;

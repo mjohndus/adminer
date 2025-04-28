@@ -21,6 +21,10 @@ abstract class Origin extends Plugin
 	 */
 	public static function create(array $config = [], array $plugins = [])
 	{
+		if (isset(self::$instance)) {
+			die("Admin instance already exists.\n");
+		}
+
 		$config = new Config($config);
 		$admin = new static();
 		self::$instance = $plugins ? new Pluginer($admin, $plugins) : $admin;
@@ -34,8 +38,6 @@ abstract class Origin extends Plugin
 	}
 
 	/**
-	 * TODO: Eliminate singleton.
-	 *
 	 * @return static|Pluginer
 	 */
 	public static function get()

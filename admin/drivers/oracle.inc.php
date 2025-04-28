@@ -197,11 +197,9 @@ if (isset($_GET["oracle"])) {
 	 */
 	function connect()
 	{
-		global $admin;
-
 		$connection = new Min_DB();
 
-		$credentials = $admin->getCredentials();
+		$credentials = Admin::get()->getCredentials();
 		if (!$connection->connect($credentials[0], $credentials[1], $credentials[2])) {
 			return $connection->error;
 		}

@@ -44,8 +44,7 @@ if ($_GET["script"] == "version") {
 }
 
 // Allows including AdminNeo inside a function.
-/** @var Admin $admin */
-global $admin, $connection, $driver, $drivers, $edit_functions, $enum_length, $error, $functions, $grouping, $HTTPS, $inout, $jush, $LANG, $languages, $on_actions, $permanent, $structured_types, $has_token, $token, $translations, $types, $unsigned, $VERSION;
+global $connection, $driver, $drivers, $edit_functions, $enum_length, $error, $functions, $grouping, $HTTPS, $inout, $jush, $LANG, $languages, $on_actions, $permanent, $structured_types, $has_token, $token, $translations, $types, $unsigned, $VERSION;
 
 if (!$_SERVER["REQUEST_URI"]) { // IIS 5 compatibility
 	$_SERVER["REQUEST_URI"] = $_SERVER["ORIG_PATH_INFO"];
@@ -98,11 +97,11 @@ if (is_dir($plugins_dir)) {
 }
 
 if (function_exists('\create_adminneo')) {
-	$admin = \create_adminneo();
+	\create_adminneo();
 } elseif (function_exists('AdminNeo\create_adminneo')) {
-	$admin = create_adminneo();
+	create_adminneo();
 } else {
-	$admin = new Admin();
+	Admin::create();
 }
 
 if (defined("AdminNeo\DRIVER")) {
@@ -120,8 +119,8 @@ if (defined("AdminNeo\DRIVER")) {
 	$grouping = $config['grouping'];
 	$edit_functions = $config['edit_functions'];
 
-	$admin->setOperators($operators, $operator_like, $operator_regexp);
-	$admin->setSystemObjects($config["system_databases"] ?? [], $config["system_schemas"] ?? []);
+	Admin::get()->setOperators($operators, $operator_like, $operator_regexp);
+	Admin::get()->setSystemObjects($config["system_databases"] ?? [], $config["system_schemas"] ?? []);
 } else {
 	define("AdminNeo\DRIVER", null);
 }

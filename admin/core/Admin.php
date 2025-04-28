@@ -1224,7 +1224,7 @@ class Admin extends Origin
 	 */
 	public function printDatabaseSwitcher(?string $missing): void
 	{
-		global $admin, $connection, $jush;
+		global $connection, $jush;
 
 		$databases = $this->admin->getDatabases();
 		if (!$databases && $jush != "sqlite") {
@@ -1246,7 +1246,7 @@ class Admin extends Origin
 
 		if (support("scheme") && $missing != "db" && DB != "" && $connection->select_db(DB)) {
 			echo "<div>";
-			echo "<select id='scheme-select' name='ns'>" . optionlist(["" => lang('Schema')] + $admin->getSchemas(), $_GET["ns"]) . "</select>"
+			echo "<select id='scheme-select' name='ns'>" . optionlist(["" => lang('Schema')] + $this->admin->getSchemas(), $_GET["ns"]) . "</select>"
 				. script("mixin(gid('scheme-select'), {onmousedown: dbMouseDown, onchange: dbChange});");
 			echo "</div>";
 

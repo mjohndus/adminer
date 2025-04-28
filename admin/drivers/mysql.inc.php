@@ -19,18 +19,17 @@ if (isset($_GET["mysql"])) {
 			}
 
 			function connect($server = "", $username = "", $password = "", $database = null, $port = null, $socket = null) {
-				global $admin;
 				mysqli_report(MYSQLI_REPORT_OFF);
 				list($host, $port) = explode(":", $server, 2); // part after : is used for port or socket
 
-				$key = $admin->getConfig()->getSslKey();
-				$certificate = $admin->getConfig()->getSslCertificate();
-				$ca_certificate = $admin->getConfig()->getSslCaCertificate();
+				$key = Admin::get()->getConfig()->getSslKey();
+				$certificate = Admin::get()->getConfig()->getSslCertificate();
+				$ca_certificate = Admin::get()->getConfig()->getSslCaCertificate();
 				$ssl_defined = $key || $certificate || $ca_certificate;
 
 				if ($ssl_defined) {
 					$this->ssl_set($key, $certificate, $ca_certificate, null, null);
-					$flags = $admin->getConfig()->getSslTrustServerCertificate() ? MYSQLI_CLIENT_SSL_DONT_VERIFY_SERVER_CERT : MYSQLI_CLIENT_SSL;
+					$flags = Admin::get()->getConfig()->getSslTrustServerCertificate() ? MYSQLI_CLIENT_SSL_DONT_VERIFY_SERVER_CERT : MYSQLI_CLIENT_SSL;
 				} else {
 					$flags = 0;
 				}
@@ -76,28 +75,26 @@ if (isset($_GET["mysql"])) {
 			var $extension = "PDO_MySQL";
 
 			function connect($server, $username, $password) {
-				global $admin;
-
 				$dsn = "mysql:charset=utf8;host=" . str_replace(":", ";unix_socket=", preg_replace('~:(\d)~', ';port=\1', $server));
 
 				$options = [PDO::MYSQL_ATTR_LOCAL_INFILE => false];
 
-				$key = $admin->getConfig()->getSslKey();
+				$key = Admin::get()->getConfig()->getSslKey();
 				if ($key) {
 					$options[PDO::MYSQL_ATTR_SSL_KEY] = $key;
 				}
 
-				$certificate = $admin->getConfig()->getSslCertificate();
+				$certificate = Admin::get()->getConfig()->getSslCertificate();
 				if ($certificate) {
 					$options[PDO::MYSQL_ATTR_SSL_CERT] = $certificate;
 				}
 
-				$ca_certificate = $admin->getConfig()->getSslCaCertificate();
+				$ca_certificate = Admin::get()->getConfig()->getSslCaCertificate();
 				if ($ca_certificate) {
 					$options[PDO::MYSQL_ATTR_SSL_CA] = $ca_certificate;
 				}
 
-				$trustServerCertificate = $admin->getConfig()->getSslTrustServerCertificate();
+				$trustServerCertificate = Admin::get()->getConfig()->getSslTrustServerCertificate();
 				if ($trustServerCertificate !== null) {
 					$options[PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT] = !$trustServerCertificate;
 				}
@@ -229,11 +226,11 @@ if (isset($_GET["mysql"])) {
 	 */
 	function connect()
 	{
-		global $admin, $types, $structured_types, $edit_functions;
+		global $types, $structured_types, $edit_functions;
 
 		$connection = new Min_DB();
 
-		$credentials = $admin->getCredentials();
+		$credentials = Admin::get()->getCredentials();
 		if (!$connection->connect($credentials[0], $credentials[1], $credentials[2])) {
 			$error = $connection->error;
 

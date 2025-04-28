@@ -3,7 +3,6 @@
 namespace AdminNeo;
 
 /**
- * @var Admin $admin
  * @var ?Min_DB $connection
  * @var ?Min_Driver $driver
  */
@@ -14,7 +13,7 @@ if (!$fields) {
 	$error = error();
 }
 $table_status = table_status1($TABLE, true);
-$name = $admin->getTableName($table_status);
+$name = Admin::get()->getTableName($table_status);
 
 $rights = [];
 foreach ($fields as $key => $field) {
@@ -29,7 +28,7 @@ $set = null;
 if (isset($rights["insert"]) || !support("table")) {
 	$set = "";
 }
-$admin->printTableMenu($table_status, $set);
+Admin::get()->printTableMenu($table_status, $set);
 
 $info = [];
 if (!preg_match("~sqlite|mssql|pgsql~", $jush) && isset($table_status["Engine"])) {
@@ -43,12 +42,12 @@ if ($info) {
 }
 
 if ($fields) {
-	$admin->printTableStructure($fields);
+	Admin::get()->printTableStructure($fields);
 }
 
 $comment = $table_status["Comment"];
 if ($comment != "") {
-	echo "<p class='keep-lines'>", lang('Comment'), ": ", $admin->formatComment($comment), "</p>\n";
+	echo "<p class='keep-lines'>", lang('Comment'), ": ", Admin::get()->formatComment($comment), "</p>\n";
 }
 
 if (is_view($table_status)) {
@@ -65,7 +64,7 @@ if (support("partitioning") && preg_match("~partitioned~", $table_status["Create
 	echo "<h2 id='partition-by'>" . lang('Partition by') . "</h2>\n";
 
 	$partitions_info = get_partitions_info($TABLE);
-	$admin->printTablePartitions($partitions_info);
+	Admin::get()->printTablePartitions($partitions_info);
 
 	echo $editLink;
 }
@@ -75,7 +74,7 @@ if (!is_view($table_status)) {
 		echo "<h2 id='indexes'>" . lang('Indexes') . "</h2>\n";
 		$indexes = indexes($TABLE);
 		if ($indexes) {
-			$admin->printTableIndexes($indexes);
+			Admin::get()->printTableIndexes($indexes);
 		}
 		echo '<p class="links"><a href="' . h(ME) . 'indexes=' . urlencode($TABLE) . '">' . icon("edit") . lang('Alter indexes') . "</a>\n";
 	}

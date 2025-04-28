@@ -3,7 +3,6 @@
 namespace AdminNeo;
 
 /**
- * @var Admin $admin
  * @var ?Min_DB $connection
  * @var ?Min_Driver $driver
  */
@@ -23,7 +22,7 @@ if ($_POST && !$error) {
 	} elseif (DB !== null) {
 		$identifier = DB;
 	} else {
-		$identifier = SERVER != "" ? $admin->getServerName(SERVER) : "localhost";
+		$identifier = SERVER != "" ? Admin::get()->getServerName(SERVER) : "localhost";
 	}
 
 	$ext = dump_headers($identifier, DB == null || count($subjects) > 1);
@@ -53,7 +52,7 @@ SET foreign_key_checks = 0;
 	}
 
 	foreach ((array) $databases as $db) {
-		$admin->dumpDatabase($db);
+		Admin::get()->dumpDatabase($db);
 		if ($connection->select_db($db)) {
 			if ($is_sql && preg_match('~CREATE~', $style) && ($create = $connection->result("SHOW CREATE DATABASE " . idf_escape($db), 1))) {
 				set_utf8mb4($create);
@@ -112,12 +111,12 @@ SET foreign_key_checks = 0;
 							ob_start([$tmp_file, 'write'], 1e5);
 						}
 
-						$admin->dumpTable($name, ($table ? $_POST["table_style"] : ""), (is_view($table_status) ? 2 : 0));
+						Admin::get()->dumpTable($name, ($table ? $_POST["table_style"] : ""), (is_view($table_status) ? 2 : 0));
 						if (is_view($table_status)) {
 							$views[] = $name;
 						} elseif ($data) {
 							$fields = fields($name);
-							$admin->dumpData($name, $_POST["data_style"], "SELECT *" . convert_fields($fields, $fields) . " FROM " . table($name));
+							Admin::get()->dumpData($name, $_POST["data_style"], "SELECT *" . convert_fields($fields, $fields) . " FROM " . table($name));
 						}
 						if ($is_sql && $_POST["triggers"] && $table && ($triggers = trigger_sql($name))) {
 							echo "\nDELIMITER ;;\n$triggers\nDELIMITER ;\n";
@@ -143,7 +142,7 @@ SET foreign_key_checks = 0;
 				}
 
 				foreach ($views as $view) {
-					$admin->dumpTable($view, $_POST["table_style"], 1);
+					Admin::get()->dumpTable($view, $_POST["table_style"], 1);
 				}
 
 				if ($ext == "tar") {
@@ -159,7 +158,7 @@ SET foreign_key_checks = 0;
 	exit;
 }
 
-$name = DB !== null ? h(DB) : (SERVER != "" ? h($admin->getServerName(SERVER)) : lang('Server'));
+$name = DB !== null ? h(DB) : (SERVER != "" ? h(Admin::get()->getServerName(SERVER)) : lang('Server'));
 page_header(lang('Export') . ": $name", $error, ($_GET["export"] != "" ? ["table" => $_GET["export"]] : [lang('Export')]));
 ?>
 
@@ -181,7 +180,7 @@ if (!isset($row["events"])) { // backwards compatibility
 	$row["triggers"] = $row["table_style"];
 }
 
-echo "<tr><th>", lang('Format'), "</th><td>", html_select("format", $admin->getDumpFormats(), $row["format"], false), "</td></tr>\n"; // false = radio
+echo "<tr><th>", lang('Format'), "</th><td>", html_select("format", Admin::get()->getDumpFormats(), $row["format"], false), "</td></tr>\n"; // false = radio
 
 if ($jush != "sqlite") {
 	echo "<tr><th>", lang('Database'), "</th>";
@@ -212,7 +211,7 @@ echo "</span></td></tr>";
 
 echo "<tr><th>", lang('Data'), "</th><td>", html_select('data_style', $data_style, $row["data_style"]), "</td></tr>";
 
-echo "<tr><th>", lang('Output'), "</th><td>", html_select("output", $admin->getDumpOutputs(), $row["output"], false), "</td></tr>\n"; // false = radio
+echo "<tr><th>", lang('Output'), "</th><td>", html_select("output", Admin::get()->getDumpOutputs(), $row["output"], false), "</td></tr>\n"; // false = radio
 
 ?>
 </table>
@@ -255,7 +254,7 @@ if (DB != "") {
 	echo "<label class='block'><input type='checkbox' id='check-databases'" . ($TABLE == "" ? " checked" : "") . ">" . lang('Database') . "</label>";
 	echo script("gid('check-databases').onclick = partial(formCheck, /^databases\\[/);", "");
 	echo "</thead>\n";
-	$databases = $admin->getDatabases();
+	$databases = Admin::get()->getDatabases();
 	if ($databases) {
 		foreach ($databases as $db) {
 			if (!information_schema($db)) {

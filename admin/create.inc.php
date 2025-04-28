@@ -3,7 +3,6 @@
 namespace AdminNeo;
 
 /**
- * @var Admin $admin
  * @var ?Min_DB $connection
  * @var ?Min_Driver $driver
  */
@@ -187,7 +186,7 @@ foreach ($row["fields"] as $field) {
 	}
 }
 
-$collations = $admin->getCollations(array_keys($keep_collations));
+$collations = Admin::get()->getCollations(array_keys($keep_collations));
 
 $engines = engines();
 // case of engine may differ
