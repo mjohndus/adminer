@@ -2,7 +2,7 @@
 
 namespace AdminNeo;
 
-class Admin extends AdminBase
+class Admin extends Origin
 {
 	/** @var ?array operators used in select, null for all operators */
 	private $operators = null;

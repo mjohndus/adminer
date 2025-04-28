@@ -140,7 +140,7 @@ include "adminneo.php";
 
 ### Customizable functions
 
-All customization functions defined in the Admin and AdminBase classes were refactored. They have new names and strict
+All customization functions defined in the Admin and Origin classes were refactored. They have new names and strict
 types of parameters and return values.
 
 - Function `selectQueryBuild()` was removed.

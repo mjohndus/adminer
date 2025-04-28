@@ -2,7 +2,7 @@
 
 namespace AdminNeo;
 
-abstract class AdminBase extends Plugin
+abstract class Origin extends Plugin
 {
 	/** @var array */
 	private $systemDatabases;

@@ -34,15 +34,15 @@ class Pluginer
 	private $hooks = [];
 
 	/**
-	 * @param AdminBase $admin Admin or Editor instance.
+	 * @param Origin $admin Admin or Editor instance.
 	 * @param Plugin[] $plugins List of plugin instances.
 	 */
-	public function __construct(AdminBase $admin, array $plugins)
+	public function __construct(Origin $admin, array $plugins)
 	{
 		$this->plugins = $plugins;
 
 		// Find plugins for all public methods.
-		foreach (get_class_methods(AdminBase::class) as $method) {
+		foreach (get_class_methods(Origin::class) as $method) {
 			$this->hooks[$method] = [];
 
 			if (!(self::InternalMethods[$method] ?? false)) {

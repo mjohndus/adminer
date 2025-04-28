@@ -2,7 +2,7 @@
 
 namespace AdminNeo;
 
-class Admin extends AdminBase
+class Admin extends Origin
 {
 	private $values = [];
 

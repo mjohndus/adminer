@@ -12,14 +12,14 @@ namespace AdminNeo;
  */
 abstract class Plugin
 {
-	/** @var AdminBase|Pluginer */
+	/** @var Origin|Pluginer */
 	protected $admin;
 
 	/** @var Config */
 	protected $config;
 
 	/**
-	 * @param AdminBase|Pluginer $admin
+	 * @param Origin|Pluginer $admin
 	 * @param Config $config
 	 */
 	public function inject($admin, Config $config): void
