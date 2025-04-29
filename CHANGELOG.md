@@ -21,7 +21,9 @@ upgrade your AdminNeo installation.
 - Add new default theme (blue, green and red variants)
 - Add new logo and favicons
 - Remove all alternative designs
-- Add new configuration system that brings new customization possibilities
+- Add the configuration system that brings new customization possibilities
+- Autoload plugins from adminneo-plugins directory and adminneo-plugins.php file
+- Autoload custom Admin class from adminneo-instance.php file
 - Plugins: Remove plugins replaced by new configuration options or integrated to the core code
 - Plugins: Remove plugins using historical abandoned external libraries
 - Plugins: Remove plugins with very small added value or too specific complex functionality
