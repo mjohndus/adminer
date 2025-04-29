@@ -53,6 +53,7 @@ upgrade your AdminNeo installation.
 
 - Fix displaying query delimiters in 'SQL command' page
 - Fix displaying edit actions if editing is not allowed
+- Fix syntax highlighting in table rows loaded by AJAX
 - MS SQL: Fix escaping UTF-8 strings in PDO drivers
 - Security: Disallow writing temporary files to symlinks (by @vrana)
 

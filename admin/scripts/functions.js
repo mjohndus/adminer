@@ -1203,6 +1203,9 @@ function loadNextPage(limit, loadingText) {
 		const newBody = document.createElement('tbody');
 		newBody.innerHTML = request.responseText;
 
+		jush.highlight_tag(qsa("code", newBody), 0);
+		initToggles(newBody);
+
 		const tableBody = qs('#table tbody');
 		for (let row of newBody.children) {
 			tableBody.appendChild(row);
