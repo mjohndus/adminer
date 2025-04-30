@@ -33,7 +33,9 @@ abstract class Origin extends Plugin
 			if (!is_array($config)) {
 				$config = [];
 				$linkParams = "href=https://github.com/adminneo-org/adminneo#configuration " . target_blank();
-				$errors[] = lang('%s must return an array. <a %s>More information.</a>', "<b>adminneo-config.php</b>", $linkParams);
+
+				$errors[] = lang('%s must return an array.', "<b>adminneo-config.php</b>") .
+					" <a $linkParams>" . lang('More information.') . "</a>";
 			}
 		}
 
@@ -42,7 +44,9 @@ abstract class Origin extends Plugin
 			if (!is_array($plugins)) {
 				$plugins = [];
 				$linkParams = "href=https://github.com/adminneo-org/adminneo#plugins " . target_blank();
-				$errors[] = lang('%s must return an array. <a %s>More information.</a>', "<b>adminneo-plugins.php</b>", $linkParams);
+
+				$errors[] = lang('%s must return an array.', "<b>adminneo-plugins.php</b>") .
+					" <a $linkParams>" . lang('More information.') . "</a>";
 			}
 		}
 
