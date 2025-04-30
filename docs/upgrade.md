@@ -195,9 +195,10 @@ types of parameters and return values.
     - `dumpHeaders()` -> `sendDumpHeaders()`
     - `tableName()` -> `getTableName()`
     - `fieldName()` -> `getFieldName()`
-    - `editVal()` -> `formatFieldValue()`
-    - `selectLink()` -> `getFieldValueLink()`
     - `selectVal()` -> `formatSelectionValue()`
+    - `selectLink()` -> `getFieldValueLink()`
+    - `editVal()` -> `formatFieldValue()`
+    - `editFunctions()` -> `getFieldFunctions()`
     - `editInput()` -> `getFieldInput()`
     - `editHint()` -> `getFieldInputHint()`
     - `processInput()` -> `processFieldInput()`

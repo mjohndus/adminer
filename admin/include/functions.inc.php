@@ -1012,7 +1012,7 @@ function input($field, $value, $function) {
 	$attrs = " name='fields[$name]' $disabled";
 
 	// Function list.
-	$functions = (isset($_GET["select"]) || $reset ? ["orig" => lang('original')] : []) + Admin::get()->editFunctions($field);
+	$functions = (isset($_GET["select"]) || $reset ? ["orig" => lang('original')] : []) + Admin::get()->getFieldFunctions($field);
 	$has_function = (in_array($function, $functions) || isset($functions[$function]));
 
 	echo "<td class='function'>";
@@ -1660,7 +1660,7 @@ function edit_form($table, $fields, $row, $update) {
 			echo "<tr>"
 				. "<th><input class='input' name='field_keys[]'>"
 				. script("qsl('input').oninput = fieldChange;")
-				. "<td class='function'>" . html_select("field_funs[]", Admin::get()->editFunctions(["null" => isset($_GET["select"])]))
+				. "<td class='function'>" . html_select("field_funs[]", Admin::get()->getFieldFunctions(["null" => isset($_GET["select"])]))
 				. "<td><input class='input' name='field_vals[]'>"
 				. "\n"
 			;

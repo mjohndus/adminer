@@ -22,7 +22,7 @@ class Pluginer
 	/** @var true[] Map of methods that expect the value to be appended to the result. */
 	private const AppendMethods = [
 		"getErrors" => true,
-		"editFunctions" => true,
+		"getFieldFunctions" => true,
 		"getDumpOutputs" => true,
 		"getDumpFormats" => true
 	];

@@ -432,7 +432,8 @@ ORDER BY ORDINAL_POSITION", null, "") as $row) { //! requires MySQL 5
 		return "100";
 	}
 
-	function editFunctions($field) {
+	public function getFieldFunctions(array $field): array
+	{
 		$return = [];
 		if ($field["null"] && preg_match('~blob~', $field["type"])) {
 			$return["NULL"] = lang('empty');

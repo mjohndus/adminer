@@ -791,11 +791,13 @@ class Admin extends Origin
 		return $_GET["text_length"] ?? "100";
 	}
 
-	/** Functions displayed in edit form
-	* @param array single field from fields()
-	* @return array
-	*/
-	function editFunctions($field) {
+	/**
+	 * Return the list of functions displayed in edit form.
+	 *
+	 * @param array $field Single field returned from fields().
+	 */
+	public function getFieldFunctions(array $field): array
+	{
 		global $edit_functions;
 		$return = ($field["null"] ? "NULL/" : "");
 		$update = isset($_GET["select"]) || where($_GET);
