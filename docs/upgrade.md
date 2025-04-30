@@ -150,6 +150,7 @@ types of parameters and return values.
     - `dumpFilename()`
     - `selectEmailPrint()`
     - `selectEmailProcess()`
+    - `editRowPrint()`
 - Renamed customizable functions:
     - `headers()` -> `sendHeaders()`
     - `credentials()` -> `getCredentials()`

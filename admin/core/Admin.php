@@ -791,16 +791,6 @@ class Admin extends Origin
 		return $_GET["text_length"] ?? "100";
 	}
 
-	/** Print before edit form
-	* @param string
-	* @param array
-	* @param mixed
-	* @param bool
-	* @return null
-	*/
-	function editRowPrint($table, $fields, $row, $update) {
-	}
-
 	/** Functions displayed in edit form
 	* @param array single field from fields()
 	* @return array

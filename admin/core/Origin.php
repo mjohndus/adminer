@@ -509,8 +509,6 @@ abstract class Origin extends Plugin
 
 	public abstract function processSelectionLength(): string;
 
-	public abstract function editRowPrint($table, $fields, $row, $update);
-
 	public abstract function editFunctions($field);
 
 	public abstract function getFieldInput(string $table, array $field, string $attrs, $value, ?string $function): string;

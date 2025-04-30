@@ -432,9 +432,6 @@ ORDER BY ORDINAL_POSITION", null, "") as $row) { //! requires MySQL 5
 		return "100";
 	}
 
-	function editRowPrint($table, $fields, $row, $update) {
-	}
-
 	function editFunctions($field) {
 		$return = [];
 		if ($field["null"] && preg_match('~blob~', $field["type"])) {

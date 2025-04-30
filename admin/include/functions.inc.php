@@ -1594,7 +1594,6 @@ function edit_form($table, $fields, $row, $update) {
 	$title = $update ? lang('Edit') : lang('Insert');
 
 	page_header("$title: $table_name", $error, ["select" => [$table, $table_name], $title]);
-	Admin::get()->editRowPrint($table, $fields, $row, $update);
 	if ($row === false) {
 		echo "<p class='error'>" . lang('No rows.') . "\n";
 		return;
