@@ -118,7 +118,7 @@ if ($lengths || support("descidx")) {
 ?>
 <th id="label-name"><?php echo lang('Name'); ?>
 <th><?php
-	echo "<button name='add[0]' value='1' title='", h(lang('Add next')), "' class='button light noscript'>", icon_solo("add"), "</button>";
+	echo "<button name='add[0]' value='1' title='", h(lang('Add next')), "' class='button light hidden'>", icon_solo("add"), "</button>";
 ?></th>
 </thead>
 <?php
@@ -157,8 +157,8 @@ foreach ($row["indexes"] as $index) {
 
 		echo "<td><input name='indexes[$j][name]' value='", h($index["name"]), "' class='input' autocapitalize='off' aria-labelledby='label-name'></td>\n",
 			"<td>",
-			"<button name='drop_col[$i]' value='1' title='", h(lang('Remove')), "' class='button light'>", icon_solo("remove"), "</button>",
-			script("qsl('button').onclick = partial(editingRemoveRow, 'indexes\$1[type]');"),
+			"<button name='drop_col[$j]' value='1' title='", h(lang('Remove')), "' class='button light'>", icon_solo("remove"), "</button>",
+			script("qsl('button').onclick = onRemoveIndexRowClick;"),
 			"</td>\n";
 	}
 	$j++;

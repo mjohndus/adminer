@@ -527,9 +527,7 @@ function selectAddRow(event) {
  * @return {boolean} Always false.
  */
 function selectRemoveRow() {
-	const row = this.parentNode;
-
-	row.parentNode.removeChild(row);
+	this.parentElement.remove();
 
 	return false;
 }
@@ -850,11 +848,16 @@ function editingKeydown(event) {
 		if (el && (isTag(el, 'tr') || (el = el[sibling])) && isTag(el, 'tr') && (el = el.childNodes[nodePosition(target.parentNode)]) && (el = el.childNodes[nodePosition(target)])) {
 			el.focus();
 		}
+
+		event.preventDefault();
 		return false;
 	}
+
 	if (event.shiftKey && !bodyKeydown(event, 'insert')) {
+		event.preventDefault();
 		return false;
 	}
+
 	return true;
 }
 

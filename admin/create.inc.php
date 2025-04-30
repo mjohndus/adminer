@@ -226,7 +226,9 @@ foreach ($engines as $engine) {
 edit_fields($row["fields"], $collations, "TABLE", $foreign_keys);
 ?>
 </table>
-<?php echo script("editFields();"); ?>
+<?php
+	echo script("initFieldsEditing(gid('edit-fields')); initSortable('#edit-fields tbody');");
+?>
 </div>
 <p>
 <?php echo lang('Auto Increment'); ?>: <input type="number" class="input size" name="Auto_increment" size="6" value="<?php echo h($row["Auto_increment"]); ?>">
