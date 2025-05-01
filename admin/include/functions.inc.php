@@ -849,7 +849,7 @@ function open_file_with_lock($filename)
 		return null;
 	}
 
-	chmod($filename, 0660);
+	@chmod($filename, 0660); // @ - may not be permitted
 
 	if (!flock($file, LOCK_EX)) {
 		fclose($file);
