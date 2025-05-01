@@ -37,6 +37,22 @@ class Server
 		return $this->params["name"] ?? $this->params["server"] ?? "";
 	}
 
+	public function getUsername(): string
+	{
+		return $this->params["username"] ?? "";
+	}
+
+	public function getPassword(): string
+	{
+		return $this->params["password"] ?? "";
+	}
+
+	public function hasCredentials(): bool
+	{
+		return $this->getUsername() != "" || $this->getPassword() != "";
+
+	}
+
 	public function getConfigParams(): array
 	{
 		$params = $this->params["config"] ?? [];

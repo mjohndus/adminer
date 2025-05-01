@@ -200,12 +200,14 @@ function connection_error($result): void
 	auth_error($error);
 }
 
+/** @var Admin $admin */
+$admin->init();
+
 $auth = $_POST["auth"] ?? null;
 if ($auth) {
 	// Defense against session fixation.
 	session_regenerate_id();
 
-	/** @var Admin $admin */
 	$server = $auth["server"] ?? "";
 	$server_obj = $admin->getConfig()->getServer($server);
 
@@ -213,10 +215,15 @@ if ($auth) {
 	$server = $server_obj ? $server : trim($server);
 	$username = $auth["username"] ?? "";
 	$password = $auth["password"] ?? "";
+
+	if ($server_obj && $server_obj->hasCredentials() && $username == "" && $password == "") {
+		$username = $server_obj->getUsername();
+		$password = $server_obj->getPassword();
+	}
+
 	$db = $server_obj ? $server_obj->getDatabase() : ($auth["db"] ?? "");
 
-	set_password($driver, $server, $username, $password);
-	$_SESSION["db"][$driver][$server][$username][$db] = true;
+	save_login($driver, $server, $username, $password, $db);
 
 	if ($auth["permanent"]) {
 		$key = base64_encode($driver) . "-" . base64_encode($server) . "-" . base64_encode($username) . "-" . base64_encode($db);
@@ -248,9 +255,19 @@ if ($auth) {
 	foreach ($permanent as $key => $val) {
 		list(, $cipher) = explode(":", $val);
 		list($driver, $server, $username, $db) = array_map('base64_decode', explode("-", $key));
-		set_password($driver, $server, $username, $private ? decrypt_string(base64_decode($cipher), $private) : false);
-		$_SESSION["db"][$driver][$server][$username][$db] = true;
+		$password = $private ? decrypt_string(base64_decode($cipher), $private) : false;
+
+		save_login($driver, $server, $username, $password, $db);
 	}
+}
+
+/**
+ * @param string|false $password False in case of an encryption error.
+ */
+function save_login(string $driver, string $server, string $username, $password, string $db = ""): void
+{
+	set_password($driver, $server, $username, $password);
+	$_SESSION["db"][$driver][$server][$username][$db] = true;
 }
 
 function unset_permanent() {

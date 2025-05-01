@@ -163,6 +163,7 @@ types of parameters and return values.
     - `login()` -> `authenticate()`
     - `permanentLogin()` -> `getPrivateKey()`
     - `bruteForceKey()` -> `getBruteForceKey()`
+    - `name()` -> `getServiceTitle()`
     - `serverName()` -> `getServerName()`
     - `database()` -> `getDatabase()`
     - `databases()` -> `getDatabases()`

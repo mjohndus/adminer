@@ -27,7 +27,7 @@ class SlugifyEditPlugin
 		<script <?= nonce(); ?>>
 			function initSlugField(input, slugField, maxLenght) {
 				input.oninput = function () {
-					const target = this.form[`fields[\${slugField}]`];
+					const target = this.form[`fields[${slugField}]`];
 
 					if (target.value === '' || target.dataset.slugEnabled) {
 						target.value = webalize(this.value).substring(0, maxLenght);

@@ -8,8 +8,6 @@ class Config
 	public const NavigationDual = "dual";
 	public const NavigationReversed = "reversed";
 
-	public const SelfSource = "self";
-
 	/** @var array */
 	private $params;
 
@@ -43,7 +41,7 @@ class Config
 	 */
 	public function getCssUrls(): array
 	{
-		return $this->params["cssUrls"] ?? [];
+		return $this->parseList($this->params["cssUrls"] ?? []);
 	}
 
 	/**
@@ -51,7 +49,7 @@ class Config
 	 */
 	public function getJsUrls(): array
 	{
-		return $this->params["jsUrls"] ?? [];
+		return $this->parseList($this->params["jsUrls"] ?? []);
 	}
 
 	public function getNavigationMode(): string
@@ -110,17 +108,17 @@ class Config
 
 	public function getHiddenDatabases(): array
 	{
-		return $this->params["hiddenDatabases"] ?? [];
+		return $this->parseList($this->params["hiddenDatabases"] ?? []);
 	}
 
 	public function getHiddenSchemas(): array
 	{
-		return $this->params["hiddenSchemas"] ?? [];
+		return $this->parseList($this->params["hiddenSchemas"] ?? []);
 	}
 
 	public function getVisibleCollations(): array
 	{
-		return $this->params["visibleCollations"] ?? [];
+		return $this->parseList($this->params["visibleCollations"] ?? []);
 	}
 
 	public function getDefaultDriver(array $drivers): string
@@ -201,5 +199,14 @@ class Config
 		}
 
 		$this->params = array_merge($this->params, $server->getConfigParams());
+	}
+
+	private function parseList($list): array
+	{
+		if (is_array($list)) {
+			return $list;
+		}
+
+		return preg_split('~\s*,\s*~', (string)$list);
 	}
 }

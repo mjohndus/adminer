@@ -239,6 +239,8 @@ List of predefined server connections. Each server connection has parameters:
 | `server`   | no       | Server address.                                                                      |
 | `database` | no       | Database name, or file path to SQLite file.                                          |
 | `name`     | no       | Custom server name.                                                                  |
+| `username` | no       | Database user that will be used to log in.                                           |
+| `password` | no       | Database user's password.                                                            |
 | `config`   | no       | Configuration parameters that overrides global config.                               |
 
 For example:
@@ -251,5 +253,10 @@ $config = [
     ],
 ];
 ```
+
+Username and password are used to log in to the database if the login form is submitted with empty credentials. This can
+be used to:
+- simplify the login process on a development environment,
+- provide the credentials for `ExternalLoginPlugin`.
 
 Global parameters that can't be overridden by server connection: `servers`.

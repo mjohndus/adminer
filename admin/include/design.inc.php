@@ -25,7 +25,7 @@ function page_header(string $title, string $error = "", $breadcrumb = []): void
 
 	$title = strip_tags($title);
 	$server_part = $breadcrumb !== false && $breadcrumb !== null && SERVER != "" ? " - " . h($admin->getServerName(SERVER)) : "";
-	$service_title = strip_tags($admin->name());
+	$service_title = strip_tags($admin->getServiceTitle());
 
 	$title_page = $title . $server_part . " - " . ($service_title != "" ? $service_title : "AdminNeo");
 
@@ -282,17 +282,23 @@ function get_nonce()
 	return $nonce;
 }
 
-/** Print flash and error messages
-* @param string
-* @return null
-*/
-function page_messages($error) {
+/**
+ * Prints flash and error messages.
+ */
+function page_messages(string $error): void
+{
 	$uri = preg_replace('~^[^?]*~', '', $_SERVER["REQUEST_URI"]);
+
 	$messages = $_SESSION["messages"][$uri] ?? null;
 	if ($messages) {
-		echo "<div class='message'>" . implode("</div>\n<div class='message'>", $messages) . "</div>" . script("initToggles();");
+		foreach ($messages as $message) {
+			echo "<div class='message'>$message</div>\n";
+			echo script("initToggles(qsl('div'));");
+		}
+
 		unset($_SESSION["messages"][$uri]);
 	}
+
 	if ($error) {
 		echo "<div class='error'>$error</div>\n";
 	}
@@ -310,26 +316,15 @@ function page_footer(?string $missing = null): void
 	echo "</div>\n"; // content
 
 	// Main navigation is printed after the page content, because databases and tables can be changed after the query
-	// execution in 'SQL command' page.
+	// execution in the 'SQL command' page.
 	echo "<button id='navigation-button' class='button light navigation-button'>", icon_solo("menu"), icon_solo("close"), "</button>";
 	echo "<div id='navigation-panel' class='navigation-panel'>\n";
 	$admin->printNavigation($missing);
 
 	echo "<div class='footer'>\n";
 	language_select();
-
-	if ($missing != "auth") {
-		?>
-
-		<div class="logout">
-			<form action="" method="post">
-				<?php echo h($_GET["username"]); ?>
-				<input type="submit" class="button" name="logout" value="<?php echo lang('Logout'); ?>" id="logout">
-				<input type="hidden" name="token" value="<?php echo $token; ?>">
-			</form>
-		</div>
-
-		<?php
+    if ($missing != "auth") {
+		$admin->printLogout();
 	}
 	echo "</div>\n"; // footer
 	echo "</div>\n"; // navigation-panel

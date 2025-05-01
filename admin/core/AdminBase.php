@@ -37,7 +37,15 @@ abstract class AdminBase
 		$this->systemSchemas = $schemas;
 	}
 
-	public abstract function name();
+	/**
+	 * Initializes the Admin. This method is called right before the authentication process.
+	 */
+	public function init(): void
+	{
+		//
+	}
+
+	public abstract function getServiceTitle(): string;
 
 	/**
 	 * Returns connection parameters.
@@ -294,6 +302,22 @@ abstract class AdminBase
 	}
 
 	/**
+	 * Prints username and logout button.
+	 */
+	public function printLogout(): void
+	{
+		global $token;
+
+		echo "<div class='logout'>";
+		echo "<form action='' method='post'>\n";
+		echo h($_GET["username"]);
+		echo "<input type='submit' class='button' name='logout' value='", lang('Logout'), "' id='logout'>";
+		echo "<input type='hidden' name='token' value='$token'>\n";
+		echo "</form>";
+		echo "</div>\n";
+	}
+
+	/**
 	 * Returns table name used in navigation and headings.
 	 *
 	 * @param array $tableStatus The result of SHOW TABLE STATUS.
@@ -507,7 +531,7 @@ abstract class AdminBase
 ?>
 
 <div class="header">
-	<?= $this->name(); ?>
+	<?= $this->getServiceTitle(); ?>
 
 	<?php if ($missing != "auth"): ?>
 		<span class="version">

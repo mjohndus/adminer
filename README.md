@@ -18,16 +18,16 @@ Requirements
 
 - PHP 7.1+ with enabled sessions, modern web browser.
 
-It is also recommend to install [OpenSSL PHP extension](https://www.php.net/manual/en/book.openssl.php) for improved
+It is also recommended to install [OpenSSL PHP extension](https://www.php.net/manual/en/book.openssl.php) for improved
 security of stored login information.
 
 Security
 --------
 
-AdminNeo does not allow connecting to databases without a password, and it rate-limits connection attempts to protect
+AdminNeo does not allow connecting to databases without a password, and it also rate-limits connection attempts to protect
 against brute force attacks. However, it is highly recommended to **restrict access to AdminNeo** 🔒 by whitelisting IP
-addresses allowed to connect to it, by password protecting access in your web server, or by enabling security plugins
-(e.g. to require an OTP).
+addresses allowed to connect to it, by password protecting access in your web server or by enabling security plugins
+(e.g., to require an OTP).
 
 Migration from older versions
 -----------------------------
@@ -37,11 +37,17 @@ backward compatibility.
 
 A complete list of changes can be found in the [Upgrade Guide](/docs/upgrade.md).
 
+Docker
+------
+
+The official Docker image is available at [Docker Hub](https://hub.docker.com/r/peterknut/adminneo). Please follow the
+instructions on the Docker page to get started.
+
 Usage
 -----
 
-Download one for the latest [release files](https://github.com/adminneo-org/adminneo/releases), upload to the HTTP server 
-with PHP and enjoy 😉 If you are not satisfied with any combination of the database driver, language and theme, you can 
+Download one of the latest [release files](https://github.com/adminneo-org/adminneo/releases), upload to the HTTP server 
+with PHP and enjoy 😉. If you are not satisfied with any combination of the database driver, language and theme, you can 
 download the source code and compile your own AdminNeo:
 
 - Download the source code.
@@ -70,7 +76,7 @@ Where:
 If the theme name contains a postfix with one of the supported color variants (-green, -red), the corresponding favicons
 will be included automatically.
 
-For examples:
+For example:
 ```shell
 # Default set of drivers, all languages, only default-blue theme.
 php bin/compile.php
@@ -136,7 +142,7 @@ include "adminneo.php";
 ### Configuration parameters
 
 All parameters available in AdminNeo are listed in the following table. Parameters available in EditorNeo are labeled in
-Editor column.
+the Editor column.
 
 For detailed information see [Configuration documentation](/docs/configuration.md).
 
@@ -226,15 +232,16 @@ include "adminneo.php";
 
 [Available plugins](plugins).
 
-Custom CSS and Javascript
+Custom CSS and JavaScript
 -------------------------
 
-It is possible to modify the appearance and functionality by creating a custom CSS or Javasrtipt file. AdminNeo will
-automatically include files **adminneo.css**, **adminneo-light.css**, **adminneo-dark.css** and **adminneo.js** that are
+It is possible to modify the appearance and functionality by creating a custom CSS or JavaScript file. AdminNeo will
+automatically include files `adminneo.css`, `adminneo-light.css`, `adminneo-dark.css` and `adminneo.js` that are
 placed in the AdminNeo's current working directory (typically next to the index.php).
 
-Custom adminneo.css should be compatible with automatic switching to dark mode. File adminneo-light.css will force 
-AdminNeo to use only light mode, file adminneo-dark.css will force dark mode.
+- adminneo.css - Should be compatible with automatic switching to dark mode.
+- adminneo-light.css - Will force AdminNeo to use only the light mode.
+- adminneo-dark.css - Will force the dark mode.
 
 Main project files
 ------------------
@@ -253,7 +260,7 @@ What to expect
 --------------
 
 Our top priority is fixing the security issues and reported bugs. But we also want to move forward and transform
-AdminNeo to a tool with clean modern UI and simple configuration.
+AdminNeo to a tool with a clean modern UI and simple configuration.
 
 ### Version 4.x
 

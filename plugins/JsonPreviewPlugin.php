@@ -28,6 +28,9 @@ class JsonPreviewPlugin
 	/** @var int */
 	private $maxTextLength;
 
+	/** @var string */
+	private $linkIdBase;
+
 	/** @var int */
 	private $counter = 1;
 
@@ -43,6 +46,8 @@ class JsonPreviewPlugin
 		$this->inEdit = $inEdit;
 		$this->maxLevel = $maxLevel;
 		$this->maxTextLength = $maxTextLength;
+
+		$this->linkIdBase = (string)microtime(true);
 	}
 
 	/**
@@ -55,7 +60,6 @@ class JsonPreviewPlugin
 		<style>
 			/* Table */
 			.json {
-				/*display: none;*/
 				width: auto;
 				margin: 4px 0;
 				border-color: var(--code-border);
@@ -89,7 +93,7 @@ class JsonPreviewPlugin
 				margin: 0;
 			}
 
-			.json:not(.hidden) + textarea {
+			.json + textarea {
 				margin-top: 3px;
 			}
 		</style>
@@ -109,7 +113,7 @@ class JsonPreviewPlugin
 			return null;
 		}
 
-		return "<a class='toggle jsonly' href='#json-code-$this->counter' title='JSON' data-value='" . h($val) . "'>" . icon_chevron_right() . "</a>" .
+		return "<a class='toggle jsonly' href='#json-code-$this->linkIdBase-$this->counter' title='JSON' data-value='" . h($val) . "'>" . icon_chevron_right() . "</a>" .
 			" <code class='jush-js'>$val</code>" .
 			$this->buildTable($json, 1, $this->counter++);
 
@@ -126,7 +130,7 @@ class JsonPreviewPlugin
 			return null;
 		}
 
-		return "<div class='jsonly'><a class='toggle' href='#json-code-$this->counter'>JSON" . icon_chevron_down() . "</a></div>" .
+		return "<div class='jsonly'><a class='toggle' href='#json-code-$this->linkIdBase-$this->counter'>JSON" . icon_chevron_down() . "</a></div>" .
 			$this->buildTable($json, 1, $this->counter++) .
 			"<textarea $attrs cols='50' rows='12' class='jush-js'>" . h($value) . "</textarea>";
 
@@ -152,9 +156,9 @@ class JsonPreviewPlugin
 
 	}
 
-	private function buildTable(array $json, int $level = 1, int $id = 0): string
+	private function buildTable(array $json, int $level = 1, int $counter = 0): string
 	{
-		$value = "<table class='json hidden'" . ($id && $level == 1 ? " id='json-code-$id'" : "") . ">";
+		$value = "<table class='json hidden'" . ($counter && $level == 1 ? " id='json-code-$this->linkIdBase-$counter'" : "") . ">";
 
 		foreach ($json as $key => $val) {
 			$value .= "<tr><th><code>" . h($key) . "</code>";

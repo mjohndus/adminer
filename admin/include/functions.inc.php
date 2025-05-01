@@ -1275,24 +1275,17 @@ function apply_sql_function($function, $column) {
 	return ($function ? ($function == "unixepoch" ? "DATETIME($column, '$function')" : ($function == "count distinct" ? "COUNT(DISTINCT " : strtoupper("$function(")) . "$column)") : $column);
 }
 
-/** Get path of the temporary directory
-* @return string
-*/
-function get_temp_dir() {
-	$return = ini_get("upload_tmp_dir"); // session_save_path() may contain other storage path
-	if (!$return) {
-		if (function_exists('sys_get_temp_dir')) {
-			$return = sys_get_temp_dir();
-		} else {
-			$filename = @tempnam("", ""); // @ - temp directory can be disabled by open_basedir
-			if (!$filename) {
-				return false;
-			}
-			$return = dirname($filename);
-			unlink($filename);
-		}
+/**
+ * Returns a path of the temporary directory.
+ */
+function get_temp_dir(): string
+{
+	$path = ini_get("upload_tmp_dir"); // session_save_path() may contain other storage path
+	if (!$path) {
+		$path = sys_get_temp_dir();
 	}
-	return $return;
+
+	return $path;
 }
 
 /**

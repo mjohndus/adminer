@@ -26,7 +26,8 @@ class Admin extends AdminBase
 		return null;
 	}
 
-	function name() {
+	public function getServiceTitle(): string
+	{
 		return "<a href='" . h(HOME_URL) . "'><svg role='img' class='logo' width='130' height='28'><desc>EditorNeo</desc><use href='" . link_files("logo.svg", ["images/logo.svg"]) . "#logo'/></svg></a>";
 	}
 
@@ -197,7 +198,7 @@ ORDER BY ORDINAL_POSITION", null, "") as $row) { //! requires MySQL 5
 			if (preg_match("~^(GIF|\xFF\xD8\xFF|\x89PNG\x0D\x0A\x1A\x0A)~", $original)) { // GIF|JPG|PNG, getimagetype() works with filename
 				$text = "<img src='$link' alt='$text'>";
 			}
-		} elseif ($this->looksLikeBool($field) && $text != "") { // bool
+		} elseif ($this->looksLikeBool($field)) { // bool
 			$text = (preg_match('~^(1|t|true|y|yes|on)$~i', $val) ? lang('yes') : lang('no'));
 		} else {
 			$text = $val;

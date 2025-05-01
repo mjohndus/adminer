@@ -461,6 +461,26 @@ function initFieldset(id) {
 }
 
 /**
+ * Installs toggle handler.
+ *
+ * @param {HTMLElement} parent
+ */
+function initToggles(parent) {
+	const links = qsa('.toggle', parent);
+
+	for (let i = 0; i < links.length; i++) {
+		links[i].addEventListener("click", (event) => {
+			const id = links[i].getAttribute('href').substring(1);
+
+			gid(id).classList.toggle("hidden");
+			links[i].classList.toggle("opened");
+
+			event.preventDefault();
+		});
+	}
+}
+
+/**
  * Adds row in select fieldset.
  *
  * @param {Event} event
@@ -1159,33 +1179,47 @@ function selectClick(event, text, warning) {
 
 
 
-/** Load and display next page in select
-* @param number
-* @param string
-* @return boolean false for success
-* @this HTMLLinkElement
-*/
-function selectLoadMore(limit, loading) {
-	var a = this;
-	var title = a.innerHTML;
-	var href = a.href;
-	a.innerHTML = loading;
-	if (href) {
-		a.removeAttribute('href');
-		return !ajax(href, function (request) {
-			var tbody = document.createElement('tbody');
-			tbody.innerHTML = request.responseText;
-			gid('table').appendChild(tbody);
-			if (tbody.children.length < limit) {
-				a.parentNode.removeChild(a);
-			} else {
-				a.href = href.replace(/\d+$/, function (page) {
-					return +page + 1;
-				});
-				a.innerHTML = title;
-			}
-		});
+/**
+ * Loads and displays the next page in the select table.
+ *
+ * @param {number} limit
+ * @param {string} loadingText
+ * @this {HTMLLinkElement}
+ *
+ * @return {boolean} false for success to stop the click event.
+ */
+function loadNextPage(limit, loadingText) {
+	const a = this;
+	const title = a.innerHTML;
+	const href = a.href;
+	if (!href) {
+		return true;
 	}
+
+	a.innerHTML = loadingText;
+	a.removeAttribute('href');
+
+	return !ajax(href, function (request) {
+		const newBody = document.createElement('tbody');
+		newBody.innerHTML = request.responseText;
+
+		jush.highlight_tag(qsa("code", newBody), 0);
+		initToggles(newBody);
+
+		const tableBody = qs('#table tbody');
+		for (let row of newBody.children) {
+			tableBody.appendChild(row);
+		}
+
+		if (newBody.children.length < limit) {
+			a.parentElement.remove();
+		} else {
+			a.href = href.replace(/\d+$/, function (page) {
+				return +page + 1;
+			});
+			a.innerHTML = title;
+		}
+	});
 }
 
 

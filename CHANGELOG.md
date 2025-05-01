@@ -17,6 +17,7 @@ upgrade your AdminNeo installation.
 - Rename public customizable functions in Admin class
 - Rename cookies and storage parameters to have neo_ prefix
 - Rename local temporary files
+- Add init() and printLogout() customizable functions
 - Add new default theme (blue, green and red variants)
 - Add new logo and favicons
 - Remove all alternative designs
@@ -25,6 +26,7 @@ upgrade your AdminNeo installation.
 - Plugins: Remove plugins using historical abandoned external libraries
 - Plugins: Remove plugins with very small added value or too specific complex functionality
 - Plugins: Rename and enhance remaining plugins
+- Plugins: Add ExternalLoginPlugin
 - Compiler: Rename compiled filename to adminneo.php / editorneo.php
 - Compiler: Allow to compile selected themes together with favicon color variants
 - Compiler: Add ability to compile custom configuration directly into the single file
@@ -51,6 +53,7 @@ upgrade your AdminNeo installation.
 
 - Fix displaying query delimiters in 'SQL command' page
 - Fix displaying edit actions if editing is not allowed
+- Fix syntax highlighting in table rows loaded by AJAX
 - MS SQL: Fix escaping UTF-8 strings in PDO drivers
 - Security: Disallow writing temporary files to symlinks (by @vrana)
 

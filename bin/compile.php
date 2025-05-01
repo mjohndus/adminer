@@ -458,9 +458,6 @@ foreach (glob(__DIR__ . "/../admin/drivers/*.inc.php") as $filename) {
 }
 */
 
-include __DIR__ . "/../admin/include/pdo.inc.php";
-include __DIR__ . "/../admin/include/driver.inc.php";
-
 $features = ["check", "call" => "routine", "dump", "event", "privileges", "procedure" => "routine", "processlist", "routine", "scheme", "sequence", "status", "trigger", "type", "user" => "privileges", "variables", "view"];
 $lang_ids = []; // global variable simplifies usage in a callback functions
 
@@ -472,6 +469,9 @@ $file = file_get_contents(__DIR__ . "/../$project/index.php");
 
 // Remove including source code for unsupported features in single-driver file.
 if ($single_driver) {
+	include __DIR__ . "/../admin/include/pdo.inc.php";
+	include __DIR__ . "/../admin/include/driver.inc.php";
+
 	$_GET[$single_driver] = true; // to load the driver
 	include __DIR__ . "/../admin/drivers/$single_driver.inc.php";
 

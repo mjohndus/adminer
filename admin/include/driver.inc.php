@@ -15,6 +15,17 @@ function add_driver(string $id, string $name): void
 }
 
 /**
+ * Returns the list of available drivers.
+ *
+ * @return string[]
+ */
+function get_drivers(): array
+{
+	global $drivers;
+	return $drivers;
+}
+
+/**
  * Returns driver name.
  */
 function get_driver_name(string $id): ?string

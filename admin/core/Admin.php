@@ -33,10 +33,11 @@ class Admin extends AdminBase
 		return $this->regexpOperator;
 	}
 
-	/** Name in title and navigation
-	* @return string HTML code
-	*/
-	function name() {
+	/**
+	 * Returns HTML code for the service title.
+	 */
+	public function getServiceTitle(): string
+	{
 		return "<a href='" . h(HOME_URL) . "'><svg role='img' class='logo' width='133' height='28'><desc>AdminNeo</desc><use href='" . link_files("logo.svg", ["images/logo.svg"]) . "#logo'/></svg></a>";
 	}
 
@@ -79,6 +80,7 @@ class Admin extends AdminBase
 			"../vendor/vrana/jush/modules/jush-sql.js",
 			"../vendor/vrana/jush/modules/jush-pgsql.js",
 			"../vendor/vrana/jush/modules/jush-mssql.js",
+			"../vendor/vrana/jush/modules/jush-sqlite.js",
 			"../vendor/vrana/jush/modules/jush-oracle.js",
 			"../vendor/vrana/jush/modules/jush-simpledb.js",
 			"../vendor/vrana/jush/modules/jush-js.js",
@@ -1232,6 +1234,7 @@ class Admin extends AdminBase
 		echo "<div class='db-selector'><form action=''>";
 		hidden_fields_get();
 
+		echo "<div>";
 		if ($databases) {
 			echo "<select id='database-select' name='db'>" . optionlist(["" => lang('Database')] + $databases, DB) . "</select>"
 				. script("mixin(gid('database-select'), {onmousedown: dbMouseDown, onchange: dbChange});");
@@ -1239,10 +1242,13 @@ class Admin extends AdminBase
 			echo "<input id='database-select' class='input' name='db' value='" . h(DB) . "' autocapitalize='off'>\n";
 		}
 		echo "<input type='submit' value='" . lang('Use') . "' class='button " . ($databases ? "hidden" : "") . "'>\n";
+		echo "</div>";
 
 		if (support("scheme") && $missing != "db" && DB != "" && $connection->select_db(DB)) {
-			echo "<br><select id='scheme-select' name='ns'>" . optionlist(["" => lang('Schema')] + $admin->getSchemas(), $_GET["ns"]) . "</select>"
+			echo "<div>";
+			echo "<select id='scheme-select' name='ns'>" . optionlist(["" => lang('Schema')] + $admin->getSchemas(), $_GET["ns"]) . "</select>"
 				. script("mixin(gid('scheme-select'), {onmousedown: dbMouseDown, onchange: dbChange});");
+			echo "</div>";
 
 			if ($_GET["ns"] != "") {
 				set_schema($_GET["ns"]);
