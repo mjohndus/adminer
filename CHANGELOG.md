@@ -19,6 +19,7 @@ AdminNeo 5.4.0
 - PostgreSQL: Support partial indices (by @salacr)
 - MS SQL: Limit one INSERT in export to 1000 rows (by @vrana)
 - non-MySQL: Parse '--' without trailing space as comment in SQL command (by @vrana)
+- Editor: Fix bit search (by @vrana)
 - Update Dutch translations (by @wintstar)
 - Update Polish translations (by @Matthaiks)
 - Elasticsearch, ClickHouse: Validate response origin

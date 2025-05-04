@@ -216,12 +216,13 @@ class Admin extends Origin
 			if (preg_match("~enum~", $field["type"]) || $this->looksLikeBool($field)) { //! set - uses 1 << $i and FIND_IN_SET()
 				$key = $keys[$name];
 				$i--;
-				echo "<div>" . h($desc) . input_hidden("where[$i][col]", $name) . ":";
+				echo "<div>" . h($desc) . ":" . input_hidden("where[$i][col]", $name);
 
+				$val = $where[$key]["val"] ?? null;
 				if ($this->looksLikeBool($field)) {
-					echo " <select name='where[$i][val]'>" . optionlist(["" => "", lang('no'), lang('yes')], $where[$key]["val"] ?? null, true) . "</select>";
+					echo " <select name='where[$i][val]'>" . optionlist(["" => "", lang('no'), lang('yes')], $val, true) . "</select>";
 				} else {
-					echo " ", enum_input("name='where[$i][val][]'", $field, (array)($where[$key]["val"] ?? []), ($field["null"] ? 0 : null), true);
+					echo " ", enum_input("name='where[$i][val][]'", $field, (array)$val, ($field["null"] ? 0 : null), true);
 				}
 
 				echo "</div>\n";
@@ -334,7 +335,7 @@ class Admin extends Origin
 							$conds[] = Driver::get()->convertSearch($name, $where, $field) . ($value == "NULL" ? " IS" . ($op == ">=" ? " NOT" : "") . " $value"
 								: (in_array($op, $this->admin->getOperators()) || $op == "=" ? " $op $value"
 								: ($text_type ? " LIKE $value"
-								: " IN (" . str_replace(",", "', '", $value) . ")"
+								: " IN (" . ($value[0] == "'" ? str_replace(",", "', '", $value) : $value) . ")"
 							)));
 
 							if ($key < 0 && $val == "0") {
@@ -475,7 +476,7 @@ class Admin extends Origin
 			$return = ($match["p1"] != "" ? $match["p1"] : ($match["p2"] != "" ? ($match["p2"] < 70 ? 20 : 19) . $match["p2"] : gmdate("Y"))) . "-$match[p3]$match[p4]-$match[p5]$match[p6]" . end($match);
 		}
 
-		$return = ($field["type"] == "bit" && preg_match('~^[0-9]+$~', $value) ? $return : q($return));
+		$return = q($return);
 
 		if ($value == "" && $this->looksLikeBool($field)) {
 			$return = "'0'";
