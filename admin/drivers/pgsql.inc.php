@@ -374,7 +374,8 @@ if (isset($_GET["pgsql"])) {
 			$this->operators = [
 				"=", "<", ">", "<=", ">=", "!=",
 				"~", "~*", "!~", "!~*",
-				"LIKE", "LIKE %%", "ILIKE", "ILIKE %%", "NOT LIKE",
+				"LIKE", "LIKE %%", "NOT LIKE",
+				"ILIKE", "ILIKE %%", "NOT ILIKE",
 				"IN", "NOT IN",
 				"IS NULL", "IS NOT NULL",
 			];
