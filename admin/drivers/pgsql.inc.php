@@ -220,7 +220,7 @@ if (isset($_GET["pgsql"])) {
 					return false;
 				}
 
-				$type = pg_field_type($this->resource, $column);  //! map to MySQL numbers
+				$type = pg_field_type($this->resource, $column);
 				if ($type === false) {
 					return false;
 				}
@@ -228,7 +228,7 @@ if (isset($_GET["pgsql"])) {
 				return (object) [
 					'orgtable' => $orgtable,
 					'name' => $name,
-					'type' => $type,
+					'type' => (preg_match(number_type(), $type) ? 0 : 15),
 					'charsetnr' => ($type == "bytea" ? 63 : 0), // 63 - binary
 				];
 			}
