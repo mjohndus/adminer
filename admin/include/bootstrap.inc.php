@@ -105,16 +105,16 @@ if (function_exists('\adminneo_instance')) {
 	$admin = include_once "adminneo-instance.php";
 }
 
+if (!$admin) {
+	Admin::create([], [], $errors);
+}
+
 if (!$admin instanceof Admin && !$admin instanceof Pluginer) {
 	$admin = null;
 	$linkParams = "href=https://github.com/adminneo-org/adminneo#advanced-customizations " . target_blank();
 
 	$errors[] = lang('%s and %s must return an object created by %s method.', "<b>adminneo-instance.php</b>", "<b>adminneo_instance()</b>", "Admin::create()") .
 		" <a $linkParams>" . lang('More information.') . "</a>";
-}
-
-if (!$admin) {
-	Admin::create([], [], $errors);
 }
 
 if (defined("AdminNeo\DRIVER")) {
