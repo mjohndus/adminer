@@ -1,5 +1,4 @@
 <?php
-// This file is not used in Editor.
 
 namespace AdminNeo;
 
