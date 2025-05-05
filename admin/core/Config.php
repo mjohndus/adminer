@@ -19,8 +19,8 @@ class Config
 		$this->params = $params; // !compile: custom config
 
 		if (isset($this->params["servers"])) {
-			foreach ($this->params["servers"] as $server) {
-				$serverObj = new Server($server);
+			foreach ($this->params["servers"] as $key => $server) {
+				$serverObj = new Server($server, is_string($key) ? $key : null);
 				$this->servers[$serverObj->getKey()] = $serverObj;
 			}
 		}

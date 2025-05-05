@@ -33,7 +33,8 @@ function adminneo_instance()
 	];
 
 	$servers = [
-		["driver" => "mysql", "name" => "Devel DB"],
+		"server1" => ["driver" => "mysql", "name" => "Devel"],
+		"server2" => ["driver" => "mysql", "name" => "Test", "database" => "adminneo_test"],
 		["driver" => "pgsql", "server" => "localhost:5432", "database" => "postgres", "config" => ["colorVariant" => null]],
 		["driver" => "sqlite", "database" => "/projects/my-service/test.db"],
 	];
