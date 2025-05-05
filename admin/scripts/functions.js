@@ -836,20 +836,43 @@ function bodyClick(event) {
 
 
 
-/** Change focus by Ctrl+Up or Ctrl+Down
-* @param KeyboardEvent
-* @return boolean
-*/
-function editingKeydown(event) {
+/**
+ * Changes the focus by Ctrl+Up or Ctrl+Down in a table.
+ *
+ * @param {KeyboardEvent} event
+ *
+ * @return {boolean}
+ */
+function onEditingKeydown(event)
+{
 	if ((event.keyCode === 40 || event.keyCode === 38) && isCtrl(event)) { // 40 - Down, 38 - Up
-		var target = event.target;
-		var sibling = (event.keyCode === 40 ? 'nextSibling' : 'previousSibling');
-		var el = target.parentNode.parentNode[sibling];
-		if (el && (isTag(el, 'tr') || (el = el[sibling])) && isTag(el, 'tr') && (el = el.childNodes[nodePosition(target.parentNode)]) && (el = el.childNodes[nodePosition(target)])) {
-			el.focus();
+		event.preventDefault();
+
+		const target = event.target;
+		let row = parentTag(target, "tr");
+		if (!row) {
+			return false;
 		}
 
-		event.preventDefault();
+		row = event.keyCode === 40 ? row.nextElementSibling : row.previousElementSibling;
+		if (!row || !isTag(row, 'tr')) {
+			return false;
+		}
+
+		const cell = row.childNodes[nodePosition(parentTag(target, "th|td"))];
+		if (!cell) {
+			return false;
+		}
+
+		let input = cell.childNodes[nodePosition(target)];
+		if (!input || !isTag(input, "input|select|textarea|pre|button") || input.classList.contains("hidden")) {
+			input = qs("input:not(.hidden), select:not(.hidden), textarea:not(.hidden), pre.jush, button", cell);
+		}
+
+		if (input) {
+			input.focus();
+		}
+
 		return false;
 	}
 

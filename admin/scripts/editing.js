@@ -198,7 +198,7 @@ function selectFieldChange() {
 	window.initFieldsEditing = function(table) {
 		const tableBody = qs("tbody", table);
 
-		tableBody.addEventListener("keydown", editingKeydown);
+		tableBody.addEventListener("keydown", onEditingKeydown);
 
 		const rows = qsa("tr", tableBody);
 		for (let row of rows) {

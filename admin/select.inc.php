@@ -338,7 +338,7 @@ if (!$columns && support("table")) {
 			echo "<div class='scrollable'>\n";
 			echo "<table id='table' class='nowrap checkable'>\n";
 
-			echo script("mixin(gid('table'), {onclick: partialArg(tableClick, false, " . (Admin::get()->isDataEditAllowed() ? "true" : "false") . "), ondblclick: partialArg(tableClick, true), onkeydown: editingKeydown});");
+			echo script("mixin(gid('table'), {onclick: partialArg(tableClick, false, " . (Admin::get()->isDataEditAllowed() ? "true" : "false") . "), ondblclick: partialArg(tableClick, true), onkeydown: onEditingKeydown});");
 			echo "<thead><tr>";
 
 			if ($group || !$select) {
