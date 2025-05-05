@@ -291,7 +291,7 @@ function page_messages(string $error): void
 	if ($messages) {
 		foreach ($messages as $message) {
 			echo "<div class='message'>$message</div>\n";
-			echo script("initToggles(qsl('div'));");
+			echo script("initToggles(qsl('.message'));");
 		}
 
 		unset($_SESSION["messages"][$uri]);
