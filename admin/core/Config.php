@@ -173,12 +173,33 @@ class Config
 	 */
 	public function getServerPairs(array $drivers): array
 	{
+		$singleDriver = null;
+
+		foreach ($this->servers as $server) {
+			if (!isset($drivers[$server->getDriver()])) {
+				continue;
+			}
+
+			if (!$singleDriver) {
+				$singleDriver = $server->getDriver();
+			} elseif ($server->getDriver() != $singleDriver) {
+				$singleDriver = null;
+				break;
+			}
+		}
+
 		$serverPairs = [];
 
 		foreach ($this->servers as $key => $server) {
-			if (isset($drivers[$server->getDriver()])) {
-				$serverName = $server->getName();
+			if (!isset($drivers[$server->getDriver()])) {
+				continue;
+			}
 
+			$serverName = $server->getName();
+
+			if ($singleDriver && $serverName) {
+				$serverPairs[$key] = $serverName;
+			} else {
 				$serverPairs[$key] = $drivers[$server->getDriver()] . ($serverName != "" ? " - $serverName" : "");
 			}
 		}
