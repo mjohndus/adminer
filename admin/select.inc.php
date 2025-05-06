@@ -316,7 +316,8 @@ if (!$columns && support("table")) {
 		if ($jush == "mssql" && $page) {
 			$result->seek($limit * $page);
 		}
-		echo "<form class='table-footer-parent' action='' method='post' enctype='multipart/form-data'>\n";
+		echo "<form action='' method='post' enctype='multipart/form-data'>\n";
+		echo "<div class='table-footer-parent'>\n";
 		$rows = [];
 		while ($row = $result->fetch_assoc()) {
 			if ($page && $jush == "oracle") {
@@ -502,7 +503,7 @@ if (!$columns && support("table")) {
 
 			echo "</table>\n";
 			echo script("initToggles(gid('table'));");
-			echo "</div>\n";
+			echo "</div>\n"; // scrollable
 		}
 
 		if (!is_ajax()) {
@@ -630,8 +631,11 @@ if (!$columns && support("table")) {
 					print_fieldset_end("export");
 				}
 
-			    echo "</div></div>\n";
+			    echo "</div></div>\n"; // table-footer
+				echo script("initTableFooter()");
 			}
+
+			echo "</div>\n"; // table-footer-parent
 
 			if (Admin::get()->isDataEditAllowed()) {
 				echo "<p>";
@@ -648,6 +652,8 @@ if (!$columns && support("table")) {
 			echo "<input type='hidden' name='token' value='$token'>\n";
 			echo "</form>\n";
 			echo (!$group && $select ? "" : script("tableCheck();"));
+		} else {
+			echo "</div>\n"; // table-footer-parent
 		}
 	}
 }

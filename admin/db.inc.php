@@ -91,7 +91,9 @@ if ($_GET["ns"] === "") {
 	if (!$tables_list) {
 		echo "<p class='message'>" . lang('No tables.') . "\n";
 	} else {
-		echo "<form class='table-footer-parent' action='' method='post'>\n";
+		echo "<form action='' method='post'>\n";
+		echo "<div class='table-footer-parent'>\n";
+
 		if (support("table")) {
 			echo "<div class='field-sets'>\n";
 			echo "<fieldset><legend>" . lang('Search data in tables') . " <span id='selected2'></span></legend><div class='fieldset-content'>";
@@ -181,7 +183,7 @@ if ($_GET["ns"] === "") {
 		echo "</tr></tfoot>\n";
 
 		echo "</table>\n";
-		echo "</div>\n";
+		echo "</div>\n"; // scrollable
 
 		if (Admin::get()->isDataEditAllowed()) {
 			echo "<div class='table-footer'><div class='field-sets'>\n";
@@ -211,7 +213,11 @@ if ($_GET["ns"] === "") {
 			echo "<input type='hidden' name='token' value='$token'>\n";
 			echo "</div></fieldset>\n";
 			echo "</div></div>\n";
+
+			echo script("initTableFooter()");
 		}
+
+		echo "</div>\n"; // table-footer-parent
 		echo "</form>\n";
 		echo script("tableCheck();");
 	}

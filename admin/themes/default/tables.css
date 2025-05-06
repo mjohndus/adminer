@@ -166,22 +166,29 @@ tr .actions .icon {
 
 /* Required to achieve full with of sticky table footer. */
 .table-footer-parent {
+	min-width: 100%;
 	width: fit-content;
+}
+
+.table-footer-parent + p {
+	margin-top: 10px;
 }
 
 .table-footer {
 	position: sticky;
 	bottom: 0;
 	margin-top: 15px;
-	border-top: 15px solid rgba(255, 255, 255, .7);
-	border-image: linear-gradient(transparent, var(--body-bg)) 100% 0;
+	padding: 10px 0 15px;
+	background: var(--body-bg);
+}
+
+.table-footer.sticky {
+	border-top: 1px solid var(--panel-border);
 }
 
 .table-footer .field-sets {
-	padding-bottom: 10px;
-	padding-inline-start: 20px;
-	margin: 0;
-	background: var(--body-bg);
+	margin-top: 0;
+	margin-bottom: 0;
 }
 
 .table-footer fieldset {
