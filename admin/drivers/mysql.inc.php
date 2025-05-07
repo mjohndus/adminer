@@ -68,6 +68,11 @@ if (isset($_GET["mysql"])) {
 			function quote($string) {
 				return "'" . $this->escape_string($string) . "'";
 			}
+
+			public function next_result()
+			{
+				return parent::more_results() && parent::next_result();
+			}
 		}
 
 	} elseif (extension_loaded("pdo_mysql")) {
