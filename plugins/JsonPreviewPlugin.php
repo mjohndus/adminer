@@ -142,7 +142,7 @@ class JsonPreviewPlugin extends Plugin
 			preg_match('~json~', $field["type"]) ||
 			(
 				$this->config->isJsonValuesDetection() &&
-				preg_match('~varchar|text|character varying|String~', $field["type"]) &&
+				preg_match('~varchar|text|character varying|String|keyword~', $field["type"]) &&
 				is_string($value) &&
 				in_array(substr($value, 0, 1), ['{', '['])
 			)
