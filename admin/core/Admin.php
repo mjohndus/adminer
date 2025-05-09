@@ -392,11 +392,6 @@ class Admin extends Origin
 	 */
 	public function formatFieldValue($value, array $field): ?string
 	{
-		// Format Elasticsearch boolean value, but do not touch PostgreSQL boolean that use string value 't' or 'f'.
-		if ($field && $field["type"] == "boolean" && is_bool($value)) {
-			return $value ? "true" : "false";
-		}
-
 		return $value;
 	}
 
@@ -850,6 +845,8 @@ class Admin extends Origin
 	 */
 	public function processFieldInput(?array $field, string $value, string $function = ""): string
 	{
+		global $jush;
+
 		if ($function == "SQL") {
 			return $value; //! SQL injection
 		}
@@ -873,6 +870,8 @@ class Admin extends Origin
 			$return = "$function(" . idf_escape($name) . ", $return)";
 		} elseif (preg_match('~^(md5|sha1|password|encrypt)$~', $function)) {
 			$return = "$function($return)";
+		} elseif ($field["type"] == "boolean" && $jush == "elastic") {
+			$return = $return == "0" ? "false" : "true";
 		}
 
 		return unconvert_field($field, $return);
