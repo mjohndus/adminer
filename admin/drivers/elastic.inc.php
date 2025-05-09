@@ -210,6 +210,13 @@ if (isset($_GET["elastic"])) {
 		{
 			list($col, $op, $val) = explode(" ", $val, 3);
 
+			if ($col == "_id" && $op == "=") {
+				$data["query"]["bool"]["must"][] = [
+					"term" => [$col => $val]
+				];
+				return;
+			}
+
 			if (!preg_match('~^([^(]+)\(([^)]+)\)$~', $op, $matches)) {
 				return;
 			}
@@ -236,14 +243,14 @@ if (isset($_GET["elastic"])) {
 		function update($type, $record, $queryWhere, $limit = 0, $separator = "\n") {
 			//! use $limit
 			$parts = preg_split('~ *= *~', $queryWhere);
-			if (count($parts) == 2) {
-				$id = trim($parts[1]);
-				$query = "$type/$id";
-
-				return $this->_conn->query($query, $record, 'POST');
+			if (count($parts) != 2) {
+				return false;
 			}
 
-			return false;
+			$id = trim($parts[1]);
+			$query = "$type/_doc/$id";
+
+			return $this->_conn->query($query, $record, 'POST');
 		}
 
 		function insert($type, $record) {
