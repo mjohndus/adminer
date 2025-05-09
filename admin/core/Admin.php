@@ -228,7 +228,8 @@ class Admin extends Origin
 		$supportSql = support("sql");
 		$warnings = !$failed ? $driver->warnings() : null;
 
-		$return = "<pre><code class='jush-$jush'>" . h(str_replace("\n", " ", $query)) . "</code></pre>\n";
+		$syntax = $jush == "elastic" ? "js" : $jush;
+		$return = "<pre><code class='jush-$syntax'>" . h(str_replace("\n", " ", $query)) . "</code></pre>\n";
 
         $return .= "<p class='links'>";
         if ($supportSql) {
@@ -1188,11 +1189,11 @@ class Admin extends Origin
 			}
 
 			// Syntax highlighting.
-			if (support("sql")) {
+			if (support("sql") || $jush == "elastic") {
 				?>
 				<script<?php echo nonce(); ?>>
 					<?php
-					if ($tables) {
+					if (support("sql") && $tables) {
 						$links = [];
 						foreach ($tables as $table => $type) {
 							$links[] = preg_quote($table, '/');
