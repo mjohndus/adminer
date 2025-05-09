@@ -228,6 +228,10 @@ class Admin extends Origin
 		$supportSql = support("sql");
 		$warnings = !$failed ? $driver->warnings() : null;
 
+		if ($supportSql) {
+			$query .= ";";
+		}
+
 		$syntax = $jush == "elastic" ? "js" : $jush;
 		$return = "<pre><code class='jush-$syntax'>" . h(str_replace("\n", " ", $query)) . "</code></pre>\n";
 
