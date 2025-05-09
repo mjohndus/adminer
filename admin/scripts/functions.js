@@ -1250,8 +1250,8 @@ function loadNextPage(limit, loadingText) {
 		initToggles(newBody);
 
 		const tableBody = qs('#table tbody');
-		for (let row of newBody.children) {
-			tableBody.appendChild(row);
+		while (newBody.children.length) {
+			tableBody.appendChild(newBody.children[0]);
 		}
 
 		if (newBody.children.length < limit) {
