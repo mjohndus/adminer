@@ -50,6 +50,7 @@ upgrade your AdminNeo installation.
 - SQLite: Drop support for SQLite 2
 - Elasticsearch: Drop support for Elasticsearch 5
 - Elasticsearch: Display called request in a flash message after altering a record
+- Elasticsearch: Refresh index immediately after altering a record
 - Firebird: Remove the whole driver
 
 ### Bugfixes

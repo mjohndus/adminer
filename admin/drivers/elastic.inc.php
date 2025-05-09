@@ -253,7 +253,12 @@ if (isset($_GET["elastic"])) {
 			// Save the query for later use in a flesh message. TODO: This is so ugly.
 			queries("\"POST $query\": " . json_encode($record));
 
-			return $this->_conn->query($query, $record, 'POST');
+			$response = $this->_conn->query($query, $record, 'POST');
+			if ($response) {
+				$this->_conn->query("$type/_refresh");
+			}
+
+			return $response;
 		}
 
 		function insert($type, $record) {
@@ -274,9 +279,11 @@ if (isset($_GET["elastic"])) {
 			queries("\"POST $query\": " .json_encode($record));
 
 			$response = $this->_conn->query($query, $record, 'POST');
-			if ($response == false) {
+			if (!$response) {
 				return false;
 			}
+
+			$this->_conn->query("$type/_refresh");
 			$this->_conn->last_id = $response['_id'];
 
 			return $response['result'];
@@ -310,6 +317,8 @@ if (isset($_GET["elastic"])) {
 					$this->_conn->affected_rows++;
 				}
 			}
+
+			$this->_conn->query("$table/_refresh");
 
 			return $this->_conn->affected_rows;
 		}
