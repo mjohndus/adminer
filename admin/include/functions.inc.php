@@ -681,7 +681,7 @@ function query_redirect($query, $location, $message, $redirect = true, $execute 
 
 /** Execute and remember query
 * @param string or null to return remembered queries, end with ';' to use DELIMITER
-* @return Min_Result or [$queries, $time] if $query = null
+* @return Min_Result|array or [$queries, $time] if $query = null
 */
 function queries($query) {
 	global $connection;
@@ -694,8 +694,15 @@ function queries($query) {
 		// return executed queries
 		return [implode("\n", $queries), format_time($start)];
 	}
-	$queries[] = (preg_match('~;$~', $query) ? "DELIMITER ;;\n$query;\nDELIMITER " : $query) . ";";
-	return $connection->query($query);
+
+	if (support("sql")) {
+		$queries[] = (preg_match('~;$~', $query) ? "DELIMITER ;;\n$query;\nDELIMITER " : $query) . ";";
+		return $connection->query($query);
+	} else {
+		// Save the query for later use in a flesh message. TODO: This is so ugly.
+		$queries[] = $query;
+		return [];
+	}
 }
 
 /** Apply command to all array items

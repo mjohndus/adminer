@@ -293,7 +293,8 @@ class Admin extends Origin
 		}
 
 		$return .= "<div id='$sqlId' class='hidden'>\n";
-		$return .= "<pre><code class='jush-$jush'>" . truncate_utf8($query, 1000) . "</code></pre>\n";
+		$syntax = $jush == "elastic" ? "js" : $jush;
+		$return .= "<pre><code class='jush-$syntax'>" . truncate_utf8($query, 1000) . "</code></pre>\n";
 
 		$return .= "<p class='links'>";
 		if ($supportSql) {

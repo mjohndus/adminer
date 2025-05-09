@@ -49,6 +49,7 @@ upgrade your AdminNeo installation.
 - MySQL: Allow to trust server certificate
 - SQLite: Drop support for SQLite 2
 - Elasticsearch: Drop support for Elasticsearch 5
+- Elasticsearch: Display called request in a flash message after altering a record
 - Firebird: Remove the whole driver
 
 ### Bugfixes

@@ -170,7 +170,7 @@ if (isset($_GET["elastic"])) {
 			$search = $this->_conn->rootQuery($query, $data);
 
 			if ($print) {
-				echo $this->admin->formatSelectQuery("\"$query\": " . json_encode($data), $start, !$search);
+				echo $this->admin->formatSelectQuery("\"GET $query\": " . json_encode($data), $start, !$search);
 			}
 			if (empty($search)) {
 				return false;
@@ -250,6 +250,9 @@ if (isset($_GET["elastic"])) {
 			$id = trim($parts[1]);
 			$query = "$type/_doc/$id";
 
+			// Save the query for later use in a flesh message. TODO: This is so ugly.
+			queries("\"POST $query\": " . json_encode($record));
+
 			return $this->_conn->query($query, $record, 'POST');
 		}
 
@@ -266,6 +269,9 @@ if (isset($_GET["elastic"])) {
 					unset($record[$key]);
 				}
 			}
+
+			// Save the query for later use in a flesh message. TODO: This is so ugly.
+			queries("\"POST $query\": " .json_encode($record));
 
 			$response = $this->_conn->query($query, $record, 'POST');
 			if ($response == false) {
@@ -295,6 +301,10 @@ if (isset($_GET["elastic"])) {
 
 			foreach ($ids as $id) {
 				$query = "$table/_doc/$id";
+
+				// Save the query for later use in a flesh message. TODO: This is so ugly.
+				queries("\"DELETE $query\"");
+
 				$response = $this->_conn->query($query, null, 'DELETE');
 				if (isset($response['result']) && $response['result'] == 'deleted') {
 					$this->_conn->affected_rows++;
