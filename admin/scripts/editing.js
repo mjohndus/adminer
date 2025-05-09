@@ -58,20 +58,6 @@ function initSyntaxHighlighting(version, maria) {
 	});
 }
 
-/** Get value of dynamically created form field
-* @param HTMLFormElement
-* @param string
-* @return HTMLElement
-*/
-function formField(form, name) {
-	// required in IE < 8, form.elements[name] doesn't work
-	for (var i=0; i < form.length; i++) {
-		if (form[i].name === name) {
-			return form[i];
-		}
-	}
-}
-
 /** Try to change input type to password or to text
 * @param HTMLInputElement
 * @param boolean
@@ -199,285 +185,344 @@ function selectFieldChange() {
 
 
 
-var added = '.', rowCount;
+// Table/Procedure fields editing.
+(function() {
+	let added = '.';
+	let lastType = '';
 
-/** Check if val is equal to a-delimiter-b where delimiter is '_', '' or big letter
-* @param string
-* @param string
-* @param string
-* @return boolean
-*/
-function delimiterEqual(val, a, b) {
-	return (val === a + '_' + b || val === a + b || val === a + b.charAt(0).toUpperCase() + b.substr(1));
-}
+	/**
+	 * Sets up event handlers for table printed by edit_fields().
+	 *
+	 * @param {HTMLElement} table
+	 */
+	window.initFieldsEditing = function(table) {
+		const tableBody = qs("tbody", table);
 
-/** Escape string to use as identifier
-* @param string
-* @return string
-*/
-function idfEscape(s) {
-	return s.replace(/`/, '``');
-}
+		tableBody.addEventListener("keydown", onEditingKeydown);
 
-
-
-/** Set up event handlers for edit_fields().
-*/
-function editFields() {
-	var els = qsa('[name$="[field]"]');
-	for (var i = 0; i < els.length; i++) {
-		els[i].oninput = function () {
-			editingNameChange.call(this);
-			if (!this.defaultValue) {
-				editingAddRow.call(this);
-			}
+		const rows = qsa("tr", tableBody);
+		for (let row of rows) {
+			initFieldsEditingRow(row);
 		}
-	}
-	els = qsa('[name$="[length]"]');
-	for (var i = 0; i < els.length; i++) {
-		mixin(els[i], {onfocus: editingLengthFocus, oninput: editingLengthChange});
-	}
-	els = qsa('[name$="[type]"]');
-	for (var i = 0; i < els.length; i++) {
-		mixin(els[i], {
-			onfocus: () => {
-				lastType = selectValue(this);
-			},
-			onchange: editingTypeChange,
+	};
+
+	/**
+	 * Sets up event handlers for one row.
+	 *
+	 * @param {HTMLElement} row
+	 * @param {boolean} autoAddRow
+	 */
+	function initFieldsEditingRow(row, autoAddRow = true) {
+		// Field name. Can be null if some row is removed and then new row is added to the beginning (form is posted).
+		let field = qs('[name$="[field]"]', row);
+		if (field) {
+			field.addEventListener("input", (event) => {
+				const input = event.target;
+				detectForeignKey(input);
+
+				if (autoAddRow && !input.defaultValue) {
+					addRow(input);
+					autoAddRow = false;
+				}
+			});
+		}
+
+		// Type.
+		field = qs('[name$="[type]"]', row);
+		field.addEventListener("focus", () => {
+			lastType = selectValue(this);
+		});
+		field.addEventListener("change", onFieldTypeChange);
+
+		// Length.
+		field = qs('[name$="[length]"]', row);
+		field.addEventListener("focus", onFieldLengthFocus);
+		field.addEventListener("input", (event) => {
+			// Mark length as required.
+			event.target.classList.toggle('required', !this.value.length && /var(char|binary)$/.test(selectValue(this.parentNode.previousSibling.firstChild)));
 		});
 
-		initHelpFor(els[i], (value) => { return value; }, true);
-	}
-}
+		// Help.
+		initHelpFor(field, (value) => {
+			return value;
+		}, true);
 
-/** Handle clicks on fields editing
-* @param MouseEvent
-* @return boolean false to cancel action
-*/
-function editingClick(event) {
-	var el = event.target;
-	if (!isTag(el, 'input|button')) {
-		const parent = parentTag(el, 'label');
-		if (parent) {
-			el = qs('input', parent);
-		} else {
-			el = parentTag(el, 'button');
-		}
-	}
-	if (el) {
-		var name = el.name;
-		if (/^add\[/.test(name)) {
-			editingAddRow.call(el, 1);
-		} else if (/^drop_col\[/.test(name)) {
-			editingRemoveRow.call(el, 'fields\$1[field]');
-		} else {
-			if (name === 'auto_increment_col') {
-				var field = el.form['fields[' + el.value + '][field]'];
-				if (!field.value) {
-					field.value = 'id';
-					field.oninput();
-				}
+		// Autoincrement.
+		qs("[name='auto_increment_col']", row).addEventListener("click", (event) => {
+			const input = event.target;
+			const field = input.form['fields[' + input.value + '][field]'];
+			if (!field.value) {
+				field.value = "id";
+				field.dispatchEvent(new Event("input"));
 			}
-			return;
-		}
-		return false;
-	}
-}
+		});
 
-/** Handle input on fields editing
-* @param InputEvent
-*/
-function editingInput(event) {
-	var el = event.target;
-	if (/\[default]$/.test(el.name)) {
-		 el.previousSibling.checked = true;
-	}
-}
-
-/** Detect foreign key
-* @this HTMLInputElement
-*/
-function editingNameChange() {
-	var name = this.name.substr(0, this.name.length - 7);
-	var type = formField(this.form, name + '[type]');
-	var opts = type.options;
-	var candidate; // don't select anything with ambiguous match (like column `id`)
-	var val = this.value;
-	for (var i = opts.length; i--; ) {
-		var match = /(.+)`(.+)/.exec(opts[i].value);
-		if (!match) { // common type
-			if (candidate && i === opts.length - 2 && val === opts[candidate].value.replace(/.+`/, '') && name === 'fields[1]') { // single target table, link to column, first field - probably `id`
-				return;
-			}
-			break;
+		// Default value. Can be null in procedure editing.
+		field = qs('[name$="[default]"]', row);
+		if (field) {
+			field.addEventListener("input", (event) => {
+				// Check checkbox for the default value.
+				event.target.previousSibling.checked = true;
+			});
 		}
-		var table = match[1];
-		var column = match[2];
-		var tables = [ table, table.replace(/s$/, ''), table.replace(/es$/, '') ];
-		for (var j=0; j < tables.length; j++) {
-			table = tables[j];
-			if (val === column || val === table || delimiterEqual(val, table, column) || delimiterEqual(val, column, table)) {
-				if (candidate) {
+
+		// Actions.
+		let button = qs("button[name^='add']", row);
+		button.addEventListener("click", (event) => {
+			addRow(event.currentTarget, true);
+			event.preventDefault();
+		});
+
+		button = qs("button[name^='drop_col']", row);
+		button.addEventListener("click", (event) => {
+			removeTableRow(event.currentTarget, "field");
+			event.preventDefault();
+		});
+	}
+
+	/**
+	 * Detects foreign key from field name.
+	 *
+	 * @param {HTMLInputElement} input
+	 */
+	function detectForeignKey(input) {
+		const name = input.name.substring(0, input.name.length - 7);
+		const typeSelect = input.form.elements[name + '[type]'];
+		const options = typeSelect.options;
+		const value = input.value;
+		let candidate; // don't select anything with ambiguous match (like column `id`)
+
+		for (let i = options.length; i--; ) {
+			const match = /(.+)`(.+)/.exec(options[i].value);
+			// Common type.
+			if (!match) {
+				// Single target table, link to column, first field - probably `id`.
+				if (candidate && i === options.length - 2 && value === options[candidate].value.replace(/.+`/, '') && name === 'fields[1]') {
 					return;
 				}
-				candidate = i;
 				break;
 			}
-		}
-	}
-	if (candidate) {
-		type.selectedIndex = candidate;
-		type.onchange();
-	}
-}
 
-/** Add table row for next field
-* @param [boolean]
-* @return boolean false
-* @this HTMLInputElement
-*/
-function editingAddRow(focus) {
-	var match = /(\d+)(\.\d+)?/.exec(this.name);
-	var x = match[0] + (match[2] ? added.substr(match[2].length) : added) + '1';
-	var row = parentTag(this, 'tr');
-	var row2 = cloneNode(row);
-	var tags = qsa('select', row);
-	var tags2 = qsa('select', row2);
-	for (var i=0; i < tags.length; i++) {
-		tags2[i].name = tags[i].name.replace(/[0-9.]+/, x);
-		tags2[i].selectedIndex = tags[i].selectedIndex;
-	}
-	tags = qsa('input', row);
-	tags2 = qsa('input', row2);
-	var input = tags2[0]; // IE loose tags2 after insertBefore()
-	for (var i=0; i < tags.length; i++) {
-		if (tags[i].name === 'auto_increment_col') {
-			tags2[i].value = x;
-			tags2[i].checked = false;
-		}
-		tags2[i].name = tags[i].name.replace(/([0-9.]+)/, x);
-		if (/\[(orig|field|comment|default)/.test(tags[i].name)) {
-			tags2[i].value = '';
-		}
-		if (/\[(has_default)/.test(tags[i].name)) {
-			tags2[i].checked = false;
-		}
-	}
-	tags[0].oninput = editingNameChange;
+			let table = match[1];
+			const column = match[2];
+			const tables = [table, table.replace(/s$/, ''), table.replace(/es$/, '')];
 
-	initSortableRow(row2);
-	row.parentNode.insertBefore(row2, row.nextSibling);
+			for (const table of tables) {
+				if (value === column || value === table || delimiterEqual(value, table, column) || delimiterEqual(value, column, table)) {
+					if (candidate) {
+						return;
+					}
 
-	if (focus) {
-		input.oninput = editingNameChange;
-		input.focus();
-	}
-	added += '0';
-	rowCount++;
-	return false;
-}
-
-/** Remove table row for field
-* @param string regular expression replacement
-* @return boolean false
-* @this HTMLInputElement
-*/
-function editingRemoveRow(name) {
-	var field = formField(this.form, this.name.replace(/[^\[]+(.+)/, name));
-	field.parentNode.removeChild(field);
-	parentTag(this, 'tr').style.display = 'none';
-	return false;
-}
-
-var lastType = '';
-
-/** Clear length and hide collation or unsigned
-* @this HTMLSelectElement
-*/
-function editingTypeChange() {
-	var type = this;
-	var name = type.name.substr(0, type.name.length - 6);
-	var text = selectValue(type);
-	for (var i=0; i < type.form.elements.length; i++) {
-		var el = type.form.elements[i];
-		if (el.name === name + '[length]') {
-			if (!(
-				(/(char|binary)$/.test(lastType) && /(char|binary)$/.test(text))
-				|| (/(enum|set)$/.test(lastType) && /(enum|set)$/.test(text))
-			)) {
-				el.value = '';
+					candidate = i;
+					break;
+				}
 			}
-			el.oninput.apply(el);
 		}
-		if (lastType === 'timestamp' && el.name == name + '[has_default]' && /timestamp/i.test(formField(type.form, name + '[default]').value)) {
-			el.checked = false;
-		}
-		if (el.name === name + '[collation]') {
-			el.classList.toggle('hidden', !/(char|text|enum|set)$/.test(text));
-		}
-		if (el.name === name + '[unsigned]') {
-			el.classList.toggle('hidden', !/(^|[^o])int(?!er)|numeric|real|float|double|decimal|money/.test(text));
-		}
-		if (el.name === name + '[on_update]') {
-			// MySQL supports datetime since 5.6.5.
-			el.classList.toggle('hidden', !/timestamp|datetime/.test(text));
-		}
-		if (el.name === name + '[on_delete]') {
-			el.classList.toggle('hidden', !/`/.test(text));
+
+		if (candidate) {
+			typeSelect.selectedIndex = candidate;
+			typeSelect.dispatchEvent(new Event('change'));
 		}
 	}
-}
 
-/** Mark length as required
-* @this HTMLInputElement
-*/
-function editingLengthChange() {
-	this.classList.toggle('required', !this.value.length && /var(char|binary)$/.test(selectValue(this.parentNode.previousSibling.firstChild)));
-}
+	/**
+	 * Checks if value is equal to a-delimiter-b where delimiter is '_', '' or big letter.
+	 *
+	 * @param {string} value
+	 * @param {string} part1
+	 * @param {string} part2
+	 *
+	 * @return {boolean}
+	 */
+	function delimiterEqual(value, part1, part2) {
+		return (value === part1 + '_' + part2 || value === part1 + part2 || value === part1 + part2.charAt(0).toUpperCase() + part2.substring(1));
+	}
 
-/** Edit enum or set
-* @this HTMLInputElement
-*/
-function editingLengthFocus() {
-	var td = this.parentNode;
-	if (/(enum|set)$/.test(selectValue(td.previousSibling.firstChild))) {
-		var edit = gid('enum-edit');
-		edit.value = enumValues(this.value);
-		td.appendChild(edit);
+	/**
+	 * Edit enum or set.
+	 *
+	 * @this {HTMLInputElement} Length input.
+	 */
+	function onFieldLengthFocus() {
+		const td = this.parentNode;
+
+		if (/(enum|set)$/.test(selectValue(td.previousSibling.firstChild))) {
+			const edit = gid('enum-edit');
+			edit.value = parseEnumValues(this.value);
+
+			td.appendChild(edit);
+			this.style.display = 'none';
+			edit.style.display = 'inline';
+			edit.focus();
+		}
+	}
+
+	/**
+	 * Finishes editing of enum or set.
+	 *
+	 * @this {HTMLTextAreaElement}
+	 */
+	window.onFieldLengthBlur = function() {
+		const field = this.parentNode.firstChild;
+		const value = this.value;
+
+		field.value = (/^'[^\n]+'$/.test(value) ?
+			value :
+			value && "'" + value.replace(/\n+$/, '').replace(/'/g, "''").replace(/\\/g, '\\\\').replace(/\n/g, "','") + "'");
+
+		field.style.display = 'inline';
 		this.style.display = 'none';
-		edit.style.display = 'inline';
-		edit.focus();
-	}
-}
+	};
 
-/** Get enum values
-* @param string
-* @return string values separated by newlines
-*/
-function enumValues(s) {
-	var re = /(^|,)\s*'(([^\\']|\\.|'')*)'\s*/g;
-	var result = [];
-	var offset = 0;
-	var match;
-	while (match = re.exec(s)) {
-		if (offset !== match.index) {
-			break;
+	/**
+	 * Returns enum values.
+	 *
+	 * @param {string} string
+	 *
+	 * @return {string} Values separated by newlines.
+	 */
+	function parseEnumValues(string) {
+		const re = /(^|,)\s*'(([^\\']|\\.|'')*)'\s*/g;
+		const result = [];
+		let offset = 0;
+		let match;
+
+		while (match = re.exec(string)) {
+			if (offset !== match.index) {
+				break;
+			}
+
+			result.push(match[2].replace(/'(')|\\(.)/g, '$1$2'));
+			offset += match[0].length;
 		}
-		result.push(match[2].replace(/'(')|\\(.)/g, '$1$2'));
-		offset += match[0].length;
+
+		return offset === string.length ? result.join('\n') : string;
 	}
-	return (offset === s.length ? result.join('\n') : s);
+
+	/**
+	 * Clears length and hides collation or unsigned.
+	 *
+	 * @this HTMLSelectElement
+	 */
+	function onFieldTypeChange() {
+		const type = this;
+		const name = type.name.substring(0, type.name.length - 6);
+		const text = selectValue(type);
+
+		for (const el of type.form.elements) {
+			if (el.name === name + '[length]') {
+				if (!(
+					(/(char|binary)$/.test(lastType) && /(char|binary)$/.test(text))
+					|| (/(enum|set)$/.test(lastType) && /(enum|set)$/.test(text))
+				)) {
+					el.value = '';
+				}
+				el.dispatchEvent(new Event("input"));
+			}
+
+			if (lastType === 'timestamp' && el.name === name + '[has_default]' && /timestamp/i.test(type.form.elements[name + '[default]'].value)) {
+				el.checked = false;
+			}
+
+			if (el.name === name + '[collation]') {
+				el.classList.toggle('hidden', !/(char|text|enum|set)$/.test(text));
+			}
+
+			if (el.name === name + '[unsigned]') {
+				el.classList.toggle('hidden', !/(^|[^o])int(?!er)|numeric|real|float|double|decimal|money/.test(text));
+			}
+
+			if (el.name === name + '[on_update]') {
+				// MySQL supports datetime since 5.6.5.
+				el.classList.toggle('hidden', !/timestamp|datetime/.test(text));
+			}
+
+			if (el.name === name + '[on_delete]') {
+				el.classList.toggle('hidden', !/`/.test(text));
+			}
+		}
+	}
+
+	/**
+	 * Adds new table row for the next field.
+	 *
+	 * @param {(HTMLInputElement|HTMLButtonElement)} button
+	 * @param {boolean} focus
+	 */
+	function addRow(button, focus = false) {
+		const match = /(\d+)(\.\d+)?/.exec(button.name);
+		const newIndex = match[0] + (match[2] ? added.substring(match[2].length) : added) + '1';
+		const row = parentTag(button, 'tr');
+		const newRow = cloneNode(row);
+
+		let inputs = qsa('select, input, button', row);
+		let newInputs = qsa('select, input, button', newRow);
+
+		for (let i = 0; i < inputs.length; i++) {
+			newInputs[i].name = inputs[i].name.replace(/[0-9.]+/, newIndex);
+
+			if (newInputs[i].tagName === "SELECT") {
+				newInputs[i].selectedIndex = inputs[i].selectedIndex;
+			}
+		}
+
+		inputs = qsa('input', row);
+		newInputs = qsa('input', newRow);
+
+		for (let i = 0; i < inputs.length; i++) {
+			if (inputs[i].name === 'auto_increment_col') {
+				newInputs[i].value = newIndex;
+				newInputs[i].checked = false;
+			}
+
+			if (/\[(orig|field|comment|default)/.test(inputs[i].name)) {
+				newInputs[i].value = '';
+			}
+
+			if (/\[(has_default)/.test(inputs[i].name)) {
+				newInputs[i].checked = false;
+			}
+		}
+
+		initFieldsEditingRow(newRow, !focus);
+		initSortableRow(newRow);
+
+		row.parentNode.insertBefore(newRow, row.nextSibling);
+
+		if (focus) {
+			newInputs[0].focus();
+		}
+
+		added += '0';
+	}
+})();
+
+/**
+ * Removes row in indexes table.
+ *
+ * @this {HTMLButtonElement}
+ * @return {false}
+ */
+function onRemoveIndexRowClick() {
+	removeTableRow(this, "type");
+
+	return false;
 }
 
-/** Finish editing of enum or set
-* @this HTMLTextAreaElement
-*/
-function editingLengthBlur() {
-	var field = this.parentNode.firstChild;
-	var val = this.value;
-	field.value = (/^'[^\n]+'$/.test(val) ? val : val && "'" + val.replace(/\n+$/, '').replace(/'/g, "''").replace(/\\/g, '\\\\').replace(/\n/g, "','") + "'");
-	field.style.display = 'inline';
-	this.style.display = 'none';
+/**
+ * Removes table row for field.
+ *
+ * @param {HTMLButtonElement} button
+ * @param {string} columnName Name of the key input field.
+ */
+function removeTableRow(button, columnName) {
+	const row = parentTag(button, "tr");
+	const input = qs(`[name$='[${columnName}]']`, row);
+
+	input.remove();
+	row.style.display = 'none';
+
+	return false;
 }
 
 /** Show or hide selected table column

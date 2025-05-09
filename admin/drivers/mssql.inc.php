@@ -28,25 +28,23 @@ if (isset($_GET["mssql"])) {
 			}
 
 			function connect($server, $username, $password) {
-				global $admin;
-
 				$connection_info = [
 					"UID" => $username,
 					"PWD" => $password,
 					"CharacterSet" => "UTF-8",
 				];
 
-				$encrypt = $admin->getConfig()->getSslEncrypt();
+				$encrypt = Admin::get()->getConfig()->getSslEncrypt();
 				if ($encrypt !== null) {
 					$connection_info["Encrypt"] = $encrypt;
 				}
 
-				$trust = $admin->getConfig()->getSslTrustServerCertificate();
+				$trust = Admin::get()->getConfig()->getSslTrustServerCertificate();
 				if ($trust !== null) {
 					$connection_info["TrustServerCertificate"] = $trust;
 				}
 
-				$db = $admin->getDatabase();
+				$db = Admin::get()->getDatabase();
 				if ($db != "") {
 					$connection_info["Database"] = $db;
 				}
@@ -285,11 +283,9 @@ if (isset($_GET["mssql"])) {
 	 */
 	function connect()
 	{
-		global $admin;
-
 		$connection = new Min_DB();
 
-		$credentials = $admin->getCredentials();
+		$credentials = Admin::get()->getCredentials();
 		if ($credentials[0] == "") {
 			$credentials[0] = "localhost:1433";
 		}

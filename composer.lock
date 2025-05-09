@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "2e3cdfa7512487c6ba0538495f6fbc9d",
+    "content-hash": "05c101e73c77c491592789ae180936e2",
     "packages": [
         {
             "name": "vrana/jsshrink",
@@ -86,13 +86,50 @@
                 "source": "https://github.com/vrana/jush/"
             },
             "time": "2025-03-23T22:20:39+00:00"
+        },
+        {
+            "name": "vrana/phpshrink",
+            "version": "dev-main",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/vrana/PhpShrink.git",
+                "reference": "b3d92cdf76aacfde22732a9132669d5ab55e7310"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/vrana/PhpShrink/zipball/b3d92cdf76aacfde22732a9132669d5ab55e7310",
+                "reference": "b3d92cdf76aacfde22732a9132669d5ab55e7310",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=5.3"
+            },
+            "default-branch": true,
+            "type": "library",
+            "license": [
+                "Apache-2.0"
+            ],
+            "authors": [
+                {
+                    "name": "Jakub Vrána",
+                    "homepage": "https://www.vrana.cz"
+                }
+            ],
+            "description": "Remove spaces and comments from PHP code.",
+            "homepage": "https://github.com/vrana/PhpShrink",
+            "support": {
+                "source": "https://github.com/vrana/PhpShrink/tree/main",
+                "issues": "https://github.com/vrana/PhpShrink/issues"
+            },
+            "time": "2025-05-07T06:59:19+00:00"
         }
     ],
     "packages-dev": [],
     "aliases": [],
     "minimum-stability": "stable",
     "stability-flags": {
-        "vrana/jsshrink": 20
+        "vrana/jsshrink": 20,
+        "vrana/phpshrink": 20
     },
     "prefer-stable": false,
     "prefer-lowest": false,

@@ -262,11 +262,9 @@ if (isset($_GET["clickhouse"])) {
 	 */
 	function connect()
 	{
-		global $admin;
-
 		$connection = new Min_DB();
 
-		$credentials = $admin->getCredentials();
+		$credentials = Admin::get()->getCredentials();
 		if (!$connection->connect($credentials[0], $credentials[1], $credentials[2])) {
 			return $connection->error;
 		}
@@ -302,8 +300,8 @@ if (isset($_GET["clickhouse"])) {
 	}
 
 	function logged_user() {
-		global $admin;
-		$credentials = $admin->getCredentials();
+		$credentials = Admin::get()->getCredentials();
+
 		return $credentials[1];
 	}
 

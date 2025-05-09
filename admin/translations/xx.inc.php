@@ -3,6 +3,10 @@
 namespace AdminNeo;
 
 $translations = [
+	'%s must return an array.' => '%s xx.</a>',
+	'%s and %s must return an object created by %s method.' => '%s xx %s xx %s.',
+	'More information.' => 'Xx.',
+
 	// label for database system selection (MySQL, SQLite, ...)
 	'Home' => 'Xx',
 	'System' => 'Xx',

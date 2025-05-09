@@ -3,7 +3,6 @@
 namespace AdminNeo;
 
 /**
- * @var Admin $admin
  * @var ?Min_DB $connection
  * @var ?Min_Driver $driver
  */
@@ -42,7 +41,7 @@ if (!$error && $_POST) {
 	$start = microtime(true);
 	$result = $connection->multi_query($query);
 	$affected = $connection->affected_rows; // getting warnings overwrites this
-	echo $admin->formatSelectQuery($query, $start, !$result);
+	echo Admin::get()->formatSelectQuery($query, $start, !$result);
 
 	if (!$result) {
 		echo "<p class='error'>" . error() . "\n";
@@ -76,7 +75,7 @@ if ($in) {
 	foreach ($in as $key) {
 		$field = $routine["fields"][$key];
 		$name = $field["field"];
-		echo "<tr><th>" . $admin->getFieldName($field);
+		echo "<tr><th>" . Admin::get()->getFieldName($field);
 		$value = $_POST["fields"][$name] ?? "";
 		if ($value != "") {
 			if ($field["type"] == "set") {

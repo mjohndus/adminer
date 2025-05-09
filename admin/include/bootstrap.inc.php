@@ -44,8 +44,7 @@ if ($_GET["script"] == "version") {
 }
 
 // Allows including AdminNeo inside a function.
-/** @var Admin $admin */
-global $admin, $connection, $driver, $drivers, $edit_functions, $enum_length, $error, $functions, $grouping, $HTTPS, $inout, $jush, $LANG, $languages, $on_actions, $permanent, $structured_types, $has_token, $token, $translations, $types, $unsigned, $VERSION;
+global $connection, $driver, $drivers, $edit_functions, $enum_length, $error, $functions, $grouping, $HTTPS, $inout, $jush, $LANG, $languages, $on_actions, $permanent, $structured_types, $has_token, $token, $translations, $types, $unsigned, $VERSION;
 
 if (!$_SERVER["REQUEST_URI"]) { // IIS 5 compatibility
 	$_SERVER["REQUEST_URI"] = $_SERVER["ORIG_PATH_INFO"];
@@ -90,12 +89,35 @@ include __DIR__ . "/../drivers/elastic.inc.php";
 include __DIR__ . "/../drivers/clickhouse.inc.php";
 include __DIR__ . "/../drivers/simpledb.inc.php";
 
-if (function_exists('\create_adminneo')) {
-	$admin = \create_adminneo();
-} elseif (function_exists('AdminNeo\create_adminneo')) {
-	$admin = create_adminneo();
-} else {
-	$admin = new Admin();
+$plugins_dir = __DIR__ . "/../../plugins"; // !compile: plugins directory
+if (is_dir($plugins_dir)) {
+	foreach (glob("$plugins_dir/*.php") as $filename) {
+		include_once $filename;
+	}
+}
+
+$admin = null;
+$custom_instance = false;
+$errors = [];
+
+if (function_exists('\adminneo_instance')) {
+	$admin = \adminneo_instance();
+	$custom_instance = true;
+} elseif (file_exists("adminneo-instance.php")) {
+	$admin = include_once "adminneo-instance.php";
+	$custom_instance = true;
+}
+
+if ($custom_instance && !$admin instanceof Admin && !$admin instanceof Pluginer) {
+	$admin = null;
+	$linkParams = "href=https://github.com/adminneo-org/adminneo#advanced-customizations " . target_blank();
+
+	$errors[] = lang('%s and %s must return an object created by %s method.', "<b>adminneo-instance.php</b>", "<b>adminneo_instance()</b>", "Admin::create()") .
+		" <a $linkParams>" . lang('More information.') . "</a>";
+}
+
+if (!$admin) {
+	Admin::create([], [], $errors);
 }
 
 if (defined("AdminNeo\DRIVER")) {
@@ -113,8 +135,8 @@ if (defined("AdminNeo\DRIVER")) {
 	$grouping = $config['grouping'];
 	$edit_functions = $config['edit_functions'];
 
-	$admin->setOperators($operators, $operator_like, $operator_regexp);
-	$admin->setSystemObjects($config["system_databases"] ?? [], $config["system_schemas"] ?? []);
+	Admin::get()->setOperators($operators, $operator_like, $operator_regexp);
+	Admin::get()->setSystemObjects($config["system_databases"] ?? [], $config["system_schemas"] ?? []);
 } else {
 	define("AdminNeo\DRIVER", null);
 }

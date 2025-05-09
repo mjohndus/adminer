@@ -3,6 +3,9 @@
 namespace AdminNeo;
 
 $translations = [
+	'%s must return an array.' => '%s muss ein Array zurückgeben.</a>',
+	'More information.' => 'Weitere Informationen.',
+
 	'Home' => 'Startseite',
 	'Login' => 'Login',
 	'Logout successful.' => 'Abmeldung erfolgreich.',

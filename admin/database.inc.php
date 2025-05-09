@@ -3,7 +3,6 @@
 namespace AdminNeo;
 
 /**
- * @var Admin $admin
  * @var ?Min_DB $connection
  * @var ?Min_Driver $driver
  */
@@ -66,7 +65,7 @@ if ($_POST) {
 	}
 }
 
-$collations = $admin->getCollations($row["collation"] ? [$row["collation"]] : []);
+$collations = Admin::get()->getCollations($row["collation"] ? [$row["collation"]] : []);
 
 ?>
 

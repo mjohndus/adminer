@@ -27,7 +27,8 @@
         "php": "7.1 - 8.4",
         "ext-json": "*",
         "vrana/jush": "2.1.*",
-        "vrana/jsshrink": "@dev"
+        "vrana/jsshrink": "@dev",
+        "vrana/phpshrink": "@dev"
     },
     "suggest": {
         "ext-openssl": "Allows secure encryption of login information",
@@ -62,6 +63,10 @@
         {
             "type": "vcs",
             "url": "https://github.com/peterpp/js-shrink.git"
+        },
+        {
+            "type": "vcs",
+            "url": "https://github.com/vrana/PhpShrink.git"
         }
     ]
 }

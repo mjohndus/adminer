@@ -16,7 +16,7 @@ namespace AdminNeo;
  * @license https://www.apache.org/licenses/LICENSE-2.0 Apache License, Version 2.0
  * @license https://www.gnu.org/licenses/gpl-2.0.html GNU General Public License, version 2 (one or other)
  */
-class ExternalLoginPlugin
+class ExternalLoginPlugin extends Plugin
 {
 	/** @var bool */
 	private $authenticated;
@@ -37,7 +37,7 @@ class ExternalLoginPlugin
 
 	public function init(): ?bool
 	{
-		$servers = admin()->getConfig()->getServerPairs(get_drivers());
+		$servers = $this->config->getServerPairs(get_drivers());
 
 		$this->hasServers = count($servers) > 0;
 		$this->autologin = count($servers) == 1;
@@ -48,7 +48,7 @@ class ExternalLoginPlugin
 			// If the password is not found or expired, store the login information.
 			if ($password === null || $password === false) {
 				$serverKey = key($servers);
-				$server = admin()->getConfig()->getServer($serverKey);
+				$server = $this->config->getServer($serverKey);
 
 				session_regenerate_id();
 				save_login($server->getDriver(), $serverKey, $server->getUsername(), $server->getPassword(), $server->getDatabase());
@@ -80,7 +80,7 @@ class ExternalLoginPlugin
 
 	public function getCredentials(): ?array
 	{
-		$server = admin()->getConfig()->getServer(SERVER);
+		$server = $this->config->getServer(SERVER);
 		if (!$server) {
 			return null;
 		}

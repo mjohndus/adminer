@@ -293,13 +293,11 @@ if (isset($_GET["simpledb"])) {
 	 */
 	function connect()
 	{
-		global $admin;
-
 		$connection = new Min_DB();
 
-		list($server, , $password) = $admin->getCredentials();
+		list($server, , $password) = Admin::get()->getCredentials();
 		if ($password != "") {
-			$result = $admin->verifyDefaultPassword($password);
+			$result = Admin::get()->verifyDefaultPassword($password);
 			if ($result !== true) {
 				return $result;
 			}
@@ -317,8 +315,7 @@ if (isset($_GET["simpledb"])) {
 	}
 
 	function logged_user() {
-		global $admin;
-		$credentials = $admin->getCredentials();
+		$credentials = Admin::get()->getCredentials();
 		return $credentials[1];
 	}
 
@@ -445,8 +442,8 @@ if (isset($_GET["simpledb"])) {
 	}
 
 	function sdb_request($action, $params = []) {
-		global $admin, $connection;
-		list($host, $params['AWSAccessKeyId'], $secret) = $admin->getCredentials();
+		global $connection;
+		list($host, $params['AWSAccessKeyId'], $secret) = Admin::get()->getCredentials();
 		$params['Action'] = $action;
 		$params['Timestamp'] = gmdate('Y-m-d\TH:i:s+00:00');
 		$params['Version'] = '2009-04-15';

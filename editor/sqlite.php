@@ -2,11 +2,9 @@
 
 use AdminNeo\Admin;
 
-function create_adminneo(): Admin
+function adminneo_instance()
 {
-	include "../plugins/Pluginer.php";
-
-	class CustomAdmin extends Admin
+	class SQLiteEditor extends Admin
 	{
 		public function getDatabase(): ?string
 		{
@@ -21,7 +19,7 @@ function create_adminneo(): Admin
 		"defaultPasswordHash" => password_hash("YOUR_PASSWORD_HERE", PASSWORD_DEFAULT),
 	];
 
-	return new CustomAdmin($config);
+	return SQLiteEditor::create($config);
 }
 
 include "index.php";

@@ -3,23 +3,23 @@
 use AdminNeo\Admin;
 use function AdminNeo\h;
 
-function create_adminneo(): Admin
+function adminneo_instance()
 {
-	class CdsEditor extends Admin
+	class ExampleEditor extends Admin
 	{
 		public function getServiceTitle(): string
 		{
-			// custom name in title and heading
-			return 'CDs';
+			// Custom name in title and heading.
+			return 'Example';
 		}
 
 		public function getCredentials(): array
 		{
-			// ODBC user with password ODBC on localhost
+			// User ODBC with password ODBC on localhost.
 			return ['localhost', 'ODBC', 'ODBC'];
 		}
 
-		public function authenticate(string $username, string $password)
+		public function authenticate(string $username, string $password): ?bool
 		{
 			// username: 'admin', password: anything
 			return ($username == 'admin');
@@ -27,7 +27,7 @@ function create_adminneo(): Admin
 
 		public function getDatabase(): ?string
 		{
-			// will be escaped by Admin
+			// Use just one database.
 			return 'adminneo_test';
 		}
 
@@ -60,9 +60,11 @@ function create_adminneo(): Admin
 
 	}
 
-	return new CdsEditor([
+	$config = [
 		"colorVariant" => "green",
-	]);
+	];
+
+	return ExampleEditor::create($config);
 }
 
 include "index.php";

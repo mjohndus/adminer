@@ -2,15 +2,14 @@
 namespace AdminNeo;
 
 /**
- * @var Admin $admin
  * @var ?Min_DB $connection
  * @var ?Min_Driver $driver
  */
 
 if (!$error && $_POST["export"]) {
 	dump_headers("sql");
-	$admin->dumpTable("", "");
-	$admin->dumpData("", "table", $_POST["query"]);
+	Admin::get()->dumpTable("", "");
+	Admin::get()->dumpData("", "table", $_POST["query"]);
 	exit;
 }
 
@@ -30,7 +29,7 @@ if (!$error && $_POST) {
 	if (!isset($_GET["import"])) {
 		$query = $_POST["query"];
 	} elseif ($_POST["webfile"]) {
-		$import_file_path = $admin->getImportFilePath();
+		$import_file_path = Admin::get()->getImportFilePath();
 		if ($import_file_path) {
 			if (file_exists($import_file_path)) {
 				$fp = fopen($import_file_path, "rb");
@@ -76,14 +75,14 @@ if (!$error && $_POST) {
 		$parse = '[\'"' . ($jush == "sql" ? '`#' : ($jush == "sqlite" ? '`[' : ($jush == "mssql" ? '[' : ''))) . ']|/\*|-- |$' . ($jush == "pgsql" ? '|\$[^$]*\$' : '');
 		$total_start = microtime(true);
 		parse_str($_COOKIE["neo_export"], $admin_export);
-		$dump_format = $admin->getDumpFormats();
+		$dump_format = Admin::get()->getDumpFormats();
 		unset($dump_format["sql"]);
 
 		while ($query != "") {
 			if (!$offset && preg_match("~^$space*+DELIMITER\\s+(\\S+)~i", $query, $match)) {
 				$delimiter = $match[1];
 
-				$formatted_query = $admin->formatSqlCommandQuery(trim($match[0]));
+				$formatted_query = Admin::get()->formatSqlCommandQuery(trim($match[0]));
 				if ($formatted_query != "") {
 					echo "<pre><code class='jush-$jush'>$formatted_query</code></pre>\n";
 				}
@@ -132,7 +131,7 @@ if (!$error && $_POST) {
 						$empty = false;
 						$q = substr($query, 0, $pos + strlen($delimiter));
 						$commands++;
-						$print = "<pre id='sql-$commands'><code class='jush-$jush'>" . $admin->formatSqlCommandQuery(trim($q)) . "</code></pre>\n";
+						$print = "<pre id='sql-$commands'><code class='jush-$jush'>" . Admin::get()->formatSqlCommandQuery(trim($q)) . "</code></pre>\n";
 						if ($jush == "sqlite" && preg_match("~^$space*+ATTACH\\b~i", $q, $match)) {
 							// PHP doesn't support setting SQLITE_LIMIT_ATTACHED
 							echo $print;
@@ -237,7 +236,7 @@ if (!$error && $_POST) {
 
 									if ($export) {
 										echo "<form id='$export_id' action='' method='post' class='hidden'><p>\n";
-										echo html_select("output", $admin->getDumpOutputs(), $admin_export["output"]) . " ";
+										echo html_select("output", Admin::get()->getDumpOutputs(), $admin_export["output"]) . " ";
 										echo html_select("format", $dump_format, $admin_export["format"]);
 										echo "<input type='hidden' name='query' value='", h($q), "'>";
 										echo "<input type='hidden' name='token' value='$token'>";
@@ -310,7 +309,7 @@ if (!isset($_GET["import"])) {
 	}
 	echo "</div></fieldset>\n";
 
-	$import_file_path = $admin->getImportFilePath();
+	$import_file_path = Admin::get()->getImportFilePath();
 	if ($import_file_path) {
 		echo "<fieldset><legend>" . lang('From server') . "</legend><div class='fieldset-content'>";
 		echo lang('Webserver file %s', "<code>" . h($import_file_path) . "$gz</code>");

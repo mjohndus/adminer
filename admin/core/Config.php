@@ -19,8 +19,8 @@ class Config
 		$this->params = $params; // !compile: custom config
 
 		if (isset($this->params["servers"])) {
-			foreach ($this->params["servers"] as $server) {
-				$serverObj = new Server($server);
+			foreach ($this->params["servers"] as $key => $server) {
+				$serverObj = new Server($server, is_string($key) ? $key : null);
 				$this->servers[$serverObj->getKey()] = $serverObj;
 			}
 		}
@@ -173,12 +173,33 @@ class Config
 	 */
 	public function getServerPairs(array $drivers): array
 	{
+		$singleDriver = null;
+
+		foreach ($this->servers as $server) {
+			if (!isset($drivers[$server->getDriver()])) {
+				continue;
+			}
+
+			if (!$singleDriver) {
+				$singleDriver = $server->getDriver();
+			} elseif ($server->getDriver() != $singleDriver) {
+				$singleDriver = null;
+				break;
+			}
+		}
+
 		$serverPairs = [];
 
 		foreach ($this->servers as $key => $server) {
-			if (isset($drivers[$server->getDriver()])) {
-				$serverName = $server->getName();
+			if (!isset($drivers[$server->getDriver()])) {
+				continue;
+			}
 
+			$serverName = $server->getName();
+
+			if ($singleDriver && $serverName) {
+				$serverPairs[$key] = $serverName;
+			} else {
 				$serverPairs[$key] = $drivers[$server->getDriver()] . ($serverName != "" ? " - $serverName" : "");
 			}
 		}

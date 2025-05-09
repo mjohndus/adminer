@@ -3,7 +3,6 @@
 namespace AdminNeo;
 
 /**
- * @var Admin $admin
  * @var ?Min_DB $connection
  * @var ?Min_Driver $driver
  */
@@ -22,11 +21,11 @@ $search_columns = []; // searchable columns
 $order_columns = []; // searchable columns
 $text_length = null;
 foreach ($fields as $key => $field) {
-	$name = $admin->getFieldName($field);
+	$name = Admin::get()->getFieldName($field);
 	if (isset($field["privileges"]["select"]) && $name != "") {
 		$columns[$key] = html_entity_decode(strip_tags($name), ENT_QUOTES);
 		if (is_shortable($field)) {
-			$text_length = $admin->processSelectionLength();
+			$text_length = Admin::get()->processSelectionLength();
 		}
 	}
 	if (isset($field["privileges"]["where"]) && $name != "") {
@@ -38,15 +37,15 @@ foreach ($fields as $key => $field) {
 	$rights += $field["privileges"];
 }
 
-list($select, $group) = $admin->processSelectionColumns($columns, $indexes);
+list($select, $group) = Admin::get()->processSelectionColumns($columns, $indexes);
 $select = array_unique($select);
 $group = array_unique($group);
 $is_group = count($group) < count($select);
-$where = $admin->processSelectionSearch($fields, $indexes);
-$order = $admin->processSelectionOrder($fields, $indexes);
-$limit = $admin->processSelectionLimit();
+$where = Admin::get()->processSelectionSearch($fields, $indexes);
+$order = Admin::get()->processSelectionOrder($fields, $indexes);
+$limit = Admin::get()->processSelectionLimit();
 
-if ($_GET["modify"] && !$admin->isDataEditAllowed()) {
+if ($_GET["modify"] && !Admin::get()->isDataEditAllowed()) {
 	redirect(ME . "select=" . urlencode($TABLE));
 }
 
@@ -95,7 +94,7 @@ if ($_POST && !$error) {
 	if ($_POST["export"]) {
 		cookie("neo_import", "output=" . urlencode($_POST["output"]) . "&format=" . urlencode($_POST["format"]));
 		dump_headers($TABLE);
-		$admin->dumpTable($TABLE, "");
+		Admin::get()->dumpTable($TABLE, "");
 		$from = ($select ? implode(", ", $select) : "*")
 			. convert_fields($columns, $fields, $select)
 			. "\nFROM " . table($TABLE);
@@ -110,7 +109,7 @@ if ($_POST && !$error) {
 			}
 			$query = implode(" UNION ALL ", $union);
 		}
-		$admin->dumpData($TABLE, "table", $query);
+		Admin::get()->dumpData($TABLE, "table", $query);
 		exit;
 	}
 
@@ -183,7 +182,7 @@ if ($_POST && !$error) {
 				$set = [];
 				foreach ($row as $key => $val) {
 					$key = bracket_escape($key, 1); // 1 - back
-					$set[idf_escape($key)] = (preg_match('~char|text~', $fields[$key]["type"]) || $val != "" ? $admin->processFieldInput($fields[$key], $val) : "NULL");
+					$set[idf_escape($key)] = (preg_match('~char|text~', $fields[$key]["type"]) || $val != "" ? Admin::get()->processFieldInput($fields[$key], $val) : "NULL");
 				}
 				$result = $driver->update(
 					$TABLE,
@@ -236,7 +235,7 @@ if ($_POST && !$error) {
 	}
 }
 
-$table_name = $admin->getTableName($table_status);
+$table_name = Admin::get()->getTableName($table_status);
 if (is_ajax()) {
 	page_headers();
 	ob_start();
@@ -257,7 +256,7 @@ if (isset($rights["insert"]) || !support("table")) {
 
 	$set = $params ? "&" . http_build_query($params) : "";
 }
-$admin->printTableMenu($table_status, $set);
+Admin::get()->printTableMenu($table_status, $set);
 
 if (!$columns && support("table")) {
 	echo "<p class='error'>" . lang('Unable to select the table') . ($fields ? "." : ": " . error()) . "\n";
@@ -270,12 +269,12 @@ if (!$columns && support("table")) {
 	echo '<input type="submit" class="button" value="' . h(lang('Select')) . '">'; # hidden default submit so filter remove buttons aren't "clicked" on submission from enter key
 	echo "</div>\n";
 	echo "<div class='field-sets'>\n";
-	$admin->printSelectionColumns($select, $columns);
-	$admin->printSelectionSearch($where, $search_columns, $indexes);
-	$admin->printSelectionOrder($order, $order_columns, $indexes);
-	$admin->printSelectionLimit($limit);
-	$admin->printSelectionLength($text_length);
-	$admin->printSelectionAction($indexes);
+	Admin::get()->printSelectionColumns($select, $columns);
+	Admin::get()->printSelectionSearch($where, $search_columns, $indexes);
+	Admin::get()->printSelectionOrder($order, $order_columns, $indexes);
+	Admin::get()->printSelectionLimit($limit);
+	Admin::get()->printSelectionLength($text_length);
+	Admin::get()->printSelectionAction($indexes);
 	echo "</div>\n</form>\n";
 
 	$page = $_GET["page"] ?? 0;
@@ -317,7 +316,8 @@ if (!$columns && support("table")) {
 		if ($jush == "mssql" && $page) {
 			$result->seek($limit * $page);
 		}
-		echo "<form class='table-footer-parent' action='' method='post' enctype='multipart/form-data'>\n";
+		echo "<form action='' method='post' enctype='multipart/form-data'>\n";
+		echo "<div class='table-footer-parent'>\n";
 		$rows = [];
 		while ($row = $result->fetch_assoc()) {
 			if ($page && $jush == "oracle") {
@@ -334,17 +334,17 @@ if (!$columns && support("table")) {
 		if (!$rows) {
 			echo "<p class='message'>" . lang('No rows.') . "\n";
 		} else {
-			$backward_keys = $admin->getBackwardKeys($TABLE, $table_name);
+			$backward_keys = Admin::get()->getBackwardKeys($TABLE, $table_name);
 
 			echo "<div class='scrollable'>\n";
 			echo "<table id='table' class='nowrap checkable'>\n";
 
-			echo script("mixin(gid('table'), {onclick: partialArg(tableClick, false, " . ($admin->isDataEditAllowed() ? "true" : "false") . "), ondblclick: partialArg(tableClick, true), onkeydown: editingKeydown});");
+			echo script("mixin(gid('table'), {onclick: partialArg(tableClick, false, " . (Admin::get()->isDataEditAllowed() ? "true" : "false") . "), ondblclick: partialArg(tableClick, true), onkeydown: onEditingKeydown});");
 			echo "<thead><tr>";
 
 			if ($group || !$select) {
 				echo "<th class='actions'><input type='checkbox' id='all-page' class='jsonly'>" . script("gid('all-page').onclick = partial(formCheck, /check/);", "");
-				if ($admin->isDataEditAllowed()) {
+				if (Admin::get()->isDataEditAllowed()) {
 					echo " <a href='", h($_GET["modify"] ? remove_from_uri("modify") : $_SERVER["REQUEST_URI"] . "&modify=1") . "' title='", lang('Modify'), "'>", icon_solo("edit-all"), "</a>";
 				}
 			}
@@ -357,7 +357,7 @@ if (!$columns && support("table")) {
 				if (!isset($unselected[$key])) {
 					$val = $_GET["columns"][key($select)] ?? null;
 					$field = $fields[$select ? ($val ? $val["col"] : current($select)) : $key];
-					$name = ($field ? $admin->getFieldName($field, $rank) : (isset($val["fun"]) ? "*" : h($key)));
+					$name = ($field ? Admin::get()->getFieldName($field, $rank) : (isset($val["fun"]) ? "*" : h($key)));
 					if ($name != "") {
 						$rank++;
 						$names[$key] = $name;
@@ -403,7 +403,7 @@ if (!$columns && support("table")) {
 				ob_end_clean();
 			}
 
-			foreach ($admin->fillForeignDescriptions($rows, $foreign_keys) as $n => $row) {
+			foreach (Admin::get()->fillForeignDescriptions($rows, $foreign_keys) as $n => $row) {
 				$unique_array = unique_array($rows[$n], $indexes);
 				if (!$unique_array) {
 					$unique_array = [];
@@ -427,7 +427,7 @@ if (!$columns && support("table")) {
 					echo "<td class='actions'>",
 						checkbox("check[]", substr($unique_idf, 1), in_array(substr($unique_idf, 1), (array)$_POST["check"]));
 
-					if (!$is_group && $admin->isDataEditAllowed()) {
+					if (!$is_group && Admin::get()->isDataEditAllowed()) {
 						echo " <a href='", h(ME . "edit=" . urlencode($TABLE) . $unique_idf), "' class='edit' title='", lang('Edit'), "'>", icon_solo("edit"), "</a>";
 					}
 				}
@@ -493,7 +493,7 @@ if (!$columns && support("table")) {
 				if ($backward_keys) {
 					echo "<td>";
 				}
-				$admin->printBackwardKeys($backward_keys, $rows[$n]);
+				Admin::get()->printBackwardKeys($backward_keys, $rows[$n]);
 				echo "</tr>\n"; // close to allow white-space: pre
 			}
 
@@ -503,7 +503,7 @@ if (!$columns && support("table")) {
 
 			echo "</table>\n";
 			echo script("initToggles(gid('table'));");
-			echo "</div>\n";
+			echo "</div>\n"; // scrollable
 		}
 
 		if (!is_ajax()) {
@@ -602,7 +602,7 @@ if (!$columns && support("table")) {
 				echo checkbox("all", 1, 0, ($found_rows !== false ? ($exact_count ? "" : "~ ") . lang('%d row(s)', $found_rows) : ""), "var checked = formChecked(this, /check/); selectCount('selected', this.checked ? '$display_rows' : checked); selectCount('selected2', this.checked || !checked ? '$display_rows' : checked);") . "\n";
 				echo "</div></fieldset>\n";
 
-				if ($admin->isDataEditAllowed()) {
+				if (Admin::get()->isDataEditAllowed()) {
 					?>
 <fieldset<?php echo ($_GET["modify"] ? '' : ' class="jsonly"'); ?>><legend><?php echo lang('Modify'); ?></legend><div class='fieldset-content'>
 <input type="submit" class="button" value="<?php echo lang('Save'); ?>"<?php echo ($_GET["modify"] ? '' : ' title="' . lang('Ctrl+click on a value to modify it.') . '"'); ?>>
@@ -615,7 +615,7 @@ if (!$columns && support("table")) {
 <?php
 				}
 
-				$format = $admin->getDumpFormats();
+				$format = Admin::get()->getDumpFormats();
 				foreach ((array) $_GET["columns"] as $column) {
 					if ($column["fun"]) {
 						unset($format['sql']);
@@ -625,16 +625,19 @@ if (!$columns && support("table")) {
 				if ($format) {
 					print_fieldset_start("export", lang('Export') . " <span id='selected2'></span>", "export");
 					echo html_select("format", $format, $import_settings["format"]);
-					$output = $admin->getDumpOutputs();
+					$output = Admin::get()->getDumpOutputs();
 					echo ($output ? " " . html_select("output", $output, $import_settings["output"]) : "");
 					echo " <input type='submit' class='button' name='export' value='" . lang('Export') . "'>\n";
 					print_fieldset_end("export");
 				}
 
-			    echo "</div></div>\n";
+			    echo "</div></div>\n"; // table-footer
+				echo script("initTableFooter()");
 			}
 
-			if ($admin->isDataEditAllowed()) {
+			echo "</div>\n"; // table-footer-parent
+
+			if (Admin::get()->isDataEditAllowed()) {
 				echo "<p>";
 				echo "<a href='#import'>", icon("import"), lang('Import') . "</a>";
 				echo script("qsl('a').onclick = partial(toggle, 'import');", "");
@@ -649,6 +652,8 @@ if (!$columns && support("table")) {
 			echo "<input type='hidden' name='token' value='$token'>\n";
 			echo "</form>\n";
 			echo (!$group && $select ? "" : script("tableCheck();"));
+		} else {
+			echo "</div>\n"; // table-footer-parent
 		}
 	}
 }

@@ -14,25 +14,16 @@ Migrating to 5.0
 include "adminneo.php";
 ```
 
-- Function for creating Admin instance was renamed form `adminer_object` to `create_adminneo`.
-
-- Core classes has been renamed: `Adminer` -> `Admin`, `AdminerPlugin` -> `Pluginer`.
-
 - Project's code and official plugins are in `AdminNeo` namespace now. Update your index.php and custom plugins by
-  using this new namespace. Simple index.php will look like this:
+  using this new namespace.
 
-```php
-<?php
+- Core classes have been renamed: `Adminer` -> `Admin`, `AdminerPlugin` -> `Pluginer`.
 
-use AdminNeo\Admin;
+- Function for creating custom Admin instance was renamed form `adminer_object()` to `adminneo_instance()`.
 
-function create_adminneo(): Admin 
-{
-    return new Admin();
-}
-
-include "adminneo.php";
-```
+- Plugins and Admin instance are autoloaded from `adminneo-plugins` directory, `adminneo-plugins.php` and
+  `adminneo-instance.php` files. More information about the new setup possibilities can be found in updated 
+  [README file](/README.md#configuration).
 
 - AdminNeo has a brand-new default design that is incompatible with the previous one. All alternative designs was
   removed. If you use custom `adminer.css` file, you can delete it. If you use
@@ -138,9 +129,11 @@ include "adminneo.php";
     - `AdminerTinymce` to `TinyMcePlugin`
     - `AdminerTranslation` to `TranslationPlugin`
 
+- All plugins now extend `Plugin` class.
+
 ### Customizable functions
 
-All customization functions defined in the Admin and AdminBase classes were refactored. They have new names and strict
+All customization functions defined in the Admin and Origin classes were refactored. They have new names and strict
 types of parameters and return values.
 
 - Function `selectQueryBuild()` was removed.
@@ -157,6 +150,7 @@ types of parameters and return values.
     - `dumpFilename()`
     - `selectEmailPrint()`
     - `selectEmailProcess()`
+    - `editRowPrint()`
 - Renamed customizable functions:
     - `headers()` -> `sendHeaders()`
     - `credentials()` -> `getCredentials()`
@@ -201,9 +195,10 @@ types of parameters and return values.
     - `dumpHeaders()` -> `sendDumpHeaders()`
     - `tableName()` -> `getTableName()`
     - `fieldName()` -> `getFieldName()`
-    - `editVal()` -> `formatFieldValue()`
-    - `selectLink()` -> `getFieldValueLink()`
     - `selectVal()` -> `formatSelectionValue()`
+    - `selectLink()` -> `getFieldValueLink()`
+    - `editVal()` -> `formatFieldValue()`
+    - `editFunctions()` -> `getFieldFunctions()`
     - `editInput()` -> `getFieldInput()`
     - `editHint()` -> `getFieldInputHint()`
     - `processInput()` -> `processFieldInput()`

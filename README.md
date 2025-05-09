@@ -117,26 +117,25 @@ JSON configuration file example:
 Configuration
 -------------
 
-You can define a configuration as a constructor parameter. Create `index.php` file implementing `create_adminneo()` 
-method that returns configured `Admin` instance.
+Configuration can be defined in `adminneo-config.php` file placed in the AdminNeo's current working directory. 
+A simple file structure will be:
+
+```
+– adminneo.php
+– adminneo-config.php
+```
+
+You can freely rename adminneo.php to index.php.
+
+The file adminneo-config.php will just return the configuration array:
 
 ```php
 <?php
 
-use AdminNeo\Admin;
-
-function create_adminneo(): Admin 
-{
-    // Define configuration.
-    $config = [
-        "colorVariant" => "green",
-    ];
-	
-    return new Admin($config);
-}
-
-// Include AdminNeo file.
-include "adminneo.php";
+// Define configuration.
+return [
+    "colorVariant" => "green",
+];
 ```
 
 ### Configuration parameters
@@ -175,62 +174,157 @@ For detailed information see [Configuration documentation](/docs/configuration.m
 Plugins
 -------
 
-AdminNeo functions can be changed or extended by plugins. Plugins are managed by `Pluginer` customization class. 
+AdminNeo functions can be modified or extended by plugins. 
 
-* Download `Pluginer.php` and plugins you want and place them into the `plugins` folder.
-* Create `index.php` file implementing `create_adminneo()` method that returns Pluginer instance.
+* Download plugins you want and place them into the `adminneo-plugins` folder. All plugins in this folder will be
+  autoloaded (but not enabled).
+* Define the list of enabled plugins in `adminneo-plugins.php` file.
 
 File structure will be:
 
 ```
-- plugins
-    - Pluginer.php
-    - dump-xml.php
-    - tinymce.php
-    - file-upload.php
+- adminneo-plugins
+    - JsonPreviewPlugin.php
+    - XmlDumpPlugin.php
+    - FileUploadPlugin.php
     - ...
 - adminneo.php
-- index.php
+- adminneo-plugins.php
 ```
 
-Index.php:
+adminneo-plugins.php:
+
+```php
+<?php
+  
+// Enable plugins. Files in `adminneo-plugins` are autoloaded, so including the source files is not necessary.
+return [
+    new \AdminNeo\JsonPreviewPlugin(),
+    new \AdminNeo\XmlDumpPlugin(),
+    new \AdminNeo\FileUploadPlugin("data/"),
+    // ...
+];
+```
+
+[Available plugins](plugins).
+
+Advanced customizations
+-----------------------
+
+The final option is overriding methods in the `Admin` class. It can be done in `adminneo-instance.php` file.
+
+File structure will be:
+
+```
+- adminneo.php
+- adminneo-instance.php
+```
+
+adminneo-instance.php:
+
+```php
+<?php
+class CustomAdmin extends \AdminNeo\Admin
+{
+    public function getServiceTitle(): string
+    {
+        return "Custom Service";
+    }
+}
+
+// Use factory method to create CustomAdmin instance.
+return CustomAdmin::create();
+```
+
+Factory method create() accepts also configuration and plugins, so everything can be defined in one 
+`adminneo-instance.php` file:
 
 ```php
 <?php
 
-use AdminNeo\Pluginer;
-
-function create_adminneo(): Pluginer
+class CustomAdmin extends \AdminNeo\Admin
 {
-    // Required to run any plugin.
-    include "plugins/Pluginer.php";
+    public function getServiceTitle(): string
+    {
+        return "Custom Service";
+    }
+}
+
+// Define configuration.
+$config = [
+    "colorVariant" => "green",
+];
+
+// Enable plugins.
+$plugins = [
+    new \AdminNeo\JsonPreviewPlugin(),
+    new \AdminNeo\XmlDumpPlugin(),
+    new \AdminNeo\FileUploadPlugin("data/"),
+    // ...
+];
     
-    // Include plugins.
-    include "plugins/dump-xml.php";
-    include "plugins/tinymce.php.php";
-    include "plugins/file-upload.php";
-    
-    // Enable plugins.
-    $plugins = [
-        new XmlDumpPlugin(),
-        new TinyMcePlugin(),
-        new FileUploadPlugin("data/"),
-        // ...
+// Use factory method to create CustomAdmin instance.
+return CustomAdmin::create($config, $plugins);
+```
+
+### Custom index.php
+
+It is also possible to create `Admin` instance inside your own index.php file. In this case, implement
+`adminneo_instance()` function in the global namespace and include AdminNeo file placed in the **non-public** directory:
+
+```php
+<?php
+
+function adminneo_instance() 
+{
+    // Define configuration.
+    $config = [
+        "colorVariant" => "green",
     ];
-    
+	
+    // Use factory method to create Admin instance.
+    return \AdminNeo\Admin::create($config);
+}
+
+// Include AdminNeo file.
+include "/non-public-path/adminneo.php";
+```
+
+Or with derived class and plugins:
+
+```php
+<?php
+
+function adminneo_instance() 
+{
+    class CustomAdmin extends \AdminNeo\Admin
+    {
+        public function getServiceTitle(): string
+        {
+            return "Custom Service";
+        }
+    }
+
     // Define configuration.
     $config = [
         "colorVariant" => "green",
     ];
     
-    return new Pluginer($plugins, $config);
+    // Enable plugins.
+    $plugins = [
+        new \AdminNeo\JsonPreviewPlugin(),
+        new \AdminNeo\XmlDumpPlugin(),
+        new \AdminNeo\FileUploadPlugin("data/"),
+        // ...
+    ];
+	
+    // Use factory method to create Admin instance.
+    return CustomAdmin::create($config, $plugins);
 }
 
-// Include AdminNeo or EditorNeo.
-include "adminneo.php";
+// Include AdminNeo file.
+include "/non-public-path/adminneo.php";
 ```
-
-[Available plugins](plugins).
 
 Custom CSS and JavaScript
 -------------------------
@@ -246,12 +340,12 @@ placed in the AdminNeo's current working directory (typically next to the index.
 Main project files
 ------------------
 
-- admin/index.php - Run development version of AdminNeo.
-- editor/index.php - Run development version of EditorNeo.
-- editor/example.php - Example Editor customization.
-- admin/plugins.php - Plugins demo.
-- admin/sqlite.php - Development version of AdminNeo with SQLite allowed.
-- editor/sqlite.php - Development version of Editor with SQLite allowed.
+- admin/index.php - Development version of AdminNeo.
+- admin/plugins.php - Plugins example.
+- editor/index.php - Development version of EditorNeo.
+- editor/plugins.php - Plugins example.
+- editor/example.php - Customizations example.
+- editor/sqlite.php - SQLite example.
 - bin/compile.php - Create a single file version.
 - bin/update-translations.php - Update translation files.
 - tests/katalon.html - Katalon Automation Recorder test suite.

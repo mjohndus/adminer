@@ -4,7 +4,7 @@ namespace AdminNeo;
 
 page_header(lang('Server'), "", false);
 
-$admin->printDatabaseMenu();
+Admin::get()->printDatabaseMenu();
 
 echo "<form action='' method='post'>\n";
 echo "<p>" . lang('Search data in tables') . ": <input type='search' class='input' name='query' value='" . h($_POST["query"]) . "'> <input type='submit' class='button' value='" . lang('Search') . "'>\n";
@@ -23,7 +23,7 @@ echo '<td>' . lang('Rows');
 echo "</thead>\n";
 
 foreach (table_status() as $table => $row) {
-	$name = $admin->getTableName($row);
+	$name = Admin::get()->getTableName($row);
 	if (isset($row["Engine"]) && $name != "") {
 		echo '<tr><td class="actions">' . checkbox("tables[]", $table, in_array($table, (array) $_POST["tables"], true));
 		echo "<th><a href='" . h(ME) . 'select=' . urlencode($table) . "'>$name</a>";

@@ -3,7 +3,6 @@
 namespace AdminNeo;
 
 /**
- * @var Admin $admin
  * @var ?Min_DB $connection
  * @var ?Min_Driver $driver
  */
@@ -65,11 +64,11 @@ if ($_GET["ns"] == "") {
 	page_header(lang('Schema') . ": " . h($_GET["ns"]), $error, true);
 }
 
-$admin->printDatabaseMenu();
+Admin::get()->printDatabaseMenu();
 
 if ($_GET["ns"] === "") {
 	echo "<h2 id='schemas'>" . lang('Schemas') . "</h2>\n";
-	$schemas = $admin->getSchemas();
+	$schemas = Admin::get()->getSchemas();
 	if (!$schemas) {
 		echo "<p class='message'>" . lang('No schemas.') . "\n";
 	} else {
@@ -92,14 +91,16 @@ if ($_GET["ns"] === "") {
 	if (!$tables_list) {
 		echo "<p class='message'>" . lang('No tables.') . "\n";
 	} else {
-		echo "<form class='table-footer-parent' action='' method='post'>\n";
+		echo "<form action='' method='post'>\n";
+		echo "<div class='table-footer-parent'>\n";
+
 		if (support("table")) {
 			echo "<div class='field-sets'>\n";
 			echo "<fieldset><legend>" . lang('Search data in tables') . " <span id='selected2'></span></legend><div class='fieldset-content'>";
 			echo "<input type='search' class='input' name='query' value='" . h($_POST["query"]) . "'>";
 			echo script("qsl('input').onkeydown = partialArg(bodyKeydown, 'search');", "");
 			echo " <input type='submit' class='button' name='search' value='" . lang('Search') . "'>\n";
-			if ($admin->getRegexpOperator()) {
+			if (Admin::get()->getRegexpOperator()) {
 				echo "<p><label><input type='checkbox' name='regexp' value='1'" . (empty($_POST['regexp']) ? '' : ' checked') . '>' . lang('as a regular expression') . '</label>';
 				echo doc_link(['sql' => 'regexp.html', 'pgsql' => 'functions-matching.html#FUNCTIONS-POSIX-REGEXP', 'elastic' => "regexp-syntax.html"]) . "</p>\n";
 			}
@@ -107,7 +108,7 @@ if ($_GET["ns"] === "") {
 			echo "</div>\n";
 
 			if ($_POST["search"] && $_POST["query"] != "") {
-				$_GET["where"][0]["op"] = $admin->getRegexpOperator() && !empty($_POST['regexp']) ? $admin->getRegexpOperator() : $admin->getLikeOperator();
+				$_GET["where"][0]["op"] = Admin::get()->getRegexpOperator() && !empty($_POST['regexp']) ? Admin::get()->getRegexpOperator() : Admin::get()->getLikeOperator();
 				search_tables();
 			}
 		}
@@ -136,7 +137,7 @@ if ($_GET["ns"] === "") {
 
 			echo '<tr><td class="actions">' . checkbox(($view ? "views[]" : "tables[]"), $name, in_array($name, $tables_views, true), "", "", "", $id);
 
-			if (!$admin->getConfig()->isSelectionPreferred() && (support("table") || support("indexes"))) {
+			if (!Admin::get()->getConfig()->isSelectionPreferred() && (support("table") || support("indexes"))) {
 				$action = "table";
 			} else {
 				$action = "select";
@@ -182,9 +183,9 @@ if ($_GET["ns"] === "") {
 		echo "</tr></tfoot>\n";
 
 		echo "</table>\n";
-		echo "</div>\n";
+		echo "</div>\n"; // scrollable
 
-		if ($admin->isDataEditAllowed()) {
+		if (Admin::get()->isDataEditAllowed()) {
 			echo "<div class='table-footer'><div class='field-sets'>\n";
 			$vacuum = "<input type='submit' class='button' value='" . lang('Vacuum') . "'> " . help_script("VACUUM");
 			$optimize = "<input type='submit' class='button' name='optimize' value='" . lang('Optimize') . "'> " . help_script($jush == "sql" ? "OPTIMIZE TABLE" : "VACUUM OPTIMIZE");
@@ -198,7 +199,7 @@ if ($_GET["ns"] === "") {
 			: "")))
 			. "<input type='submit' class='button' name='truncate' value='" . lang('Truncate') . "'> " . help_script($jush == "sqlite" ? "DELETE" : ("TRUNCATE" . ($jush == "pgsql" ? "" : " TABLE"))) . confirm()
 			. "<input type='submit' class='button' name='drop' value='" . lang('Drop') . "'>" . help_script("DROP TABLE") . confirm() . "\n";
-			$databases = (support("scheme") ? $admin->getSchemas() : $admin->getDatabases());
+			$databases = (support("scheme") ? Admin::get()->getSchemas() : Admin::get()->getDatabases());
 			if (count($databases) != 1 && $jush != "sqlite") {
 				$db = (isset($_POST["target"]) ? $_POST["target"] : (support("scheme") ? $_GET["ns"] : DB));
 				echo "<p>" . lang('Move to other database') . ": ";
@@ -212,7 +213,11 @@ if ($_GET["ns"] === "") {
 			echo "<input type='hidden' name='token' value='$token'>\n";
 			echo "</div></fieldset>\n";
 			echo "</div></div>\n";
+
+			echo script("initTableFooter()");
 		}
+
+		echo "</div>\n"; // table-footer-parent
 		echo "</form>\n";
 		echo script("tableCheck();");
 	}

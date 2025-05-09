@@ -15,7 +15,7 @@ if (!ob_get_level()) {
  */
 function page_header(string $title, string $error = "", $breadcrumb = []): void
 {
-	global $LANG, $admin, $jush;
+	global $LANG, $jush;
 
 	page_headers();
 	if (is_ajax() && $error) {
@@ -24,13 +24,13 @@ function page_header(string $title, string $error = "", $breadcrumb = []): void
 	}
 
 	$title = strip_tags($title);
-	$server_part = $breadcrumb !== false && $breadcrumb !== null && SERVER != "" ? " - " . h($admin->getServerName(SERVER)) : "";
-	$service_title = strip_tags($admin->getServiceTitle());
+	$server_part = $breadcrumb !== false && $breadcrumb !== null && SERVER != "" ? " - " . h(Admin::get()->getServerName(SERVER)) : "";
+	$service_title = strip_tags(Admin::get()->getServiceTitle());
 
 	$title_page = $title . $server_part . " - " . ($service_title != "" ? $service_title : "AdminNeo");
 
 	// Load AdminNeo version from file if cookie is missing.
-	if ($admin->getConfig()->isVersionVerificationEnabled()) {
+	if (Admin::get()->getConfig()->isVersionVerificationEnabled()) {
 		$filename = get_temp_dir() . "/adminneo.version";
 		if (!isset($_COOKIE["neo_version"]) && file_exists($filename) && ($lifetime = filemtime($filename) + 86400 - time()) > 0) { // 86400 - 1 day in seconds
 			$data = unserialize(file_get_contents($filename));
@@ -50,7 +50,7 @@ function page_header(string $title, string $error = "", $breadcrumb = []): void
 	<title><?= $title_page; ?></title>
 
 	<?php
-	$color_variant = validate_color_variant($admin->getConfig()->getColorVariant());
+	$color_variant = validate_color_variant(Admin::get()->getConfig()->getColorVariant());
 
 	echo "<link rel='stylesheet' href='", link_files("default-$color_variant.css", [
 		"../admin/themes/default/variables.css",
@@ -68,8 +68,8 @@ function page_header(string $title, string $error = "", $breadcrumb = []): void
 		"../admin/themes/default/print.css",
 	]), "'>\n";
 
-	if (!$admin->isLightModeForced()) {
-		echo "<link rel='stylesheet' " . (!$admin->isDarkModeForced() ? "media='(prefers-color-scheme: dark)' " : "") . "href='";
+	if (!Admin::get()->isLightModeForced()) {
+		echo "<link rel='stylesheet' " . (!Admin::get()->isDarkModeForced() ? "media='(prefers-color-scheme: dark)' " : "") . "href='";
 		echo link_files("default-$color_variant-dark.css", [
 			"../admin/themes/default/variables-dark.css",
 			"../admin/themes/default-$color_variant/variables-dark.css",
@@ -77,7 +77,7 @@ function page_header(string $title, string $error = "", $breadcrumb = []): void
 		echo "'>\n";
 	}
 
-	$theme = $admin->getConfig()->getTheme();
+	$theme = Admin::get()->getConfig()->getTheme();
 	[$theme, $color_variant] = validate_theme($theme, $color_variant);
 
 	if ($theme != "default") {
@@ -86,8 +86,8 @@ function page_header(string $title, string $error = "", $breadcrumb = []): void
 			"../admin/themes/$theme-$color_variant/main.css",
 		]), "'>\n";
 
-		if (!$admin->isLightModeForced()) {
-			echo "<link rel='stylesheet' " . (!$admin->isDarkModeForced() ? "media='(prefers-color-scheme: dark)' " : "") . "href='";
+		if (!Admin::get()->isLightModeForced()) {
+			echo "<link rel='stylesheet' " . (!Admin::get()->isDarkModeForced() ? "media='(prefers-color-scheme: dark)' " : "") . "href='";
 			echo link_files("$theme-$color_variant-dark.css", [
 				"../admin/themes/$theme/main-dark.css",
 				"../admin/themes/$theme-$color_variant/main-dark.css",
@@ -96,8 +96,8 @@ function page_header(string $title, string $error = "", $breadcrumb = []): void
 		}
 	}
 
-	foreach ($admin->getCssUrls() as $url) {
-		if (strpos($url, "adminneo-dark.css") === 0 && !$admin->isDarkModeForced()) {
+	foreach (Admin::get()->getCssUrls() as $url) {
+		if (strpos($url, "adminneo-dark.css") === 0 && !Admin::get()->isDarkModeForced()) {
 			echo "<link rel='stylesheet' media='(prefers-color-scheme: dark)' href='", h($url), "'>\n";
 		} else {
 			echo "<link rel='stylesheet' href='", h($url), "'>\n";
@@ -106,12 +106,12 @@ function page_header(string $title, string $error = "", $breadcrumb = []): void
 
 	echo script_src(link_files("main.js", ["../admin/scripts/functions.js", "scripts/editing.js"]));
 
-	foreach ($admin->getJsUrls() as $url) {
+	foreach (Admin::get()->getJsUrls() as $url) {
 		echo script_src($url);
 	}
 
-	$admin->printFavicons();
-	$admin->printToHead();
+	Admin::get()->printFavicons();
+	Admin::get()->printToHead();
 	?>
 </head>
 <body class="<?php echo lang('ltr'); ?> nojs">
@@ -140,7 +140,7 @@ function page_header(string $title, string $error = "", $breadcrumb = []): void
 
 		echo '<li><a href="' . h(HOME_URL) . '" title="', lang('Home'), '">', icon_solo("home"), '</a></li>';
 
-		$server_name = SERVER !== null ? $admin->getServerName(SERVER) : "";
+		$server_name = SERVER !== null ? Admin::get()->getServerName(SERVER) : "";
 		$server_name = $server_name != "" ? h($server_name) : lang('Server');
 
 		if ($breadcrumb === false) {
@@ -234,8 +234,6 @@ function get_available_themes(): array
  */
 function page_headers(): void
 {
-	global $admin;
-
 	header("Content-Type: text/html; charset=utf-8");
 	header("Cache-Control: no-cache");
 	header("X-XSS-Protection: 0"); // prevents introducing XSS in IE8 by removing safe parts of the page
@@ -254,7 +252,7 @@ function page_headers(): void
 		"base-uri" => "'none'",
 		"form-action" => "'self'",
 	];
-	$admin->updateCspHeader($csp);
+	Admin::get()->updateCspHeader($csp);
 
 	$directives = [];
 	foreach ($csp as $directive => $sources) {
@@ -262,7 +260,7 @@ function page_headers(): void
 	}
 	header("Content-Security-Policy: " . implode("; ", $directives));
 
-	$admin->sendHeaders();
+	Admin::get()->sendHeaders();
 }
 
 /**
@@ -293,7 +291,7 @@ function page_messages(string $error): void
 	if ($messages) {
 		foreach ($messages as $message) {
 			echo "<div class='message'>$message</div>\n";
-			echo script("initToggles(qsl('div'));");
+			echo script("initToggles(qsl('.message'));");
 		}
 
 		unset($_SESSION["messages"][$uri]);
@@ -301,6 +299,13 @@ function page_messages(string $error): void
 
 	if ($error) {
 		echo "<div class='error'>$error</div>\n";
+	}
+
+	$errors = Admin::get()->getErrors();
+	if ($errors) {
+		foreach ($errors as $error) {
+			echo "<div class='error'>$error</div>\n";
+		}
 	}
 }
 
@@ -311,20 +316,18 @@ function page_messages(string $error): void
  */
 function page_footer(?string $missing = null): void
 {
-	global $admin, $token;
-
 	echo "</div>\n"; // content
 
 	// Main navigation is printed after the page content, because databases and tables can be changed after the query
 	// execution in the 'SQL command' page.
 	echo "<button id='navigation-button' class='button light navigation-button'>", icon_solo("menu"), icon_solo("close"), "</button>";
 	echo "<div id='navigation-panel' class='navigation-panel'>\n";
-	$admin->printNavigation($missing);
+	Admin::get()->printNavigation($missing);
 
 	echo "<div class='footer'>\n";
 	language_select();
     if ($missing != "auth") {
-		$admin->printLogout();
+		Admin::get()->printLogout();
 	}
 	echo "</div>\n"; // footer
 	echo "</div>\n"; // navigation-panel

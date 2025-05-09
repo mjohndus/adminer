@@ -7,14 +7,18 @@ class Server
 	/** @var array */
 	private $params;
 
-	public function __construct(array $params)
+	/** @var ?string */
+	private $key;
+
+	public function __construct(array $params, ?string $key = null)
 	{
 		$this->params = $params;
+		$this->key = $key;
 	}
 
 	public function getKey(): string
 	{
-		return substr(md5($this->getDriver() . $this->getServer()), 0, 8);
+		return $this->key ?? substr(md5($this->getDriver() . $this->getServer()), 0, 8);
 	}
 
 	public function getDriver(): string

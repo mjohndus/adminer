@@ -170,7 +170,7 @@ if (isset($_GET["elastic"])) {
 			$search = $this->_conn->rootQuery($query, $data);
 
 			if ($print) {
-				echo admin()->formatSelectQuery("$query: " . json_encode($data), $start, !$search);
+				echo $this->admin->formatSelectQuery("$query: " . json_encode($data), $start, !$search);
 			}
 			if (empty($search)) {
 				return false;
@@ -284,14 +284,12 @@ if (isset($_GET["elastic"])) {
 	 */
 	function connect()
 	{
-		global $admin;
-
 		$connection = new Min_DB();
 
-		list($server, $username, $password) = $admin->getCredentials();
+		list($server, $username, $password) = Admin::get()->getCredentials();
 
 		if ($password != "" && $connection->connect($server, $username, "")) {
-			$result = $admin->verifyDefaultPassword($password);
+			$result = Admin::get()->verifyDefaultPassword($password);
 
 			return $result === true ? $connection : $result;
 		}
@@ -308,7 +306,7 @@ if (isset($_GET["elastic"])) {
 	}
 
 	function logged_user() {
-		$credentials = admin()->getCredentials();
+		$credentials = Admin::get()->getCredentials();
 
 		return $credentials[1];
 	}

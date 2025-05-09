@@ -88,8 +88,6 @@ function build_http_url($server, $username, $password, $defaultServer, $defaultP
 }
 
 function add_invalid_login() {
-	global $admin;
-
 	$base_name = get_temp_dir() . "/adminneo.invalid";
 	// adminer.invalid may not be writable by us, try the files with random suffixes
 	$file = null;
@@ -116,7 +114,7 @@ function add_invalid_login() {
 			}
 		}
 	}
-	$invalid = &$invalids[$admin->getBruteForceKey()];
+	$invalid = &$invalids[Admin::get()->getBruteForceKey()];
 	if (!$invalid) {
 		$invalid = [$time + 30*60, 0]; // active for 30 minutes
 	}
@@ -125,8 +123,6 @@ function add_invalid_login() {
 }
 
 function check_invalid_login() {
-	global $admin;
-
 	$base_name = get_temp_dir() . "/adminneo.invalid";
 
 	$invalids = [];
@@ -139,7 +135,7 @@ function check_invalid_login() {
 		}
 	}
 
-	$invalid = ($invalids ? $invalids[$admin->getBruteForceKey()] : []);
+	$invalid = ($invalids ? $invalids[Admin::get()->getBruteForceKey()] : []);
 
 	$next_attempt = ($invalid && $invalid[1] > 29 ? $invalid[0] - time() : 0); // allow 30 invalid attempts
 	if ($next_attempt > 0) { //! do the same with permanent login
@@ -152,9 +148,7 @@ function check_invalid_login() {
  */
 function connect_to_db(): Min_DB
 {
-	global $admin;
-
-	if ($admin->getConfig()->hasServers() && !$admin->getConfig()->getServer(SERVER)) {
+	if (Admin::get()->getConfig()->hasServers() && !Admin::get()->getConfig()->getServer(SERVER)) {
 		auth_error(lang('Invalid server or credentials.'));
 	}
 
@@ -171,12 +165,10 @@ function connect_to_db(): Min_DB
  */
 function authenticate(): void
 {
-	global $admin;
-
-	// Note: $admin->authenticate() method can use global $connection
+	// Note: Admin::get()->authenticate() method can use global $connection
 	// That's why authentication has to be called after successful connection to the database.
 
-	$result = $admin->authenticate($_GET["username"], get_password());
+	$result = Admin::get()->authenticate($_GET["username"], get_password());
 	if ($result !== true) {
 		connection_error($result);
 	}
@@ -200,8 +192,7 @@ function connection_error($result): void
 	auth_error($error);
 }
 
-/** @var Admin $admin */
-$admin->init();
+Admin::get()->init();
 
 $auth = $_POST["auth"] ?? null;
 if ($auth) {
@@ -209,7 +200,7 @@ if ($auth) {
 	session_regenerate_id();
 
 	$server = $auth["server"] ?? "";
-	$server_obj = $admin->getConfig()->getServer($server);
+	$server_obj = Admin::get()->getConfig()->getServer($server);
 
 	$driver = $server_obj ? $server_obj->getDriver() : ($auth["driver"] ?? "");
 	$server = $server_obj ? $server : trim($server);
@@ -227,7 +218,7 @@ if ($auth) {
 
 	if ($auth["permanent"]) {
 		$key = base64_encode($driver) . "-" . base64_encode($server) . "-" . base64_encode($username) . "-" . base64_encode($db);
-		$private = $admin->getPrivateKey(true);
+		$private = Admin::get()->getPrivateKey(true);
 		$encrypted_password = $private ? encrypt_string($password, $private) : false;
 		$permanent[$key] = "$key:" . base64_encode($encrypted_password ?: "");
 		cookie("neo_permanent", implode(" ", $permanent));
@@ -251,7 +242,7 @@ if ($auth) {
 
 } elseif ($permanent && !$_SESSION["pwds"]) {
 	session_regenerate_id();
-	$private = $admin->getPrivateKey();
+	$private = Admin::get()->getPrivateKey();
 	foreach ($permanent as $key => $val) {
 		list(, $cipher) = explode(":", $val);
 		list($driver, $server, $username, $db) = array_map('base64_decode', explode("-", $key));
@@ -287,7 +278,7 @@ function unset_permanent() {
  * @throws \Random\RandomException
  */
 function auth_error($error) {
-	global $admin, $has_token;
+	global $has_token;
 	$session_name = session_name();
 	if (isset($_GET["username"])) {
 		header("HTTP/1.1 403 Forbidden"); // 401 requires sending WWW-Authenticate header
@@ -319,7 +310,7 @@ function auth_error($error) {
 		echo "<p class='message'>" . lang('The action will be performed after successful login with the same credentials.') . "\n";
 	}
 	echo "</div>\n";
-	$admin->printLoginForm();
+	Admin::get()->printLoginForm();
 	echo "</form>\n";
 	page_footer("auth");
 	exit;
@@ -348,11 +339,11 @@ if (!isset($_GET["username"]) || get_password() === null) {
 validate_server_input();
 check_invalid_login();
 
-$admin->getConfig()->applyServer(SERVER);
+Admin::get()->getConfig()->applyServer(SERVER);
 
 $connection = connect_to_db();
 authenticate();
-$driver = new Min_Driver($connection);
+$driver = new Min_Driver($connection, Admin::get());
 
 if ($_POST["logout"] && $has_token && !verify_token()) {
 	page_header(lang('Logout'), lang('Invalid CSRF token. Send the form again.'));

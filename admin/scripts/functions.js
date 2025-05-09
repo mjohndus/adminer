@@ -527,9 +527,7 @@ function selectAddRow(event) {
  * @return {boolean} Always false.
  */
 function selectRemoveRow() {
-	const row = this.parentNode;
-
-	row.parentNode.removeChild(row);
+	this.parentElement.remove();
 
 	return false;
 }
@@ -838,23 +836,51 @@ function bodyClick(event) {
 
 
 
-/** Change focus by Ctrl+Up or Ctrl+Down
-* @param KeyboardEvent
-* @return boolean
-*/
-function editingKeydown(event) {
+/**
+ * Changes the focus by Ctrl+Up or Ctrl+Down in a table.
+ *
+ * @param {KeyboardEvent} event
+ *
+ * @return {boolean}
+ */
+function onEditingKeydown(event)
+{
 	if ((event.keyCode === 40 || event.keyCode === 38) && isCtrl(event)) { // 40 - Down, 38 - Up
-		var target = event.target;
-		var sibling = (event.keyCode === 40 ? 'nextSibling' : 'previousSibling');
-		var el = target.parentNode.parentNode[sibling];
-		if (el && (isTag(el, 'tr') || (el = el[sibling])) && isTag(el, 'tr') && (el = el.childNodes[nodePosition(target.parentNode)]) && (el = el.childNodes[nodePosition(target)])) {
-			el.focus();
+		event.preventDefault();
+
+		const target = event.target;
+		let row = parentTag(target, "tr");
+		if (!row) {
+			return false;
 		}
+
+		row = event.keyCode === 40 ? row.nextElementSibling : row.previousElementSibling;
+		if (!row || !isTag(row, 'tr')) {
+			return false;
+		}
+
+		const cell = row.childNodes[nodePosition(parentTag(target, "th|td"))];
+		if (!cell) {
+			return false;
+		}
+
+		let input = cell.childNodes[nodePosition(target)];
+		if (!input || !isTag(input, "input|select|textarea|pre|button") || input.classList.contains("hidden")) {
+			input = qs("input:not(.hidden), select:not(.hidden), textarea:not(.hidden), pre.jush, button", cell);
+		}
+
+		if (input) {
+			input.focus();
+		}
+
 		return false;
 	}
+
 	if (event.shiftKey && !bodyKeydown(event, 'insert')) {
+		event.preventDefault();
 		return false;
 	}
+
 	return true;
 }
 
@@ -1068,7 +1094,24 @@ function ajaxForm(form, message, button) {
 	}, data, message);
 }
 
+function initTableFooter() {
+	const footer = qs(".table-footer");
+	if (!footer) return;
 
+	const options = {
+		root: qs(".table-footer-parent"),
+		rootMargin: "0px 0px -1px 0px",
+		threshold: 1.0,
+	};
+
+	const observer = new IntersectionObserver((entries) => {
+		const entry = entries[0];
+		// Note: entry.isIntersecting does not work well on mobile Safari so we are comparing bottom positions.
+		footer.classList.toggle("sticky", entry.boundingClientRect.bottom < entry.rootBounds.bottom);
+	}, options);
+
+	observer.observe(footer);
+}
 
 /**
  * Displays inline edit field.

@@ -14,7 +14,7 @@ namespace AdminNeo;
  * @license https://www.apache.org/licenses/LICENSE-2.0 Apache License, Version 2.0
  * @license https://www.gnu.org/licenses/gpl-2.0.html GNU General Public License, version 2 (one or other)
  */
-class JsonPreviewPlugin
+class JsonPreviewPlugin extends Plugin
 {
 	/** @var bool */
 	private $inSelection;
@@ -141,7 +141,7 @@ class JsonPreviewPlugin
 		if (
 			preg_match('~json~', $field["type"]) ||
 			(
-				admin()->getConfig()->isJsonValuesDetection() &&
+				$this->config->isJsonValuesDetection() &&
 				preg_match('~varchar|text|character varying|String~', $field["type"]) &&
 				is_string($value) &&
 				in_array(substr($value, 0, 1), ['{', '['])

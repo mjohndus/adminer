@@ -2,22 +2,89 @@
 
 namespace AdminNeo;
 
-abstract class AdminBase
+abstract class Origin extends Plugin
 {
-	/** @var Config */
-	protected $config;
-
 	/** @var array */
 	private $systemDatabases;
 
 	/** @var array */
 	private $systemSchemas;
 
-	public function __construct(array $config = [])
+	/** @var string[] */
+	private $errors;
+
+	/** @var static|Pluginer */
+	private static $instance;
+
+	/**
+	 * @param array $config Configuration array.
+	 * @param Plugin[] $plugins List of plugin instances.
+	 *
+	 * @return static|Pluginer
+	 */
+	public static function create(array $config = [], array $plugins = [], array $errors = [])
 	{
-		$this->config = new Config($config);
+		if (isset(self::$instance)) {
+			die("Admin instance already exists.\n");
+		}
+
+		if (!$config && file_exists("adminneo-config.php")) {
+			$config = include_once("adminneo-config.php");
+			if (!is_array($config)) {
+				$config = [];
+				$linkParams = "href=https://github.com/adminneo-org/adminneo#configuration " . target_blank();
+
+				$errors[] = lang('%s must return an array.', "<b>adminneo-config.php</b>") .
+					" <a $linkParams>" . lang('More information.') . "</a>";
+			}
+		}
+
+		if (!$plugins && file_exists("adminneo-plugins.php")) {
+			$plugins = include_once("adminneo-plugins.php");
+			if (!is_array($plugins)) {
+				$plugins = [];
+				$linkParams = "href=https://github.com/adminneo-org/adminneo#plugins " . target_blank();
+
+				$errors[] = lang('%s must return an array.', "<b>adminneo-plugins.php</b>") .
+					" <a $linkParams>" . lang('More information.') . "</a>";
+			}
+		}
+
+		$config = new Config($config);
+		$admin = new static($errors);
+		self::$instance = $plugins ? new Pluginer($admin, $plugins) : $admin;
+
+		$admin->inject(self::$instance, $config);
+		foreach ($plugins as $plugin) {
+			$plugin->inject(self::$instance, $config);
+		}
+
+		return self::$instance;
 	}
 
+	/**
+	 * @return static|Pluginer
+	 */
+	public static function get()
+	{
+		if (!isset(self::$instance)) {
+			die("Admin instance not found. Create instance by Admin::create() method at first.\n");
+		}
+
+		return self::$instance;
+	}
+
+	/**
+	 * @param string[] $errors
+	 */
+	public function __construct(array $errors = [])
+	{
+		$this->errors = $errors;
+	}
+
+	/**
+	 * TODO: Do not get config from Admin, but inject Config where needed.
+	 */
 	public function getConfig(): Config
 	{
 		return $this->config;
@@ -43,6 +110,16 @@ abstract class AdminBase
 	public function init(): void
 	{
 		//
+	}
+
+	/**
+	 * Returns the array of HTML-formatted error messages.
+	 *
+	 * @return string[]
+	 */
+	public function getErrors(): array
+	{
+		return $this->errors;
 	}
 
 	public abstract function getServiceTitle(): string;
@@ -231,7 +308,7 @@ abstract class AdminBase
 
 	public function printFavicons(): void
 	{
-		$colorVariant = validate_color_variant($this->getConfig()->getColorVariant());
+		$colorVariant = validate_color_variant($this->config->getColorVariant());
 
 		// https://evilmartians.com/chronicles/how-to-favicon-in-2021-six-files-that-fit-most-needs
 		// Converting PNG to ICO: https://redketchup.io/icon-converter
@@ -432,9 +509,7 @@ abstract class AdminBase
 
 	public abstract function processSelectionLength(): string;
 
-	public abstract function editRowPrint($table, $fields, $row, $update);
-
-	public abstract function editFunctions($field);
+	public abstract function getFieldFunctions(array $field): array;
 
 	public abstract function getFieldInput(string $table, array $field, string $attrs, $value, ?string $function): string;
 
@@ -449,7 +524,7 @@ abstract class AdminBase
 	 */
 	public function getFieldInputHint(string $table, array $field, ?string $value): string
 	{
-		return support("comment") ? $this->formatComment($field["comment"]) : "";
+		return support("comment") ? $this->admin->formatComment($field["comment"]) : "";
 	}
 
 	public abstract function processFieldInput(?array $field, string $value, string $function = ""): string;
@@ -466,7 +541,7 @@ abstract class AdminBase
 	public function detectJson(string $fieldType, &$value, ?bool $pretty = null): bool
 	{
 		if (is_array($value)) {
-			$flags = JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | ($this->getConfig()->isJsonValuesAutoFormat() ? JSON_PRETTY_PRINT : 0);
+			$flags = JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | ($this->config->isJsonValuesAutoFormat() ? JSON_PRETTY_PRINT : 0);
 			$value = json_encode($value, $flags);
 			return true;
 		}
@@ -474,7 +549,7 @@ abstract class AdminBase
 		$flags = JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | ($pretty ? JSON_PRETTY_PRINT : 0);
 
 		if (str_contains($fieldType, "json")) {
-			if ($pretty !== null && $this->getConfig()->isJsonValuesAutoFormat()) {
+			if ($pretty !== null && $this->config->isJsonValuesAutoFormat()) {
 				$value = json_encode(json_decode($value), $flags);
 			}
 
@@ -491,7 +566,7 @@ abstract class AdminBase
 			($value[0] == "{" || $value[0] == "[") &&
 			($json = json_decode($value))
 		) {
-			if ($pretty !== null && $this->getConfig()->isJsonValuesAutoFormat()) {
+			if ($pretty !== null && $this->config->isJsonValuesAutoFormat()) {
 				$value = json_encode($json, $flags);
 			}
 
@@ -531,7 +606,7 @@ abstract class AdminBase
 ?>
 
 <div class="header">
-	<?= $this->getServiceTitle(); ?>
+	<?= $this->admin->getServiceTitle(); ?>
 
 	<?php if ($missing != "auth"): ?>
 		<span class="version">
@@ -557,7 +632,7 @@ abstract class AdminBase
 	{
 		echo "<div class='tables-filter jsonly'>"
 			. "<input id='tables-filter' type='search' class='input' autocomplete='off' placeholder='" . lang('Table') . "'>"
-			. script("initTablesFilter(" . json_encode($this->getDatabase()) . ");")
+			. script("initTablesFilter(" . json_encode($this->admin->getDatabase()) . ");")
 			. "</div>\n";
 	}
 

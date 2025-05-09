@@ -13,7 +13,7 @@ namespace AdminNeo;
  * @license https://www.apache.org/licenses/LICENSE-2.0 Apache License, Version 2.0
  * @license https://www.gnu.org/licenses/gpl-2.0.html GNU General Public License, version 2 (one or other)
  */
-class SqlLogPlugin
+class SqlLogPlugin extends Plugin
 {
 	private $filename;
 
@@ -42,7 +42,7 @@ class SqlLogPlugin
 	private function log(string $query): void
 	{
 		if ($this->filename == "") {
-			$dbName = admin()->getDatabase();
+			$dbName = $this->admin->getDatabase();
 			$this->filename = $dbName . ($dbName ? "-" : "") . "log.sql";
 		}
 

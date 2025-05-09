@@ -3,7 +3,6 @@
 namespace AdminNeo;
 
 /**
- * @var Admin $admin
  * @var ?Min_DB $connection
  * @var ?Min_Driver $driver
  */
@@ -68,7 +67,9 @@ if (isset($_GET["function"])) {
 }
 ?>
 </table>
-<?php echo script("editFields();"); ?>
+<?php
+	echo script("initFieldsEditing(gid('edit-fields')); initSortable('#edit-fields tbody');");
+?>
 </div>
 <p><?php textarea("definition", $row["definition"]); ?>
 <p>

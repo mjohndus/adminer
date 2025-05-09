@@ -3,7 +3,6 @@
 namespace AdminNeo;
 
 /**
- * @var Admin $admin
  * @var ?Min_DB $connection
  * @var ?Min_Driver $driver
  */
@@ -187,7 +186,7 @@ foreach ($row["fields"] as $field) {
 	}
 }
 
-$collations = $admin->getCollations(array_keys($keep_collations));
+$collations = Admin::get()->getCollations(array_keys($keep_collations));
 
 $engines = engines();
 // case of engine may differ
@@ -227,7 +226,9 @@ foreach ($engines as $engine) {
 edit_fields($row["fields"], $collations, "TABLE", $foreign_keys);
 ?>
 </table>
-<?php echo script("editFields();"); ?>
+<?php
+	echo script("initFieldsEditing(gid('edit-fields')); initSortable('#edit-fields tbody');");
+?>
 </div>
 <p>
 <?php echo lang('Auto Increment'); ?>: <input type="number" class="input size" name="Auto_increment" size="6" value="<?php echo h($row["Auto_increment"]); ?>">

@@ -3,7 +3,6 @@
 namespace AdminNeo;
 
 /**
- * @var Admin $admin
  * @var ?Min_DB $connection
  * @var ?Min_Driver $driver
  */
@@ -28,7 +27,7 @@ if (!(DB != "" ? $connection->select_db(DB) : isset($_GET["sql"]) || isset($_GET
 			queries_redirect(substr(ME, 0, -1), lang('Databases have been dropped.'), drop_databases($_POST["db"]));
 		}
 
-		$server_name = $admin->getServerName(SERVER);
+		$server_name = Admin::get()->getServerName(SERVER);
 		$title = h($drivers[DRIVER]) . ": " . ($server_name != "" ? h($server_name) : lang('Server'));
 
 		page_header($title, $error, false);
@@ -51,11 +50,12 @@ if (!(DB != "" ? $connection->select_db(DB) : isset($_GET["sql"]) || isset($_GET
 
 		echo "<p>" . lang('%s version: %s through PHP extension %s', $drivers[DRIVER], "<b>" . h($connection->server_info) . "</b>", "<b>$connection->extension</b>") . "\n";
 		echo "<p>" . lang('Logged as: %s', "<b>" . h(logged_user()) . "</b>") . "\n";
-		$databases = $admin->getDatabases();
+		$databases = Admin::get()->getDatabases();
 		if ($databases) {
 			$scheme = support("scheme");
 			$all_collations = collations();
-			echo "<form class='table-footer-parent' action='' method='post'>\n";
+			echo "<form action='' method='post'>\n";
+			echo "<div class='table-footer-parent'>\n";
 			echo "<div class='scrollable'>\n";
 			echo "<table class='checkable'>\n";
 			echo script("mixin(qsl('table'), {onclick: tableClick, ondblclick: partialArg(tableClick, true)});");
@@ -84,17 +84,21 @@ if (!(DB != "" ? $connection->select_db(DB) : isset($_GET["sql"]) || isset($_GET
 			}
 
 			echo "</table>\n";
-			echo "</div>\n";
+			echo "</div>\n"; // scrollable
 
-			echo (support("database")
-				? "<div class='table-footer'><div class='field-sets'>\n"
+			if (support("database")) {
+				echo "<div class='table-footer'><div class='field-sets'>\n"
 					. "<fieldset><legend>" . lang('Selected') . " <span id='selected'></span></legend><div class='fieldset-content'>\n"
 					. "<input type='hidden' name='all' value=''>" . script("qsl('input').onclick = function () { selectCount('selected', formChecked(this, /^db/)); };") // used by trCheck()
 					. "<input type='submit' class='button' name='drop' value='" . lang('Drop') . "'>" . confirm() . "\n"
 					. "</div></fieldset>\n"
-					. "</div></div>\n"
-				: ""
-			);
+					. "</div></div>\n";
+
+				echo script("initTableFooter()");
+			}
+
+			echo "</div>\n"; // table-footer-parent
+
 			echo "<input type='hidden' name='token' value='$token'>\n";
 			echo "</form>\n";
 			echo script("tableCheck();");
