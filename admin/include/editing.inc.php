@@ -388,7 +388,8 @@ function edit_fields(array $fields, array $collations, $type = "TABLE", $foreign
 	?></td>
 </tr></thead>
 <?php
-	echo "<tbody>\n";
+	$class = support("move_col") ? "class='sortable'" : "";
+	echo "<tbody $class>\n";
 
 	foreach ($fields as $i => $field) {
 		$i++;

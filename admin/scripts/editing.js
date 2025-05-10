@@ -229,8 +229,8 @@ function selectFieldChange() {
 
 		// Type.
 		field = qs('[name$="[type]"]', row);
-		field.addEventListener("focus", () => {
-			lastType = selectValue(this);
+		field.addEventListener("focus", (event) => {
+			lastType = selectValue(event.target);
 		});
 		field.addEventListener("change", onFieldTypeChange);
 
@@ -239,7 +239,8 @@ function selectFieldChange() {
 		field.addEventListener("focus", onFieldLengthFocus);
 		field.addEventListener("input", (event) => {
 			// Mark length as required.
-			event.target.classList.toggle('required', !this.value.length && /var(char|binary)$/.test(selectValue(this.parentNode.previousSibling.firstChild)));
+			const input = event.target;
+			input.classList.toggle('required', !input.value.length && /var(char|binary)$/.test(selectValue(input.parentNode.previousSibling.firstChild)));
 		});
 
 		// Help.
@@ -268,16 +269,20 @@ function selectFieldChange() {
 
 		// Actions.
 		let button = qs("button[name^='add']", row);
-		button.addEventListener("click", (event) => {
-			addRow(event.currentTarget, true);
-			event.preventDefault();
-		});
+		if (button) {
+			button.addEventListener("click", (event) => {
+				addRow(event.currentTarget, true);
+				event.preventDefault();
+			});
+		}
 
 		button = qs("button[name^='drop_col']", row);
-		button.addEventListener("click", (event) => {
-			removeTableRow(event.currentTarget, "field");
-			event.preventDefault();
-		});
+		if (button) {
+			button.addEventListener("click", (event) => {
+				removeTableRow(event.currentTarget, "field");
+				event.preventDefault();
+			});
+		}
 	}
 
 	/**
@@ -485,7 +490,11 @@ function selectFieldChange() {
 		}
 
 		initFieldsEditingRow(newRow, !focus);
-		initSortableRow(newRow);
+
+		const parent = parentTag(button, "tbody");
+		if (parent.classList.contains("sortable")) {
+			initSortableRow(newRow);
+		}
 
 		row.parentNode.insertBefore(newRow, row.nextSibling);
 

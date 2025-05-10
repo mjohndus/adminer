@@ -68,7 +68,10 @@ if (isset($_GET["function"])) {
 ?>
 </table>
 <?php
-	echo script("initFieldsEditing(gid('edit-fields')); initSortable('#edit-fields tbody');");
+	echo script("initFieldsEditing(gid('edit-fields'));");
+	if (support("move_col")) {
+		echo script("initSortable('#edit-fields tbody');");
+	}
 ?>
 </div>
 <p><?php textarea("definition", $row["definition"]); ?>
