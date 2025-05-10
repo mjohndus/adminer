@@ -502,7 +502,6 @@ if (isset($_GET["elastic"])) {
 	}
 
 	function fields($table) {
-		$mappings = [];
 		$mapping = connection()->rootQuery("_mapping");
 
 		if (!isset($mapping[$table])) {
@@ -518,9 +517,7 @@ if (isset($_GET["elastic"])) {
 			}
 		}
 
-		if (!empty($mapping)) {
-			$mappings = $mapping[$table]["mappings"]["properties"];
-		}
+		$mappings = $mapping[$table]["mappings"]["properties"] ?? [];
 
 		$result = [
 			"_id" => [
@@ -585,19 +582,35 @@ if (isset($_GET["elastic"])) {
 	 */
 	function alter_table($table, $name, $fields, $foreign, $comment, $engine, $collation, $auto_increment, $partitioning) {
 		$properties = [];
-		foreach ($fields as $f) {
-			$field_name = trim($f[1][0]);
-			$field_type = trim($f[1][1] ? $f[1][1] : "text");
+
+		foreach ($fields as $field) {
+			if (!isset($field[1])) {
+				continue;
+			}
+
+			$field_name = trim($field[1][0]);
+			$field_type = trim($field[1][1] ?: "text");
+
 			$properties[$field_name] = [
-				'type' => $field_type
+				"type" => $field_type,
 			];
 		}
 
-		if (!empty($properties)) {
-			$properties = ['properties' => $properties];
-		}
+		$mappings = $properties ? ["properties" => $properties] : new \stdClass();
 
-		return connection()->query("_mapping/{$name}", $properties, 'PUT');
+		if ($table != "") {
+			// Save the query for later use in a flesh message. TODO: This is so ugly.
+			queries("\"POST $name/_mapping\": " . json_encode($mappings));
+
+			return connection()->rootQuery("$name/_mapping", $mappings, "POST");
+		} else {
+			$content = ["mappings" => $mappings];
+
+			// Save the query for later use in a flesh message. TODO: This is so ugly.
+			queries("\"PUT $name\": " . json_encode($content));
+
+			return connection()->rootQuery($name, $content, "PUT");
+		}
 	}
 
 	/** Drop types

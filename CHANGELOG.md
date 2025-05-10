@@ -65,6 +65,7 @@ upgrade your AdminNeo installation.
 - Elasticsearch: Properly display sparse result rows (by @cweiske)
 - Elasticsearch: Fix record insertion on Elasticsearch 7 (by @cweiske)
 - Elasticsearch: Fix record updating
+- Elasticsearch: Fix creating and altering indexes
 
 A huge thanks to everyone who helped (alphabetically): @adrianbj, @devinemke, @Lumeriol, @wintstar
 (If I missed anyone, just ping me.)
