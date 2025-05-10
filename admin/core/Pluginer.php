@@ -74,19 +74,13 @@ class Pluginer
 	 */
 	public function __call(string $name, array $params)
 	{
-		$args = [];
-		foreach ($params as $key => $val) {
-			// Some plugins accept params by reference - we don't need to propagate it outside, just to the other plugins.
-			$args[] = &$params[$key];
-		}
-
 		$append = self::AppendMethods[$name] ?? false;
 		$result = $append ? [] : null;
 
 		assert(isset($this->hooks[$name]), "Calling unknown plugin method: $name");
 
 		foreach ($this->hooks[$name] as $plugin) {
-			$value = call_user_func_array([$plugin, $name], $args);
+			$value = call_user_func_array([$plugin, $name], $params);
 
 			if ($value !== null) {
 				if ($append) {
@@ -99,5 +93,15 @@ class Pluginer
 		}
 
 		return $result;
+	}
+
+	public function updateCspHeader(array &$csp): void
+	{
+		$this->__call(__FUNCTION__, [&$csp]);
+	}
+
+	public function detectJson(string $fieldType, &$value, ?bool $pretty = null): bool
+	{
+		return $this->__call(__FUNCTION__, [$fieldType, &$value, $pretty]);
 	}
 }
