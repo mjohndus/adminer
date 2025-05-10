@@ -61,6 +61,7 @@ upgrade your AdminNeo installation.
 - Fix navigating between various input fields by Ctrl+Up/Down keys
 - MS SQL: Fix escaping UTF-8 strings in PDO drivers
 - Security: Disallow writing temporary files to symlinks (by @vrana)
+- Elasticsearch: Fix compatibility with Elasticsearch 8
 - Elasticsearch: Properly display sparse result rows (by @cweiske)
 - Elasticsearch: Fix record insertion on Elasticsearch 7 (by @cweiske)
 - Elasticsearch: Fix record updating

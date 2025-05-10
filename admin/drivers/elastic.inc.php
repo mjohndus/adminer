@@ -20,14 +20,23 @@ if (isset($_GET["elastic"])) {
 			 * @return array|false
 			 */
 			function rootQuery($path, ?array $content = null, $method = 'GET') {
-				$file = @file_get_contents("$this->_url/" . ltrim($path, '/'), false, stream_context_create(['http' => [
-					'method' => $method,
-					'content' => $content !== null ? json_encode($content) : null,
-					'header' => $content !== null ? 'Content-Type: application/json' : [],
-					'ignore_errors' => 1,
-					'follow_location' => 0,
-					'max_redirects' => 0,
-				]]));
+				$options = [
+					'http' => [
+						'method' => $method,
+						'content' => $content !== null ? json_encode($content) : null,
+						'header' => $content !== null ? 'Content-Type: application/json' : [],
+						'ignore_errors' => 1,
+						'follow_location' => 0,
+						'max_redirects' => 0,
+					],
+				];
+
+				$trust = Admin::get()->getConfig()->getSslTrustServerCertificate();
+				if ($trust) {
+					$options["ssl"] = ["verify_peer" => false];
+				}
+
+				$file = @file_get_contents("$this->_url/" . ltrim($path, '/'), false, stream_context_create($options));
 
 				if ($file === false) {
 					$this->error = lang('Invalid server or credentials.');
@@ -399,6 +408,10 @@ if (isset($_GET["elastic"])) {
 
 		$tables = [];
 		foreach ($aliases as $name => $index) {
+			if ($name[0] == ".") {
+				continue;
+			}
+
 			$tables[$name] = "table";
 
 			ksort($index["aliases"]);
