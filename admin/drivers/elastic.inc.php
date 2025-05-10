@@ -620,7 +620,12 @@ if (isset($_GET["elastic"])) {
 	function drop_tables($tables) {
 		$return = true;
 		foreach ($tables as $table) { //! convert to bulk api
-			$return = $return && connection()->query(urlencode($table), null, 'DELETE');
+			$table = urlencode($table);
+
+			// Save the query for later use in a flesh message. TODO: This is so ugly.
+			queries("\"DELETE $table\"");
+
+			$return = $return && connection()->query($table, null, 'DELETE');
 		}
 
 		return $return;
