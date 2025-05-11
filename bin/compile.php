@@ -280,29 +280,22 @@ $selected_themes = ["default-blue"];
 if ($arguments) {
 	$params = explode(",", $arguments[0]);
 
-	$base_name = str_replace("+", "", $params[0]);
-	if (file_exists(__DIR__ . "/../admin/themes/$base_name")) {
+	if (file_exists(__DIR__ . "/../admin/themes/$params[0]")) {
 		$themes_map = [];
 		foreach ($params as $theme) {
-			// Expand names with wildcards.
-			if (strpos($theme, "+") !== false) {
-				$dirNames = glob(__DIR__ . "/../admin/themes/" . str_replace("+", "*", $theme));
-			} else {
+			if (preg_match('~-(blue|green|red)$~', $theme)) {
 				$dirNames = [$theme];
+			} else {
+				$dirNames = ["$theme-blue", "$theme-green", "$theme-red"];
 			}
 
-			// Collect unique themes, ensure to use a color variant and include default color variant for every theme.
+			// Collect unique themes, ensure to include the default color variant for every theme.
 			foreach ($dirNames as $dirName) {
 				$dirname = basename($dirName);
 
-				if (preg_match('~-(blue|green|red)$~', $dirname, $matches)) {
-					$color_variant = $matches[1];
-				} else {
-					$dirname .= "-blue";
-					$color_variant = "blue";
-				}
+				preg_match('~-(blue|green|red)$~', $dirname, $matches);
 
-				$themes_map["default-$color_variant"] = true;
+				$themes_map["default-$matches[1]"] = true;
 				$themes_map[$dirname] = true;
 			}
 		}

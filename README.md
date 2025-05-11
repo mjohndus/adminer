@@ -70,8 +70,8 @@ Where:
 - `languages` is a comma-separated list of [languages](/admin/translations).
   If not specified, all languages will be included.
 - `themes` is a comma-separated list of [themes](/admin/themes) together with specific color variant. E.g. 
-  `default-blue`, `default-red`, etc. If not specified, only the `default-blue` theme will be included. The `+` 
-  character can be used as a wildcard in the theme name.
+  `default-blue`, `default-red`, etc. If color variant is not specified (e.g. `default`), all color variants will be
+  included. If no theme is specified, the `default-blue` theme will be included.
 - `config-file.json` is a path to the custom JSON configuration file. It contains a class with [the same parameters](#configuration) 
   that can be configured in Admin constructor.
 
