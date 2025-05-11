@@ -53,17 +53,18 @@ download the source code and compile your own AdminNeo:
 
 - Download the source code.
 - Run `composer install` to install dependencies.
-- Run bin/compile.php:
+- Run `php bin/compile.php`:
 
 ```shell
 # AdminNeo
-php bin/compile.php [drivers] [languages] [themes] [config-file.json]
+php bin/compile.php [project] [drivers] [languages] [themes] [config-file.json]
 
 # EditorNeo
 php bin/compile.php editor [drivers] [languages] [themes] [config-file.json]
 ```
 
 Where:
+- `project` is one of `admin` or `editor`. If not specified, AdminNeo is compiled.
 - `drivers` is a comma-separated list of [database drivers](/admin/drivers) or the value `all-drivers`.
   The default set is: mysql, pgsql, mssql, sqlite.
 - `languages` is a comma-separated list of [languages](/admin/translations).

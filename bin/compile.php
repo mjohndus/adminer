@@ -200,18 +200,46 @@ function min_version(): bool
 	return true;
 }
 
-function ini_bool(): bool {
+function ini_bool(): bool
+{
 	return true;
+}
+
+function print_usage(): void
+{
+	echo "Usage:\n";
+	echo "  php bin/compile.php [project] [drivers] [languages] [themes] [config-file]\n";
+	echo "\n";
+	echo "Compile AdminNeo or EditorNeo together with all plugins.\n";
+	echo "Files will be saved into the 'compiled' directory.\n";
+	echo "\n";
+	echo "PARAMETERS:\n";
+	echo "  project     - `admin` or `editor`\n";
+	echo "  drivers     - is a comma-separated list of database drivers or the value `all-drivers`\n";
+	echo "  languages   - comma-separated list of languages\n";
+	echo "  themes      - comma-separated list of themes together with specific color variant\n";
+	echo "  config-file - path to the custom JSON configuration file\n";
+	echo "\n";
+	echo "More information at: https://github.com/adminneo-org/adminneo?tab=readme-ov-file#usage\n";
 }
 
 // Parse script arguments.
 $arguments = $argv;
 array_shift($arguments);
 
+if ($arguments && ($arguments[0] == "-h" || $arguments[0] == "--help")) {
+	print_usage();
+	exit;
+}
+
 $project = "admin";
-if ($arguments[0] == "editor") {
-	$project = "editor";
-	array_shift($arguments);
+if ($arguments) {
+	if ($arguments[0] == "editor") {
+		$project = "editor";
+		array_shift($arguments);
+	} elseif ($arguments[0] == "admin") {
+		array_shift($arguments);
+	}
 }
 
 echo "project:   $project\n";
@@ -309,8 +337,8 @@ if ($arguments && preg_match('~\.json$~i', $arguments[0])) {
 echo "config:    " . ($custom_config ? "yes" : "no") . "\n";
 
 if ($arguments) {
-	echo "Usage: php compile.php [editor] [drivers] [languages] [themes] [config-file.json]\n";
-	echo "Purpose: Compile adminneo[-driver][-lang].php or editorneo[-driver][-lang].php.\n";
+	echo "\n⚠️ Unknown argument: $arguments[0]\n";
+	echo "Run `php bin/compile.php -h` for help.\n";
 	exit(1);
 }
 
