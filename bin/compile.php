@@ -531,8 +531,8 @@ $file = downgrade_php($file);
 $file = phpShrink($file);
 
 // Save file to export directory.
-@mkdir(__DIR__ . "/../export", 0777, true);
-$filename = __DIR__ . "/../export/{$project}neo"
+@mkdir(__DIR__ . "/../compiled", 0777, true);
+$filename = __DIR__ . "/../compiled/{$project}neo"
 	. (is_dev_version() ? "" : "-$VERSION")
 	. ($single_driver ? "-$single_driver" : "")
 	. ($single_language ? "-$single_language" : "")
@@ -540,10 +540,10 @@ $filename = __DIR__ . "/../export/{$project}neo"
 
 file_put_contents($filename, $file);
 
-echo "output:    export/" . basename($filename) . " (" . strlen($file) . " B)\n";
+echo "output:    compiled/" . basename($filename) . " (" . strlen($file) . " B)\n";
 
 // Compile plugins.
-$directory = __DIR__ . "/../export/adminneo-plugins";
+$directory = __DIR__ . "/../compiled/adminneo-plugins";
 @mkdir($directory);
 
 foreach (glob(__DIR__ . "/../plugins/*") as $file_path) {
