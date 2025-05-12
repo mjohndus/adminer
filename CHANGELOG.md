@@ -55,6 +55,7 @@ upgrade your AdminNeo installation.
 - Update German translation (by @wintstar)
 - Update Polish translation (by @Matthaiks)
 - Update Bengali translation (by @yogesh-joshi-0333)
+- Add Hindi translation (by @yogesh-joshi-0333)
 
 ### Bugfixes
 
