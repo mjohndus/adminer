@@ -54,6 +54,7 @@ upgrade your AdminNeo installation.
 - Running AdminNeo and EditorNeo from the sources requires PHP 7.1
 - Update German translation (by @wintstar)
 - Update Polish translation (by @Matthaiks)
+- Update Bengali translation (by @yogesh-joshi-0333)
 
 ### Bugfixes
 
