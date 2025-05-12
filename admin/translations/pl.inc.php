@@ -14,10 +14,13 @@ $translations = [
 	'Password' => 'Hasło',
 	'Permanent login' => 'Zapamiętaj sesję',
 	'Login' => 'Zaloguj się',
-	'Logout' => 'Wyloguj',
+	'Logout' => 'Wyloguj się',
 	'Logged as: %s' => 'Zalogowany jako: %s',
 	'Logout successful.' => 'Wylogowano pomyślnie.',
 	'Invalid server or credentials.' => 'Nieprawidłowy serwer lub dane logowania.',
+	'There is a space in the input password which might be the cause.' => 'W haśle wejściowym znajduje się spacja, która może być przyczyną.',
+	'AdminNeo does not support accessing a database without a password, <a href="https://www.adminer.org/en/password/"%s>more information</a>.' => 'AdminNeo nie obsługuje dostępu do bazy danych bez hasła, <a href="https://www.adminer.org/pl/password/"%s>więcej informacji</a>.',
+	'Database does not support password.' => 'Baza danych nie obsługuje hasła.',
 	'Too many unsuccessful logins, try again in %d minute(s).' => ['Za dużo nieudanych prób logowania, spróbuj ponownie za %d minutę.', 'Za dużo nieudanych prób logowania, spróbuj ponownie za %d minuty.', 'Za dużo nieudanych prób logowania, spróbuj ponownie za %d minut.'],
 	'Language' => 'Język',
 	'Invalid CSRF token. Send the form again.' => 'Nieprawidłowy token CSRF. Spróbuj wysłać formularz ponownie.',
@@ -27,6 +30,7 @@ $translations = [
 	'Connecting to privileged ports is not allowed.' => 'Łączenie do portów uprzywilejowanych jest niedozwolone.',
 	'Session support must be enabled.' => 'Wymagana jest obsługa sesji w PHP.',
 	'Session expired, please login again.' => 'Sesja wygasła, zaloguj się ponownie.',
+	'The action will be performed after successful login with the same credentials.' => 'Czynność zostanie wykonana po pomyślnym zalogowaniu przy użyciu tych samych danych logowania.',
 	'%s version: %s through PHP extension %s' => 'Wersja %s: %s za pomocą %s',
 	'Refresh' => 'Odśwież',
 
@@ -56,6 +60,8 @@ $translations = [
 	'Query executed OK, %d row(s) affected.' => ['Zapytanie wykonane pomyślnie, zmieniono %d rekord.', 'Zapytanie wykonane pomyślnie, zmieniono %d rekordy.', 'Zapytanie wykonane pomyślnie, zmieniono %d rekordów.'],
 	'No commands to execute.' => 'Nic do wykonania.',
 	'Error in query' => 'Błąd w zapytaniu',
+	'Unknown error.' => 'Nieznany błąd.',
+	'Warnings' => 'Ostrzeżenia',
 	'ATTACH queries are not supported.' => 'Zapytania ATTACH są niewspierane.',
 	'Execute' => 'Wykonaj',
 	'Stop on error' => 'Zatrzymaj w przypadku błędu',
@@ -78,7 +84,7 @@ $translations = [
 	'You can upload a big SQL file via FTP and import it from server.' => 'Większe pliki SQL możesz wgrać na serwer poprzez FTP przed zaimportowaniem.',
 	'You are offline.' => 'Jesteś offline.',
 
-	'Export' => 'Eksport',
+	'Export' => 'Eksportuj',
 	'Output' => 'Rezultat',
 	'open' => 'otwórz',
 	'save' => 'zapisz',
@@ -86,6 +92,7 @@ $translations = [
 	'Data' => 'Dane',
 
 	'Database' => 'Baza danych',
+	'DB' => 'BD',
 	'Use' => 'Wybierz',
 	'Invalid database.' => 'Nie znaleziono bazy danych.',
 	'Database has been dropped.' => 'Baza danych została usunięta.',
@@ -122,6 +129,7 @@ $translations = [
 	'Tables have been moved.' => 'Tabele zostały przeniesione.',
 	'Copy' => 'Kopiuj',
 	'Tables have been copied.' => 'Tabele zostały skopiowane.',
+	'overwrite' => 'nadpisz',
 
 	'Routines' => 'Procedury i funkcje',
 	'Routine has been called, %d row(s) affected.' => ['Procedura została uruchomiona, zmieniono %d rekord.', 'Procedura została uruchomiona, zmieniono %d rekordy.', 'Procedura została uruchomiona, zmieniono %d rekordów.'],
@@ -167,14 +175,14 @@ $translations = [
 	'Column name' => 'Nazwa kolumny',
 	'Type' => 'Typ',
 	'Length' => 'Długość',
-	'Auto Increment' => 'Auto Increment',
+	'Auto Increment' => 'Automatyczny przyrost',
 	'Options' => 'Opcje',
 	'Comment' => 'Komentarz',
 	'Default value' => 'Wartość domyślna',
 	'Drop' => 'Usuń',
 	'Drop %s?' => 'Usunąć %s?',
-	'Are you sure?' => 'Czy jesteś pewien?',
-	'Size' => 'Wielkość',
+	'Are you sure?' => 'Czy na pewno?',
+	'Size' => 'Rozmiar',
 	'Compute' => 'Oblicz',
 	'Move up' => 'Przesuń w górę',
 	'Move down' => 'Przesuń w dół',
@@ -254,14 +262,14 @@ $translations = [
 	'Whole result' => 'Wybierz wszystkie',
 	'%d byte(s)' => ['%d bajt', '%d bajty', '%d bajtów'],
 
-	'Import' => 'Import',
+	'Import' => 'Importuj',
 	'%d row(s) have been imported.' => ['%d rekord został zaimportowany.', '%d rekordy zostały zaimportowane.', '%d rekordów zostało zaimportowanych.'],
 	'File must be in UTF-8 encoding.' => 'Kodowanie pliku musi być ustawione na UTF-8.',
 
 	// in-place editing in select
 	'Modify' => 'Zmień',
 	'Ctrl+click on a value to modify it.' => 'Ctrl+kliknij wartość, aby ją edytować.',
-	'Use edit link to modify this value.' => 'Użyj linku edycji aby zmienić tę wartość.',
+	'Use edit link to modify this value.' => 'Użyj linku edycji, aby zmienić tę wartość.',
 
 	// %s can contain auto-increment value
 	'Item%s has been inserted.' => 'Rekord%s został dodany.',
@@ -281,7 +289,7 @@ $translations = [
 	'Selected' => 'Zaznaczone',
 	'Clone' => 'Duplikuj',
 	'Delete' => 'Usuń',
-	'You have no privileges to update this table.' => 'Brak uprawnień do edycji tej tabeli',
+	'You have no privileges to update this table.' => 'Brak uprawnień do edycji tej tabeli.',
 
 	// data type descriptions
 	'Numbers' => 'Numeryczne',
@@ -330,14 +338,14 @@ $translations = [
 	'Type has been created.' => 'Typ został utworzony.',
 	'Alter type' => 'Zmień typ',
 
-	'overwrite' => null,
-	'DB' => null,
-	'Warnings' => null,
-	'AdminNeo does not support accessing a database without a password, <a href="https://www.adminer.org/en/password/"%s>more information</a>.' => null,
-	'The action will be performed after successful login with the same credentials.' => null,
-	'There is a space in the input password which might be the cause.' => null,
-	'Unknown error.' => null,
-	'Database does not support password.' => null,
+	// Table check constraints
+	'Checks' => 'Kontrole',
+	'Create check' => 'Utwórz kontrolę',
+	'Alter check' => 'Zmień kontrolę',
+	'Check has been created.' => 'Kontrola została utworzona.',
+	'Check has been altered.' => 'Kontrola została zmieniona.',
+	'Check has been dropped.' => 'Kontrola została usunięta.',
+
 	'One Time Password' => null,
 	'Invalid OTP code.' => null,
 
@@ -347,14 +355,11 @@ $translations = [
 	'No driver' => null,
 	'Database driver not found.' => null,
 
-	'Check has been dropped.' => null,
-	'Check has been altered.' => null,
-	'Check has been created.' => null,
-	'Alter check' => null,
-	'Create check' => null,
-	'Checks' => null,
 	'Invalid permanent login, please login again.' => null,
 
 	'Access denied.' => null,
 	'Enter OTP code.' => null,
+
+	'Info' => null,
+	'%s and %s must return an object created by %s method.' => null,
 ];
