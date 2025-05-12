@@ -4,6 +4,7 @@ namespace AdminNeo;
 
 $translations = [
 	'%s must return an array.' => '%s muss ein Array zurückgeben.</a>',
+	'%s and %s must return an object created by %s method.' => "%s und %s müssen ein mit der Methode %s erstelltes Objekt zurückgeben.",
 	'More information.' => 'Weitere Informationen.',
 
 	'Home' => 'Startseite',

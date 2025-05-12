@@ -52,6 +52,7 @@ upgrade your AdminNeo installation.
 - Elasticsearch: Refresh index immediately after altering a record
 - Firebird: Remove the whole driver
 - Running AdminNeo and EditorNeo from the sources requires PHP 7.1
+- Update German translation (by @wintstar)
 
 ### Bugfixes
 
