@@ -292,6 +292,13 @@ $translations = [
 	'There is a space in the input password which might be the cause.' => 'В введеном пароле есть пробел, это может быть причиною.',
 	'Unknown error.' => 'Неизвестная ошибка.',
 	'Database does not support password.' => 'База данных не поддерживает пароль.',
+	'Check has been dropped.' => 'Проверка удалена.',
+	'Check has been altered.' => 'Проверка изменена.',
+	'Check has been created.' => 'Проверка создана.',
+	'Alter check' => 'Изменить проверку',
+	'Create check' => 'Создать проверку',
+	'Checks' => 'Проверки',
+
 	'One Time Password' => null,
 	'Invalid OTP code.' => null,
 
@@ -301,14 +308,13 @@ $translations = [
 	'No driver' => null,
 	'Database driver not found.' => null,
 
-	'Check has been dropped.' => null,
-	'Check has been altered.' => null,
-	'Check has been created.' => null,
-	'Alter check' => null,
-	'Create check' => null,
-	'Checks' => null,
 	'Invalid permanent login, please login again.' => null,
 
 	'Access denied.' => null,
 	'Enter OTP code.' => null,
+
+	'Info' => null,
+	'%s must return an array.' => null,
+	'More information.' => null,
+	'%s and %s must return an object created by %s method.' => null,
 ];

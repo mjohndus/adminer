@@ -332,9 +332,15 @@ $translations = [
 	'Saving' => 'Збереження',
 	'Unknown error.' => 'Невідома помилка.',
 	'Database does not support password.' => 'База даних не підтримує пароль.',
+	'Check has been dropped.' => 'Перевірку видалено.',
+	'Check has been altered.' => 'Перевірка змінена.',
+	'Check has been created.' => 'Перевірку створено.',
+	'Alter check' => 'Змінити перевірку',
+	'Create check' => 'Створити перевірку',
+	'Vacuum' => 'Вакуум',
+	'%d / ' => '%d / ',
+	'Checks' => 'Перевірки',
 
-	'Vacuum' => null,
-	'%d / ' => [],
 	'One Time Password' => null,
 	'Invalid OTP code.' => null,
 
@@ -344,14 +350,13 @@ $translations = [
 	'No driver' => null,
 	'Database driver not found.' => null,
 
-	'Check has been dropped.' => null,
-	'Check has been altered.' => null,
-	'Check has been created.' => null,
-	'Alter check' => null,
-	'Create check' => null,
-	'Checks' => null,
 	'Invalid permanent login, please login again.' => null,
 
 	'Access denied.' => null,
 	'Enter OTP code.' => null,
+
+	'Info' => null,
+	'%s must return an array.' => null,
+	'More information.' => null,
+	'%s and %s must return an object created by %s method.' => null,
 ];
