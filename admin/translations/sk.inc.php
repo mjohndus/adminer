@@ -38,6 +38,7 @@ $translations = [
 	'Alter database' => 'Zmeniť databázu',
 	'Create database' => 'Vytvoriť databázu',
 	'SQL command' => 'SQL príkaz',
+	'HTTP request' => 'HTTP požiadavka',
 	'Logout' => 'Odhlásiť',
 	'Use' => 'Vybrať',
 	'No tables.' => 'Žiadne tabuľky.',

@@ -61,6 +61,7 @@ $translations = [
 	'Status' => 'Stav',
 
 	'SQL command' => 'SQL příkaz',
+	'HTTP request' => 'HTTP dotaz',
 	'%d query(s) executed OK.' => ['%d příkaz proběhl v pořádku.', '%d příkazy proběhly v pořádku.', '%d příkazů proběhlo v pořádku.'],
 	'Query executed OK, %d row(s) affected.' => ['Příkaz proběhl v pořádku, byl změněn %d záznam.', 'Příkaz proběhl v pořádku, byly změněny %d záznamy.', 'Příkaz proběhl v pořádku, bylo změněno %d záznamů.'],
 	'No commands to execute.' => 'Žádné příkazy k vykonání.',

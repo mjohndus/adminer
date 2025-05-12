@@ -289,7 +289,9 @@ class Admin extends Origin
 		if ($warnings) {
 			$return .= "<a href='#$warningsId' class='toggle'>" . lang('Warnings') . icon_chevron_down() . "</a>, ";
 		}
-		$return .= "<a href='#$sqlId' class='toggle'>" . lang('SQL command') . icon_chevron_down() . "</a>";
+
+		$queryTitle = support("sql") ? lang('SQL command') : lang('HTTP request');
+		$return .= "<a href='#$sqlId' class='toggle'>$queryTitle" . icon_chevron_down() . "</a>";
 		$return .= " <span class='time'>" . @date("H:i:s") . "</span>\n"; // @ - time zone may be not set
 
 		if ($warnings) {
