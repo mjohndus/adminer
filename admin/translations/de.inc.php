@@ -317,4 +317,6 @@ $translations = [
 
 	'Invalid permanent login, please login again.' => 'Ungültige permanente Anmeldung, bitte melden Sie sich erneut an.',
 	'Info' => 'Info',
+
+	'HTTP request' => "HTTP-Anfrage",
 ];
