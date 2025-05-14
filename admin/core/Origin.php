@@ -511,18 +511,18 @@ abstract class Origin extends Plugin
 
 	public abstract function getFieldFunctions(array $field): array;
 
-	public abstract function getFieldInput(string $table, array $field, string $attrs, $value, ?string $function): string;
+	public abstract function getFieldInput(?string $table, array $field, string $attrs, $value, ?string $function): string;
 
 	/**
 	 * Returns hint for edit field.
 	 *
-	 * @param string $table Table name.
+	 * @param ?string $table Table name. Is null in stored procedure calling.
 	 * @param array $field Single field from fields().
-	 * @param string $value Field value.
+	 * @param ?string $value Field value.
 	 *
 	 * @return string HTML code.
 	 */
-	public function getFieldInputHint(string $table, array $field, ?string $value): string
+	public function getFieldInputHint(?string $table, array $field, ?string $value): string
 	{
 		return support("comment") ? $this->admin->formatComment($field["comment"]) : "";
 	}

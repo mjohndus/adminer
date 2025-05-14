@@ -1037,7 +1037,7 @@ function input($field, $value, $function) {
 	echo "</td><td>";
 
 	// Input field.
-	$input = Admin::get()->getFieldInput($_GET["edit"], $field, $attrs, $value, $function);
+	$input = Admin::get()->getFieldInput($_GET["edit"] ?? null, $field, $attrs, $value, $function);
 
 	if ($input != "") {
 		echo $input;

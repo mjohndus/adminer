@@ -29,8 +29,12 @@ class ForeignEditPlugin extends Plugin
 		$this->limit = $limit;
 	}
 
-	public function getFieldInput(string $table, array $field, string $attrs, $value, ?string $function): ?string
+	public function getFieldInput(?string $table, array $field, string $attrs, $value, ?string $function): ?string
 	{
+		if (!$table) {
+			return null;
+		}
+
 		if (!isset($this->foreignTables[$table])) {
 			$this->foreignTables[$table] = column_foreign_keys($table);
 		}

@@ -825,7 +825,7 @@ class Admin extends Origin
 	/**
 	 * Customize input field.
 	 *
-	 * @param string $table Table name.
+	 * @param ?string $table Table name. Is null in stored procedure calling.
 	 * @param array $field Single field from fields().
 	 * @param string $attrs Attributes to use inside the tag.
 	 * @param string|bool|null $value Field value.
@@ -833,7 +833,7 @@ class Admin extends Origin
 	 *
 	 * @return string Custom input field or empty string for default.
 	 */
-	public function getFieldInput(string $table, array $field, string $attrs, $value, ?string $function): string
+	public function getFieldInput(?string $table, array $field, string $attrs, $value, ?string $function): string
 	{
 		return "";
 	}

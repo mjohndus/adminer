@@ -213,7 +213,7 @@ function selectFieldChange() {
 	 * @param {boolean} autoAddRow
 	 */
 	function initFieldsEditingRow(row, autoAddRow = true) {
-		// Field name. Can be null if some row is removed and then new row is added to the beginning (form is posted).
+		// Field name. Is null if some row is removed and then new row is added to the beginning (form is posted).
 		let field = qs('[name$="[field]"]', row);
 		if (field) {
 			field.addEventListener("input", (event) => {
@@ -248,17 +248,20 @@ function selectFieldChange() {
 			return value;
 		}, true);
 
-		// Autoincrement.
-		qs("[name='auto_increment_col']", row).addEventListener("click", (event) => {
-			const input = event.target;
-			const field = input.form['fields[' + input.value + '][field]'];
-			if (!field.value) {
-				field.value = "id";
-				field.dispatchEvent(new Event("input"));
-			}
-		});
+		// Autoincrement. Is null in procedure editing.
+		field = qs("[name='auto_increment_col']", row);
+		if (field) {
+			field.addEventListener("click", (event) => {
+				const input = event.target;
+				const field = input.form['fields[' + input.value + '][field]'];
+				if (!field.value) {
+					field.value = "id";
+					field.dispatchEvent(new Event("input"));
+				}
+			});
+		}
 
-		// Default value. Can be null in procedure editing.
+		// Default value. Is null in procedure editing.
 		field = qs('[name$="[default]"]', row);
 		if (field) {
 			field.addEventListener("input", (event) => {
