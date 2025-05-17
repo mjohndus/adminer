@@ -7,7 +7,7 @@
 	<style>
 		body {
 			margin: 20px;
-			font-family: Helvetica, Verdana, Arial, Helvetica, sans-serif;
+			font-family: Helvetica, Arial, sans-serif;
 			font-size: 14px;
 		}
 
