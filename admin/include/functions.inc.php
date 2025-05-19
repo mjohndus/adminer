@@ -489,7 +489,7 @@ function where($where, $fields = []) {
 			// LIKE because of text. But it does not work with datetime, datetime2 and smalldatetime.
 			$conditions[] = "$column LIKE " . q(preg_replace('~[_%[]~', '[\0]', $val));
 		} else {
-			$conditions[] = "$column = " . ($fields ? unconvert_field($fields[$key], q($val)) : q($val));
+			$conditions[] = "$column = " . (isset($fields[$key]) ? unconvert_field($fields[$key], q($val)) : q($val));
 		}
 
 		// Not just [a-z] to catch non-ASCII characters.
