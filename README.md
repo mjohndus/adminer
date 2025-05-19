@@ -106,7 +106,7 @@ JSON configuration file example:
 Configuration
 -------------
 
-Configuration can be defined in `adminneo-config.php` file placed in the AdminNeo's current working directory. 
+Configuration can be defined in **adminneo-config.php** file placed in the AdminNeo's current working directory. 
 A simple file structure will be:
 
 ```
@@ -142,7 +142,7 @@ For detailed information see [Configuration documentation](/docs/configuration.m
 | `theme`                     | `default` | YES    | Theme code. Available themes are: `default`.                                                                                                        |
 | `colorVariant`              | `blue`    | YES    | Theme color variant. Available variants are: `blue`, `green`, `red`.                                                                                |
 | `cssUrls`                   | `[]`      | YES    | List of custom CSS files.                                                                                                                           |
-| `jsUrls`                    | `[]`      | YES    | List of custom Javascript files.                                                                                                                    |
+| `jsUrls`                    | `[]`      | YES    | List of custom JavaScript files.                                                                                                                    |
 | `navigationMode`            | `simple`  | no     | Main navigation mode that affects the left menu with the list of tables and top links: `simple`, `dual`, `reversed`.                                |
 | `preferSelection`           | `false`   | no     | Whether data selection is the primary action for all table links.                                                                                   |
 | `jsonValuesDetection`       | `false`   | no     | Whether to detect JSON objects and arrays in text columns.                                                                                          |
@@ -168,9 +168,9 @@ Plugins
 
 AdminNeo functions can be modified or extended by plugins. 
 
-* Download plugins you want and place them into the `adminneo-plugins` folder. All plugins in this folder will be
-  autoloaded (but not enabled).
-* Define the list of enabled plugins in `adminneo-plugins.php` file.
+* Download plugins you want and place them into the **adminneo-plugins** folder in the AdminNeo's current working 
+  directory. All plugins in this folder will be autoloaded (but not enabled).
+* Define the list of enabled plugins in **adminneo-plugins.php** file.
 
 File structure will be:
 
@@ -184,12 +184,13 @@ File structure will be:
 - adminneo-plugins.php
 ```
 
-adminneo-plugins.php:
+The file adminneo-config.php will return the array with plugin instances:
 
 ```php
 <?php
   
-// Enable plugins. Files in `adminneo-plugins` are autoloaded, so including the source files is not necessary.
+// Enable plugins.
+// Files in `adminneo-plugins` are autoloaded, so it is not necessary to include the source files.
 return [
     new \AdminNeo\JsonPreviewPlugin(),
     new \AdminNeo\XmlDumpPlugin(),
@@ -203,7 +204,7 @@ return [
 Advanced customizations
 -----------------------
 
-The final option is overriding methods in the `Admin` class. It can be done in `adminneo-instance.php` file.
+It is possible to override methods in the `\AdminNeo\Admin` class. It can be done in **adminneo-instance.php** file.
 
 File structure will be:
 
@@ -216,9 +217,10 @@ adminneo-instance.php:
 
 ```php
 <?php
+
 class CustomAdmin extends \AdminNeo\Admin
 {
-    public function getServiceTitle(): string
+    public function getServiceTitle()
     {
         return "Custom Service";
     }
@@ -228,15 +230,15 @@ class CustomAdmin extends \AdminNeo\Admin
 return CustomAdmin::create();
 ```
 
-Factory method create() accepts also configuration and plugins, so everything can be defined in one 
-`adminneo-instance.php` file:
+Factory method `create()` accepts also configuration and plugins, so everything can be defined in one 
+adminneo-instance.php file:
 
 ```php
 <?php
 
 class CustomAdmin extends \AdminNeo\Admin
 {
-    public function getServiceTitle(): string
+    public function getServiceTitle()
     {
         return "Custom Service";
     }
@@ -261,7 +263,7 @@ return CustomAdmin::create($config, $plugins);
 
 ### Custom index.php
 
-It is also possible to create `Admin` instance inside your own index.php file. In this case, implement
+Another option is to create `\AdminNeo\Admin` instance inside your own **index.php file**. In this case, implement
 `adminneo_instance()` function in the global namespace and include AdminNeo file placed in the **non-public** directory:
 
 ```php
@@ -291,7 +293,7 @@ function adminneo_instance()
 {
     class CustomAdmin extends \AdminNeo\Admin
     {
-        public function getServiceTitle(): string
+        public function getServiceTitle()
         {
             return "Custom Service";
         }
@@ -321,9 +323,9 @@ include "/non-public-path/adminneo.php";
 Custom CSS and JavaScript
 -------------------------
 
-It is possible to modify the appearance and functionality by creating a custom CSS or JavaScript file. AdminNeo will
-automatically include files `adminneo.css`, `adminneo-light.css`, `adminneo-dark.css` and `adminneo.js` that are
-placed in the AdminNeo's current working directory (typically next to the index.php).
+UI appearance and functionality can be modified by creating a custom CSS or JavaScript file. AdminNeo will
+automatically include files **adminneo.css**, **adminneo-light.css**, **adminneo-dark.css** and **adminneo.js** that are
+placed in the AdminNeo's current working directory (typically next to the adminneo.php or index.php).
 
 - adminneo.css - Should be compatible with automatic switching to dark mode.
 - adminneo-light.css - Will force AdminNeo to use only the light mode.
