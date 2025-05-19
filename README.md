@@ -56,11 +56,7 @@ download the source code and compile your own AdminNeo:
 - Run `php bin/compile.php`:
 
 ```shell
-# AdminNeo
 php bin/compile.php [project] [drivers] [languages] [themes] [config-file.json]
-
-# EditorNeo
-php bin/compile.php editor [drivers] [languages] [themes] [config-file.json]
 ```
 
 Where:
@@ -69,14 +65,11 @@ Where:
   The default set is: mysql, pgsql, mssql, sqlite.
 - `languages` is a comma-separated list of [languages](/admin/translations).
   If not specified, all languages will be included.
-- `themes` is a comma-separated list of [themes](/admin/themes) together with specific color variant. E.g. 
-  `default-blue`, `default-red`, etc. If color variant is not specified (e.g. `default`), all color variants will be
+- `themes` is a comma-separated list of [themes](/admin/themes) together with specific color variant: 
+  `default-blue`, `default-red`, etc. If color variant is not specified (e.g., `default`), all color variants will be
   included. If no theme is specified, the `default-blue` theme will be included.
-- `config-file.json` is a path to the custom JSON configuration file. It contains a class with [the same parameters](#configuration) 
-  that can be configured in Admin constructor.
-
-If the theme name contains a postfix with one of the supported color variants (-green, -red), the corresponding favicons
-will be included automatically.
+- `config-file.json` is a path to the custom JSON configuration file. It contains an object with the same parameters 
+  that can be [configured](#configuration) in PHP code.
 
 For example:
 ```shell
@@ -94,7 +87,7 @@ php bin/compile.php mysql,pgsql en,de,cs,sk
 php bin/compile.php default-green,default-red
 
 # Default theme together with all color variants.
-php bin/compile.php default+
+php bin/compile.php default
 
 # Custom configuration.
 php bin/compile.php ~/my-config.json
@@ -106,7 +99,7 @@ Editor examples:
 php bin/compile.php editor
 
 # Only pgsql driver, only EN language, default theme with all color variants.
-php bin/compile.php editor pgsql en default+
+php bin/compile.php editor pgsql en default
 ```
 
 JSON configuration file example:
