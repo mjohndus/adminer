@@ -232,6 +232,7 @@ if ($arguments && ($arguments[0] == "-h" || $arguments[0] == "--help")) {
 	exit;
 }
 
+// Project.
 $project = "admin";
 if ($arguments) {
 	if ($arguments[0] == "editor") {
@@ -244,17 +245,12 @@ if ($arguments) {
 
 echo "project:   $project\n";
 
-$selected_drivers = ["mysql", "pgsql", "mssql", "sqlite"];
+// Drivers.
+$selected_drivers = [];
 if ($arguments) {
 	$params = explode(",", $arguments[0]);
 
-	if ($params[0] == "all-drivers") {
-		$selected_drivers = array_map(function (string $filePath): string {
-			return str_replace(".inc.php", "", basename($filePath));
-		}, glob(__DIR__ . "/../admin/drivers/*"));
-
-		array_shift($arguments);
-	} elseif (file_exists(__DIR__ . "/../admin/drivers/" . $params[0] . ".inc.php")) {
+	if (file_exists(__DIR__ . "/../admin/drivers/" . $params[0] . ".inc.php")) {
 		$selected_drivers = $params;
 		array_shift($arguments);
 	}
@@ -263,6 +259,7 @@ $single_driver = count($selected_drivers) == 1 ? $selected_drivers[0] : null;
 
 echo "drivers:   " . ($selected_drivers ? implode(", ", $selected_drivers) : "all") . "\n";
 
+// Languages.
 $selected_languages = [];
 if ($arguments) {
 	$params = explode(",", $arguments[0]);
@@ -276,6 +273,7 @@ $single_language = count($selected_languages) == 1 ? $selected_languages[0] : nu
 
 echo "languages: " . ($selected_languages ? implode(", ", $selected_languages) : "all") . "\n";
 
+// Themes.
 $selected_themes = ["default-blue"];
 if ($arguments) {
 	$params = explode(",", $arguments[0]);
@@ -308,6 +306,7 @@ if ($arguments) {
 
 echo "themes:    " . implode(", ", $selected_themes) . "\n";
 
+// Custom config.
 $custom_config = [];
 if ($arguments && preg_match('~\.json$~i', $arguments[0])) {
 	$file_path = $arguments[0][0] == "/" ? $arguments[0] : getcwd() . "/$arguments[0]";
@@ -329,6 +328,7 @@ if ($arguments && preg_match('~\.json$~i', $arguments[0])) {
 
 echo "config:    " . ($custom_config ? "yes" : "no") . "\n";
 
+// Check if all arguments were consumed.
 if ($arguments) {
 	echo "\n⚠️ Unknown argument: $arguments[0]\n";
 	echo "Run `php bin/compile.php -h` for help.\n";
@@ -399,9 +399,11 @@ $file = str_replace('include __DIR__ . "/compile.inc.php";', '', $file);
 $file = str_replace('include __DIR__ . "/coverage.inc.php";', '', $file);
 
 // Remove including unwanted drivers.
-$file = preg_replace_callback('~\binclude __DIR__ \. "/../drivers/([^.]+).*\n~', function ($match) use ($selected_drivers) {
-	return in_array($match[1], $selected_drivers) ? $match[0] : "";
-}, $file);
+if ($selected_drivers) {
+	$file = preg_replace_callback('~\binclude __DIR__ \. "/../drivers/([^.]+).*\n~', function ($match) use ($selected_drivers) {
+		return in_array($match[1], $selected_drivers) ? $match[0] : "";
+	}, $file);
+}
 
 // Change plugins directory.
 $file = str_replace(

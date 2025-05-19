@@ -61,8 +61,8 @@ php bin/compile.php [project] [drivers] [languages] [themes] [config-file.json]
 
 Where:
 - `project` is one of `admin` or `editor`. If not specified, AdminNeo is compiled.
-- `drivers` is a comma-separated list of [database drivers](/admin/drivers) or the value `all-drivers`.
-  The default set is: mysql, pgsql, mssql, sqlite.
+- `drivers` is a comma-separated list of [database drivers](/admin/drivers).
+  If not specified, all drivers will be included.
 - `languages` is a comma-separated list of [languages](/admin/translations).
   If not specified, all languages will be included.
 - `themes` is a comma-separated list of [themes](/admin/themes) together with specific color variant: 
@@ -73,39 +73,33 @@ Where:
 
 For example:
 ```shell
-# Default set of drivers, all languages, only default-blue theme.
+# All drivers, all languages, default-blue theme.
 php bin/compile.php
 
-# Only pgsql driver, only EN language, only default-blue theme.
-php bin/compile.php pgsql en
+# PostgreSQL driver, EN language, default theme with all color variants.
+php bin/compile.php pgsql en default
 
-# Only mysql and pgsql driver, selected languages, only default-blue theme.
+# MySQL and PostgreSQL drivers, selected languages, default-blue theme.
 php bin/compile.php mysql,pgsql en,de,cs,sk
 
-# Default set of drivers, all languages, green and red color variants of the default theme. 
-# Blue color variant will be not available.
+# All drivers, all languages, green and red color variants of the default theme.
 php bin/compile.php default-green,default-red
-
-# Default theme together with all color variants.
-php bin/compile.php default
 
 # Custom configuration.
 php bin/compile.php ~/my-config.json
 ```
 
-Editor examples:
+EditorNeo example:
 ```shell
-# Default set of drivers, all languages, default theme (without color variants).
-php bin/compile.php editor
-
-# Only pgsql driver, only EN language, default theme with all color variants.
 php bin/compile.php editor pgsql en default
 ```
 
 JSON configuration file example:
 ```json
 {
-    "navigationMode": "reversed"
+    "navigationMode": "dual",
+    "preferSelection": true,
+    "recordsPerPage": 70
 }
 ```
 
@@ -130,6 +124,9 @@ The file adminneo-config.php will just return the configuration array:
 // Define configuration.
 return [
     "colorVariant" => "green",
+    "navigationMode": "dual",
+    "preferSelection": true,
+    "recordsPerPage": 70
 ];
 ```
 
