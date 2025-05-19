@@ -34,7 +34,7 @@ $languages = [
 	'no' => 'Norsk', // Iver Odin Kvello, mupublishing.com
 	'pl' => 'Polski', // Radosław Kowalewski - http://srsbiz.pl/
 	'pt' => 'Português', // André Dias
-	'pt-br' => 'Português (Brazil)', // Gian Live - gian@live.com, Davi Alexandre davi@davialexandre.com.br, RobertoPC - http://www.robertopc.com.br
+	'pt-BR' => 'Português (Brazil)', // Gian Live - gian@live.com, Davi Alexandre davi@davialexandre.com.br, RobertoPC - http://www.robertopc.com.br
 	'ro' => 'Limba Română', // .nick .messing - dot.nick.dot.messing@gmail.com
 	'ru' => 'Русский', // Maksim Izmaylov; Andre Polykanine - https://github.com/Oire/
 	'sk' => 'Slovenčina', // Ivan Suchy - http://www.ivansuchy.com, Juraj Krivda - http://www.jstudio.cz
@@ -47,7 +47,7 @@ $languages = [
 	'uk' => 'Українська', // Valerii Kryzhov
 	'vi' => 'Tiếng Việt', // Giang Manh @ manhgd google mail
 	'zh' => '简体中文', // Mr. Lodar, vea - urn2.net - vea.urn2@gmail.com
-	'zh-tw' => '繁體中文', // http://tzangms.com
+	'zh-TW' => '繁體中文', // http://tzangms.com
 ];
 
 /**
