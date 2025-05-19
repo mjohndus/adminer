@@ -6,7 +6,7 @@
 	--list-active: hsla(120, 100%, 27%, 7%);
 	--list-active-hover: hsla(120, 100%, 27%, 12%);
 
-	--button-bg-hover: hsla(120, 100%, 27%, 7%);
+	--button-bg-hover: hsl(120, 50%, 96%);
 	--button-border: hsl(120, 100%, 27%);
 	--button-border-hover: hsl(120, 100%, 22%);
 	--button-text: hsl(120, 100%, 27%);
