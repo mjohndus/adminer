@@ -228,7 +228,12 @@ class Admin extends Origin
 		$supportSql = support("sql");
 		$warnings = !$failed ? $driver->warnings() : null;
 
-		$return = "<pre><code class='jush-$jush'>" . h(str_replace("\n", " ", $query)) . "</code></pre>\n";
+		if ($supportSql) {
+			$query .= ";";
+		}
+
+		$syntax = $jush == "elastic" ? "js" : $jush;
+		$return = "<pre><code class='jush-$syntax'>" . h(str_replace("\n", " ", $query)) . "</code></pre>\n";
 
         $return .= "<p class='links'>";
         if ($supportSql) {
@@ -284,7 +289,9 @@ class Admin extends Origin
 		if ($warnings) {
 			$return .= "<a href='#$warningsId' class='toggle'>" . lang('Warnings') . icon_chevron_down() . "</a>, ";
 		}
-		$return .= "<a href='#$sqlId' class='toggle'>" . lang('SQL command') . icon_chevron_down() . "</a>";
+
+		$queryTitle = support("sql") ? lang('SQL command') : lang('HTTP request');
+		$return .= "<a href='#$sqlId' class='toggle'>$queryTitle" . icon_chevron_down() . "</a>";
 		$return .= " <span class='time'>" . @date("H:i:s") . "</span>\n"; // @ - time zone may be not set
 
 		if ($warnings) {
@@ -292,7 +299,8 @@ class Admin extends Origin
 		}
 
 		$return .= "<div id='$sqlId' class='hidden'>\n";
-		$return .= "<pre><code class='jush-$jush'>" . truncate_utf8($query, 1000) . "</code></pre>\n";
+		$syntax = $jush == "elastic" ? "js" : $jush;
+		$return .= "<pre><code class='jush-$syntax'>" . truncate_utf8($query, 1000) . "</code></pre>\n";
 
 		$return .= "<p class='links'>";
 		if ($supportSql) {
@@ -386,11 +394,6 @@ class Admin extends Origin
 	 */
 	public function formatFieldValue($value, array $field): ?string
 	{
-		// Format Elasticsearch boolean value, but do not touch PostgreSQL boolean that use string value 't' or 'f'.
-		if ($field && $field["type"] == "boolean" && is_bool($value)) {
-			return $value ? "true" : "false";
-		}
-
 		return $value;
 	}
 
@@ -822,7 +825,7 @@ class Admin extends Origin
 	/**
 	 * Customize input field.
 	 *
-	 * @param string $table Table name.
+	 * @param ?string $table Table name. Is null in stored procedure calling.
 	 * @param array $field Single field from fields().
 	 * @param string $attrs Attributes to use inside the tag.
 	 * @param string|bool|null $value Field value.
@@ -830,7 +833,7 @@ class Admin extends Origin
 	 *
 	 * @return string Custom input field or empty string for default.
 	 */
-	public function getFieldInput(string $table, array $field, string $attrs, $value, ?string $function): string
+	public function getFieldInput(?string $table, array $field, string $attrs, $value, ?string $function): string
 	{
 		return "";
 	}
@@ -844,6 +847,8 @@ class Admin extends Origin
 	 */
 	public function processFieldInput(?array $field, string $value, string $function = ""): string
 	{
+		global $jush;
+
 		if ($function == "SQL") {
 			return $value; //! SQL injection
 		}
@@ -867,6 +872,8 @@ class Admin extends Origin
 			$return = "$function(" . idf_escape($name) . ", $return)";
 		} elseif (preg_match('~^(md5|sha1|password|encrypt)$~', $function)) {
 			$return = "$function($return)";
+		} elseif ($field["type"] == "boolean" && $jush == "elastic") {
+			$return = $return == "0" ? "false" : "true";
 		}
 
 		return unconvert_field($field, $return);
@@ -1188,11 +1195,11 @@ class Admin extends Origin
 			}
 
 			// Syntax highlighting.
-			if (support("sql")) {
+			if (support("sql") || $jush == "elastic") {
 				?>
 				<script<?php echo nonce(); ?>>
 					<?php
-					if ($tables) {
+					if (support("sql") && $tables) {
 						$links = [];
 						foreach ($tables as $table => $type) {
 							$links[] = preg_quote($table, '/');

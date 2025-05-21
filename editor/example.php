@@ -16,7 +16,7 @@ function adminneo_instance()
 		public function getCredentials(): array
 		{
 			// User ODBC with password ODBC on localhost.
-			return ['localhost', 'ODBC', 'ODBC'];
+			return ['localhost', 'test', 'test'];
 		}
 
 		public function authenticate(string $username, string $password): ?bool

@@ -50,8 +50,12 @@ class SlugifyEditPlugin extends Plugin
 		return null;
 	}
 
-	public function getFieldInput(string $table, array $field, string $attrs, $value, ?string $function): ?string
+	public function getFieldInput(?string $table, array $field, string $attrs, $value, ?string $function): ?string
 	{
+		if (!$table) {
+			return null;
+		}
+
 		// Do not slugify in multi-edit mode.
 		if (($_GET["select"] ?? null)) {
 			return null;

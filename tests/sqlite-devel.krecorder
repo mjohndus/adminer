@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<meta content="text/html; charset=UTF-8" http-equiv="content-type" />
+<title>sqlite-devel</title>
+</head>
+<body>
+<table cellpadding="1" cellspacing="1" border="1">
+<thead>
+<tr><td rowspan="1" colspan="3" data-tags="">SQLite</td></tr>
+</thead>
+<tbody>
+<tr><td>open</td><td>/adminneo/admin/sqlite.php<datalist></datalist></td><td></td></tr>
+<tr><td>select</td><td>name=auth[driver]<datalist></datalist></td><td>label=SQLite</td></tr>
+<tr><td>type</td><td>id=username<datalist></datalist></td><td>admin</td></tr>
+<tr><td>type</td><td>name=auth[password]<datalist></datalist></td><td></td></tr>
+<tr><td>click</td><td>css=input[type="submit"]<datalist></datalist></td><td></td></tr>
+<tr><td>click</td><td>link=Create database<datalist></datalist></td><td></td></tr>
+<tr><td>type</td><td>name=name<datalist></datalist></td><td>adminneo_test</td></tr>
+<tr><td>click</td><td>css=input[type="submit"]<datalist></datalist></td><td></td></tr>
+<tr><td>verifyTextPresent</td><td>Please use one of the extensions<datalist></datalist></td><td></td></tr>
+<tr><td>type</td><td>name=name<datalist></datalist></td><td>adminneo_test.sqlite</td></tr>
+<tr><td>click</td><td>css=input[type="submit"]<datalist></datalist></td><td></td></tr>
+<tr><td>verifyTextPresent</td><td>Database has been created.<datalist></datalist></td><td></td></tr>
+<tr><td>click</td><td>link=Create table<datalist></datalist></td><td></td></tr>
+<tr><td>type</td><td>name=name<datalist></datalist></td><td>interprets</td></tr>
+<tr><td>click</td><td>css=label.block > input[name="auto_increment_col"]<datalist></datalist></td><td></td></tr>
+<tr><td>type</td><td>name=fields[1.1][field]<datalist></datalist></td><td>name</td></tr>
+<tr><td>select</td><td>name=fields[1.1][type]<datalist></datalist></td><td>label=text</td></tr>
+<tr><td>click</td><td>xpath=(//input[@value='Save'])[2]<datalist></datalist></td><td></td></tr>
+<tr><td>verifyTextPresent</td><td>Table has been created.<datalist></datalist></td><td></td></tr>
+<tr><td>click</td><td>link=New item<datalist></datalist></td><td></td></tr>
+<tr><td>type</td><td>name=fields[name]<datalist></datalist></td><td>Michael Jackson</td></tr>
+<tr><td>click</td><td>css=input[type="submit"]<datalist></datalist></td><td></td></tr>
+<tr><td>verifyTextPresent</td><td>Item 1 has been inserted.<datalist></datalist></td><td></td></tr>
+<tr><td>click</td><td>link=Create table<datalist></datalist></td><td></td></tr>
+<tr><td>type</td><td>name=name<datalist></datalist></td><td>albums</td></tr>
+<tr><td>click</td><td>css=label.block > input[name="auto_increment_col"]<datalist></datalist></td><td></td></tr>
+<tr><td>type</td><td>name=fields[1.1][field]<datalist></datalist></td><td>interpret</td></tr>
+<tr><td>select</td><td>name=fields[1.1][on_delete]<datalist></datalist></td><td>label=CASCADE</td></tr>
+<tr><td>type</td><td>name=fields[1.11][field]<datalist></datalist></td><td>title</td></tr>
+<tr><td>select</td><td>name=fields[1.11][type]<datalist></datalist></td><td>label=text</td></tr>
+<tr><td>click</td><td>xpath=(//input[@value='Save'])[2]<datalist></datalist></td><td></td></tr>
+<tr><td>verifyTextPresent</td><td>interprets(id)<datalist></datalist></td><td></td></tr>
+<tr><td>click</td><td>link=New item<datalist></datalist></td><td></td></tr>
+<tr><td>type</td><td>name=fields[interpret]<datalist></datalist></td><td>1</td></tr>
+<tr><td>type</td><td>name=fields[title]<datalist></datalist></td><td>Dangerous</td></tr>
+<tr><td>click</td><td>css=input[type="submit"]<datalist></datalist></td><td></td></tr>
+<tr><td>click</td><td>link=1<datalist></datalist></td><td></td></tr>
+<tr><td>verifyTextPresent</td><td>Select: interprets<datalist></datalist></td><td></td></tr>
+<tr><td>click</td><td>link=adminneo_test.sqlite<datalist></datalist></td><td></td></tr>
+<tr><td>click</td><td>link=Alter database<datalist></datalist></td><td></td></tr>
+<tr><td>chooseOkOnNextConfirmation</td><td>Drop adminneo_test.sqlite?<datalist></datalist></td><td></td></tr>
+<tr><td>click</td><td>name=drop<datalist></datalist></td><td></td></tr>
+<tr><td>verifyTextPresent</td><td>Database has been dropped.<datalist></datalist></td><td></td></tr>
+<tr><td>click</td><td>id=logout<datalist></datalist></td><td></td></tr>
+<tr><td>verifyTextPresent</td><td>Logout successful.<datalist></datalist></td><td></td></tr>
+</tbody></table>
+</body>
+</html>

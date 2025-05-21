@@ -1249,12 +1249,14 @@ function loadNextPage(limit, loadingText) {
 		jush.highlight_tag(qsa("code", newBody), 0);
 		initToggles(newBody);
 
+		const lastPage = newBody.children.length < limit;
 		const tableBody = qs('#table tbody');
-		for (let row of newBody.children) {
-			tableBody.appendChild(row);
+
+		while (newBody.children.length) {
+			tableBody.appendChild(newBody.children[0]);
 		}
 
-		if (newBody.children.length < limit) {
+		if (lastPage) {
 			a.parentElement.remove();
 		} else {
 			a.href = href.replace(/\d+$/, function (page) {

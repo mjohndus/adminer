@@ -200,33 +200,57 @@ function min_version(): bool
 	return true;
 }
 
-function ini_bool(): bool {
+function ini_bool(): bool
+{
 	return true;
+}
+
+function print_usage(): void
+{
+	echo "Usage:\n";
+	echo "  php bin/compile.php [project] [drivers] [languages] [themes] [config-file]\n";
+	echo "\n";
+	echo "Compile AdminNeo or EditorNeo together with all plugins.\n";
+	echo "Files will be saved into the 'compiled' directory.\n";
+	echo "\n";
+	echo "PARAMETERS:\n";
+	echo "  project     - `admin` or `editor`\n";
+	echo "  drivers     - is a comma-separated list of database drivers or the value `all-drivers`\n";
+	echo "  languages   - comma-separated list of languages\n";
+	echo "  themes      - comma-separated list of themes together with specific color variant\n";
+	echo "  config-file - path to the custom JSON configuration file\n";
+	echo "\n";
+	echo "More information at: https://github.com/adminneo-org/adminneo?tab=readme-ov-file#usage\n";
 }
 
 // Parse script arguments.
 $arguments = $argv;
 array_shift($arguments);
 
+if ($arguments && ($arguments[0] == "-h" || $arguments[0] == "--help")) {
+	print_usage();
+	exit;
+}
+
+// Project.
 $project = "admin";
-if ($arguments[0] == "editor") {
-	$project = "editor";
-	array_shift($arguments);
+if ($arguments) {
+	if ($arguments[0] == "editor") {
+		$project = "editor";
+		array_shift($arguments);
+	} elseif ($arguments[0] == "admin") {
+		array_shift($arguments);
+	}
 }
 
 echo "project:   $project\n";
 
-$selected_drivers = ["mysql", "pgsql", "mssql", "sqlite"];
+// Drivers.
+$selected_drivers = [];
 if ($arguments) {
 	$params = explode(",", $arguments[0]);
 
-	if ($params[0] == "all-drivers") {
-		$selected_drivers = array_map(function (string $filePath): string {
-			return str_replace(".inc.php", "", basename($filePath));
-		}, glob(__DIR__ . "/../admin/drivers/*"));
-
-		array_shift($arguments);
-	} elseif (file_exists(__DIR__ . "/../admin/drivers/" . $params[0] . ".inc.php")) {
+	if (file_exists(__DIR__ . "/../admin/drivers/" . $params[0] . ".inc.php")) {
 		$selected_drivers = $params;
 		array_shift($arguments);
 	}
@@ -235,6 +259,7 @@ $single_driver = count($selected_drivers) == 1 ? $selected_drivers[0] : null;
 
 echo "drivers:   " . ($selected_drivers ? implode(", ", $selected_drivers) : "all") . "\n";
 
+// Languages.
 $selected_languages = [];
 if ($arguments) {
 	$params = explode(",", $arguments[0]);
@@ -248,33 +273,27 @@ $single_language = count($selected_languages) == 1 ? $selected_languages[0] : nu
 
 echo "languages: " . ($selected_languages ? implode(", ", $selected_languages) : "all") . "\n";
 
+// Themes.
 $selected_themes = ["default-blue"];
 if ($arguments) {
 	$params = explode(",", $arguments[0]);
 
-	$base_name = str_replace("+", "", $params[0]);
-	if (file_exists(__DIR__ . "/../admin/themes/$base_name")) {
+	if (file_exists(__DIR__ . "/../admin/themes/$params[0]")) {
 		$themes_map = [];
 		foreach ($params as $theme) {
-			// Expand names with wildcards.
-			if (strpos($theme, "+") !== false) {
-				$dirNames = glob(__DIR__ . "/../admin/themes/" . str_replace("+", "*", $theme));
-			} else {
+			if (preg_match('~-(blue|green|red)$~', $theme)) {
 				$dirNames = [$theme];
+			} else {
+				$dirNames = ["$theme-blue", "$theme-green", "$theme-red"];
 			}
 
-			// Collect unique themes, ensure to use a color variant and include default color variant for every theme.
+			// Collect unique themes, ensure to include the default color variant for every theme.
 			foreach ($dirNames as $dirName) {
 				$dirname = basename($dirName);
 
-				if (preg_match('~-(blue|green|red)$~', $dirname, $matches)) {
-					$color_variant = $matches[1];
-				} else {
-					$dirname .= "-blue";
-					$color_variant = "blue";
-				}
+				preg_match('~-(blue|green|red)$~', $dirname, $matches);
 
-				$themes_map["default-$color_variant"] = true;
+				$themes_map["default-$matches[1]"] = true;
 				$themes_map[$dirname] = true;
 			}
 		}
@@ -287,6 +306,7 @@ if ($arguments) {
 
 echo "themes:    " . implode(", ", $selected_themes) . "\n";
 
+// Custom config.
 $custom_config = [];
 if ($arguments && preg_match('~\.json$~i', $arguments[0])) {
 	$file_path = $arguments[0][0] == "/" ? $arguments[0] : getcwd() . "/$arguments[0]";
@@ -308,9 +328,10 @@ if ($arguments && preg_match('~\.json$~i', $arguments[0])) {
 
 echo "config:    " . ($custom_config ? "yes" : "no") . "\n";
 
+// Check if all arguments were consumed.
 if ($arguments) {
-	echo "Usage: php compile.php [editor] [drivers] [languages] [themes] [config-file.json]\n";
-	echo "Purpose: Compile adminneo[-driver][-lang].php or editorneo[-driver][-lang].php.\n";
+	echo "\n⚠️ Unknown argument: $arguments[0]\n";
+	echo "Run `php bin/compile.php -h` for help.\n";
 	exit(1);
 }
 
@@ -378,9 +399,11 @@ $file = str_replace('include __DIR__ . "/compile.inc.php";', '', $file);
 $file = str_replace('include __DIR__ . "/coverage.inc.php";', '', $file);
 
 // Remove including unwanted drivers.
-$file = preg_replace_callback('~\binclude __DIR__ \. "/../drivers/([^.]+).*\n~', function ($match) use ($selected_drivers) {
-	return in_array($match[1], $selected_drivers) ? $match[0] : "";
-}, $file);
+if ($selected_drivers) {
+	$file = preg_replace_callback('~\binclude __DIR__ \. "/../drivers/([^.]+).*\n~', function ($match) use ($selected_drivers) {
+		return in_array($match[1], $selected_drivers) ? $match[0] : "";
+	}, $file);
+}
 
 // Change plugins directory.
 $file = str_replace(
@@ -524,12 +547,15 @@ if ($custom_config) {
 // Remove superfluous PHP tags.
 $file = preg_replace("~<\\?php\\s*\\?>\n?|\\?>\n?<\\?php~", '', $file);
 
+// PHP 5.6 compatibility.
+$file = downgrade_php($file);
+
 // Shrink final file.
 $file = phpShrink($file);
 
 // Save file to export directory.
-@mkdir(__DIR__ . "/../export", 0777, true);
-$filename = __DIR__ . "/../export/{$project}neo"
+@mkdir(__DIR__ . "/../compiled", 0777, true);
+$filename = __DIR__ . "/../compiled/{$project}neo"
 	. (is_dev_version() ? "" : "-$VERSION")
 	. ($single_driver ? "-$single_driver" : "")
 	. ($single_language ? "-$single_language" : "")
@@ -537,4 +563,17 @@ $filename = __DIR__ . "/../export/{$project}neo"
 
 file_put_contents($filename, $file);
 
-echo "output:    export/" . basename($filename) . " (" . strlen($file) . " B)\n";
+echo "output:    compiled/" . basename($filename) . " (" . strlen($file) . " B)\n";
+
+// Compile plugins.
+$directory = __DIR__ . "/../compiled/adminneo-plugins";
+@mkdir($directory);
+
+foreach (glob(__DIR__ . "/../plugins/*") as $file_path) {
+	$file = file_get_contents($file_path);
+
+	$file = downgrade_php($file);
+
+	$filename = "$directory/" . basename($file_path);
+	file_put_contents($filename, $file);
+}

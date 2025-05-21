@@ -449,7 +449,7 @@ ORDER BY ORDINAL_POSITION", null, "") as $row) { //! requires MySQL 5
 		return $return;
 	}
 
-	public function getFieldInput(string $table, array $field, string $attrs, $value, ?string $function): string
+	public function getFieldInput(?string $table, array $field, string $attrs, $value, ?string $function): string
 	{
 		if ($field["type"] == "enum") {
 			if (!$value && !isset($_GET["select"])) {
@@ -485,7 +485,7 @@ ORDER BY ORDINAL_POSITION", null, "") as $row) { //! requires MySQL 5
 		return "";
 	}
 
-	public function getFieldInputHint(string $table, array $field, ?string $value): string
+	public function getFieldInputHint(?string $table, array $field, ?string $value): string
 	{
 		$hint =  parent::getFieldInputHint($table, $field, $value);
 

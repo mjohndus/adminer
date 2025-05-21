@@ -20,14 +20,23 @@ if (isset($_GET["elastic"])) {
 			 * @return array|false
 			 */
 			function rootQuery($path, ?array $content = null, $method = 'GET') {
-				$file = @file_get_contents("$this->_url/" . ltrim($path, '/'), false, stream_context_create(['http' => [
-					'method' => $method,
-					'content' => $content !== null ? json_encode($content) : null,
-					'header' => $content !== null ? 'Content-Type: application/json' : [],
-					'ignore_errors' => 1,
-					'follow_location' => 0,
-					'max_redirects' => 0,
-				]]));
+				$options = [
+					'http' => [
+						'method' => $method,
+						'content' => $content !== null ? json_encode($content) : null,
+						'header' => $content !== null ? 'Content-Type: application/json' : [],
+						'ignore_errors' => 1,
+						'follow_location' => 0,
+						'max_redirects' => 0,
+					],
+				];
+
+				$trust = Admin::get()->getConfig()->getSslTrustServerCertificate();
+				if ($trust) {
+					$options["ssl"] = ["verify_peer" => false];
+				}
+
+				$file = @file_get_contents("$this->_url/" . ltrim($path, '/'), false, stream_context_create($options));
 
 				if ($file === false) {
 					$this->error = lang('Invalid server or credentials.');
@@ -170,10 +179,13 @@ if (isset($_GET["elastic"])) {
 			$search = $this->_conn->rootQuery($query, $data);
 
 			if ($print) {
-				echo $this->admin->formatSelectQuery("$query: " . json_encode($data), $start, !$search);
+				echo $this->admin->formatSelectQuery("\"GET $query\": " . json_encode($data), $start, !$search);
 			}
 			if (empty($search)) {
 				return false;
+			}
+			if ($select == ["*"]) {
+				$tableFields = array_keys(fields($table));
 			}
 
 			$return = [];
@@ -189,7 +201,9 @@ if (isset($_GET["elastic"])) {
 						$fields[$key] = $key == "_id" ? $hit["_id"] : $hit["_source"][$key];
 					}
 				} else {
-					$fields = $hit["_source"];
+					foreach ($tableFields as $key) {
+						$fields[$key] = $key == "_id" ? $hit["_id"] : $hit["_source"][$key];
+					}
 				}
 				foreach ($fields as $key => $val) {
 					$row[$key] = (is_array($val) ? json_encode($val) : $val);
@@ -204,6 +218,13 @@ if (isset($_GET["elastic"])) {
 		private  function addQueryCondition($val, &$data)
 		{
 			list($col, $op, $val) = explode(" ", $val, 3);
+
+			if ($col == "_id" && $op == "=") {
+				$data["query"]["bool"]["must"][] = [
+					"term" => [$col => $val]
+				];
+				return;
+			}
 
 			if (!preg_match('~^([^(]+)\(([^)]+)\)$~', $op, $matches)) {
 				return;
@@ -231,23 +252,50 @@ if (isset($_GET["elastic"])) {
 		function update($type, $record, $queryWhere, $limit = 0, $separator = "\n") {
 			//! use $limit
 			$parts = preg_split('~ *= *~', $queryWhere);
-			if (count($parts) == 2) {
-				$id = trim($parts[1]);
-				$query = "$type/$id";
-
-				return $this->_conn->query($query, $record, 'POST');
+			if (count($parts) != 2) {
+				return false;
 			}
 
-			return false;
+			$id = trim($parts[1]);
+			$query = "$type/_doc/$id";
+
+			// Save the query for later use in a flesh message. TODO: This is so ugly.
+			queries("\"POST $query\": " . json_encode($record));
+
+			$response = $this->_conn->query($query, $record, 'POST');
+			if ($response) {
+				$this->_conn->query("$type/_refresh");
+			}
+
+			return $response;
 		}
 
 		function insert($type, $record) {
-			$id = ""; //! user should be able to inform _id
-			$query = "$type/$id";
+			$query = "$type/_doc/";
+
+			if (isset($record["_id"]) && $record["_id"] != "NULL") {
+				$query .= $record["_id"];
+				unset($record["_id"]);
+			}
+
+			foreach ($record as $key => $value) {
+				if ($value == "NULL") {
+					unset($record[$key]);
+				}
+			}
+
+			// Save the query for later use in a flesh message. TODO: This is so ugly.
+			queries("\"POST $query\": " .json_encode($record));
+
 			$response = $this->_conn->query($query, $record, 'POST');
+			if (!$response) {
+				return false;
+			}
+
+			$this->_conn->query("$type/_refresh");
 			$this->_conn->last_id = $response['_id'];
 
-			return $response['created'];
+			return $response['result'];
 		}
 
 		function delete($table, $queryWhere, $limit = 0) {
@@ -269,11 +317,17 @@ if (isset($_GET["elastic"])) {
 
 			foreach ($ids as $id) {
 				$query = "$table/_doc/$id";
+
+				// Save the query for later use in a flesh message. TODO: This is so ugly.
+				queries("\"DELETE $query\"");
+
 				$response = $this->_conn->query($query, null, 'DELETE');
 				if (isset($response['result']) && $response['result'] == 'deleted') {
 					$this->_conn->affected_rows++;
 				}
 			}
+
+			$this->_conn->query("$table/_refresh");
 
 			return $this->_conn->affected_rows;
 		}
@@ -354,6 +408,10 @@ if (isset($_GET["elastic"])) {
 
 		$tables = [];
 		foreach ($aliases as $name => $index) {
+			if ($name[0] == ".") {
+				continue;
+			}
+
 			$tables[$name] = "table";
 
 			ksort($index["aliases"]);
@@ -444,7 +502,6 @@ if (isset($_GET["elastic"])) {
 	}
 
 	function fields($table) {
-		$mappings = [];
 		$mapping = connection()->rootQuery("_mapping");
 
 		if (!isset($mapping[$table])) {
@@ -460,15 +517,14 @@ if (isset($_GET["elastic"])) {
 			}
 		}
 
-		if (!empty($mapping)) {
-			$mappings = $mapping[$table]["mappings"]["properties"];
-		}
+		$mappings = $mapping[$table]["mappings"]["properties"] ?? [];
 
 		$result = [
 			"_id" => [
 				"field" => "_id",
 				"full_type" => "_id",
 				"type" => "_id",
+				"null" => true,
 				"privileges" => ["insert" => 1, "select" => 1, "where" => 1, "order" => 1],
 			]
 		];
@@ -478,6 +534,7 @@ if (isset($_GET["elastic"])) {
 				"field" => $name,
 				"full_type" => $field["type"],
 				"type" => $field["type"],
+				"null" => true,
 				"privileges" => [
 					"insert" => 1,
 					"select" => 1,
@@ -525,19 +582,35 @@ if (isset($_GET["elastic"])) {
 	 */
 	function alter_table($table, $name, $fields, $foreign, $comment, $engine, $collation, $auto_increment, $partitioning) {
 		$properties = [];
-		foreach ($fields as $f) {
-			$field_name = trim($f[1][0]);
-			$field_type = trim($f[1][1] ? $f[1][1] : "text");
+
+		foreach ($fields as $field) {
+			if (!isset($field[1])) {
+				continue;
+			}
+
+			$field_name = trim($field[1][0]);
+			$field_type = trim($field[1][1] ?: "text");
+
 			$properties[$field_name] = [
-				'type' => $field_type
+				"type" => $field_type,
 			];
 		}
 
-		if (!empty($properties)) {
-			$properties = ['properties' => $properties];
-		}
+		$mappings = $properties ? ["properties" => $properties] : new \stdClass();
 
-		return connection()->query("_mapping/{$name}", $properties, 'PUT');
+		if ($table != "") {
+			// Save the query for later use in a flesh message. TODO: This is so ugly.
+			queries("\"POST $name/_mapping\": " . json_encode($mappings));
+
+			return connection()->rootQuery("$name/_mapping", $mappings, "POST");
+		} else {
+			$content = ["mappings" => $mappings];
+
+			// Save the query for later use in a flesh message. TODO: This is so ugly.
+			queries("\"PUT $name\": " . json_encode($content));
+
+			return connection()->rootQuery($name, $content, "PUT");
+		}
 	}
 
 	/** Drop types
@@ -547,7 +620,12 @@ if (isset($_GET["elastic"])) {
 	function drop_tables($tables) {
 		$return = true;
 		foreach ($tables as $table) { //! convert to bulk api
-			$return = $return && connection()->query(urlencode($table), null, 'DELETE');
+			$table = urlencode($table);
+
+			// Save the query for later use in a flesh message. TODO: This is so ugly.
+			queries("\"DELETE $table\"");
+
+			$return = $return && connection()->query($table, null, 'DELETE');
 		}
 
 		return $return;

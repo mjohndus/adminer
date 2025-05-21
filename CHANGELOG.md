@@ -11,7 +11,6 @@ upgrade your AdminNeo installation.
 
 ### Changes
 
-- Minimal supported PHP version is 7.1
 - Add AdminNeo namespace
 - Rename core classes to Admin and Pluginer
 - Rename public customizable functions in Admin class
@@ -49,7 +48,17 @@ upgrade your AdminNeo installation.
 - MySQL: Allow to trust server certificate
 - SQLite: Drop support for SQLite 2
 - Elasticsearch: Drop support for Elasticsearch 5
+- Elasticsearch: Display called request in a flash message after altering a record
+- Elasticsearch: Refresh index immediately after altering a record
 - Firebird: Remove the whole driver
+- Running AdminNeo and EditorNeo from the sources requires PHP 7.1
+- Update German translation (by @wintstar)
+- Update Polish translation (by @Matthaiks)
+- Update Japanese translation (by Takashi SHIRAI)
+- Update Ukrainian and Russian translation (by @makss)
+- Update Spanish translation (by @unix4you2)
+- Update Bengali translation (by @yogesh-joshi-0333)
+- Add Hindi translation (by @yogesh-joshi-0333)
 
 ### Bugfixes
 
@@ -59,6 +68,11 @@ upgrade your AdminNeo installation.
 - Fix navigating between various input fields by Ctrl+Up/Down keys
 - MS SQL: Fix escaping UTF-8 strings in PDO drivers
 - Security: Disallow writing temporary files to symlinks (by @vrana)
+- Elasticsearch: Fix compatibility with Elasticsearch 8
+- Elasticsearch: Properly display sparse result rows (by @cweiske)
+- Elasticsearch: Fix record insertion on Elasticsearch 7 (by @cweiske)
+- Elasticsearch: Fix record updating
+- Elasticsearch: Fix creating and altering indexes
 
 A huge thanks to everyone who helped (alphabetically): @adrianbj, @devinemke, @Lumeriol, @wintstar
 (If I missed anyone, just ping me.)

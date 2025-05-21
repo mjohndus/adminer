@@ -489,7 +489,7 @@ function where($where, $fields = []) {
 			// LIKE because of text. But it does not work with datetime, datetime2 and smalldatetime.
 			$conditions[] = "$column LIKE " . q(preg_replace('~[_%[]~', '[\0]', $val));
 		} else {
-			$conditions[] = "$column = " . ($fields ? unconvert_field($fields[$key], q($val)) : q($val));
+			$conditions[] = "$column = " . (isset($fields[$key]) ? unconvert_field($fields[$key], q($val)) : q($val));
 		}
 
 		// Not just [a-z] to catch non-ASCII characters.
@@ -681,7 +681,7 @@ function query_redirect($query, $location, $message, $redirect = true, $execute 
 
 /** Execute and remember query
 * @param string or null to return remembered queries, end with ';' to use DELIMITER
-* @return Min_Result or [$queries, $time] if $query = null
+* @return Min_Result|array or [$queries, $time] if $query = null
 */
 function queries($query) {
 	global $connection;
@@ -694,8 +694,15 @@ function queries($query) {
 		// return executed queries
 		return [implode("\n", $queries), format_time($start)];
 	}
-	$queries[] = (preg_match('~;$~', $query) ? "DELIMITER ;;\n$query;\nDELIMITER " : $query) . ";";
-	return $connection->query($query);
+
+	if (support("sql")) {
+		$queries[] = (preg_match('~;$~', $query) ? "DELIMITER ;;\n$query;\nDELIMITER " : $query) . ";";
+		return $connection->query($query);
+	} else {
+		// Save the query for later use in a flesh message. TODO: This is so ugly.
+		$queries[] = $query;
+		return [];
+	}
 }
 
 /** Apply command to all array items
@@ -1030,7 +1037,7 @@ function input($field, $value, $function) {
 	echo "</td><td>";
 
 	// Input field.
-	$input = Admin::get()->getFieldInput($_GET["edit"], $field, $attrs, $value, $function);
+	$input = Admin::get()->getFieldInput($_GET["edit"] ?? null, $field, $attrs, $value, $function);
 
 	if ($input != "") {
 		echo $input;
@@ -1609,7 +1616,8 @@ function edit_form($table, $fields, $row, $update) {
 		$first = 0;
 		foreach ($fields as $name => $field) {
 			echo "<tr><th>" . Admin::get()->getFieldName($field);
-			$default = $_GET["set"][bracket_escape($name)] ?? null;
+			$key = bracket_escape($name);
+			$default = $_GET["set"][$key] ?? null;
 			if ($default === null) {
 				$default = $field["default"];
 				if ($field["type"] == "bit" && preg_match("~^b'([01]*)'\$~", $default, $regs)) {

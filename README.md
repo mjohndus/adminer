@@ -16,7 +16,8 @@ AdminNeo is based on the [Adminer](https://www.adminer.org/) project by Jakub Vr
 Requirements
 ------------
 
-- PHP 7.1+ with enabled sessions, modern web browser.
+- PHP 5.4+ with enabled sessions, modern web browser.
+- Running AdminNeo from the source code requires PHP 7.1+.
 
 It is also recommended to install [OpenSSL PHP extension](https://www.php.net/manual/en/book.openssl.php) for improved
 security of stored login information.
@@ -52,65 +53,53 @@ download the source code and compile your own AdminNeo:
 
 - Download the source code.
 - Run `composer install` to install dependencies.
-- Run bin/compile.php:
+- Run `php bin/compile.php`:
 
 ```shell
-# AdminNeo
-php bin/compile.php [drivers] [languages] [themes] [config-file.json]
-
-# EditorNeo
-php bin/compile.php editor [drivers] [languages] [themes] [config-file.json]
+php bin/compile.php [project] [drivers] [languages] [themes] [config-file.json]
 ```
 
 Where:
-- `drivers` is a comma-separated list of [database drivers](/admin/drivers) or the value `all-drivers`.
-  The default set is: mysql, pgsql, mssql, sqlite.
+- `project` is one of `admin` or `editor`. If not specified, AdminNeo is compiled.
+- `drivers` is a comma-separated list of [database drivers](/admin/drivers).
+  If not specified, all drivers will be included.
 - `languages` is a comma-separated list of [languages](/admin/translations).
   If not specified, all languages will be included.
-- `themes` is a comma-separated list of [themes](/admin/themes) together with specific color variant. E.g. 
-  `default-blue`, `default-red`, etc. If not specified, only the `default-blue` theme will be included. The `+` 
-  character can be used as a wildcard in the theme name.
-- `config-file.json` is a path to the custom JSON configuration file. It contains a class with [the same parameters](#configuration) 
-  that can be configured in Admin constructor.
-
-If the theme name contains a postfix with one of the supported color variants (-green, -red), the corresponding favicons
-will be included automatically.
+- `themes` is a comma-separated list of [themes](/admin/themes) together with specific color variant: 
+  `default-blue`, `default-red`, etc. If color variant is not specified (e.g., `default`), all color variants will be
+  included. If no theme is specified, the `default-blue` theme will be included.
+- `config-file.json` is a path to the custom JSON configuration file. It contains an object with the same parameters 
+  that can be [configured](#configuration) in PHP code.
 
 For example:
 ```shell
-# Default set of drivers, all languages, only default-blue theme.
+# All drivers, all languages, default-blue theme.
 php bin/compile.php
 
-# Only pgsql driver, only EN language, only default-blue theme.
-php bin/compile.php pgsql en
+# PostgreSQL driver, EN language, default theme with all color variants.
+php bin/compile.php pgsql en default
 
-# Only mysql and pgsql driver, selected languages, only default-blue theme.
+# MySQL and PostgreSQL drivers, selected languages, default-blue theme.
 php bin/compile.php mysql,pgsql en,de,cs,sk
 
-# Default set of drivers, all languages, green and red color variants of the default theme. 
-# Blue color variant will be not available.
+# All drivers, all languages, green and red color variants of the default theme.
 php bin/compile.php default-green,default-red
-
-# Default theme together with all color variants.
-php bin/compile.php default+
 
 # Custom configuration.
 php bin/compile.php ~/my-config.json
 ```
 
-Editor examples:
+EditorNeo example:
 ```shell
-# Default set of drivers, all languages, default theme (without color variants).
-php bin/compile.php editor
-
-# Only pgsql driver, only EN language, default theme with all color variants.
-php bin/compile.php editor pgsql en default+
+php bin/compile.php editor pgsql en default
 ```
 
 JSON configuration file example:
 ```json
 {
-    "navigationMode": "reversed"
+    "navigationMode": "dual",
+    "preferSelection": true,
+    "recordsPerPage": 70
 }
 ```
 
@@ -135,6 +124,9 @@ The file adminneo-config.php will just return the configuration array:
 // Define configuration.
 return [
     "colorVariant" => "green",
+    "navigationMode": "dual",
+    "preferSelection": true,
+    "recordsPerPage": 70
 ];
 ```
 
@@ -365,7 +357,6 @@ UI improvements have been introduced.
 
 Bridges are burned 🔥🔥🔥. Our goals are:
 
-- **Requirements** - Bump minimal PHP to 7.1. 
 - **Themes** – Brand-new default theme based on our old [Adminer theme](https://github.com/pematon/adminer-theme). It will support dark mode and configurable 
 color variants for production/devel environment. All current designs will be removed. 
 - **Plugins** - Integrate several basic plugins, enable them by simple optional configuration.

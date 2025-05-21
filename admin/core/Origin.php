@@ -146,7 +146,7 @@ abstract class Origin extends Plugin
 		$hash = $this->config->getDefaultPasswordHash();
 		if ($hash === null || $hash === "") {
 			return lang('Database does not support password.');
-		} elseif (!password_verify($password, $hash)) {
+		} elseif (!function_exists("password_verify") || !password_verify($password, $hash)) {
 			return lang('Invalid server or credentials.');
 		}
 
@@ -511,18 +511,18 @@ abstract class Origin extends Plugin
 
 	public abstract function getFieldFunctions(array $field): array;
 
-	public abstract function getFieldInput(string $table, array $field, string $attrs, $value, ?string $function): string;
+	public abstract function getFieldInput(?string $table, array $field, string $attrs, $value, ?string $function): string;
 
 	/**
 	 * Returns hint for edit field.
 	 *
-	 * @param string $table Table name.
+	 * @param ?string $table Table name. Is null in stored procedure calling.
 	 * @param array $field Single field from fields().
-	 * @param string $value Field value.
+	 * @param ?string $value Field value.
 	 *
 	 * @return string HTML code.
 	 */
-	public function getFieldInputHint(string $table, array $field, ?string $value): string
+	public function getFieldInputHint(?string $table, array $field, ?string $value): string
 	{
 		return support("comment") ? $this->admin->formatComment($field["comment"]) : "";
 	}
@@ -562,7 +562,7 @@ abstract class Origin extends Plugin
 
 		if (
 			$value != "" &&
-			preg_match('~varchar|text|character varying|String~', $fieldType) &&
+			preg_match('~varchar|text|character varying|String|keyword~', $fieldType) &&
 			($value[0] == "{" || $value[0] == "[") &&
 			($json = json_decode($value))
 		) {
@@ -603,27 +603,26 @@ abstract class Origin extends Plugin
 		global $VERSION;
 
 		$last_version = $_COOKIE["neo_version"] ?? null;
-?>
 
-<div class="header">
-	<?= $this->admin->getServiceTitle(); ?>
+		echo "<div class='header'>\n";
+		echo $this->admin->getServiceTitle() . "\n";
 
-	<?php if ($missing != "auth"): ?>
-		<span class="version">
-			<?= h($VERSION); ?>
-			<a id="version" class="version-badge" href="https://github.com/adminneo-org/adminneo/releases"<?= target_blank(); ?> title="<?= h($last_version); ?>">
-				<?= ($this->config->isVersionVerificationEnabled() && $last_version && version_compare($VERSION, $last_version) < 0 ? icon_solo("asterisk") : ""); ?>
-			</a>
-		</span>
-		<?php
-		if ($this->config->isVersionVerificationEnabled() && !$last_version) {
-			echo script("verifyVersion('" . js_escape(ME) . "', '" . get_token() . "');");
+		if ($missing != "auth") {
+			echo "<span class='version'>";
+			echo h(preg_replace('~\\.0(-|$)~', '$1', $VERSION));
+			echo "<a id='version' class='version-badge' href='https://github.com/adminneo-org/adminneo/releases' " . target_blank() . " title='" . h($last_version) . "'>";
+			if ($this->config->isVersionVerificationEnabled() && $last_version && version_compare($VERSION, $last_version) < 0) {
+				echo icon_solo("asterisk");
+			}
+			echo "</a>";
+			echo "</span>\n";
+
+			if ($this->config->isVersionVerificationEnabled() && !$last_version) {
+				echo script("verifyVersion('" . js_escape(ME) . "', '" . get_token() . "');");
+			}
 		}
-		?>
-	<?php endif; ?>
-</div>
 
-<?php
+		echo "</div>\n";
 	}
 
 	public abstract function printDatabaseSwitcher(?string $missing): void;

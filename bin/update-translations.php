@@ -6,9 +6,23 @@ include __DIR__ . "/../admin/include/available.inc.php";
 
 $languages = find_available_languages();
 
+if ($argv && ($argv[1] == "-h" || $argv[1] == "--help")) {
+	echo "Usage:\n";
+	echo "  php bin/update-translations.php [language]\n";
+	echo "\n";
+	echo "Update admin/translations/*.inc.php from source code messages.\n";
+	exit;
+}
+
 $lang = $argv[1] ?? null;
-if (isset($argv[2]) || ($lang && $lang != "xx" && !isset($languages[$lang]))) {
-	echo "Usage: php update-translations.php [lang]\nPurpose: Update admin/translations/*.inc.php from source code messages.\n";
+if ($lang && $lang != "xx" && !isset($languages[$lang])) {
+	echo "⚠️ Unknown language: $lang\n";
+	exit(1);
+}
+
+if (isset($argv[2])) {
+	echo "⚠️ Unknown argument: $argv[2]\n";
+	echo "Run `php bin/update-translations.php -h` for help.\n";
 	exit(1);
 }
 

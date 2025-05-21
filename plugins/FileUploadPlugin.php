@@ -51,7 +51,7 @@ class FileUploadPlugin extends Plugin
 			$this->encodeUrl("$shortFieldName-$val");
 	}
 
-	public function getFieldInput(string $table, array $field, string $attrs, $value, ?string $function): ?string
+	public function getFieldInput(?string $table, array $field, string $attrs, $value, ?string $function): ?string
 	{
 		if (!$this->matchField($field)) {
 			return null;
