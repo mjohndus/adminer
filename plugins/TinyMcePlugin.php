@@ -3,7 +3,7 @@
 namespace AdminNeo;
 
 /**
- * Edits all fields containing "_html" by TinyMCE 7 editor.
+ * Use TinyMCE 7 editor for all edit fields containing "_html" in their name.
  *
  * @link https://www.tiny.cloud/docs/tinymce/latest/php-projects/
  * @link https://www.tiny.cloud/docs/tinymce/latest/basic-setup/
