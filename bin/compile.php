@@ -195,6 +195,13 @@ function short_identifier(int $number, string $chars): string
 	return $return;
 }
 
+function get_absolute_path($file_path): string
+{
+	global $current_path;
+
+	return $file_path[0] == "/" ? $file_path : "$current_path/$file_path";
+}
+
 function min_version(): bool
 {
 	return true;
@@ -208,7 +215,7 @@ function ini_bool(): bool
 function print_usage(): void
 {
 	echo "Usage:\n";
-	echo "  php bin/compile.php [project] [drivers] [languages] [themes] [config-file]\n";
+	echo "  php bin/compile.php [project] [drivers] [languages] [themes] [config-file] [-o output-file]\n";
 	echo "\n";
 	echo "Compile AdminNeo or EditorNeo together with all plugins.\n";
 	echo "Files will be saved into the 'compiled' directory.\n";
@@ -219,6 +226,7 @@ function print_usage(): void
 	echo "  languages   - comma-separated list of languages\n";
 	echo "  themes      - comma-separated list of themes together with specific color variant\n";
 	echo "  config-file - path to the custom JSON configuration file\n";
+	echo "  output-file - path where to save the compiled file\n";
 	echo "\n";
 	echo "More information at: https://github.com/adminneo-org/adminneo?tab=readme-ov-file#usage\n";
 }
@@ -309,7 +317,7 @@ echo "themes:    " . implode(", ", $selected_themes) . "\n";
 // Custom config.
 $custom_config = [];
 if ($arguments && preg_match('~\.json$~i', $arguments[0])) {
-	$file_path = $arguments[0][0] == "/" ? $arguments[0] : getcwd() . "/$arguments[0]";
+	$file_path = get_absolute_path($arguments[0]);
 	$custom_config = @file_get_contents($file_path);
 
 	if ($custom_config) {
@@ -327,6 +335,15 @@ if ($arguments && preg_match('~\.json$~i', $arguments[0])) {
 }
 
 echo "config:    " . ($custom_config ? "yes" : "no") . "\n";
+
+// Output file path and/or name.
+$output_file_path = null;
+if ($arguments && ($arguments[0] == "-o" || $arguments[0] == "--output") && isset($arguments[1])) {
+	$output_file_path = $arguments[1];
+
+	array_shift($arguments);
+	array_shift($arguments);
+}
 
 // Check if all arguments were consumed.
 if ($arguments) {
@@ -363,6 +380,7 @@ $features = ["check", "call" => "routine", "dump", "event", "privileges", "proce
 $lang_ids = []; // global variable simplifies usage in a callback functions
 
 // Change current directory to the project's root. This is required for generating static files.
+$current_path = getcwd();
 chdir(__DIR__ . "/../$project");
 
 // Start with index.php.
@@ -553,27 +571,48 @@ $file = downgrade_php($file);
 // Shrink final file.
 $file = phpShrink($file);
 
-// Save file to export directory.
-@mkdir(__DIR__ . "/../compiled", 0777, true);
-$filename = __DIR__ . "/../compiled/{$project}neo"
-	. (is_dev_version() ? "" : "-$VERSION")
-	. ($single_driver ? "-$single_driver" : "")
-	. ($single_language ? "-$single_language" : "")
-	. ".php";
+// Save file to the output directory.
+if ($output_file_path) {
+	if (is_dir($output_file_path)) {
+		$output_dir = get_absolute_path(rtrim($output_file_path, "/"));
+		$output_name = null;
+	} else {
+		$output_dir = get_absolute_path(dirname($output_file_path));
+		$output_name = basename($output_file_path);
+
+		@mkdir($output_dir, 0777, true);
+	}
+} else {
+	$output_dir = __DIR__ . "/../compiled";
+	$output_name = null;
+
+	@mkdir($output_dir);
+}
+
+if (!$output_name) {
+	$output_name = "{$project}neo"
+		. (is_dev_version() ? "" : "-$VERSION")
+		. ($single_driver ? "-$single_driver" : "")
+		. ($single_language ? "-$single_language" : "")
+		. ".php";
+}
+
+$filename = "$output_dir/$output_name";
 
 file_put_contents($filename, $file);
 
-echo "output:    compiled/" . basename($filename) . " (" . strlen($file) . " B)\n";
+$short_filename = preg_replace('~^' . preg_quote("$current_path/") . '~', "", realpath($filename));
+echo "output:    $short_filename (" . strlen($file) . " B)\n";
 
 // Compile plugins.
-$directory = __DIR__ . "/../compiled/adminneo-plugins";
-@mkdir($directory);
+$output_dir = "$output_dir/adminneo-plugins";
+@mkdir($output_dir);
 
 foreach (glob(__DIR__ . "/../plugins/*") as $file_path) {
 	$file = file_get_contents($file_path);
 
 	$file = downgrade_php($file);
 
-	$filename = "$directory/" . basename($file_path);
+	$filename = "$output_dir/" . basename($file_path);
 	file_put_contents($filename, $file);
 }
