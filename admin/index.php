@@ -1,9 +1,9 @@
 <?php
 
 /**
- * AdminNeo - Database management in a single PHP file
+ * AdminNeo - Powerful database manager in a single PHP file
  *
- * @link https://github.com/adminneo-org/adminneo
+ * @link https://www.adminneo.org/
  *
  * @author Peter Knut
  * @author Jakub Vrana (https://www.vrana.cz/)

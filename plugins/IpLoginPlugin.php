@@ -8,7 +8,7 @@ namespace AdminNeo;
  * If the remote address is a proxy server, it is possible to set additional restriction to the next client in the line
  * (the last IP address found in X-Forwarded-For HTTP header).
  *
- * @link https://www.adminer.org/plugins/#use
+ * @link https://www.adminneo.org/plugins/#usege
  *
  * @author Jakub Vrana, https://www.vrana.cz/
  * @author Peter Knut

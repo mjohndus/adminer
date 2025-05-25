@@ -324,7 +324,7 @@ $translations = [
 	'Warnings' => null,
 	'%d / ' => [],
 	'Limit rows' => null,
-	'AdminNeo does not support accessing a database without a password, <a href="https://www.adminer.org/en/password/"%s>more information</a>.' => null,
+	'AdminNeo does not support accessing a database without a password, <a href="https://www.adminneo.org/password"%s>more information</a>.' => null,
 	'Default value' => null,
 	'The action will be performed after successful login with the same credentials.' => null,
 	'Connecting to privileged ports is not allowed.' => null,

@@ -9,7 +9,7 @@ $translations = [
 	'Username' => 'ユーザ名',
 	'Password' => 'パスワード',
 	'There is a space in the input password which might be the cause.' => '入力されたパスワードに空白が含まれているので、それが原因かもしれません。',
-	'AdminNeo does not support accessing a database without a password, <a href="https://www.adminer.org/en/password/"%s>more information</a>.' => 'AdminNeo はパスワードのないデータベースへの接続には対応していません。(<a href="https://www.adminer.org/en/password/"%s>詳細</a>)',
+	'AdminNeo does not support accessing a database without a password, <a href="https://www.adminneo.org/password"%s>more information</a>.' => 'AdminNeo はパスワードのないデータベースへの接続には対応していません。(<a href="https://www.adminneo.org/password"%s>詳細</a>)',
 	'Database does not support password.' => 'データベースがパスワードに対応していません。',
 	'Too many unsuccessful logins, try again in %d minute(s).' => 'ログインの失敗数が多すぎます。%d分後に再試行してください。',
 	'Invalid database.' => '不正なデータベースです。',

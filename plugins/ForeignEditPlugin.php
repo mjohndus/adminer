@@ -7,7 +7,7 @@ namespace AdminNeo;
  *
  * Selection will be displayed only if the number of foreign values will not exceed the given limit.
  *
- * @link https://www.adminer.org/plugins/#use
+ * @link https://www.adminneo.org/plugins/#usege
  *
  * @author Jakub Vrana, https://www.vrana.cz/
  * @author Peter Knut

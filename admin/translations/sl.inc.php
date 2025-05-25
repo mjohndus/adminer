@@ -313,7 +313,7 @@ $translations = [
 	'%d / ' => [],
 	'Limit rows' => null,
 	'Edit all' => null,
-	'AdminNeo does not support accessing a database without a password, <a href="https://www.adminer.org/en/password/"%s>more information</a>.' => null,
+	'AdminNeo does not support accessing a database without a password, <a href="https://www.adminneo.org/password"%s>more information</a>.' => null,
 	'Default value' => null,
 	'Full table scan' => null,
 	'Too many unsuccessful logins, try again in %d minute(s).' => [],

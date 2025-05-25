@@ -1,9 +1,9 @@
 <?php
 
 /**
- * AdminNeo Editor - Compact database editor for end-users
+ * EditorNeo - Easy-to-use data editor in a single PHP file
  *
- * @link https://github.com/adminneo-org/adminneo
+ * @link https://www.adminneo.org/editor
  *
  * @author Peter Knut
  * @author Jakub Vrana (https://www.vrana.cz/)

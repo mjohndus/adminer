@@ -275,7 +275,7 @@ $translations = [
 	'Warnings' => 'Attenzione',
 	'%d / ' => ['%d / '],
 	'Limit rows' => 'Limite righe',
-	'AdminNeo does not support accessing a database without a password, <a href="https://www.adminer.org/en/password/"%s>more information</a>.' => 'AdminNeo non supporta accesso a databse senza password, <a href="https://www.adminer.org/it/password/"%s>piú informazioni</a>.',
+	'AdminNeo does not support accessing a database without a password, <a href="https://www.adminneo.org/password"%s>more information</a>.' => 'AdminNeo non supporta accesso a databse senza password, <a href="https://www.adminneo.org/password"%s>piú informazioni</a>.',
 	'Default value' => 'Valore predefinito',
 	'Full table scan' => 'Analizza intera tabella',
 	'Too many unsuccessful logins, try again in %d minute(s).' => ['Troppi tentativi infruttuosi di login, si prega di riprovare in %d minuto.', 'Troppi tentativi infruttuosi di login, si prega di riprovare in %d minuti.'],

@@ -5,7 +5,7 @@ namespace AdminNeo;
 /**
  * Logs all queries to SQL file.
  *
- * @link https://www.adminer.org/plugins/#use
+ * @link https://www.adminneo.org/plugins/#usege
  *
  * @author Jakub Vrana, https://www.vrana.cz/
  * @author Peter Knut

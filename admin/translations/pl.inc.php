@@ -19,7 +19,7 @@ $translations = [
 	'Logout successful.' => 'Wylogowano pomyślnie.',
 	'Invalid server or credentials.' => 'Nieprawidłowy serwer lub dane logowania.',
 	'There is a space in the input password which might be the cause.' => 'W haśle wejściowym znajduje się spacja, która może być przyczyną.',
-	'AdminNeo does not support accessing a database without a password, <a href="https://www.adminer.org/en/password/"%s>more information</a>.' => 'AdminNeo nie obsługuje dostępu do bazy danych bez hasła, <a href="https://www.adminer.org/pl/password/"%s>więcej informacji</a>.',
+	'AdminNeo does not support accessing a database without a password, <a href="https://www.adminneo.org/password"%s>more information</a>.' => 'AdminNeo nie obsługuje dostępu do bazy danych bez hasła, <a href="https://www.adminneo.org/password"%s>więcej informacji</a>.',
 	'Database does not support password.' => 'Baza danych nie obsługuje hasła.',
 	'Too many unsuccessful logins, try again in %d minute(s).' => ['Za dużo nieudanych prób logowania, spróbuj ponownie za %d minutę.', 'Za dużo nieudanych prób logowania, spróbuj ponownie za %d minuty.', 'Za dużo nieudanych prób logowania, spróbuj ponownie za %d minut.'],
 	'Language' => 'Język',

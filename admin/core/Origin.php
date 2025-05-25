@@ -164,7 +164,7 @@ abstract class Origin extends Plugin
 			$hash = $this->config->getDefaultPasswordHash();
 
 			if ($hash === null) {
-				return lang('AdminNeo does not support accessing a database without a password, <a href="https://www.adminer.org/en/password/"%s>more information</a>.', target_blank());
+				return lang('AdminNeo does not support accessing a database without a password, <a href="https://www.adminneo.org/password"%s>more information</a>.', target_blank());
 			} else {
 				return $hash === "";
 			}

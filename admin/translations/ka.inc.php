@@ -284,7 +284,7 @@ $translations = [
 	'Source and target columns must have the same data type, there must be an index on the target columns and referenced data must exist.' => 'საწყისი და მიზნობრივი ველები უნდა იყოს ერთიდაიგივე სახეობის, მიზნობრივ ველზე უნდა იყოს ინდექსი და უნდა არსებობდეს შესაბამისი ინფორმაცია.',
 	'Drop %s?' => 'წაიშალოს %s?',
 	'Warnings' => 'გაფრთხილება',
-	'AdminNeo does not support accessing a database without a password, <a href="https://www.adminer.org/en/password/"%s>more information</a>.' => 'უპაროლო წვდომა ბაზასთან არაა დაშვებული AdminNeo-ში, მეტი ინფორმაციისთვის ეწვიეთ <a href="https://www.adminer.org/en/password/"%s>ბმულს</a>.',
+	'AdminNeo does not support accessing a database without a password, <a href="https://www.adminneo.org/password"%s>more information</a>.' => 'უპაროლო წვდომა ბაზასთან არაა დაშვებული AdminNeo-ში, მეტი ინფორმაციისთვის ეწვიეთ <a href="https://www.adminneo.org/password"%s>ბმულს</a>.',
 	'DB' => 'ბაზა',
 	'The action will be performed after successful login with the same credentials.' => 'მოქმედება შესრულდება იგივე მომხმარებლით წარმატებული ავტორიზაციის შემდეგ.',
 	'Connecting to privileged ports is not allowed.' => 'პრივილეგირებულ პორტთან წვდომა დაუშვებელია.',

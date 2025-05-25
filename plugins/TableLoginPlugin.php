@@ -20,7 +20,7 @@ namespace AdminNeo;
  *
  * The minimum required PHP version is 5.5.
  *
- * @link https://www.adminer.org/plugins/#use
+ * @link https://www.adminneo.org/plugins/#usege
  *
  * @author Jakub Vrana, https://www.vrana.cz/
  * @author Peter Knut
