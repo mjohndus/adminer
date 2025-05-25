@@ -3,7 +3,9 @@
 namespace AdminNeo;
 
 /**
- * Require One-Time Password at login.
+ * Adds time-based one-time password authentication to the login form.
+ *
+ * The implementation uses standard SHA1 algorithm, 30s time interval and 6-digits code.
  *
  * @link https://www.adminer.org/plugins/otp/
  *

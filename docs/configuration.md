@@ -56,7 +56,7 @@ List of custom CSS files.
 - Default value: `[]`
 - Available in EditorNeo: YES
 
-List of custom Javascript files.
+List of custom JavaScript files.
 
 ### navigationMode
 
@@ -112,7 +112,7 @@ Number of selected records per one page.
 - Default value: `true`
 - Available in EditorNeo: YES
 
-Whether verification of the new Adminer's version is enabled.
+Whether verification of the new AdminNeo's version is enabled.
 
 ### hiddenDatabases
 
@@ -170,7 +170,7 @@ Note: Access to other collations will be not restricted.
 - Default value: `null`
 - Available in EditorNeo: YES
 
-Default driver for login form. Given value is validated against available drivers. If driver is not set or not invalid,
+Default driver for login form. Given value is validated against available drivers. If driver is not set or is invalid,
 the first available driver will be used.
 
 ### defaultPasswordHash

@@ -3,7 +3,7 @@
 namespace AdminNeo;
 
 /**
- * Exports table data to XML format in structure <database name=""><table name=""><column name="">value
+ * Adds option to export table data to XML format in structure <database name=""><table name=""><column name="">.
  *
  * @link https://www.adminer.org/plugins/#use
  *
