@@ -52,7 +52,6 @@ with PHP and enjoy 😉. If you are not satisfied with any combination of the da
 download the source code and compile your own AdminNeo:
 
 - Download the source code.
-- Run `composer install` to install dependencies.
 - Run `php bin/compile.php`:
 
 ```shell

@@ -52,6 +52,8 @@
         "ext-pdo_oci": "PDO driver for Oracle database"
     },
     "scripts": {
+        "pre-update-cmd": "sh bin/packages/composer-pre-update.sh",
+        "post-update-cmd": "sh bin/packages/composer-post-update.sh",
         "compile": "sh bin/compile-set.sh",
         "clean": "rm -f compiled/admin*.php compiled/editor*.php"
     },

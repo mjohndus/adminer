@@ -2,10 +2,6 @@
 
 namespace AdminNeo;
 
-if (!file_exists(__DIR__ . "/../../vendor/vrana/jsshrink/jsShrink.php")) {
-	die("Please run `composer install` to install dependencies.\n");
-}
-
 require __DIR__ . "/../../vendor/vrana/jsshrink/jsShrink.php";
 
 function read_compiled_file(string $filename): ?string

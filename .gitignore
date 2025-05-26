@@ -5,4 +5,5 @@
 /**/adminneo.js
 /export
 /externals
-/vendor
+vendor/**/.svn
+vendor/**/.git_

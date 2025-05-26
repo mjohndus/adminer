@@ -12,12 +12,7 @@ include __DIR__ . "/../admin/include/debug.inc.php";
 include __DIR__ . "/../admin/include/polyfill.inc.php";
 include __DIR__ . "/../admin/include/available.inc.php";
 include __DIR__ . "/../admin/include/compile.inc.php";
-
-$phpShrinkLib = __DIR__ . "/../vendor/vrana/phpshrink/phpShrink.php";
-if (!file_exists($phpShrinkLib)) {
-	die("Please run `composer install` to install dependencies.\n");
-}
-require $phpShrinkLib;
+include __DIR__ . "/../vendor/vrana/phpshrink/phpShrink.php";
 
 function is_dev_version(): bool
 {
