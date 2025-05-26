@@ -282,7 +282,7 @@ $single_language = count($selected_languages) == 1 ? $selected_languages[0] : nu
 echo "languages: " . ($selected_languages ? implode(", ", $selected_languages) : "all") . "\n";
 
 // Themes.
-$selected_themes = ["default-blue"];
+$selected_themes = [];
 if ($arguments) {
 	$params = explode(",", $arguments[0]);
 
@@ -312,7 +312,15 @@ if ($arguments) {
 	}
 }
 
-echo "themes:    " . implode(", ", $selected_themes) . "\n";
+echo "themes:    " . ($selected_themes ? implode(", ", $selected_themes) : "all") . "\n";
+
+if (!$selected_themes) {
+	foreach (find_available_themes() as $theme => $colors) {
+		foreach ($colors as $color => $available) {
+			$selected_themes[] = "$theme-$color";
+		}
+	}
+}
 
 // Custom config.
 $custom_config = [];

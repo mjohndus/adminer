@@ -12,7 +12,7 @@ function find_available_themes(): array
 	static $themes = [];
 
 	if (!$themes) {
-		$paths = array_filter(glob(__DIR__ . "/../themes/*"));
+		$paths = glob(__DIR__ . "/../themes/*");
 
 		foreach ($paths as $path) {
 			if (preg_match('~/([^/]+)-(blue|green|red)$~', $path, $matches)) {
@@ -34,7 +34,7 @@ function find_available_languages(): array
 	static $languages = [];
 
 	if (!$languages) {
-		$paths = array_filter(glob(__DIR__ . "/../translations/*"));
+		$paths = glob(__DIR__ . "/../translations/*");
 
 		foreach ($paths as $path) {
 			if (preg_match('~/([^/]+)\.inc\.php$~', $path, $matches)) {
