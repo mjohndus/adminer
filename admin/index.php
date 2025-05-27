@@ -3,12 +3,15 @@
 /**
  * AdminNeo - Powerful database manager in a single PHP file
  *
+ * !compile: parameters
+ *
  * @link https://www.adminneo.org/
  *
  * @author Peter Knut
  * @author Jakub Vrana (https://www.vrana.cz/)
  *
- * @copyright 2007-2025 Jakub Vrana, 2024-2025 Peter Knut
+ * @copyright 2007-2025 Jakub Vrána
+ * @copyright 2024-2025 Peter Knut
  *
  * @license Apache License, Version 2.0 (https://www.apache.org/licenses/LICENSE-2.0)
  * @license GNU General Public License, version 2 (https://www.gnu.org/licenses/gpl-2.0.html)

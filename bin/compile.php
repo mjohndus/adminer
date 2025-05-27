@@ -262,7 +262,8 @@ if ($arguments) {
 }
 $single_driver = count($selected_drivers) == 1 ? $selected_drivers[0] : null;
 
-echo "drivers:   " . ($selected_drivers ? implode(", ", $selected_drivers) : "all") . "\n";
+$compilation_info[] = $text = "drivers:   " . ($selected_drivers ? implode(", ", $selected_drivers) : "all") . "\n";
+echo $text;
 
 // Languages.
 $selected_languages = [];
@@ -276,7 +277,8 @@ if ($arguments) {
 }
 $single_language = count($selected_languages) == 1 ? $selected_languages[0] : null;
 
-echo "languages: " . ($selected_languages ? implode(", ", $selected_languages) : "all") . "\n";
+$compilation_info[] = $text = "languages: " . ($selected_languages ? implode(", ", $selected_languages) : "all") . "\n";
+echo $text;
 
 // Themes.
 $selected_themes = [];
@@ -309,7 +311,8 @@ if ($arguments) {
 	}
 }
 
-echo "themes:    " . ($selected_themes ? implode(", ", $selected_themes) : "all") . "\n";
+$compilation_info[] = $text = "themes:    " . ($selected_themes ? implode(", ", $selected_themes) : "all") . "\n";
+echo $text;
 
 if (!$selected_themes) {
 	foreach (find_available_themes() as $theme => $colors) {
@@ -339,7 +342,8 @@ if ($arguments && preg_match('~\.json$~i', $arguments[0])) {
 	array_shift($arguments);
 }
 
-echo "config:    " . ($custom_config ? "yes" : "no") . "\n";
+$compilation_info[] = $text = "config:    " . ($custom_config ? "yes" : "no") . "\n";
+echo $text;
 
 // Output file path and/or name.
 $output_file_path = null;
@@ -565,6 +569,13 @@ if ($custom_config) {
 		$file
 	);
 }
+
+// Print compilation parameters.
+$file = str_replace(
+	"!compile: parameters\n",
+	"Compiled with\n * " . implode(" * ", $compilation_info),
+	$file
+);
 
 // Remove superfluous PHP tags.
 $file = preg_replace("~<\\?php\\s*\\?>\n?|\\?>\n?<\\?php~", '', $file);
