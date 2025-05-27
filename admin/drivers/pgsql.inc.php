@@ -735,11 +735,10 @@ ORDER BY 1";
 	pg_indexes_size(oid) AS \"Index_length\"" : "") . ",
 	obj_description(oid, 'pg_class') AS \"Comment\",
 	" . (Connection::get()->isMinVersion("12") ? "''" : "CASE WHEN relhasoids THEN 'oid' ELSE '' END") . " AS \"Oid\",
-	reltuples as \"Rows\",
-	inhparent AS \"Inherited\",
+	reltuples AS \"Rows\",
+	(SELECT inhparent FROM pg_inherits WHERE inhrelid = oid) AS \"Inherited\",
 	current_schema() AS nspname
 FROM pg_class
-LEFT JOIN pg_inherits ON inhrelid = oid
 WHERE relkind IN ('r', 'm', 'v', 'f', 'p')
 AND relnamespace = " . Driver::get()->getNsOidSql() . "
 " . ($name != "" ? "AND relname = " . q($name) : "ORDER BY relname")
