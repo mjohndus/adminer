@@ -226,6 +226,8 @@ function print_usage(): void
 	echo "More information at: https://github.com/adminneo-org/adminneo?tab=readme-ov-file#usage\n";
 }
 
+$current_path = getcwd();
+
 // Parse script arguments.
 $arguments = $argv;
 array_shift($arguments);
@@ -383,7 +385,6 @@ $features = ["check", "call" => "routine", "dump", "event", "privileges", "proce
 $lang_ids = []; // global variable simplifies usage in a callback functions
 
 // Change current directory to the project's root. This is required for generating static files.
-$current_path = getcwd();
 chdir(__DIR__ . "/../$project");
 
 // Start with index.php.
