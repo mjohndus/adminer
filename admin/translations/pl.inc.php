@@ -7,7 +7,7 @@ $translations = [
 	'More information.' => 'Więcej informacji.',
 
 	// label for database system selection (MySQL, SQLite, ...)
-	'Home' => null,
+	'Home' => 'Strona główna',
 	'System' => 'Rodzaj bazy',
 	'Server' => 'Serwer',
 	'Username' => 'Użytkownik',
@@ -190,7 +190,7 @@ $translations = [
 	'Maximum number of allowed fields exceeded. Please increase %s.' => 'Przekroczono maksymalną liczbę pól. Zwiększ %s.',
 
 	'Partition by' => 'Partycjonowanie',
-	'Partition' => null,
+	'Partition' => 'Partycja',
 	'Partitions' => 'Partycje',
 	'Partition name' => 'Nazwa partycji',
 	'Values' => 'Wartości',
@@ -243,7 +243,7 @@ $translations = [
 	'Search' => 'Szukaj',
 	'anywhere' => 'gdziekolwiek',
 	'Search data in tables' => 'Wyszukaj we wszystkich tabelach',
-	'as a regular expression' => null,
+	'as a regular expression' => 'jako wyrażenie regularne',
 	'Sort' => 'Sortuj',
 	'descending' => 'malejąco',
 	'Limit' => 'Limit',
@@ -346,20 +346,17 @@ $translations = [
 	'Check has been altered.' => 'Kontrola została zmieniona.',
 	'Check has been dropped.' => 'Kontrola została usunięta.',
 
-	'One Time Password' => null,
-	'Invalid OTP code.' => null,
-
-	'Schemas' => null,
-	'No schemas.' => null,
-	'Show schema' => null,
-	'No driver' => null,
-	'Database driver not found.' => null,
-
-	'Invalid permanent login, please login again.' => null,
-
-	'Access denied.' => null,
-	'Enter OTP code.' => null,
-
-	'Info' => null,
-	'%s and %s must return an object created by %s method.' => null,
+	'One Time Password' => 'Jednorazowe hasło',
+	'Invalid OTP code.' => 'Nieprawidłowy kod OTP.',
+	'HTTP request' => 'Żądanie HTTP',
+	'Schemas' => 'Schematy',
+	'No schemas.' => 'Brak schematów.',
+	'Show schema' => 'Pokaż schemat',
+	'No driver' => 'Brak sterownika',
+	'Database driver not found.' => 'Nie znaleziono sterownika bazy danych.',
+	'Invalid permanent login, please login again.' => 'Nieprawidłowe trwałe logowanie, proszę zaloguj się ponownie.',
+	'Access denied.' => 'Odmowa dostępu.',
+	'Enter OTP code.' => 'Wprowadź kod OTP.',
+	'Info' => 'Informacje',
+	'%s and %s must return an object created by %s method.' => '%s i %s muszą zwracać obiekt utworzony przez metodę %s.',
 ];
