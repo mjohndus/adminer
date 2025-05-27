@@ -9,7 +9,7 @@ namespace AdminNeo;
  * @link https://www.tiny.cloud/docs/tinymce/latest/basic-setup/
  * @link https://www.tiny.cloud/get-tiny/language-packages/
  *
- * @link https://www.adminneo.org/plugins/#usege
+ * @link https://www.adminneo.org/plugins/#usage
  *
  * @author Jakub Vrana, https://www.vrana.cz/
  * @author Peter Knut

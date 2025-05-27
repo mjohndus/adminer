@@ -5,7 +5,7 @@ namespace AdminNeo;
 /**
  * Adds option to export table data to XML format in structure <database name=""><table name=""><column name="">.
  *
- * @link https://www.adminneo.org/plugins/#usege
+ * @link https://www.adminneo.org/plugins/#usage
  *
  * @author Jakub Vrana, https://www.vrana.cz/
  * @author Peter Knut
