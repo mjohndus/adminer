@@ -610,7 +610,7 @@ abstract class Origin extends Plugin
 		if ($missing != "auth") {
 			echo "<span class='version'>";
 			echo h(preg_replace('~\\.0(-|$)~', '$1', $VERSION));
-			echo "<a id='version' class='version-badge' href='https://github.com/adminneo-org/adminneo/releases' " . target_blank() . " title='" . h($last_version) . "'>";
+			echo "<a id='version' class='version-badge' href='https://www.adminneo.org/download' " . target_blank() . " title='" . h($last_version) . "'>";
 			if ($this->config->isVersionVerificationEnabled() && $last_version && version_compare($VERSION, $last_version) < 0) {
 				echo icon_solo("asterisk");
 			}

@@ -110,9 +110,10 @@ function verifyVersion(baseUrl, token) {
 		ajax('https://api.github.com/repos/adminneo-org/adminneo/releases/latest', (request) => {
 			const response = JSON.parse(request.responseText);
 
-			const version = response.tag_name.replace(/^\D*/, '');
-			if (!version) return;
+			const matches = response.tag_name.match(/^v(\d{1,2}\.\d{1,2}\.\d{1,2}(-(alpha|beta|rc)\d?)?)$/);
+			if (!matches) return;
 
+			const version = matches[1];
 			cookie('neo_version=' + version, 1);
 
 			const data = 'version=' + version + '&token=' + token;
