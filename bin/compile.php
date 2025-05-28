@@ -570,7 +570,9 @@ if ($custom_config) {
 	);
 }
 
-// Print compilation parameters.
+// Print version and compilation parameters.
+$file = str_replace("!compile: version", "v$VERSION", $file);
+
 $file = str_replace(
 	"!compile: parameters\n",
 	"Compiled with\n * " . implode(" * ", $compilation_info),

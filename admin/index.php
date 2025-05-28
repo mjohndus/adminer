@@ -2,6 +2,7 @@
 
 /**
  * AdminNeo - Powerful database manager in a single PHP file
+ * !compile: version
  *
  * !compile: parameters
  *

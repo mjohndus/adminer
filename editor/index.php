@@ -2,6 +2,7 @@
 
 /**
  * EditorNeo - Easy-to-use data editor in a single PHP file
+ * !compile: version
  *
  * !compile: parameters
  *
