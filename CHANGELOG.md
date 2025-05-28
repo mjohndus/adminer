@@ -1,8 +1,8 @@
 Changelog
 =========
 
-AdminNeo 5.0
-------------
+AdminNeo 5.0.0
+--------------
 
 This is the first release of AdminNeo and EditorNeo as standalone products. It mainly brings the brand new responsive
 theme with dark mode support and color variants, easy to use [configuration](docs/configuration.md), several UX 
@@ -77,8 +77,8 @@ upgrade your AdminNeo installation.
 A huge thanks to everyone who helped (alphabetically): @adrianbj, @devinemke, @Lumeriol, @wintstar
 (If I missed anyone, just ping me.)
 
-AdminNeo 4.17.2
----------------
+AdminNeo 4.17.2 (2025-03-14)
+----------------------------
 
 ### Changes
 
@@ -89,8 +89,8 @@ AdminNeo 4.17.2
 - Fix executing SQL query when history is NULL (@devinemke)
 - MySQL: Fix saving string default value of json fields
 
-AdminNeo 4.17.1
----------------
+AdminNeo 4.17.1 (2025-03-12)
+----------------------------
 
 ### Bugfixes
 
@@ -101,8 +101,8 @@ AdminNeo 4.17.1
 - MariaDB: Fix using "NULL" text as a default value of nullable column (issue #82)
 - PostgreSQL PDO: Escape bytea values (by @vrana)
 
-AdminNeo 4.17
--------------
+AdminNeo 4.17.0 (2025-03-10)
+----------------------------
 
 ### Changes
 
@@ -146,8 +146,8 @@ AdminNeo 4.17
 
 (Ported relevant changes and fixes from Adminer 5.0.0-5.0.2. Backward compatibility is still kept.)
 
-AdminNeo 4.16.1
----------------
+AdminNeo 4.16.1 (2025-03-03)
+----------------------------
 
 ### Changes
 
@@ -158,8 +158,8 @@ AdminNeo 4.16.1
 
 - Fix including proper dependencies without dark mode support (issue #67)
 
-AdminNeo 4.16
--------------
+AdminNeo 4.16.0 (2025-03-02)
+----------------------------
 
 ### Changes
 
@@ -196,7 +196,7 @@ AdminNeo 4.16
 
 (Ported relevant changes and fixes from Adminer 4.17.0-4.17.1.)
 
-AdminNeo 4.15 (2025-02-25)
+AdminNeo 4.15.0 (2025-02-25)
 ----------------------------
 
 ### Changes
@@ -234,7 +234,7 @@ AdminNeo 4.15 (2025-02-25)
 
 (Ported relevant changes and fixes from Adminer 4.16.0.)
 
-AdminNeo 4.14 (2025-02-02)
+AdminNeo 4.14.0 (2025-02-02)
 ----------------------------
 
 ### Changes
@@ -256,7 +256,7 @@ AdminNeo 4.14 (2025-02-02)
 
 Thanks for help with invalid links: @adrianbj.
 
-AdminNeo 4.13 (2025-01-23)
+AdminNeo 4.13.0 (2025-01-23)
 ----------------------------
 
 ### Changes
@@ -271,7 +271,7 @@ AdminNeo 4.13 (2025-01-23)
 - SQLite: Fix exporting and recreating tables with UNIQUE column constraint
 - Fix main visual glitches in designs
 
-AdminNeo 4.12 (2024-11-21)
+AdminNeo 4.12.0 (2024-11-21)
 ----------------------------
 
 ### New features
@@ -301,7 +301,7 @@ AdminNeo 4.12 (2024-11-21)
 - Compiler: Fix translations in plugins
 - Compiler: Fix compiled SQLite single-driver Adminer
 
-AdminNeo 4.11 (2024-10-30)
+AdminNeo 4.11.0 (2024-10-30)
 ----------------------------
 
 ### New features
@@ -324,7 +324,7 @@ AdminNeo 4.11 (2024-10-30)
 - MS SQL: Prefix Unicode strings with 'N' so they are treated correctly
 - Fix printing error message while validating server URL
 
-AdminNeo 4.10 (2024-10-22)
+AdminNeo 4.10.0 (2024-10-22)
 ----------------------------
 
 ### New features
@@ -358,7 +358,7 @@ AdminNeo 4.10 (2024-10-22)
 - Fix missing SQL statement if warnings are printed (regression from 4.9)
 
 AdminNeo 4.9.4 (2024-10-09)
------------------------------
+---------------------------
 
 - Fix the width of inline edit field
 - Unify displaying of 'New item' action based on privileges
@@ -371,7 +371,7 @@ AdminNeo 4.9.4 (2024-10-09)
 - Clean up the code for PHP < 5.6
 
 AdminNeo 4.9.3 (2024-10-02)
------------------------------
+---------------------------
 
 - MySQL, PostgreSQL: Fix queries splitting and string constants
 - MySQL: Fix where clause for `JSON` column (by @SeaEagle)
@@ -387,7 +387,7 @@ AdminNeo 4.9.3 (2024-10-02)
 - CSS: Bigger font size for code blocks
 
 AdminNeo 4.9.2 (2024-09-18)
------------------------------
+---------------------------
 
 - Fix textarea height for single-line inputs (used typically for SQLite text field)
 - Fix undefined property in error message if driver does not support error number (e.g. PostgreSQL)
@@ -401,7 +401,7 @@ AdminNeo 4.9.2 (2024-09-18)
 - Add function to retrieve driver name that can be used in plugins (by @Roy-Orbison)
 
 AdminNeo 4.9.1 (2024-09-09)
------------------------------
+---------------------------
 
 - Compatibility with PHP 8.3 (by @Sneda8)
 - Fix compiling jush external files
@@ -418,7 +418,7 @@ AdminNeo 4.9.1 (2024-09-09)
 - AdminerEditForeign: Refactor and fix the plugin
 - AdminerLoginOtp: Autocomplete hints for OTP input field, code refactoring
 
-AdminNeo 4.9 (2024-08-19)
+AdminNeo 4.9.0 (2024-08-19)
 ---------------------------
 
 - Validate server input in login form
@@ -437,7 +437,7 @@ AdminNeo 4.9 (2024-08-19)
 - Add script for exporting compiled adminer variants
 
 AdminNeo 4.8.2 (2024-03-16)
------------------------------
+---------------------------
 
 - Support multi-line table comments
 - MySQL: Use `ST_SRID()` instead of `SRID()` for MySQL 8 (PR #418)
