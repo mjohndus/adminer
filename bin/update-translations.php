@@ -6,7 +6,8 @@ include __DIR__ . "/../admin/include/available.inc.php";
 
 $languages = find_available_languages();
 
-if ($argv && ($argv[1] == "-h" || $argv[1] == "--help")) {
+$param = $argv[1] ?? null;
+if ($param && ($param == "-h" || $param == "--help")) {
 	echo "Usage:\n";
 	echo "  php bin/update-translations.php [language]\n";
 	echo "\n";
@@ -14,7 +15,7 @@ if ($argv && ($argv[1] == "-h" || $argv[1] == "--help")) {
 	exit;
 }
 
-$lang = $argv[1] ?? null;
+$lang = $param;
 if ($lang && $lang != "xx" && !isset($languages[$lang])) {
 	echo "⚠️ Unknown language: $lang\n";
 	exit(1);
