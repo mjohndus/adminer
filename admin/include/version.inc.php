@@ -2,4 +2,4 @@
 
 namespace AdminNeo;
 
-$VERSION = "5.0.0-rc";
+$VERSION = "5.0.0";

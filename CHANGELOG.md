@@ -5,9 +5,13 @@ AdminNeo 5.0.0
 --------------
 
 This is the first release of AdminNeo and EditorNeo as standalone products. It mainly brings the brand new responsive
-theme with dark mode support and color variants, easy to use [configuration](docs/configuration.md), several UX 
-improvements and reviewed plugins and customizable functions. Please consult the [Upgrade guide](docs/upgrade.md) to 
-upgrade your AdminNeo installation.
+theme with dark mode support and color variants, easy to use [configuration](https://www.adminneo.org/configuration), 
+several UX improvements and reviewed [plugins](https://www.adminneo.org/plugins) and 
+[customizations](https://www.adminneo.org/customizations). 
+Please consult the [Upgrade guide](https://www.adminneo.org/upgrade) to upgrade your AdminNeo installation.
+
+AdminNeo can be downloaded on the new [adminneo.org/download](https://www.adminneo.org/download) page where you can select 
+the components according to your needs.
 
 ### Changes
 
