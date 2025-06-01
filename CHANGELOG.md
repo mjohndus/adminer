@@ -1,6 +1,13 @@
 Changelog
 =========
 
+AdminNeo 5.1.0
+--------------
+
+### Changes
+
+- Refine and standardize Japanese translation (by @yama)
+
 AdminNeo 5.0.0
 --------------
 
@@ -57,7 +64,7 @@ the components according to your needs.
 - Firebird: Remove the whole driver
 - Running AdminNeo and EditorNeo from the sources requires PHP 7.1
 - Update German translation (by @wintstar)
-- Update Polish translation (by @Matthaiks)
+- Update Polish translation (by @Matthaiks and Johan)
 - Update Japanese translation (by Takashi SHIRAI)
 - Update Ukrainian and Russian translation (by @makss)
 - Update Spanish translation (by @unix4you2)
