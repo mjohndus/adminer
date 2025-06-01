@@ -207,6 +207,7 @@ if (isset($_GET["mssql"])) {
 	class Min_Driver extends Min_SQL {
 
 		function insertUpdate($table, $rows, $primary) {
+			$fields = fields($table);
 			$update = [];
 			$where = [];
 			$set = reset($rows);
