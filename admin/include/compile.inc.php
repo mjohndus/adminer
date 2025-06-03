@@ -169,7 +169,7 @@ function downgrade_php(string $code): string
 	$array_key2 = $array_key . '\[' . $array_key . ']' . '[^](]*';
 
 	$code = preg_replace(
-		'~((\$|\$this->|self::\$|self::)\w+' // name
+		'~((\$|\$\w+->|self::\$|self::)\w+' // name
 		. '(\[(' . $array_key . '|' . $array_key2 . ')])*)' // array, max 2 levels
 		. $coalescing
 		. '~', 'isset(\1) ? \1 :', $code
@@ -177,7 +177,7 @@ function downgrade_php(string $code): string
 
 	// Null coalescing - function calls.
 	$code = preg_replace(
-		'~((\$this->|self::)?\w+' // name
+		'~((\$\w+->|self::)?\w+' // name
 		. '\([^)]*\))' // parameters
 		. $coalescing
 		. '~', '($_result = \1) !== null ? $_result :', $code);
