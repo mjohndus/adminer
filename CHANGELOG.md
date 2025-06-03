@@ -8,6 +8,10 @@ AdminNeo 5.1.0
 
 - Refine and standardize Japanese translation (by @yama)
 
+### Bugfixes
+
+- MS SQL: Add missing support for Encrypt and TrustServerCertificate parameters in PDO_SQLSRV
+
 AdminNeo 5.0.0
 --------------
 

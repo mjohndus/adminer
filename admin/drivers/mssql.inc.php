@@ -170,7 +170,22 @@ if (isset($_GET["mssql"])) {
 			var $extension = "PDO_SQLSRV";
 
 			function connect($server, $username, $password) {
-				$this->dsn("sqlsrv:Server=" . str_replace(":", ",", $server), $username, $password);
+				$options = [];
+
+				$encrypt = Admin::get()->getConfig()->getSslEncrypt();
+				if ($encrypt !== null) {
+					$options[] = "Encrypt=$encrypt";
+				}
+
+				$trustServerCertificate = Admin::get()->getConfig()->getSslTrustServerCertificate();
+				if ($trustServerCertificate !== null) {
+					$options[] = "TrustServerCertificate=$trustServerCertificate";
+				}
+
+				$optionsString = $options ? (";" . implode(";", $options)) : "";
+
+				$this->dsn("sqlsrv:Server=" . str_replace(":", ",", $server) . $optionsString, $username, $password);
+
 				return true;
 			}
 
