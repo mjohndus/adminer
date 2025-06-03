@@ -736,7 +736,7 @@ ORDER BY 1";
 	obj_description(oid, 'pg_class') AS \"Comment\",
 	" . (Connection::get()->isMinVersion("12") ? "''" : "CASE WHEN relhasoids THEN 'oid' ELSE '' END") . " AS \"Oid\",
 	reltuples AS \"Rows\",
-	(SELECT inhparent FROM pg_inherits WHERE inhrelid = oid) AS \"Inherited\",
+	" . (Connection::get()->isMinVersion("10") ? "relispartition::int AS \"Partition\"," : "") . "
 	current_schema() AS nspname
 FROM pg_class
 WHERE relkind IN ('r', 'm', 'v', 'f', 'p')

@@ -582,7 +582,7 @@ class Admin extends Origin
 		foreach ($tables as $status) {
 			// Skip views and tables without a name.
 			$name = $this->admin->getTableName($status);
-			if ($name == "" || ($status["Inherited"] ?? false)) {
+			if ($name == "" || ($status["Partition"] ?? false)) {
 				continue;
 			}
 
