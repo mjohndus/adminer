@@ -44,7 +44,7 @@ class TableLoginPlugin extends Plugin
 	 * @param string $table Table name.
 	 * @param string[] $credentials Database credentials in form [user, password].
 	 */
-	function __construct(string $database, string $table = "users", array $credentials = ["", ""])
+	public function __construct(string $database, string $table = "users", array $credentials = ["", ""])
 	{
 		$this->database = $database;
 		$this->table = $table;

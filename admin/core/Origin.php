@@ -77,7 +77,7 @@ abstract class Origin extends Plugin
 	/**
 	 * @param string[] $errors
 	 */
-	public function __construct(array $errors = [])
+	protected function __construct(array $errors = [])
 	{
 		$this->errors = $errors;
 	}

@@ -25,7 +25,7 @@ class IpLoginPlugin extends Plugin
 	 * @param array $ips Allowed IP address prefixes.
 	 * @param array $forwardedFor Allowed X-Forwarded-For prefixes, empty array means no restriction.
 	 */
-	function __construct(array $ips, array $forwardedFor = [])
+	public function __construct(array $ips, array $forwardedFor = [])
 	{
 		$this->ips = $ips;
 		$this->forwardedFor = $forwardedFor;
