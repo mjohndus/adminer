@@ -10,6 +10,7 @@ AdminNeo 5.1.0
 
 ### Bugfixes
 
+- MySQL: Fix using undefined PDO constant on PHP 5
 - MS SQL: Add missing support for Encrypt and TrustServerCertificate parameters in PDO_SQLSRV
 
 AdminNeo 5.0.0
