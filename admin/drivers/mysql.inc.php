@@ -100,8 +100,9 @@ if (isset($_GET["mysql"])) {
 					$options[PDO::MYSQL_ATTR_SSL_CA] = $ca_certificate;
 				}
 
+				// MYSQL_ATTR_SSL_VERIFY_SERVER_CERT is defined only with mysqlnd.
 				$trustServerCertificate = Admin::get()->getConfig()->getSslTrustServerCertificate();
-				if ($trustServerCertificate !== null) {
+				if ($trustServerCertificate !== null && defined('\PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT')) {
 					$options[PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT] = !$trustServerCertificate;
 				}
 

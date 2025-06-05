@@ -199,7 +199,6 @@ function downgrade_php(string $code): string
 
 	// Constants.
 	$code = preg_replace('~\bMYSQLI_CLIENT_SSL_DONT_VERIFY_SERVER_CERT\b~', '64', $code);
-	$code = preg_replace('~\\\\?PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT\b~', '1014', $code);
 
 	return $code;
 }
