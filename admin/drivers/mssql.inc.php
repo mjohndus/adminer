@@ -314,7 +314,7 @@ if (isset($_GET["mssql"])) {
 	}
 
 	function get_databases() {
-		return get_vals("SELECT name FROM sys.databases WHERE name NOT IN ('master', 'tempdb', 'model', 'msdb')");
+		return get_vals("SELECT name FROM sys.databases WHERE name NOT IN ('master', 'tempdb', 'model', 'msdb') ORDER BY name");
 	}
 
 	function limit($query, $where, ?int $limit, $offset = 0, $separator = " ") {
