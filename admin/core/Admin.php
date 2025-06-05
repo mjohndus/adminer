@@ -116,7 +116,8 @@ class Admin extends Origin
 		echo $this->admin->getLoginFormRow('password', lang('Password'), '<input type="password" class="input" name="auth[password]" autocomplete="current-password">');
 
 		if (!$serverPairs) {
-			echo $this->admin->getLoginFormRow('db', lang('Database'), '<input class="input" name="auth[db]" value="' . h($_GET["db"]) . '" autocapitalize="off">');
+			$database = $_GET["db"] ?? $this->config->getDefaultDatabase();
+			echo $this->admin->getLoginFormRow('db', lang('Database'), '<input class="input" name="auth[db]" value="' . h($database) . '" autocapitalize="off">');
 		}
 		echo "</table>\n";
 

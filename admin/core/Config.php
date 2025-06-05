@@ -146,6 +146,11 @@ class Config
 		return $server;
 	}
 
+	public function getDefaultDatabase(): ?string
+	{
+		return $this->params["defaultDatabase"] ?? null;
+	}
+
 	public function getDefaultPasswordHash(): ?string
 	{
 		return $this->params["defaultPasswordHash"] ?? null;

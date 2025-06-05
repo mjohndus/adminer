@@ -6,7 +6,7 @@ AdminNeo 5.1.0
 
 ### Changes
 
-- Add defaultServer configuration parameter.
+- Add defaultServer and defaultDatabase configuration parameters
 - Refine and standardize Japanese translation (by @yama)
 
 ### Bugfixes
