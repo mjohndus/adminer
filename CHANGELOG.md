@@ -10,6 +10,7 @@ AdminNeo 5.1.0
 
 ### Bugfixes
 
+- Fix displaying the last page instead of the first one on PHP 7 and older (regression from 5.0.0)
 - MySQL: Fix using undefined PDO constant on PHP 5
 - MS SQL: Add missing support for Encrypt and TrustServerCertificate parameters in PDO_SQLSRV
 
@@ -208,7 +209,7 @@ AdminNeo 4.16.0 (2025-03-02)
 - Fix links to PostgreSQL docs (by @vrana)
 - Fix printing SQL errors as comments in export (by @vrana)
 - Editor: Select value of foreign key in edit (by @vrana)
-- Keep whitespaces and lines in result table (regression from 4.10)
+- Keep whitespaces and lines in result table (regression from 4.10.0)
 
 (Ported relevant changes and fixes from Adminer 4.17.0-4.17.1.)
 
@@ -371,7 +372,7 @@ AdminNeo 4.10.0 (2024-10-22)
 
 ### Bugfixes
 
-- Fix missing SQL statement if warnings are printed (regression from 4.9)
+- Fix missing SQL statement if warnings are printed (regression from 4.9.0)
 
 AdminNeo 4.9.4 (2024-10-09)
 ---------------------------
@@ -407,7 +408,7 @@ AdminNeo 4.9.2 (2024-09-18)
 
 - Fix textarea height for single-line inputs (used typically for SQLite text field)
 - Fix undefined property in error message if driver does not support error number (e.g. PostgreSQL)
-- PostgreSQL: Fix search fields configuration (regression from 4.9)
+- PostgreSQL: Fix search fields configuration (regression from 4.9.0)
 - PostgreSQL: Fix search condition for network address types, add macaddr8 type
 - PostgreSQL: Fix exporting `CREATE TABLE` query with `GENERATED` default values
 - PostgreSQL: Fix exporting `CREATE TABLE` query with sequence default value (by @khoazero123)
