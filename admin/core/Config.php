@@ -21,6 +21,8 @@ class Config
 		if (isset($this->params["servers"])) {
 			foreach ($this->params["servers"] as $key => $server) {
 				$serverObj = new Server($server, is_string($key) ? $key : null);
+
+				$this->params["servers"][$key] = $serverObj;
 				$this->servers[$serverObj->getKey()] = $serverObj;
 			}
 		}
@@ -126,6 +128,22 @@ class Config
 		$driver = $this->params["defaultDriver"] ?? null;
 
 		return $driver && isset($drivers[$driver]) ? $driver : key($drivers);
+	}
+
+	public function getDefaultServer(): ?string
+	{
+		$server = $this->params["defaultServer"] ?? null;
+		if ($server === null) {
+			return null;
+		}
+
+		/** @var Server $serverObj */
+		$serverObj = $this->params["servers"][$server] ?? null;
+		if ($serverObj) {
+			return $serverObj->getKey();
+		}
+
+		return $server;
 	}
 
 	public function getDefaultPasswordHash(): ?string

@@ -95,10 +95,11 @@ class Admin extends Origin
 		global $drivers;
 
 		$serverPairs = $this->config->getServerPairs($drivers);
+		$server = SERVER ?: $this->config->getDefaultServer();
 
 		echo "<table class='box'>\n";
 		if ($serverPairs) {
-			echo $this->admin->getLoginFormRow('server', lang('Server'), "<select name='auth[server]'>" . optionlist($serverPairs, SERVER, true) . "</select>");
+			echo $this->admin->getLoginFormRow('server', lang('Server'), "<select name='auth[server]'>" . optionlist($serverPairs, $server, true) . "</select>");
 		} else {
 			$driver = DRIVER ?: $this->config->getDefaultDriver($drivers);
 
@@ -108,7 +109,7 @@ class Admin extends Origin
 				echo $this->admin->getLoginFormRow('driver', '', '<input type="hidden" name="auth[driver]" value="' . h($driver) . '">');
 			}
 
-			echo $this->admin->getLoginFormRow('server', lang('Server'), '<input class="input" name="auth[server]" value="' . h(SERVER) . '" title="hostname[:port]" placeholder="localhost" autocapitalize="off">');
+			echo $this->admin->getLoginFormRow('server', lang('Server'), '<input class="input" name="auth[server]" value="' . h($server) . '" title="hostname[:port]" placeholder="localhost" autocapitalize="off">');
 		}
 
 		echo $this->admin->getLoginFormRow('username', lang('Username'), '<input class="input" name="auth[username]" id="username" value="' . h($_GET["username"]) . '" autocomplete="username" autocapitalize="off">');
