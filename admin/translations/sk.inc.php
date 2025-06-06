@@ -281,7 +281,7 @@ $translations = [
 	'Warnings' => 'Varovania',
 	'%d / ' => '%d / ',
 	'Limit rows' => 'Limit riadkov',
-	'AdminNeo does not support accessing a database without a password, <a href="https://www.adminer.org/en/password/"%s>more information</a>.' => 'AdminNeo nepodporuje prístup k databáze bez hesla, <a href="https://www.adminer.org/cs/password/"%s>viac informácií</a>.',
+	'AdminNeo does not support accessing a database without a password, <a href="https://www.adminneo.org/password"%s>more information</a>.' => 'AdminNeo nepodporuje prístup k databáze bez hesla, <a href="https://www.adminneo.org/password"%s>viac informácií</a>.',
 	'Default value' => 'Predvolená hodnota',
 	'Full table scan' => 'Prechod celej tabuľky',
 	'Too many unsuccessful logins, try again in %d minute(s).' => ['Príliš veľa pokusov o prihlásenie, skúste to znova za %d minutu.', 'Príliš veľa pokusov o prihlásenie, skúste to znova za %d minuty.', 'Príliš veľa pokusov o prihlásenie, skúste to znova za %d minút.'],

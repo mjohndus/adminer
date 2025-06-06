@@ -92,9 +92,9 @@ if (extension_loaded('pdo')) {
 
 		function fetch_field() {
 			$row = (object) $this->getColumnMeta($this->_offset++);
-			$row->orgtable = $row->table;
+			$row->orgtable = $row->table ?? null;
 			$row->orgname = $row->name;
-			$row->charsetnr = (in_array("blob", (array) $row->flags) ? 63 : 0);
+			$row->charsetnr = (in_array("blob", $row->flags ?? []) ? 63 : 0);
 			return $row;
 		}
 

@@ -20,7 +20,7 @@ $translations = [
 	'Logout successful.' => 'Odhlášení proběhlo v pořádku.',
 	'Invalid server or credentials.' => 'Neplatný server nebo přihlašovací údaje.',
 	'There is a space in the input password which might be the cause.' => 'Problém může být, že je v zadaném hesle mezera.',
-	'AdminNeo does not support accessing a database without a password, <a href="https://www.adminer.org/en/password/"%s>more information</a>.' => 'AdminNeo nepodporuje přístup k databázi bez hesla, <a href="https://www.adminer.org/cs/password/"%s>více informací</a>.',
+	'AdminNeo does not support accessing a database without a password, <a href="https://www.adminneo.org/password"%s>more information</a>.' => 'AdminNeo nepodporuje přístup k databázi bez hesla, <a href="https://www.adminneo.org/password"%s>více informací</a>.',
 	'Database does not support password.' => 'Databáze nepodporuje heslo.',
 	'Too many unsuccessful logins, try again in %d minute(s).' => ['Příliš mnoho pokusů o přihlášení, zkuste to znovu za %d minutu.', 'Příliš mnoho pokusů o přihlášení, zkuste to znovu za %d minuty.', 'Příliš mnoho pokusů o přihlášení, zkuste to znovu za %d minut.'],
 	'Invalid permanent login, please login again.' => 'Neplatné trvalé přihlášení, přihlašte se prosím znovu.',

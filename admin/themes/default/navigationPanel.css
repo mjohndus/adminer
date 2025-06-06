@@ -92,7 +92,7 @@
 .version-badge {
 	margin-left: -5px;
 	padding: 5px;
-	color: var(--version-text);
+	color: var(--version-text) !important;
 
 	.icon {
 		width: 1em;

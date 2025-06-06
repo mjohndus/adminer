@@ -12,12 +12,7 @@ include __DIR__ . "/../admin/include/debug.inc.php";
 include __DIR__ . "/../admin/include/polyfill.inc.php";
 include __DIR__ . "/../admin/include/available.inc.php";
 include __DIR__ . "/../admin/include/compile.inc.php";
-
-$phpShrinkLib = __DIR__ . "/../vendor/vrana/phpshrink/phpShrink.php";
-if (!file_exists($phpShrinkLib)) {
-	die("Please run `composer install` to install dependencies.\n");
-}
-require $phpShrinkLib;
+include __DIR__ . "/../vendor/vrana/phpshrink/phpShrink.php";
 
 function is_dev_version(): bool
 {
@@ -231,6 +226,8 @@ function print_usage(): void
 	echo "More information at: https://github.com/adminneo-org/adminneo?tab=readme-ov-file#usage\n";
 }
 
+$current_path = getcwd();
+
 // Parse script arguments.
 $arguments = $argv;
 array_shift($arguments);
@@ -265,7 +262,8 @@ if ($arguments) {
 }
 $single_driver = count($selected_drivers) == 1 ? $selected_drivers[0] : null;
 
-echo "drivers:   " . ($selected_drivers ? implode(", ", $selected_drivers) : "all") . "\n";
+$compilation_info[] = $text = "drivers:   " . ($selected_drivers ? implode(", ", $selected_drivers) : "all") . "\n";
+echo $text;
 
 // Languages.
 $selected_languages = [];
@@ -279,10 +277,11 @@ if ($arguments) {
 }
 $single_language = count($selected_languages) == 1 ? $selected_languages[0] : null;
 
-echo "languages: " . ($selected_languages ? implode(", ", $selected_languages) : "all") . "\n";
+$compilation_info[] = $text = "languages: " . ($selected_languages ? implode(", ", $selected_languages) : "all") . "\n";
+echo $text;
 
 // Themes.
-$selected_themes = ["default-blue"];
+$selected_themes = [];
 if ($arguments) {
 	$params = explode(",", $arguments[0]);
 
@@ -312,7 +311,16 @@ if ($arguments) {
 	}
 }
 
-echo "themes:    " . implode(", ", $selected_themes) . "\n";
+$compilation_info[] = $text = "themes:    " . ($selected_themes ? implode(", ", $selected_themes) : "all") . "\n";
+echo $text;
+
+if (!$selected_themes) {
+	foreach (find_available_themes() as $theme => $colors) {
+		foreach ($colors as $color => $available) {
+			$selected_themes[] = "$theme-$color";
+		}
+	}
+}
 
 // Custom config.
 $custom_config = [];
@@ -334,7 +342,8 @@ if ($arguments && preg_match('~\.json$~i', $arguments[0])) {
 	array_shift($arguments);
 }
 
-echo "config:    " . ($custom_config ? "yes" : "no") . "\n";
+$compilation_info[] = $text = "config:    " . ($custom_config ? "yes" : "no") . "\n";
+echo $text;
 
 // Output file path and/or name.
 $output_file_path = null;
@@ -380,7 +389,6 @@ $features = ["check", "call" => "routine", "dump", "event", "privileges", "proce
 $lang_ids = []; // global variable simplifies usage in a callback functions
 
 // Change current directory to the project's root. This is required for generating static files.
-$current_path = getcwd();
 chdir(__DIR__ . "/../$project");
 
 // Start with index.php.
@@ -561,6 +569,15 @@ if ($custom_config) {
 		$file
 	);
 }
+
+// Print version and compilation parameters.
+$file = str_replace("!compile: version", "v$VERSION", $file);
+
+$file = str_replace(
+	"!compile: parameters\n",
+	"Compiled with\n * " . implode(" * ", $compilation_info),
+	$file
+);
 
 // Remove superfluous PHP tags.
 $file = preg_replace("~<\\?php\\s*\\?>\n?|\\?>\n?<\\?php~", '', $file);

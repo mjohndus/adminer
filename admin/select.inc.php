@@ -277,12 +277,13 @@ if (!$columns && support("table")) {
 	Admin::get()->printSelectionAction($indexes);
 	echo "</div>\n</form>\n";
 
-	$page = $_GET["page"] ?? 0;
+	$page = $_GET["page"] ?? null;
 	if ($page == "last") {
 		$found_rows = $connection->result(count_rows($TABLE, $where, $is_group, $group));
-		$page = (int) floor(max(0, $found_rows - 1) / $limit);
+		$page = (int)floor(max(0, $found_rows - 1) / $limit);
 	} else {
 		$found_rows = false;
+		$page = (int)$page;
 	}
 
 	$select2 = $select;

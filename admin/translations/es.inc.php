@@ -276,7 +276,7 @@ $translations = [
 	'Loading' => 'Cargando',
 	'%d / ' => '%d / ',
 	'Limit rows' => 'Limitar filas',
-	'AdminNeo does not support accessing a database without a password, <a href="https://www.adminer.org/en/password/"%s>more information</a>.' => 'AdminNeo no soporta el acceso a bases de datos sin contraseña, <a href="https://www.adminer.org/en/password/"%s>más informacion</a>.',
+	'AdminNeo does not support accessing a database without a password, <a href="https://www.adminneo.org/password"%s>more information</a>.' => 'AdminNeo no soporta el acceso a bases de datos sin contraseña, <a href="https://www.adminneo.org/password"%s>más informacion</a>.',
 	'Default value' => 'Valor por defecto',
 	'Full table scan' => null,
 	'Too many unsuccessful logins, try again in %d minute(s).' => ['Demasiados intentos erroneos, pruebe de nuevo en %d minuto.', 'Demasiados intentos erroneos, pruebe de nuevo en %d minutos.'],

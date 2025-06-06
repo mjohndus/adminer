@@ -5,7 +5,7 @@ namespace AdminNeo;
 /**
  * Adds option to export table data to JSON format.
  *
- * @link https://www.adminer.org/plugins/#use
+ * @link https://www.adminneo.org/plugins/#usage
  *
  * @author Jakub Vrana, https://www.vrana.cz/
  * @author Peter Knut

@@ -437,7 +437,7 @@ if (isset($_GET["mongo"])) {
 		foreach ($alter as $val) {
 			list($type, $name, $set) = $val;
 			if ($set == "DROP") {
-				$return = $connection->_db->command(["deleteIndexes" => $table, "index" => $name]);
+				$return = $connection->executeCommand(["deleteIndexes" => $table, "index" => $name]);
 			} else {
 				$columns = [];
 				foreach ($set as $column) {

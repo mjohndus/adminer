@@ -280,7 +280,7 @@ $translations = [
 	'%d / ' => ['%d / '],
 	'Limit rows' => 'সারি সীমিত করুন',
 	'Checks' => 'চেকস',
-	'AdminNeo does not support accessing a database without a password, <a href="https://www.adminer.org/en/password/"%s>more information</a>.' => 'AdminNeo পাসওয়ার্ড ছাড়া ডাটাবেস অ্যাক্সেস সমর্থন করে না, <a href="https://www.adminer.org/en/password/"%s>আরও তথ্য</a>।',
+	'AdminNeo does not support accessing a database without a password, <a href="https://www.adminneo.org/password"%s>more information</a>.' => 'AdminNeo পাসওয়ার্ড ছাড়া ডাটাবেস অ্যাক্সেস সমর্থন করে না, <a href="https://www.adminneo.org/password"%s>আরও তথ্য</a>।',
 	'Default value' => 'ডিফল্ট মান',
 	'Full table scan' => 'সম্পূর্ণ টেবিল স্ক্যান',
 	'Too many unsuccessful logins, try again in %d minute(s).' => ['অনেকগুলি ব্যর্থ লগইন প্রচেষ্টা, %d মিনিট পরে আবার চেষ্টা করুন।'],

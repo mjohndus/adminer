@@ -63,9 +63,11 @@ class Admin extends Origin
 		global $drivers;
 
 		$driver = $this->config->getDefaultDriver($drivers);
+		$server = $this->config->getDefaultServer();
 
 		echo "<table class='box'>\n";
 		echo $this->admin->getLoginFormRow('driver', '', '<input type="hidden" name="auth[driver]" value="' . h($driver) . '">');
+		echo $this->admin->getLoginFormRow('server', '', '<input type="hidden" name="auth[server]" value="' . h($server) . '">');
 		echo $this->admin->getLoginFormRow('username', lang('Username'), '<input class="input" name="auth[username]" id="username" value="' . h($_GET["username"]) . '" autocomplete="username" autocapitalize="off">');
 		echo $this->admin->getLoginFormRow('password', lang('Password'), '<input type="password" class="input" name="auth[password]" autocomplete="current-password">');
 		echo "</table>\n";

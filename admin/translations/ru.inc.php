@@ -286,7 +286,7 @@ $translations = [
 	'overwrite' => 'перезаписать',
 	'DB' => 'DB',
 	'Warnings' => 'Предупреждения',
-	'AdminNeo does not support accessing a database without a password, <a href="https://www.adminer.org/en/password/"%s>more information</a>.' => 'AdminNeo не поддерживает доступ к базе данных без пароля, <a href="https://www.adminer.org/en/password/"%s>больше информации</a>.',
+	'AdminNeo does not support accessing a database without a password, <a href="https://www.adminneo.org/password"%s>more information</a>.' => 'AdminNeo не поддерживает доступ к базе данных без пароля, <a href="https://www.adminneo.org/password"%s>больше информации</a>.',
 	'The action will be performed after successful login with the same credentials.' => 'Действие будет выполнено после успешного входа в систему с теми же учетными данными.',
 	'Connecting to privileged ports is not allowed.' => 'Подключение к привилегированным портам не допускается.',
 	'There is a space in the input password which might be the cause.' => 'В введеном пароле есть пробел, это может быть причиною.',

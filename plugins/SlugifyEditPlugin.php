@@ -7,7 +7,7 @@ namespace AdminNeo;
  *
  * Target slug field has to be empty.
  *
- * @link https://www.adminer.org/plugins/#use
+ * @link https://www.adminneo.org/plugins/#usage
  *
  * @author Jakub Vrana, https://www.vrana.cz/
  * @author Peter Knut

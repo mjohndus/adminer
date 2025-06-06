@@ -170,7 +170,22 @@ if (isset($_GET["mssql"])) {
 			var $extension = "PDO_SQLSRV";
 
 			function connect($server, $username, $password) {
-				$this->dsn("sqlsrv:Server=" . str_replace(":", ",", $server), $username, $password);
+				$options = [];
+
+				$encrypt = Admin::get()->getConfig()->getSslEncrypt();
+				if ($encrypt !== null) {
+					$options[] = "Encrypt=$encrypt";
+				}
+
+				$trustServerCertificate = Admin::get()->getConfig()->getSslTrustServerCertificate();
+				if ($trustServerCertificate !== null) {
+					$options[] = "TrustServerCertificate=$trustServerCertificate";
+				}
+
+				$optionsString = $options ? (";" . implode(";", $options)) : "";
+
+				$this->dsn("sqlsrv:Server=" . str_replace(":", ",", $server) . $optionsString, $username, $password);
+
 				return true;
 			}
 
@@ -207,6 +222,7 @@ if (isset($_GET["mssql"])) {
 	class Min_Driver extends Min_SQL {
 
 		function insertUpdate($table, $rows, $primary) {
+			$fields = fields($table);
 			$update = [];
 			$where = [];
 			$set = reset($rows);
@@ -298,7 +314,7 @@ if (isset($_GET["mssql"])) {
 	}
 
 	function get_databases() {
-		return get_vals("SELECT name FROM sys.databases WHERE name NOT IN ('master', 'tempdb', 'model', 'msdb')");
+		return get_vals("SELECT name FROM sys.databases WHERE name NOT IN ('master', 'tempdb', 'model', 'msdb') ORDER BY name");
 	}
 
 	function limit($query, $where, ?int $limit, $offset = 0, $separator = " ") {

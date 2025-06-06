@@ -10,11 +10,6 @@ add_driver("mysql", "MySQL");
 if (isset($_GET["mysql"])) {
 	define("AdminNeo\DRIVER", "mysql");
 
-	// Available from PHP 5.6.
-	if (!defined("MYSQLI_CLIENT_SSL_DONT_VERIFY_SERVER_CERT")) {
-		define("MYSQLI_CLIENT_SSL_DONT_VERIFY_SERVER_CERT", 64);
-	}
-
 	// MySQLi supports everything, PDO_MySQL doesn't support orgtable
 	if (extension_loaded("mysqli")) {
 		class Min_DB extends MySQLi {
@@ -105,8 +100,9 @@ if (isset($_GET["mysql"])) {
 					$options[PDO::MYSQL_ATTR_SSL_CA] = $ca_certificate;
 				}
 
+				// MYSQL_ATTR_SSL_VERIFY_SERVER_CERT is defined only with mysqlnd.
 				$trustServerCertificate = Admin::get()->getConfig()->getSslTrustServerCertificate();
-				if ($trustServerCertificate !== null) {
+				if ($trustServerCertificate !== null && defined('\PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT')) {
 					$options[PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT] = !$trustServerCertificate;
 				}
 

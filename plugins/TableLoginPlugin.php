@@ -20,7 +20,7 @@ namespace AdminNeo;
  *
  * The minimum required PHP version is 5.5.
  *
- * @link https://www.adminer.org/plugins/#use
+ * @link https://www.adminneo.org/plugins/#usage
  *
  * @author Jakub Vrana, https://www.vrana.cz/
  * @author Peter Knut
@@ -44,7 +44,7 @@ class TableLoginPlugin extends Plugin
 	 * @param string $table Table name.
 	 * @param string[] $credentials Database credentials in form [user, password].
 	 */
-	function __construct(string $database, string $table = "users", array $credentials = ["", ""])
+	public function __construct(string $database, string $table = "users", array $credentials = ["", ""])
 	{
 		$this->database = $database;
 		$this->table = $table;

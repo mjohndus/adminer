@@ -26,7 +26,7 @@ check('$a[$b] ?? 1', 'isset($a[$b]) ? $a[$b] : 1');
 check('$a[$b[1]] ?? 1', 'isset($a[$b[1]]) ? $a[$b[1]] : 1');
 check('$a[$b[1] + 1] ?? 1', 'isset($a[$b[1] + 1]) ? $a[$b[1] + 1] : 1');
 
-check('$this->a ?? 1', 'isset($this->a) ? $this->a : 1');
+check('$a->a ?? 1', 'isset($a->a) ? $a->a : 1');
 check('self::$a[1] ?? 1', 'isset(self::$a[1]) ? self::$a[1] : 1');
 check('self::a[1] ?? 1', 'isset(self::a[1]) ? self::a[1] : 1');
 
@@ -34,7 +34,7 @@ check('f() ?? 1', '($_result = f()) !== null ? $_result : 1');
 check('f($a) ?? 1', '($_result = f($a)) !== null ? $_result : 1');
 check('f($a[1], $b) ?? 1', '($_result = f($a[1], $b)) !== null ? $_result : 1');
 
-check('$this->f() ?? 1', '($_result = $this->f()) !== null ? $_result : 1');
+check('$a->f() ?? 1', '($_result = $a->f()) !== null ? $_result : 1');
 check('self::f($a[1], $b) ?? 1', '($_result = self::f($a[1], $b)) !== null ? $_result : 1');
 
 // Unsupported.
