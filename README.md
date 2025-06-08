@@ -57,7 +57,7 @@ A complete list of changes can be found in the [Upgrade Guide](https://www.admin
 Docker
 ------
 
-The official Docker image is available at [Docker Hub](https://hub.docker.com/r/peterknut/adminneo). Please follow the
+The official Docker image is available on [Docker Hub](https://hub.docker.com/r/adminneoorg/adminneo). Follow the
 instructions on the Docker page to get started.
 
 Main project files
