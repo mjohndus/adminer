@@ -15,7 +15,7 @@ function adminneo_instance()
 
 		public function getCredentials(): array
 		{
-			// User ODBC with password ODBC on localhost.
+			// User 'test' with password 'test' on localhost.
 			return ['localhost', 'test', 'test'];
 		}
 

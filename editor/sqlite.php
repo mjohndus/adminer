@@ -8,7 +8,17 @@ function adminneo_instance()
 	{
 		public function getDatabase(): ?string
 		{
-			return "PATH_TO_YOUR_SQLITE_HERE";
+			return "/path/to/your/database_file.db";
+		}
+
+		public function getLoginFormRow(string $fieldName, string $label, string $field): string
+		{
+			// Hide username field.
+			if ($fieldName == "username") {
+				return "";
+			}
+
+			return parent::getLoginFormRow($fieldName, $label, $field);
 		}
 	}
 
