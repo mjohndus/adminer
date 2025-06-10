@@ -6,152 +6,161 @@ Drivers::add("clickhouse", "ClickHouse (alpha)", ["allow_url_fopen"]);
 
 if (isset($_GET["clickhouse"])) {
 	define("AdminNeo\DRIVER", "clickhouse");
-	define("AdminNeo\DRIVER_EXTENSION", "JSON");
 
-	class ClickHouseConnection extends Connection
-	{
-		/** @var string */
-		private $serviceUrl;
+	if (ini_bool('allow_url_fopen')) {
+		define("AdminNeo\DRIVER_EXTENSION", "JSON");
 
-		/** @var string */
-		private $dbName = 'default';
-
-		/**
-		 * @return Result|bool
-		 */
-		function rootQuery(string $db, string $query)
+		class ClickHouseConnection extends Connection
 		{
-			$file = @file_get_contents("$this->serviceUrl/?database=$db", false, stream_context_create(['http' => [
-				'method' => 'POST',
-				'content' => $this->isQuerySelectLike($query) ? "$query FORMAT JSONCompact" : $query,
-				'header' => 'Content-type: application/x-www-form-urlencoded',
-				'ignore_errors' => 1,
-				'follow_location' => 0,
-				'max_redirects' => 0,
-			]]));
+			/** @var string */
+			private $serviceUrl;
 
-			if ($file === false) {
-				$this->error = lang('Invalid server or credentials.');
-				return false;
-			}
+			/** @var string */
+			private $dbName = 'default';
 
-			if (!preg_match('~^HTTP/[0-9.]+ 2~i', $http_response_header[0])) {
-				foreach ($http_response_header as $header) {
-					if (preg_match('~^X-ClickHouse-Exception-Code:~i', $header)) {
-						$this->error = preg_replace('~\(version [^(]+\(.+$~', '', $file);
-						return false;
-					}
+			/**
+			 * @return Result|bool
+			 */
+			function rootQuery(string $db, string $query)
+			{
+				$file = @file_get_contents("$this->serviceUrl/?database=$db", false, stream_context_create(['http' => [
+					'method' => 'POST',
+					'content' => $this->isQuerySelectLike($query) ? "$query FORMAT JSONCompact" : $query,
+					'header' => 'Content-type: application/x-www-form-urlencoded',
+					'ignore_errors' => 1,
+					'follow_location' => 0,
+					'max_redirects' => 0,
+				]]));
+
+				if ($file === false) {
+					$this->error = lang('Invalid server or credentials.');
+
+					return false;
 				}
 
-				$this->error = lang('Invalid server or credentials.');
-				return false;
+				if (!preg_match('~^HTTP/[0-9.]+ 2~i', $http_response_header[0])) {
+					foreach ($http_response_header as $header) {
+						if (preg_match('~^X-ClickHouse-Exception-Code:~i', $header)) {
+							$this->error = preg_replace('~\(version [^(]+\(.+$~', '', $file);
+
+							return false;
+						}
+					}
+
+					$this->error = lang('Invalid server or credentials.');
+
+					return false;
+				}
+
+				if (!$this->isQuerySelectLike($query) && $file === '') {
+					return true;
+				}
+
+				$return = json_decode($file, true);
+				if ($return === null) {
+					$this->error = lang('Invalid server or credentials.');
+
+					return false;
+				}
+
+				if (!isset($return['rows']) || !isset($return['data']) || !isset($return['meta'])) {
+					$this->error = lang('Invalid server or credentials.');
+
+					return false;
+				}
+
+				return new Result($return['rows'], $return['data'], $return['meta']);
 			}
 
-			if (!$this->isQuerySelectLike($query) && $file === '') {
+			private function isQuerySelectLike($query): bool
+			{
+				return (bool)preg_match('~^(select|show)~i', $query);
+			}
+
+			function query(string $query, bool $unbuffered = false)
+			{
+				return $this->rootQuery($this->dbName, $query);
+			}
+
+			public function open(string $server, string $username, string $password): bool
+			{
+				$this->serviceUrl = build_http_url($server, $username, $password, "localhost", 8123);
+
+				$return = $this->query('SELECT 1');
+
+				return (bool)$return;
+			}
+
+			public function selectDatabase(string $name): bool
+			{
+				$this->dbName = $name;
+
 				return true;
 			}
 
-			$return = json_decode($file, true);
-			if ($return === null) {
-				$this->error = lang('Invalid server or credentials.');
-				return false;
+			public function getDbName(): string
+			{
+				return $this->dbName;
 			}
 
-			if (!isset($return['rows']) || !isset($return['data']) || !isset($return['meta'])) {
-				$this->error = lang('Invalid server or credentials.');
-				return false;
+			public function quote(string $string): string
+			{
+				return "'" . addcslashes($string, "\\'") . "'";
 			}
 
-			return new Result($return['rows'], $return['data'], $return['meta']);
+			public function getResult(string $query, int $field = 0)
+			{
+				$result = $this->query($query);
+
+				return $result['data'];
+			}
 		}
 
-		private function isQuerySelectLike($query): bool
-		{
-			return (bool) preg_match('~^(select|show)~i', $query);
-		}
+		class Result {
+			var $num_rows, $_rows, $columns, $meta, $_offset = 0;
 
-		function query(string $query, bool $unbuffered = false)
-		{
-			return $this->rootQuery($this->dbName, $query);
-		}
+			/**
+			 * @param int $rows
+			 * @param array[] $data
+			 * @param array[] $meta
+			 */
+			function __construct($rows, array $data, array $meta) {
+				$this->_rows = [];
+				foreach ($data as $item) {
+					$this->_rows[] = array_map(function ($val) {
+						return is_scalar($val) ? $val : json_encode($val, JSON_UNESCAPED_UNICODE);
+					}, $item);
+				}
 
-		public function open(string $server, string $username, string $password): bool
-		{
-			$this->serviceUrl = build_http_url($server, $username, $password, "localhost", 8123);
+				$this->num_rows = $rows;
+				$this->meta = $meta;
+				$this->columns = array_column($meta, 'name');
 
-			$return = $this->query('SELECT 1');
-			return (bool) $return;
-		}
-
-		public function selectDatabase(string $name): bool
-		{
-			$this->dbName = $name;
-
-			return true;
-		}
-
-		public function getDbName(): string
-		{
-			return $this->dbName;
-		}
-
-		public function quote(string $string): string
-		{
-			return "'" . addcslashes($string, "\\'") . "'";
-		}
-
-		public function getResult(string $query, int $field = 0)
-		{
-			$result = $this->query($query);
-
-			return $result['data'];
-		}
-	}
-
-	class Result {
-		var $num_rows, $_rows, $columns, $meta, $_offset = 0;
-
-		/**
-		 * @param int $rows
-		 * @param array[] $data
-		 * @param array[] $meta
-		 */
-		function __construct($rows, array $data, array $meta) {
-			$this->_rows = [];
-			foreach ($data as $item) {
-				$this->_rows[] = array_map(function ($val) {
-					return is_scalar($val) ? $val : json_encode($val, JSON_UNESCAPED_UNICODE);
-				}, $item);
+				reset($this->_rows);
 			}
 
-			$this->num_rows = $rows;
-			$this->meta = $meta;
-			$this->columns = array_column($meta, 'name');
-
-			reset($this->_rows);
-		}
-
-		function fetch_assoc() {
-			$row = current($this->_rows);
-			next($this->_rows);
-			return $row === false ? false : array_combine($this->columns, $row);
-		}
-
-		function fetch_row() {
-			$row = current($this->_rows);
-			next($this->_rows);
-			return $row;
-		}
-
-		function fetch_field() {
-			$column = $this->_offset++;
-			$return = new \stdClass;
-			if ($column < count($this->columns)) {
-				$return->name = $this->meta[$column]['name'];
-				$return->orgname = $return->name;
-				$return->type = $this->meta[$column]['type'];
+			function fetch_assoc() {
+				$row = current($this->_rows);
+				next($this->_rows);
+				return $row === false ? false : array_combine($this->columns, $row);
 			}
-			return $return;
+
+			function fetch_row() {
+				$row = current($this->_rows);
+				next($this->_rows);
+				return $row;
+			}
+
+			function fetch_field() {
+				$column = $this->_offset++;
+				$return = new \stdClass;
+				if ($column < count($this->columns)) {
+					$return->name = $this->meta[$column]['name'];
+					$return->orgname = $return->name;
+					$return->type = $this->meta[$column]['type'];
+				}
+				return $return;
+			}
 		}
 	}
 
