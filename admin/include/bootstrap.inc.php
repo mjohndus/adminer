@@ -44,7 +44,7 @@ if ($_GET["script"] == "version") {
 }
 
 // Allows including AdminNeo inside a function.
-global $error, $HTTPS, $jush, $LANG, $languages, $permanent, $has_token, $token, $translations, $VERSION;
+global $error, $HTTPS, $LANG, $languages, $permanent, $has_token, $token, $translations, $VERSION;
 
 if (!$_SERVER["REQUEST_URI"]) { // IIS 5 compatibility
 	$_SERVER["REQUEST_URI"] = $_SERVER["ORIG_PATH_INFO"];
@@ -122,11 +122,9 @@ if (!$admin) {
 	Admin::create([], [], $errors);
 }
 
-if (defined("AdminNeo\DRIVER")) {
-	$config = driver_config();
-	$jush = $config['jush'];
-} else {
+if (!defined("AdminNeo\DRIVER")) {
 	define("AdminNeo\DRIVER", null);
+	define("AdminNeo\DIALECT", null);
 }
 
 define("AdminNeo\SERVER", DRIVER ? $_GET[DRIVER] : null); // read from pgsql=localhost

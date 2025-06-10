@@ -6,6 +6,7 @@ Drivers::add("clickhouse", "ClickHouse (alpha)", ["allow_url_fopen"]);
 
 if (isset($_GET["clickhouse"])) {
 	define("AdminNeo\DRIVER", "clickhouse");
+	define("AdminNeo\DIALECT", "clickhouse");
 
 	if (ini_bool('allow_url_fopen')) {
 		define("AdminNeo\DRIVER_EXTENSION", "JSON");
@@ -463,11 +464,5 @@ if (isset($_GET["clickhouse"])) {
 
 	function support($feature) {
 		return preg_match("~^(columns|sql|status|table|drop_col)$~", $feature);
-	}
-
-	function driver_config() {
-		return [
-			'jush' => "clickhouse",
-		];
 	}
 }

@@ -6,6 +6,7 @@ Drivers::add("pgsql", "PostgreSQL", ["PgSQL", "PDO_PgSQL"]);
 
 if (isset($_GET["pgsql"])) {
 	define("AdminNeo\DRIVER", "pgsql");
+	define("AdminNeo\DIALECT", "pgsql");
 
 	if (extension_loaded("pgsql")) {
 		define("AdminNeo\DRIVER_EXTENSION", "PgSQL");
@@ -1042,12 +1043,5 @@ AND typelem = 0"
 
 	function max_connections() {
 		return Connection::get()->getResult("SHOW max_connections");
-	}
-
-	function driver_config() {
-		return [
-			'jush' => "pgsql",
-			'c_style_escapes' => true,
-		];
 	}
 }

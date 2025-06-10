@@ -209,11 +209,10 @@ abstract class Driver
 	 */
 	public function select(string $table, array $select, array $where, array $group, array $order = [], ?int $limit = 1, int $page = 0, bool $print = false)
 	{
-		global $jush;
 		$is_group = (count($group) < count($select));
 
 		$query = "SELECT" . limit(
-			($_GET["page"] != "last" && $limit !== null && $group && $is_group && $jush == "sql" ? "SQL_CALC_FOUND_ROWS " : "") . implode(", ", $select) . "\nFROM " . table($table),
+			($_GET["page"] != "last" && $limit !== null && $group && $is_group && DIALECT == "sql" ? "SQL_CALC_FOUND_ROWS " : "") . implode(", ", $select) . "\nFROM " . table($table),
 			($where ? "\nWHERE " . implode(" AND ", $where) : "") . ($group && $is_group ? "\nGROUP BY " . implode(", ", $group) : "") . ($order ? "\nORDER BY " . implode(", ", $order) : ""),
 			($limit !== null ? +$limit : null),
 			($page ? $limit * $page : 0),

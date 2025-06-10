@@ -15,7 +15,7 @@ if (!ob_get_level()) {
  */
 function page_header(string $title, string $error = "", $breadcrumb = []): void
 {
-	global $LANG, $jush;
+	global $LANG;
 
 	page_headers();
 	if (is_ajax() && $error) {
@@ -129,7 +129,7 @@ function page_header(string $title, string $error = "", $breadcrumb = []): void
 
 
 <?php
-	echo "<div id='help' class='jush-$jush jsonly hidden'></div>";
+	echo "<div id='help' class='jush-" . DIALECT . " jsonly hidden'></div>";
     echo script("initHelpPopup();");
 
     echo "<div id='content'>\n";

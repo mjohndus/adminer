@@ -7,7 +7,7 @@ $name = $_GET["name"];
 $row = $_POST;
 
 if ($row && !$error) {
-	if ($jush == "sqlite") {
+	if (DIALECT == "sqlite") {
 		$result = recreate_table($TABLE, $TABLE, array(), array(), array(), 0, array(), $name, ($row["drop"] ? "" : $row["clause"]));
 	} else {
 		$result = ($name == "" || queries("ALTER TABLE " . table($TABLE) . " DROP CONSTRAINT " . idf_escape($name)));
@@ -32,7 +32,7 @@ if (!$row) {
 
 <form action="" method="post">
 <p><?php
-if ($jush != "sqlite") {
+if (DIALECT != "sqlite") {
 	echo lang('Name') . ': <input name="name" value="' . h($row["name"]) . '" class="input" data-maxlength="64" autocapitalize="off"> ';
 }
 echo doc_link([

@@ -9,6 +9,7 @@ Drivers::add("sqlite", "SQLite", ["SQLite3", "PDO_SQLite"]);
 
 if (isset($_GET["sqlite"])) {
 	define("AdminNeo\DRIVER", "sqlite");
+	define("AdminNeo\DIALECT", "sqlite");
 
 	if (class_exists("SQLite3")) {
 		define("AdminNeo\DRIVER_EXTENSION", "SQLite3");
@@ -824,11 +825,5 @@ if (isset($_GET["sqlite"])) {
 
 	function support($feature) {
 		return preg_match('~^(check|columns|database|drop_col|dump|indexes|descidx|move_col|sql|status|table|trigger|variables|view|view_trigger)$~', $feature);
-	}
-
-	function driver_config() {
-		return [
-			'jush' => "sqlite",
-		];
 	}
 }

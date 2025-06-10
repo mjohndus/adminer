@@ -26,7 +26,7 @@ if (isset($rights["insert"]) || !support("table")) {
 Admin::get()->printTableMenu($table_status, $set);
 
 $info = [];
-if (!preg_match("~sqlite|mssql|pgsql~", $jush) && isset($table_status["Engine"])) {
+if (!preg_match("~sqlite|mssql|pgsql~", DIALECT) && isset($table_status["Engine"])) {
 	$info[] = lang('Engine') . ": " . h($table_status["Engine"]);
 }
 if (isset($table_status["Collation"])) {
@@ -107,7 +107,7 @@ if (!is_view($table_status)) {
 			echo "<table cellspacing='0'>\n";
 			foreach ($check_constraints as $key => $val) {
 				echo "<tr title='" . h($key) . "'>";
-				echo "<td><code class='jush-$jush'>" . h($val);
+				echo "<td><code class='jush-" . DIALECT . "'>" . h($val);
 				echo "<td><a href='" . h(ME . 'check=' . urlencode($TABLE) . '&name=' . urlencode($key)) . "'>" . lang('Alter') . "</a>";
 				echo "\n";
 			}

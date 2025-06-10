@@ -133,8 +133,6 @@ class Admin extends Origin
 	 */
 	public function printTableMenu(array $tableStatus, ?string $set = ""): void
 	{
-		global $jush;
-
 		echo '<p class="links top-tabs">';
 
 		$links = [];
@@ -173,7 +171,7 @@ class Admin extends Origin
 			echo " <a href='", h(ME), "$key=", urlencode($table), ($key == "edit" ? $set : ""), "'", bold(isset($_GET[$key])), ">", icon($val[1]), "$val[0]</a>";
 		}
 
-		echo doc_link([$jush => Driver::get()->tableHelp($table, $is_view)], icon("help") . lang('Info'));
+		echo doc_link([DIALECT => Driver::get()->tableHelp($table, $is_view)], icon("help") . lang('Info'));
 
 		echo "\n";
 	}
@@ -210,8 +208,6 @@ class Admin extends Origin
 	 */
 	public function formatSelectQuery(string $query, float $start, bool $failed = false): string
 	{
-		global $jush;
-
 		$supportSql = support("sql");
 		$warnings = !$failed ? Driver::get()->warnings() : null;
 
@@ -219,7 +215,7 @@ class Admin extends Origin
 			$query .= ";";
 		}
 
-		$syntax = $jush == "elastic" ? "js" : $jush;
+		$syntax = DIALECT == "elastic" ? "js" : DIALECT;
 		$return = "<pre><code class='jush-$syntax'>" . h(str_replace("\n", " ", $query)) . "</code></pre>\n";
 
         $return .= "<p class='links'>";
@@ -251,8 +247,6 @@ class Admin extends Origin
 	 */
 	public function formatMessageQuery(string $query, string $time, bool $failed = false): string
 	{
-		global $jush;
-
 		restart_session();
 
 		$history = &get_session("queries");
@@ -286,7 +280,7 @@ class Admin extends Origin
 		}
 
 		$return .= "<div id='$sqlId' class='hidden'>\n";
-		$syntax = $jush == "elastic" ? "js" : $jush;
+		$syntax = DIALECT == "elastic" ? "js" : DIALECT;
 		$return .= "<pre><code class='jush-$syntax'>" . truncate_utf8($query, 1000) . "</code></pre>\n";
 
 		$return .= "<p class='links'>";
@@ -391,8 +385,6 @@ class Admin extends Origin
 	 */
 	public function printTableStructure(array $fields): void
 	{
-		global $jush;
-
 		echo "<div class='scrollable'>\n";
 		echo "<table class='nowrap'>\n";
 
@@ -423,7 +415,7 @@ class Admin extends Origin
 			$default = h($field["default"]);
 			if (isset($field["default"])) {
 				echo " <span title='" . lang('Default value') . "'>[<b>";
-				echo $field["generated"] ? "<code class='jush-$jush'>$default</code>" : $default;
+				echo $field["generated"] ? "<code class='jush-'" . DIALECT . ">$default</code>" : $default;
 				echo "</b>]</span>";
 			}
 
@@ -830,8 +822,6 @@ class Admin extends Origin
 	 */
 	public function processFieldInput(?array $field, string $value, string $function = ""): string
 	{
-		global $jush;
-
 		if ($function == "SQL") {
 			return $value; //! SQL injection
 		}
@@ -855,7 +845,7 @@ class Admin extends Origin
 			$return = "$function(" . idf_escape($name) . ", $return)";
 		} elseif (preg_match('~^(md5|sha1|password|encrypt)$~', $function)) {
 			$return = "$function($return)";
-		} elseif ($field["type"] == "boolean" && $jush == "elastic") {
+		} elseif ($field["type"] == "boolean" && DIALECT == "elastic") {
 			$return = $return == "0" ? "false" : "true";
 		}
 
@@ -964,10 +954,8 @@ class Admin extends Origin
 	 */
 	public function dumpData(string $table, string $style, string $query): void
 	{
-		global $jush;
-
 		if ($style) {
-			$max_packet = ($jush == "sqlite" ? 0 : 1048576); // default, minimum is 1024
+			$max_packet = (DIALECT == "sqlite" ? 0 : 1048576); // default, minimum is 1024
 			$fields = [];
 			$identity_insert = false;
 
@@ -978,7 +966,7 @@ class Admin extends Origin
 
 				$fields = fields($table);
 
-				if ($jush == "mssql") {
+				if (DIALECT == "mssql") {
 					foreach ($fields as $field) {
 						if ($field["auto_increment"]) {
 							echo "SET IDENTITY_INSERT " . table($table) . " ON;\n";
@@ -1108,8 +1096,6 @@ class Admin extends Origin
 	 */
 	public function printNavigation(?string $missing): void
 	{
-		global $jush;
-
 		parent::printNavigation($missing);
 
 		if ($missing == "auth") {
@@ -1178,7 +1164,7 @@ class Admin extends Origin
 			}
 
 			// Syntax highlighting.
-			if (support("sql") || $jush == "elastic") {
+			if (support("sql") || DIALECT == "elastic") {
 				?>
 				<script<?php echo nonce(); ?>>
 					<?php
@@ -1187,9 +1173,9 @@ class Admin extends Origin
 						foreach ($tables as $table => $type) {
 							$links[] = preg_quote($table, '/');
 						}
-						echo "var jushLinks = { $jush: [ '" . js_escape(ME) . (support("table") ? "table=" : "select=") . "\$&', /\\b(" . implode("|", $links) . ")\\b/g ] };\n";
+						echo "var jushLinks = { " . DIALECT . ": [ '" . js_escape(ME) . (support("table") ? "table=" : "select=") . "\$&', /\\b(" . implode("|", $links) . ")\\b/g ] };\n";
 						foreach (["bac", "bra", "sqlite_quo", "mssql_bra"] as $val) {
-							echo "jushLinks.$val = jushLinks.$jush;\n";
+							echo "jushLinks.$val = jushLinks." . DIALECT . ";\n";
 						}
 					}
 					$server_info = Connection::get()->getServerInfo();
@@ -1206,10 +1192,8 @@ class Admin extends Origin
 	 */
 	public function printDatabaseSwitcher(?string $missing): void
 	{
-		global $jush;
-
 		$databases = $this->admin->getDatabases();
-		if (!$databases && $jush != "sqlite") {
+		if (!$databases && DIALECT != "sqlite") {
 			return;
 		}
 

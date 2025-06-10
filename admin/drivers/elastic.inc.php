@@ -6,6 +6,7 @@ Drivers::add("elastic", "Elasticsearch 7 (beta)", ["json + allow_url_fopen"]);
 
 if (isset($_GET["elastic"])) {
 	define("AdminNeo\DRIVER", "elastic");
+	define("AdminNeo\DIALECT", "elastic");
 
 	if (ini_bool('allow_url_fopen')) {
 		define("AdminNeo\ELASTIC_DB_NAME", "elastic");
@@ -681,11 +682,5 @@ if (isset($_GET["elastic"])) {
 
 	function last_id() {
 		return Connection::get()->last_id;
-	}
-
-	function driver_config() {
-		return [
-			'jush' => "elastic",
-		];
 	}
 }

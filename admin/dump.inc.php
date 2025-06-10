@@ -25,7 +25,7 @@ if ($_POST && !$error) {
 	$is_sql = preg_match('~sql~', $_POST["format"]);
 	if ($is_sql) {
 		echo "-- AdminNeo $VERSION " . Drivers::get(DRIVER) . " " . str_replace("\n", " ", Connection::get()->getServerInfo()) . " dump\n\n";
-		if ($jush == "sql") {
+		if (DIALECT == "sql") {
 			echo "SET NAMES utf8;
 SET time_zone = '+00:00';
 SET foreign_key_checks = 0;
@@ -92,7 +92,7 @@ SET foreign_key_checks = 0;
 					}
 				}
 
-				echo ($out && $jush == 'sql' ? "DELIMITER ;;\n\n$out" . "DELIMITER ;\n\n" : $out);
+				echo ($out && DIALECT == 'sql' ? "DELIMITER ;;\n\n$out" . "DELIMITER ;\n\n" : $out);
 			}
 
 			if ($_POST["table_style"] || $_POST["data_style"]) {
@@ -163,7 +163,7 @@ page_header(lang('Export') . ": $name", $error, ($_GET["export"] != "" ? ["table
 $db_style = ['', 'USE', 'DROP+CREATE', 'CREATE'];
 $table_style = ['', 'DROP+CREATE', 'CREATE'];
 $data_style = ['', 'TRUNCATE+INSERT', 'INSERT'];
-if ($jush == "sql") { //! use insertUpdate() in all drivers
+if (DIALECT == "sql") { //! use insertUpdate() in all drivers
 	$data_style[] = 'INSERT+UPDATE';
 }
 parse_str($_COOKIE["neo_export"], $row);
@@ -177,7 +177,7 @@ if (!isset($row["events"])) { // backwards compatibility
 
 echo "<tr><th>", lang('Format'), "</th><td>", html_select("format", Admin::get()->getDumpFormats(), $row["format"], false), "</td></tr>\n"; // false = radio
 
-if ($jush != "sqlite") {
+if (DIALECT != "sqlite") {
 	echo "<tr><th>", lang('Database'), "</th>";
 	echo "<td>", html_select('db_style', $db_style, $row["db_style"]);
 

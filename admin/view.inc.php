@@ -5,7 +5,7 @@ namespace AdminNeo;
 $TABLE = $_GET["view"];
 $row = $_POST;
 $orig_type = "VIEW";
-if ($jush == "pgsql" && $TABLE != "") {
+if (DIALECT == "pgsql" && $TABLE != "") {
 	$status = table_status($TABLE);
 	$orig_type = strtoupper($status["Engine"]);
 }
@@ -18,8 +18,8 @@ if ($_POST && !$error) {
 
 	$type = ($_POST["materialized"] ? "MATERIALIZED VIEW" : "VIEW");
 
-	if (!$_POST["drop"] && $TABLE == $name && $jush != "sqlite" && $type == "VIEW" && $orig_type == "VIEW") {
-		query_redirect(($jush == "mssql" ? "ALTER" : "CREATE OR REPLACE") . " VIEW " . table($name) . $as, $location, $message);
+	if (!$_POST["drop"] && $TABLE == $name && DIALECT != "sqlite" && $type == "VIEW" && $orig_type == "VIEW") {
+		query_redirect((DIALECT == "mssql" ? "ALTER" : "CREATE OR REPLACE") . " VIEW " . table($name) . $as, $location, $message);
 	} else {
 		$temp_name = $name . "_adminneo_" . uniqid();
 		drop_create(

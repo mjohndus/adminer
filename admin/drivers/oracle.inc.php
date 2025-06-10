@@ -6,6 +6,7 @@ Drivers::add("oracle", "Oracle (beta)", ["OCI8", "PDO_OCI"]);
 
 if (isset($_GET["oracle"])) {
 	define("AdminNeo\DRIVER", "oracle");
+	define("AdminNeo\DIALECT", "oracle");
 
 	if (extension_loaded("oci8")) {
 		define("AdminNeo\DRIVER_EXTENSION", "oci8");
@@ -618,11 +619,5 @@ ORDER BY PROCESS
 
 	function support($feature) {
 		return preg_match('~^(columns|database|drop_col|indexes|descidx|processlist|scheme|sql|status|table|variables|view)$~', $feature); //!
-	}
-
-	function driver_config() {
-		return [
-			'jush' => "oracle",
-		];
 	}
 }

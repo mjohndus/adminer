@@ -466,8 +466,6 @@ function escape_key($key) {
 * @return string
 */
 function where($where, $fields = []) {
-	global $jush;
-
 	$conditions = [];
 
 	foreach ((array) $where["where"] as $key => $val) {
@@ -475,12 +473,12 @@ function where($where, $fields = []) {
 		$column = escape_key($key);
 		$field_type = $fields[$key]["type"] ?? null;
 
-		if ($jush == "sql" && $field_type == "json") {
+		if (DIALECT == "sql" && $field_type == "json") {
 			$conditions[] = "$column = CAST(" . q($val) . " AS JSON)";
-		} elseif ($jush == "sql" && is_numeric($val) && strpos($val, ".") !== false) {
+		} elseif (DIALECT == "sql" && is_numeric($val) && strpos($val, ".") !== false) {
 			// LIKE because of floats but slow with ints.
 			$conditions[] = "$column LIKE " . q($val);
-		} elseif ($jush == "mssql" && strpos($field_type, "datetime") === false) {
+		} elseif (DIALECT == "mssql" && strpos($field_type, "datetime") === false) {
 			// LIKE because of text. But it does not work with datetime, datetime2 and smalldatetime.
 			$conditions[] = "$column LIKE " . q(preg_replace('~[_%[]~', '[\0]', $val));
 		} else {
@@ -488,7 +486,7 @@ function where($where, $fields = []) {
 		}
 
 		// Not just [a-z] to catch non-ASCII characters.
-		if ($jush == "sql" && preg_match('~char|text~', $field_type) && preg_match("~[^ -@]~", $val)) {
+		if (DIALECT == "sql" && preg_match('~char|text~', $field_type) && preg_match("~[^ -@]~", $val)) {
 			$conditions[] = "$column = " . q($val) . " COLLATE " . charset(Connection::get()) . "_bin";
 		}
 	}
@@ -989,14 +987,12 @@ function enum_input(string $attrs, array $field, $value, ?string $empty = null, 
 * @return null
 */
 function input($field, $value, $function) {
-	global $jush;
-
 	$name = h(bracket_escape($field["field"]));
 
 	$types = Driver::get()->getTypes();
 	$json_type = Admin::get()->detectJson($field["type"], $value, true);
 
-	$reset = ($jush == "mssql" && $field["auto_increment"]);
+	$reset = (DIALECT == "mssql" && $field["auto_increment"]);
 	if ($reset && !$_POST["save"]) {
 		$function = null;
 	}
@@ -1061,7 +1057,7 @@ function input($field, $value, $function) {
 	} elseif ($json_type) {
 		echo "<textarea$attrs cols='50' rows='12' class='jush-js'>" . h($value) . '</textarea>';
 	} elseif (($text = preg_match('~text|lob|memo~i', $field["type"])) || preg_match("~\n~", $value)) {
-		if ($text && $jush != "sqlite") {
+		if ($text && DIALECT != "sqlite") {
 			$attrs .= " cols='50' rows='12'";
 		} else {
 			$rows = min(12, substr_count($value, "\n") + 1);
@@ -1073,7 +1069,7 @@ function input($field, $value, $function) {
 		$maxlength = !preg_match('~int~', $field["type"]) && preg_match('~^(\d+)(,(\d+))?$~', $field["length"], $match)
 			? ((preg_match("~binary~", $field["type"]) ? 2 : 1) * $match[1] + ($match[3] ? 1 : 0) + ($match[2] && !$field["unsigned"] ? 1 : 0))
 			: ($types && $types[$field["type"]] ? $types[$field["type"]] + ($field["unsigned"] ? 0 : 1) : 0);
-		if ($jush == 'sql' && min_version(5.6) && preg_match('~time~', $field["type"])) {
+		if (DIALECT == 'sql' && min_version(5.6) && preg_match('~time~', $field["type"])) {
 			$maxlength += 7; // microtime
 		}
 		// type='date' and type='time' display localized value which may be confusing, type='datetime' uses 'T' as date and time separator
@@ -1453,9 +1449,8 @@ function is_shortable(?array $field): bool
 * @return string
 */
 function count_rows($table, $where, $is_group, $group) {
-	global $jush;
 	$query = " FROM " . table($table) . ($where ? " WHERE " . implode(" AND ", $where) : "");
-	return ($is_group && ($jush == "sql" || count($group) == 1)
+	return ($is_group && (DIALECT == "sql" || count($group) == 1)
 		? "SELECT COUNT(DISTINCT " . implode(", ", $group) . ")$query"
 		: "SELECT COUNT(*)" . ($is_group ? " FROM (SELECT 1$query GROUP BY " . implode(", ", $group) . ") x" : $query)
 	);
@@ -1586,7 +1581,7 @@ function help_script_command($command, $side = false)
 * @return null
 */
 function edit_form($table, $fields, $row, $update) {
-	global $jush, $token, $error;
+	global $token, $error;
 	$table_name = Admin::get()->getTableName(table_status1($table, true));
 	$title = $update ? lang('Edit') : lang('Insert');
 
@@ -1613,12 +1608,12 @@ function edit_form($table, $fields, $row, $update) {
 				if ($field["type"] == "bit" && preg_match("~^b'([01]*)'\$~", $default, $regs)) {
 					$default = $regs[1];
 				}
-				if ($jush == "sql" && preg_match('~binary~', $field["type"])) {
+				if (DIALECT == "sql" && preg_match('~binary~', $field["type"])) {
 					$default = bin2hex($default); // same as UNHEX
 				}
 			}
 			$value = ($row !== null
-				? ($row[$name] != "" && $jush == "sql" && preg_match("~enum|set~", $field["type"]) && is_array($row[$name])
+				? ($row[$name] != "" && DIALECT == "sql" && preg_match("~enum|set~", $field["type"]) && is_array($row[$name])
 					? implode(",", $row[$name])
 					: (is_bool($row[$name]) ? +$row[$name] : $row[$name])
 				)

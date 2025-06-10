@@ -14,6 +14,7 @@ Drivers::add("mssql", "MS SQL", ["SQLSRV", "PDO_SQLSRV", "PDO_DBLIB"]);
 
 if (isset($_GET["mssql"])) {
 	define("AdminNeo\DRIVER", "mssql");
+	define("AdminNeo\DIALECT", "mssql");
 
 	if (extension_loaded("sqlsrv")) {
 		define("AdminNeo\DRIVER_EXTENSION", "sqlsrv");
@@ -811,11 +812,5 @@ WHERE sys1.xtype = 'TR' AND sys2.name = " . q($table)
 
 	function support($feature) {
 		return preg_match('~^(check|comment|columns|database|drop_col|dump|indexes|descidx|scheme|sql|table|trigger|view|view_trigger)$~', $feature); //! routine|
-	}
-
-	function driver_config() {
-		return [
-			'jush' => "mssql",
-		];
 	}
 }

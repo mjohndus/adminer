@@ -9,6 +9,7 @@ Drivers::add("mysql", "MySQL", ["MySQLi", "PDO_MySQL"]);
 
 if (isset($_GET["mysql"])) {
 	define("AdminNeo\DRIVER", "mysql");
+	define("AdminNeo\DIALECT", "sql");
 
 	// MySQLi supports everything, PDO_MySQL doesn't support orgtable
 	if (extension_loaded("mysqli")) {
@@ -1177,14 +1178,5 @@ if (isset($_GET["mysql"])) {
 	*/
 	function max_connections() {
 		return Connection::get()->getResult("SELECT @@max_connections");
-	}
-
-	/** Get driver config
-	* @return array ['possible_drivers' => , 'jush' => ]
-	*/
-	function driver_config() {
-		return [
-			'jush' => "sql", ///< @var string JUSH identifier
-		];
 	}
 }

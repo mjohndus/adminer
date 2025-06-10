@@ -6,6 +6,7 @@ Drivers::add("simpledb", "SimpleDB", ["SimpleXML + allow_url_fopen"]);
 
 if (isset($_GET["simpledb"])) {
 	define("AdminNeo\DRIVER", "simpledb");
+	define("AdminNeo\DIALECT", "simpledb");
 
 	if (class_exists('SimpleXMLElement') && ini_bool('allow_url_fopen')) {
 		define("AdminNeo\DRIVER_EXTENSION", "SimpleXML");
@@ -551,11 +552,5 @@ if (isset($_GET["simpledb"])) {
 			}
 		} while ($xml->NextToken);
 		return $return;
-	}
-
-	function driver_config() {
-		return [
-			'jush' => "simpledb",
-		];
 	}
 }

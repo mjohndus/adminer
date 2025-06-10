@@ -15,6 +15,7 @@ Drivers::add("mongo", "MongoDB (alpha)", ["mongodb"]);
 
 if (isset($_GET["mongo"])) {
 	define("AdminNeo\DRIVER", "mongo");
+	define("AdminNeo\DIALECT", "mongo");
 
 	if (class_exists('MongoDB\Driver\Manager')) {
 		define("AdminNeo\DRIVER_EXTENSION", "MongoDB");
@@ -589,11 +590,5 @@ if (isset($_GET["mongo"])) {
 			}
 		}
 		return true;
-	}
-
-	function driver_config() {
-		return [
-			'jush' => "mongo",
-		];
 	}
 }

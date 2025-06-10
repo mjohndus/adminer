@@ -67,7 +67,7 @@ if (!$error && $_POST) {
 		}
 		$commands = 0;
 		$errors = [];
-		$parse = '[\'"' . ($jush == "sql" ? '`#' : ($jush == "sqlite" ? '`[' : ($jush == "mssql" ? '[' : ''))) . ']|/\*|-- |$' . ($jush == "pgsql" ? '|\$[^$]*\$' : '');
+		$parse = '[\'"' . (DIALECT == "sql" ? '`#' : (DIALECT == "sqlite" ? '`[' : (DIALECT == "mssql" ? '[' : ''))) . ']|/\*|-- |$' . (DIALECT == "pgsql" ? '|\$[^$]*\$' : '');
 		$total_start = microtime(true);
 		parse_str($_COOKIE["neo_export"], $admin_export);
 		$dump_format = Admin::get()->getDumpFormats();
@@ -79,7 +79,7 @@ if (!$error && $_POST) {
 
 				$formatted_query = Admin::get()->formatSqlCommandQuery(trim($match[0]));
 				if ($formatted_query != "") {
-					echo "<pre><code class='jush-$jush'>$formatted_query</code></pre>\n";
+					echo "<pre><code class='jush-" . DIALECT . "'>$formatted_query</code></pre>\n";
 				}
 
 				$query = substr($query, strlen($match[0]));
@@ -96,7 +96,7 @@ if (!$error && $_POST) {
 					$offset = $pos + strlen($found);
 
 					if ($found && rtrim($found) != $delimiter) { // find matching quote or comment end
-						$c_style_escapes = Driver::get()->hasCStyleEscapes() || ($jush == "pgsql" && ($pos > 0 && strtolower($query[$pos - 1]) == "e"));
+						$c_style_escapes = Driver::get()->hasCStyleEscapes() || (DIALECT == "pgsql" && ($pos > 0 && strtolower($query[$pos - 1]) == "e"));
 
 						$pattern = '(';
 						if ($found == '/*') {
@@ -126,8 +126,8 @@ if (!$error && $_POST) {
 						$empty = false;
 						$q = substr($query, 0, $pos + strlen($delimiter));
 						$commands++;
-						$print = "<pre id='sql-$commands'><code class='jush-$jush'>" . Admin::get()->formatSqlCommandQuery(trim($q)) . "</code></pre>\n";
-						if ($jush == "sqlite" && preg_match("~^$space*+ATTACH\\b~i", $q, $match)) {
+						$print = "<pre id='sql-$commands'><code class='jush-" . DIALECT . "'>" . Admin::get()->formatSqlCommandQuery(trim($q)) . "</code></pre>\n";
+						if (DIALECT == "sqlite" && preg_match("~^$space*+ATTACH\\b~i", $q, $match)) {
 							// PHP doesn't support setting SQLITE_LIMIT_ATTACHED
 							echo $print;
 							echo "<p class='error'>" . lang('ATTACH queries are not supported.') . "\n";
@@ -329,7 +329,7 @@ if (!isset($_GET["import"]) && $history) {
 		$key = key($history);
 		list($q, $time, $elapsed) = $val;
 
-		echo " <pre><code class='jush-$jush'>", truncate_utf8(ltrim(str_replace("\n", " ", str_replace("\r", "", preg_replace('~^(#|-- ).*~m', '', $q))))), "</code></pre>";
+		echo " <pre><code class='jush-" . DIALECT . "'>", truncate_utf8(ltrim(str_replace("\n", " ", str_replace("\r", "", preg_replace('~^(#|-- ).*~m', '', $q))))), "</code></pre>";
 		echo '<p class="links">';
 		echo "<a href='" . h(ME . "sql=&history=$key") . "'>" . icon("edit") . lang('Edit') . "</a>";
 		echo " <span class='time' title='" . @date('Y-m-d', $time) . "'>" . @date("H:i:s", $time) . // @ - time zone may be not set
