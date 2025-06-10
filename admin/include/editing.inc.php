@@ -255,8 +255,9 @@ function get_partitions_info($table) {
 * @return string
 */
 function process_length($length) {
-	global $enum_length;
-	return (preg_match("~^\\s*\\(?\\s*$enum_length(?:\\s*,\\s*$enum_length)*+\\s*\\)?\\s*\$~", $length) && preg_match_all("~$enum_length~", $length, $matches)
+	$enumLengthPattern = Driver::EnumLengthPattern;
+
+	return (preg_match("~^\\s*\\(?\\s*$enumLengthPattern(?:\\s*,\\s*$enumLengthPattern)*+\\s*\\)?\\s*\$~", $length) && preg_match_all("~$enumLengthPattern~", $length, $matches)
 		? "(" . implode(",", $matches[0]) . ")"
 		: preg_replace('~^[0-9].*~', '(\0)', preg_replace('~[^-0-9,+()[\]]~', '', $length))
 	);

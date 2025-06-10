@@ -960,13 +960,12 @@ if (isset($_GET["mysql"])) {
 	 * @return array ["fields" => ["field" => , "type" => , "length" => , "unsigned" => , "inout" => , "collation" => ], "returns" => , "definition" => , "language" => ]
 	 */
 	function routine($name, $type) {
-		global $enum_length;
-
 		$info = get_rows("SELECT ROUTINE_BODY, ROUTINE_COMMENT FROM information_schema.ROUTINES WHERE ROUTINE_SCHEMA = " . q(DB) . " AND ROUTINE_NAME = " . q($name))[0];
 
 		$aliases = ["bool", "boolean", "integer", "double precision", "real", "dec", "numeric", "fixed", "national char", "national varchar"];
 		$space = "(?:\\s|/\\*[\s\S]*?\\*/|(?:#|-- )[^\n]*\n?|--\r?\n)";
-		$type_pattern = "((" . implode("|", array_merge(array_keys(Driver::get()->getTypes()), $aliases)) . ")\\b(?:\\s*\\(((?:[^'\")]|$enum_length)++)\\))?\\s*(zerofill\\s*)?(unsigned(?:\\s+zerofill)?)?)(?:\\s*(?:CHARSET|CHARACTER\\s+SET)\\s*['\"]?([^'\"\\s,]+)['\"]?)?";
+		$enumLengthPattern = Driver::EnumLengthPattern;
+		$type_pattern = "((" . implode("|", array_merge(array_keys(Driver::get()->getTypes()), $aliases)) . ")\\b(?:\\s*\\(((?:[^'\")]|$enumLengthPattern)++)\\))?\\s*(zerofill\\s*)?(unsigned(?:\\s+zerofill)?)?)(?:\\s*(?:CHARSET|CHARACTER\\s+SET)\\s*['\"]?([^'\"\\s,]+)['\"]?)?";
 		$inOut = implode("|", Driver::get()->getInOut());
 		$pattern = "$space*(" . ($type == "FUNCTION" ? "" : $inOut) . ")?\\s*(?:`((?:[^`]|``)*)`\\s*|\\b(\\S+)\\s+)$type_pattern";
 		$create = Connection::get()->getResult("SHOW CREATE $type " . idf_escape($name), 2);
@@ -978,7 +977,7 @@ if (isset($_GET["mysql"])) {
 			$fields[] = [
 				"field" => str_replace("``", "`", $param[2]) . $param[3],
 				"type" => strtolower($param[5]),
-				"length" => preg_replace_callback("~$enum_length~s", 'AdminNeo\normalize_enum', $param[6]),
+				"length" => preg_replace_callback("~$enumLengthPattern~s", 'AdminNeo\normalize_enum', $param[6]),
 				"unsigned" => strtolower(preg_replace('~\s+~', ' ', trim("$param[8] $param[7]"))),
 				"null" => 1,
 				"full_type" => $param[4],

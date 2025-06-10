@@ -4,6 +4,8 @@ namespace AdminNeo;
 
 abstract class Driver
 {
+	public const EnumLengthPattern = "'(?:''|[^'\\\\]|\\\\.)*'";
+
 	/** @var Connection */
 	protected $connection;
 
