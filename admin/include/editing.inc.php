@@ -350,8 +350,6 @@ function type_class($type) {
  * @param array $foreign_keys returned by referencable_primary()
  */
 function edit_fields(array $fields, array $collations, $type = "TABLE", $foreign_keys = []) {
-	global $inout;
-
 	$fields = array_values($fields);
 	$comment_class = ($_POST ? $_POST["comments"] : get_setting("comments")) ? "" : "class='hidden'";
 	?>
@@ -403,7 +401,7 @@ function edit_fields(array $fields, array $collations, $type = "TABLE", $foreign
 			echo "<td class='handle jsonly'>", icon_solo("handle"), "</td>";
 		}
 		if ($type == "PROCEDURE") {
-			echo "<td>", html_select("fields[$i][inout]", explode("|", $inout), $field["inout"]), "</td>\n";
+			echo "<td>", html_select("fields[$i][inout]", Driver::get()->getInOut(), $field["inout"]), "</td>\n";
 		}
 
 		echo "<th>";
@@ -592,13 +590,14 @@ function create_trigger($on, $row) {
 * @return string
 */
 function create_routine($routine, $row) {
-	global $inout, $jush;
+	global $jush;
 	$set = [];
 	$fields = (array) $row["fields"];
 	ksort($fields); // enforce fields order
+	$inOut = implode("|", Driver::get()->getInOut());
 	foreach ($fields as $field) {
 		if ($field["field"] != "") {
-			$set[] = (preg_match("~^($inout)\$~", $field["inout"]) ? "$field[inout] " : "") . idf_escape($field["field"]) . process_type($field, "CHARACTER SET");
+			$set[] = (preg_match("~^($inOut)\$~", $field["inout"]) ? "$field[inout] " : "") . idf_escape($field["field"]) . process_type($field, "CHARACTER SET");
 		}
 	}
 	$definition = rtrim($row["definition"], ";");

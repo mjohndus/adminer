@@ -31,6 +31,9 @@ abstract class Driver
 	/** @var string[] Grouping functions used in select. */
 	protected $grouping = [];
 
+	/** @var string[] List of IN/OUT parameters for procedures. */
+	protected $inOut = ["IN", "OUT", "INOUT"];
+
 	/** @var string[] List of actions used within the foreign keys. */
 	protected $onActions = ["RESTRICT", "CASCADE", "SET NULL", "SET DEFAULT", "NO ACTION"];
 
@@ -138,6 +141,14 @@ abstract class Driver
 	public function getGrouping(): array
 	{
 		return $this->grouping;
+	}
+
+	/**
+	 * @return string[]
+	 */
+	public function getInOut(): array
+	{
+		return $this->inOut;
 	}
 
 	/**
