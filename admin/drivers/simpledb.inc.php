@@ -2,7 +2,7 @@
 
 namespace AdminNeo;
 
-Drivers::add("simpledb", "SimpleDB");
+Drivers::add("simpledb", "SimpleDB", ["SimpleXML + allow_url_fopen"]);
 
 if (isset($_GET["simpledb"])) {
 	define("AdminNeo\DRIVER", "simpledb");
@@ -555,7 +555,6 @@ if (isset($_GET["simpledb"])) {
 
 	function driver_config() {
 		return [
-			'possible_drivers' => ["SimpleXML + allow_url_fopen"],
 			'jush' => "simpledb",
 		];
 	}

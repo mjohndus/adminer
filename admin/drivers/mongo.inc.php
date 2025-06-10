@@ -11,7 +11,7 @@ use MongoDB\Driver\Cursor;
 use MongoDB\Driver\Manager;
 use MongoDB\Driver\Query;
 
-Drivers::add("mongo", "MongoDB (alpha)");
+Drivers::add("mongo", "MongoDB (alpha)", ["mongodb"]);
 
 if (isset($_GET["mongo"])) {
 	define("AdminNeo\DRIVER", "mongo");
@@ -443,7 +443,7 @@ if (isset($_GET["mongo"])) {
 		}
 		return $data;
 	}
-	
+
 	function table($idf) {
 		return $idf;
 	}
@@ -593,7 +593,6 @@ if (isset($_GET["mongo"])) {
 
 	function driver_config() {
 		return [
-			'possible_drivers' => ["mongodb"],
 			'jush' => "mongo",
 		];
 	}

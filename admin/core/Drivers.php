@@ -4,15 +4,19 @@ namespace AdminNeo;
 
 class Drivers
 {
-	/** @var array */
+	/** @var string[] */
 	private static $drivers = [];
+
+	/** @var string[][] */
+	private static $extensions = [];
 
 	/**
 	 * Adds a driver.
 	 */
-	public static function add(string $id, string $name): void
+	public static function add(string $id, string $name, array $extensions): void
 	{
 		self::$drivers[$id] = $name;
+		self::$extensions[$id] = $extensions;
 	}
 
 	/**
@@ -31,6 +35,16 @@ class Drivers
 	public static function getList(): array
 	{
 		return self::$drivers;
+	}
+
+	/**
+	 * Returns the list of supported PHP extensions for given driver.
+	 *
+	 * @return string[]
+	 */
+	public static function getExtensions(string $id): array
+	{
+		return self::$extensions[$id] ?? [];
 	}
 }
 

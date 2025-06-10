@@ -5,7 +5,7 @@ namespace AdminNeo;
 use Exception;
 use SQLite3;
 
-Drivers::add("sqlite", "SQLite");
+Drivers::add("sqlite", "SQLite", ["SQLite3", "PDO_SQLite"]);
 
 if (isset($_GET["sqlite"])) {
 	define("AdminNeo\DRIVER", "sqlite");
@@ -828,7 +828,6 @@ if (isset($_GET["sqlite"])) {
 
 	function driver_config() {
 		return [
-			'possible_drivers' => [(isset($_GET["sqlite"]) ? "SQLite3" : "SQLite"), "PDO_SQLite"],
 			'jush' => "sqlite",
 		];
 	}

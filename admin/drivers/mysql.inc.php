@@ -5,7 +5,7 @@ namespace AdminNeo;
 use mysqli;
 use PDO;
 
-Drivers::add("mysql", "MySQL");
+Drivers::add("mysql", "MySQL", ["MySQLi", "PDO_MySQL"]);
 
 if (isset($_GET["mysql"])) {
 	define("AdminNeo\DRIVER", "mysql");
@@ -1184,7 +1184,6 @@ if (isset($_GET["mysql"])) {
 	*/
 	function driver_config() {
 		return [
-			'possible_drivers' => ["MySQLi", "MySQL", "PDO_MySQL"],
 			'jush' => "sql", ///< @var string JUSH identifier
 		];
 	}

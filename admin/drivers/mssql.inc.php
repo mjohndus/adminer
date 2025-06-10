@@ -10,7 +10,7 @@ use stdClass;
 * @author Jakub Vrana
 */
 
-Drivers::add("mssql", "MS SQL");
+Drivers::add("mssql", "MS SQL", ["SQLSRV", "PDO_SQLSRV", "PDO_DBLIB"]);
 
 if (isset($_GET["mssql"])) {
 	define("AdminNeo\DRIVER", "mssql");
@@ -815,7 +815,6 @@ WHERE sys1.xtype = 'TR' AND sys2.name = " . q($table)
 
 	function driver_config() {
 		return [
-			'possible_drivers' => ["SQLSRV", "MSSQL", "PDO_SQLSRV", "PDO_DBLIB"],
 			'jush' => "mssql",
 		];
 	}

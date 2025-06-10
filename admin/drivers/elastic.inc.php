@@ -2,7 +2,7 @@
 
 namespace AdminNeo;
 
-Drivers::add("elastic", "Elasticsearch 7 (beta)");
+Drivers::add("elastic", "Elasticsearch 7 (beta)", ["json + allow_url_fopen"]);
 
 if (isset($_GET["elastic"])) {
 	define("AdminNeo\DRIVER", "elastic");
@@ -685,7 +685,6 @@ if (isset($_GET["elastic"])) {
 
 	function driver_config() {
 		return [
-			'possible_drivers' => ["json + allow_url_fopen"],
 			'jush' => "elastic",
 		];
 	}

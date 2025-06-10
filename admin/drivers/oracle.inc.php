@@ -2,7 +2,7 @@
 
 namespace AdminNeo;
 
-Drivers::add("oracle", "Oracle (beta)");
+Drivers::add("oracle", "Oracle (beta)", ["OCI8", "PDO_OCI"]);
 
 if (isset($_GET["oracle"])) {
 	define("AdminNeo\DRIVER", "oracle");
@@ -622,7 +622,6 @@ ORDER BY PROCESS
 
 	function driver_config() {
 		return [
-			'possible_drivers' => ["OCI8", "PDO_OCI"],
 			'jush' => "oracle",
 		];
 	}

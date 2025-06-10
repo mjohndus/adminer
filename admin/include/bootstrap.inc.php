@@ -124,7 +124,6 @@ if (!$admin) {
 
 if (defined("AdminNeo\DRIVER")) {
 	$config = driver_config();
-	$possible_drivers = $config['possible_drivers'];
 	$jush = $config['jush'];
 } else {
 	define("AdminNeo\DRIVER", null);

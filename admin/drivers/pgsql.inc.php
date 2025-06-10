@@ -2,7 +2,7 @@
 
 namespace AdminNeo;
 
-Drivers::add("pgsql", "PostgreSQL");
+Drivers::add("pgsql", "PostgreSQL", ["PgSQL", "PDO_PgSQL"]);
 
 if (isset($_GET["pgsql"])) {
 	define("AdminNeo\DRIVER", "pgsql");
@@ -1046,7 +1046,6 @@ AND typelem = 0"
 
 	function driver_config() {
 		return [
-			'possible_drivers' => ["PgSQL", "PDO_PgSQL"],
 			'jush' => "pgsql",
 			'c_style_escapes' => true,
 		];
