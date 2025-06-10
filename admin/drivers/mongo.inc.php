@@ -178,273 +178,272 @@ if (isset($_GET["mongo"])) {
 			}
 
 		}
+	}
 
 
-		class MongoDriver extends Driver
+
+	class MongoDriver extends Driver
+	{
+		public $primary = "_id";
+
+		protected function __construct(Connection $connection, $admin)
 		{
-			public $primary = "_id";
+			parent::__construct($connection, $admin);
 
-			protected function __construct(Connection $connection, $admin)
-			{
-				parent::__construct($connection, $admin);
+			$this->operators = [
+				"=", "!=",
+				">", "<", ">=", "<=",
+				"regex",
+				"(f)=", "(f)!=",
+				"(f)>", "(f)<", "(f)>=", "(f)<=",
+				"(date)=", "(date)!=",
+				"(date)>", "(date)<", "(date)>=", "(date)<=",
+			];
 
-				$this->operators = [
-					"=", "!=",
-					">", "<", ">=", "<=",
-					"regex",
-					"(f)=", "(f)!=",
-					"(f)>", "(f)<", "(f)>=", "(f)<=",
-					"(date)=", "(date)!=",
-					"(date)>", "(date)<", "(date)>=", "(date)<=",
-				];
+			$this->likeOperator = "LIKE %%"; // TODO: LIKE operator is not listed in operators.
+			$this->regexpOperator = "regex";
 
-				$this->likeOperator = "LIKE %%"; // TODO: LIKE operator is not listed in operators.
-				$this->regexpOperator = "regex";
-
-				$this->editFunctions = [["json"]];
-			}
-
-			public function select(string $table, array $select, array $where, array $group, array $order = [], ?int $limit = 1, int $page = 0, bool $print = false)
-			{
-				$select = ($select == ["*"]
-					? []
-					: array_fill_keys($select, 1)
-				);
-				if (count($select) && !isset($select['_id'])) {
-					$select['_id'] = 0;
-				}
-
-				$where = where_to_query($where);
-				$sort = [];
-				foreach ($order as $val) {
-					$val = preg_replace('~ DESC$~', '', $val, 1, $count);
-					$sort[$val] = ($count ? -1 : 1);
-				}
-
-				$limit = min(200, max(1, (int) $limit));
-				$skip = $page * $limit;
-
-				$query = new Query($where, ['projection' => $select, 'limit' => $limit, 'skip' => $skip, 'sort' => $sort]);
-
-				try {
-					return new Result(Connection::get()->executeQuery(Connection::get()->getDbName() . ".$table", $query));
-				} catch (Exception $e) {
-					Connection::get()->setError($e->getMessage());
-					return false;
-				}
-			}
-
-			public function update(string $table, array $record, string $queryWhere, int $limit = 0, string $separator = "\n")
-			{
-				$db = Connection::get()->getDbName();
-				$where = sql_query_where_parser($queryWhere);
-				$bulk = new BulkWrite([]);
-				if (isset($record['_id'])) {
-					unset($record['_id']);
-				}
-				$removeFields = [];
-				foreach ($record as $key => $value) {
-					if ($value == 'NULL') {
-						$removeFields[$key] = 1;
-						unset($record[$key]);
-					}
-				}
-				$update = ['$set' => $record];
-				if (count($removeFields)) {
-					$update['$unset'] = $removeFields;
-				}
-				$bulk->update($where, $update, ['upsert' => false]);
-
-				return Connection::get()->executeBulkWrite("$db.$table", $bulk, 'getModifiedCount');
-			}
-
-			public function delete(string $table, string $queryWhere, int $limit = 0)
-			{
-				$bulk = new BulkWrite([]);
-				$bulk->delete(sql_query_where_parser($queryWhere), ['limit' => $limit]);
-
-				return Connection::get()->executeBulkWrite(Connection::get()->getDbName() . ".$table", $bulk, 'getDeletedCount');
-			}
-
-			public function insert(string $table, array $record)
-			{
-				if ($record['_id'] == '') {
-					unset($record['_id']);
-				}
-
-				$bulk = new BulkWrite([]);
-				$bulk->insert($record);
-
-				return Connection::get()->executeBulkWrite(Connection::get()->getDbName() . "$table", $bulk, 'getInsertedCount');
-			}
+			$this->editFunctions = [["json"]];
 		}
 
-
-
-		function create_driver(Connection $connection): Driver
+		public function select(string $table, array $select, array $where, array $group, array $order = [], ?int $limit = 1, int $page = 0, bool $print = false)
 		{
-			return MongoDriver::create($connection, Admin::get());
-		}
-
-		function get_databases($flush) {
-			$return = [];
-			foreach (Connection::get()->executeCommand(['listDatabases' => 1]) as $dbs) {
-				foreach ($dbs->databases as $db) {
-					$return[] = $db->name;
-				}
+			$select = ($select == ["*"]
+				? []
+				: array_fill_keys($select, 1)
+			);
+			if (count($select) && !isset($select['_id'])) {
+				$select['_id'] = 0;
 			}
-			return $return;
-		}
 
-		function count_tables($databases) {
-			$return = [];
-			return $return;
-		}
-
-		function tables_list() {
-			$collections = [];
-			foreach (Connection::get()->executeCommand(['listCollections' => 1]) as $result) {
-				$collections[$result->name] = 'table';
-			}
-			return $collections;
-		}
-
-		function drop_databases($databases) {
-			return false;
-		}
-
-		function indexes(string $table, ?Connection $connection = null): array
-		{
-			$return = [];
-			foreach (Connection::get()->executeCommand(['listIndexes' => $table]) as $index) {
-				$descs = [];
-				$columns = [];
-				foreach (get_object_vars($index->key) as $column => $type) {
-					$descs[] = ($type == -1 ? '1' : null);
-					$columns[] = $column;
-				}
-				$return[$index->name] = [
-					"type" => ($index->name == "_id_" ? "PRIMARY" : (isset($index->unique) ? "UNIQUE" : "INDEX")),
-					"columns" => $columns,
-					"lengths" => [],
-					"descs" => $descs,
-				];
-			}
-			return $return;
-		}
-
-		function fields($table) {
-			$fields = fields_from_edit();
-			if (!$fields) {
-				$result = Driver::get()->select($table, ["*"], [], [], [], 10);
-				if ($result) {
-					while ($row = $result->fetch_assoc()) {
-						foreach ($row as $key => $val) {
-							$row[$key] = null;
-							$fields[$key] = [
-								"field" => $key,
-								"type" => "string",
-								"null" => ($key != Driver::get()->primary),
-								"auto_increment" => ($key == Driver::get()->primary),
-								"privileges" => [
-									"insert" => 1,
-									"select" => 1,
-									"update" => 1,
-									"where" => 1,
-									"order" => 1,
-								],
-							];
-						}
-					}
-				}
-			}
-			return $fields;
-		}
-
-		function found_rows($table_status, $where) {
 			$where = where_to_query($where);
-			$toArray = Connection::get()->executeCommand(['count' => $table_status['Name'], 'query' => $where])->toArray();
-			return $toArray[0]->n;
+			$sort = [];
+			foreach ($order as $val) {
+				$val = preg_replace('~ DESC$~', '', $val, 1, $count);
+				$sort[$val] = ($count ? -1 : 1);
+			}
+
+			$limit = min(200, max(1, (int) $limit));
+			$skip = $page * $limit;
+
+			$query = new Query($where, ['projection' => $select, 'limit' => $limit, 'skip' => $skip, 'sort' => $sort]);
+
+			try {
+				return new Result(Connection::get()->executeQuery(Connection::get()->getDbName() . ".$table", $query));
+			} catch (Exception $e) {
+				Connection::get()->setError($e->getMessage());
+				return false;
+			}
 		}
 
-		function sql_query_where_parser($queryWhere) {
-			$queryWhere = preg_replace('~^\s*WHERE\s*~', "", $queryWhere);
-			while ($queryWhere[0] == "(") {
-				$queryWhere = preg_replace('~^\((.*)\)$~', "$1", $queryWhere);
+		public function update(string $table, array $record, string $queryWhere, int $limit = 0, string $separator = "\n")
+		{
+			$db = Connection::get()->getDbName();
+			$where = sql_query_where_parser($queryWhere);
+			$bulk = new BulkWrite([]);
+			if (isset($record['_id'])) {
+				unset($record['_id']);
 			}
-
-			$wheres = explode(' AND ', $queryWhere);
-			$wheresOr = explode(') OR (', $queryWhere);
-			$where = [];
-			foreach ($wheres as $whereStr) {
-				$where[] = trim($whereStr);
-			}
-			if (count($wheresOr) == 1) {
-				$wheresOr = [];
-			} elseif (count($wheresOr) > 1) {
-				$where = [];
-			}
-			return where_to_query($where, $wheresOr);
-		}
-
-		function where_to_query($whereAnd = [], $whereOr = []) {
-			$data = [];
-			foreach (['and' => $whereAnd, 'or' => $whereOr] as $type => $where) {
-				if (is_array($where)) {
-					foreach ($where as $expression) {
-						list($col, $op, $val) = explode(" ", $expression, 3);
-						if ($col == "_id" && preg_match('~^(MongoDB\\\\BSON\\\\ObjectID)\("(.+)"\)$~', $val, $match)) {
-							list(, $class, $val) = $match;
-							$val = new $class($val);
-						}
-						if (!in_array($op, Admin::get()->getOperators())) {
-							continue;
-						}
-						if (preg_match('~^\(f\)(.+)~', $op, $match)) {
-							$val = (float) $val;
-							$op = $match[1];
-						} elseif (preg_match('~^\(date\)(.+)~', $op, $match)) {
-							$dateTime = new DateTime($val);
-							$val = new BSON\UTCDatetime($dateTime->getTimestamp() * 1000);
-							$op = $match[1];
-						}
-						switch ($op) {
-							case '=':
-								$op = '$eq';
-								break;
-							case '!=':
-								$op = '$ne';
-								break;
-							case '>':
-								$op = '$gt';
-								break;
-							case '<':
-								$op = '$lt';
-								break;
-							case '>=':
-								$op = '$gte';
-								break;
-							case '<=':
-								$op = '$lte';
-								break;
-							case 'regex':
-								$op = '$regex';
-								break;
-							default:
-								continue 2;
-						}
-						if ($type == 'and') {
-							$data['$and'][] = [$col => [$op => $val]];
-						} elseif ($type == 'or') {
-							$data['$or'][] = [$col => [$op => $val]];
-						}
-					}
+			$removeFields = [];
+			foreach ($record as $key => $value) {
+				if ($value == 'NULL') {
+					$removeFields[$key] = 1;
+					unset($record[$key]);
 				}
 			}
-			return $data;
+			$update = ['$set' => $record];
+			if (count($removeFields)) {
+				$update['$unset'] = $removeFields;
+			}
+			$bulk->update($where, $update, ['upsert' => false]);
+
+			return Connection::get()->executeBulkWrite("$db.$table", $bulk, 'getModifiedCount');
+		}
+
+		public function delete(string $table, string $queryWhere, int $limit = 0)
+		{
+			$bulk = new BulkWrite([]);
+			$bulk->delete(sql_query_where_parser($queryWhere), ['limit' => $limit]);
+
+			return Connection::get()->executeBulkWrite(Connection::get()->getDbName() . ".$table", $bulk, 'getDeletedCount');
+		}
+
+		public function insert(string $table, array $record)
+		{
+			if ($record['_id'] == '') {
+				unset($record['_id']);
+			}
+
+			$bulk = new BulkWrite([]);
+			$bulk->insert($record);
+
+			return Connection::get()->executeBulkWrite(Connection::get()->getDbName() . "$table", $bulk, 'getInsertedCount');
 		}
 	}
 
+	function create_driver(Connection $connection): Driver
+	{
+		return MongoDriver::create($connection, Admin::get());
+	}
+
+	function get_databases($flush) {
+		$return = [];
+		foreach (Connection::get()->executeCommand(['listDatabases' => 1]) as $dbs) {
+			foreach ($dbs->databases as $db) {
+				$return[] = $db->name;
+			}
+		}
+		return $return;
+	}
+
+	function count_tables($databases) {
+		$return = [];
+		return $return;
+	}
+
+	function tables_list() {
+		$collections = [];
+		foreach (Connection::get()->executeCommand(['listCollections' => 1]) as $result) {
+			$collections[$result->name] = 'table';
+		}
+		return $collections;
+	}
+
+	function drop_databases($databases) {
+		return false;
+	}
+
+	function indexes(string $table, ?Connection $connection = null): array
+	{
+		$return = [];
+		foreach (Connection::get()->executeCommand(['listIndexes' => $table]) as $index) {
+			$descs = [];
+			$columns = [];
+			foreach (get_object_vars($index->key) as $column => $type) {
+				$descs[] = ($type == -1 ? '1' : null);
+				$columns[] = $column;
+			}
+			$return[$index->name] = [
+				"type" => ($index->name == "_id_" ? "PRIMARY" : (isset($index->unique) ? "UNIQUE" : "INDEX")),
+				"columns" => $columns,
+				"lengths" => [],
+				"descs" => $descs,
+			];
+		}
+		return $return;
+	}
+
+	function fields($table) {
+		$fields = fields_from_edit();
+		if (!$fields) {
+			$result = Driver::get()->select($table, ["*"], [], [], [], 10);
+			if ($result) {
+				while ($row = $result->fetch_assoc()) {
+					foreach ($row as $key => $val) {
+						$row[$key] = null;
+						$fields[$key] = [
+							"field" => $key,
+							"type" => "string",
+							"null" => ($key != Driver::get()->primary),
+							"auto_increment" => ($key == Driver::get()->primary),
+							"privileges" => [
+								"insert" => 1,
+								"select" => 1,
+								"update" => 1,
+								"where" => 1,
+								"order" => 1,
+							],
+						];
+					}
+				}
+			}
+		}
+		return $fields;
+	}
+
+	function found_rows($table_status, $where) {
+		$where = where_to_query($where);
+		$toArray = Connection::get()->executeCommand(['count' => $table_status['Name'], 'query' => $where])->toArray();
+		return $toArray[0]->n;
+	}
+
+	function sql_query_where_parser($queryWhere) {
+		$queryWhere = preg_replace('~^\s*WHERE\s*~', "", $queryWhere);
+		while ($queryWhere[0] == "(") {
+			$queryWhere = preg_replace('~^\((.*)\)$~', "$1", $queryWhere);
+		}
+
+		$wheres = explode(' AND ', $queryWhere);
+		$wheresOr = explode(') OR (', $queryWhere);
+		$where = [];
+		foreach ($wheres as $whereStr) {
+			$where[] = trim($whereStr);
+		}
+		if (count($wheresOr) == 1) {
+			$wheresOr = [];
+		} elseif (count($wheresOr) > 1) {
+			$where = [];
+		}
+		return where_to_query($where, $wheresOr);
+	}
+
+	function where_to_query($whereAnd = [], $whereOr = []) {
+		$data = [];
+		foreach (['and' => $whereAnd, 'or' => $whereOr] as $type => $where) {
+			if (is_array($where)) {
+				foreach ($where as $expression) {
+					list($col, $op, $val) = explode(" ", $expression, 3);
+					if ($col == "_id" && preg_match('~^(MongoDB\\\\BSON\\\\ObjectID)\("(.+)"\)$~', $val, $match)) {
+						list(, $class, $val) = $match;
+						$val = new $class($val);
+					}
+					if (!in_array($op, Admin::get()->getOperators())) {
+						continue;
+					}
+					if (preg_match('~^\(f\)(.+)~', $op, $match)) {
+						$val = (float) $val;
+						$op = $match[1];
+					} elseif (preg_match('~^\(date\)(.+)~', $op, $match)) {
+						$dateTime = new DateTime($val);
+						$val = new BSON\UTCDatetime($dateTime->getTimestamp() * 1000);
+						$op = $match[1];
+					}
+					switch ($op) {
+						case '=':
+							$op = '$eq';
+							break;
+						case '!=':
+							$op = '$ne';
+							break;
+						case '>':
+							$op = '$gt';
+							break;
+						case '<':
+							$op = '$lt';
+							break;
+						case '>=':
+							$op = '$gte';
+							break;
+						case '<=':
+							$op = '$lte';
+							break;
+						case 'regex':
+							$op = '$regex';
+							break;
+						default:
+							continue 2;
+					}
+					if ($type == 'and') {
+						$data['$and'][] = [$col => [$op => $val]];
+					} elseif ($type == 'or') {
+						$data['$or'][] = [$col => [$op => $val]];
+					}
+				}
+			}
+		}
+		return $data;
+	}
+	
 	function table($idf) {
 		return $idf;
 	}
