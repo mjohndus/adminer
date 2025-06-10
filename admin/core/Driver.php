@@ -13,6 +13,9 @@ abstract class Driver
 	/** @var array [$description => [$type => $maximum_unsigned_length, ...], ...] */
 	protected $types = [];
 
+	/** @var string[] List of number variants. */
+	protected $unsigned = [];
+
 	/** @var string[] Operators used in select. */
 	protected $operators = [];
 
@@ -137,6 +140,14 @@ abstract class Driver
 	public function getEditFunctions(): array
 	{
 		return $this->editFunctions;
+	}
+
+	/**
+	 * @return string[]
+	 */
+	public function getUnsigned(): array
+	{
+		return $this->unsigned;
 	}
 
 	/**

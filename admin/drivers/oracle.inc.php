@@ -624,7 +624,6 @@ ORDER BY PROCESS
 		return [
 			'possible_drivers' => ["OCI8", "PDO_OCI"],
 			'jush' => "oracle",
-			'unsigned' => [],
 		];
 	}
 }

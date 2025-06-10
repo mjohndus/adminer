@@ -1047,7 +1047,6 @@ AND typelem = 0"
 		return [
 			'possible_drivers' => ["PgSQL", "PDO_PgSQL"],
 			'jush' => "pgsql",
-			'unsigned' => [],
 			'c_style_escapes' => true,
 		];
 	}

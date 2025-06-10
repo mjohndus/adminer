@@ -459,7 +459,6 @@ if (isset($_GET["clickhouse"])) {
 	function driver_config() {
 		return [
 			'jush' => "clickhouse",
-			'unsigned' => [],
 		];
 	}
 }

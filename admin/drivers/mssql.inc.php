@@ -817,7 +817,6 @@ WHERE sys1.xtype = 'TR' AND sys2.name = " . q($table)
 		return [
 			'possible_drivers' => ["SQLSRV", "MSSQL", "PDO_SQLSRV", "PDO_DBLIB"],
 			'jush' => "mssql",
-			'unsigned' => [],
 		];
 	}
 }

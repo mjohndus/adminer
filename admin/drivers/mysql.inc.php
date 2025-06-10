@@ -215,6 +215,8 @@ if (isset($_GET["mysql"])) {
 				],
 			];
 
+			$this->unsigned = ["unsigned", "zerofill", "unsigned zerofill"];
+
 			$this->operators = [
 				"=", "<", ">", "<=", ">=", "!=",
 				"LIKE", "LIKE %%", "NOT LIKE",
@@ -1178,13 +1180,12 @@ if (isset($_GET["mysql"])) {
 	}
 
 	/** Get driver config
-	* @return array ['possible_drivers' => , 'jush' => , 'unsigned' => ]
+	* @return array ['possible_drivers' => , 'jush' => ]
 	*/
 	function driver_config() {
 		return [
 			'possible_drivers' => ["MySQLi", "MySQL", "PDO_MySQL"],
 			'jush' => "sql", ///< @var string JUSH identifier
-			'unsigned' => ["unsigned", "zerofill", "unsigned zerofill"], ///< @var array number variants
 		];
 	}
 }

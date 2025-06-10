@@ -213,7 +213,7 @@ function json_row($key, $val = null) {
 * @return null
 */
 function edit_type($key, $field, $collations, $foreign_keys = [], $extra_types = []) {
-	global $unsigned, $on_actions;
+	global $on_actions;
 	$type = $field["type"] ?? null;
 	?>
 <td><select name="<?php echo h($key); ?>[type]" class="type" aria-labelledby="label-type"><?php
@@ -227,7 +227,7 @@ if ($foreign_keys) {
 echo optionlist(array_merge($extra_types, $structured_types), $type);
 ?></select><td><input name="<?php echo h($key); ?>[length]" value="<?php echo h($field["length"] ?? null); ?>" size="3"<?php echo (!($field["length"] ?? null) && preg_match('~var(char|binary)$~', $type) ? " class='input required'" : " class='input'"); //! type="number" with enabled JavaScript ?> aria-labelledby="label-length"><td class="options"><?php
 	echo ($collations ? "<select name='" . h($key) . "[collation]'" . (preg_match('~(char|text|enum|set)$~', $type) ? "" : " class='hidden'") . '><option value="">(' . lang('collation') . ')' . optionlist($collations, $field["collation"] ?? null) . '</select>' : '');
-	echo ($unsigned ? "<select name='" . h($key) . "[unsigned]'" . (!$type || preg_match(number_type(), $type) ? "" : " class='hidden'") . '><option>' . optionlist($unsigned, $field["unsigned"] ?? null) . '</select>' : '');
+	echo (Driver::get()->getUnsigned() ? "<select name='" . h($key) . "[unsigned]'" . (!$type || preg_match(number_type(), $type) ? "" : " class='hidden'") . '><option>' . optionlist(Driver::get()->getUnsigned(), $field["unsigned"] ?? null) . '</select>' : '');
 	echo (isset($field['on_update']) ? "<select name='" . h($key) . "[on_update]'" . (preg_match('~timestamp|datetime~', $type) ? "" : " class='hidden'") . '>' . optionlist(["" => "(" . lang('ON UPDATE') . ")", "CURRENT_TIMESTAMP"], (preg_match('~^CURRENT_TIMESTAMP~i', $field["on_update"]) ? "CURRENT_TIMESTAMP" : $field["on_update"])) . '</select>' : '');
 	echo ($foreign_keys ? "<select name='" . h($key) . "[on_delete]'" . (preg_match("~`~", $type) ? "" : " class='hidden'") . "><option value=''>(" . lang('ON DELETE') . ")" . optionlist(explode("|", $on_actions), $field["on_delete"] ?? null) . "</select> " : " "); // space for IE
 }
@@ -269,10 +269,10 @@ function process_length($length) {
 * @return string
 */
 function process_type($field, $collate = "COLLATE") {
-	global $unsigned, $jush;
+	global $jush;
 	return " $field[type]"
 		. process_length($field["length"])
-		. (preg_match(number_type(), $field["type"]) && in_array($field["unsigned"], $unsigned) ? " $field[unsigned]" : "")
+		. (preg_match(number_type(), $field["type"]) && in_array($field["unsigned"], Driver::get()->getUnsigned()) ? " $field[unsigned]" : "")
 		. (preg_match('~char|text|enum|set~', $field["type"]) && $field["collation"] ? " $collate " . ($jush == "mssql" ? $field["collation"] : q($field["collation"])) : "")
 	;
 }
