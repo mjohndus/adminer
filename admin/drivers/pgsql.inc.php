@@ -573,7 +573,8 @@ ORDER BY a.attnum"
 	}
 
 	function foreign_keys($table) {
-		global $on_actions;
+		$onActions = implode("|", Driver::get()->getOnActions());
+
 		$return = [];
 		foreach (get_rows("SELECT conname, condeferrable::int AS deferrable, pg_get_constraintdef(oid) AS definition
 FROM pg_constraint
@@ -587,8 +588,8 @@ ORDER BY conkey, conname") as $row) {
 					$row['table'] = idf_unescape($match2[4]);
 				}
 				$row['target'] = array_map('AdminNeo\idf_unescape', array_map('trim', explode(',', $match[3])));
-				$row['on_delete'] = (preg_match("~ON DELETE ($on_actions)~", $match[4], $match2) ? $match2[1] : 'NO ACTION');
-				$row['on_update'] = (preg_match("~ON UPDATE ($on_actions)~", $match[4], $match2) ? $match2[1] : 'NO ACTION');
+				$row['on_delete'] = (preg_match("~ON DELETE ($onActions)~", $match[4], $match2) ? $match2[1] : 'NO ACTION');
+				$row['on_update'] = (preg_match("~ON UPDATE ($onActions)~", $match[4], $match2) ? $match2[1] : 'NO ACTION');
 				$return[$row['conname']] = $row;
 			}
 		}

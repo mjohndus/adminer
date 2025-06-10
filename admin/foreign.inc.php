@@ -102,8 +102,8 @@ foreach ($row["source"] as $key => $val) {
 ?>
 </table>
 <p>
-<?php echo lang('ON DELETE'); ?>: <?php echo html_select("on_delete", [-1 => ""] + explode("|", $on_actions), $row["on_delete"]); ?>
- <?php echo lang('ON UPDATE'); ?>: <?php echo html_select("on_update", [-1 => ""] + explode("|", $on_actions), $row["on_update"]); ?>
+<?php echo lang('ON DELETE'); ?>: <?php echo html_select("on_delete", [-1 => ""] + Driver::get()->getOnActions(), $row["on_delete"]); ?>
+<?php echo lang('ON UPDATE'); ?>: <?php echo html_select("on_update", [-1 => ""] + Driver::get()->getOnActions(), $row["on_update"]); ?>
 <?php echo doc_link([
 	'sql' => "innodb-foreign-key-constraints.html",
 	'mariadb' => "foreign-keys/",

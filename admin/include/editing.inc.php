@@ -213,7 +213,6 @@ function json_row($key, $val = null) {
 * @return null
 */
 function edit_type($key, $field, $collations, $foreign_keys = [], $extra_types = []) {
-	global $on_actions;
 	$type = $field["type"] ?? null;
 	?>
 <td><select name="<?php echo h($key); ?>[type]" class="type" aria-labelledby="label-type"><?php
@@ -229,7 +228,7 @@ echo optionlist(array_merge($extra_types, $structured_types), $type);
 	echo ($collations ? "<select name='" . h($key) . "[collation]'" . (preg_match('~(char|text|enum|set)$~', $type) ? "" : " class='hidden'") . '><option value="">(' . lang('collation') . ')' . optionlist($collations, $field["collation"] ?? null) . '</select>' : '');
 	echo (Driver::get()->getUnsigned() ? "<select name='" . h($key) . "[unsigned]'" . (!$type || preg_match(number_type(), $type) ? "" : " class='hidden'") . '><option>' . optionlist(Driver::get()->getUnsigned(), $field["unsigned"] ?? null) . '</select>' : '');
 	echo (isset($field['on_update']) ? "<select name='" . h($key) . "[on_update]'" . (preg_match('~timestamp|datetime~', $type) ? "" : " class='hidden'") . '>' . optionlist(["" => "(" . lang('ON UPDATE') . ")", "CURRENT_TIMESTAMP"], (preg_match('~^CURRENT_TIMESTAMP~i', $field["on_update"]) ? "CURRENT_TIMESTAMP" : $field["on_update"])) . '</select>' : '');
-	echo ($foreign_keys ? "<select name='" . h($key) . "[on_delete]'" . (preg_match("~`~", $type) ? "" : " class='hidden'") . "><option value=''>(" . lang('ON DELETE') . ")" . optionlist(explode("|", $on_actions), $field["on_delete"] ?? null) . "</select> " : " "); // space for IE
+	echo ($foreign_keys ? "<select name='" . h($key) . "[on_delete]'" . (preg_match("~`~", $type) ? "" : " class='hidden'") . "><option value=''>(" . lang('ON DELETE') . ")" . optionlist(Driver::get()->getOnActions(), $field["on_delete"] ?? null) . "</select> " : " "); // space for IE
 }
 
 /**
@@ -621,11 +620,12 @@ function remove_definer($query) {
 }
 
 /** Format foreign key to use in SQL query
-* @param array ["db" => string, "ns" => string, "table" => string, "source" => array, "target" => array, "on_delete" => one of $on_actions, "on_update" => one of $on_actions]
+* @param array ["db" => string, "ns" => string, "table" => string, "source" => array, "target" => array, "on_delete" => one of Driver::$onActions, "on_update" => one of $on_actions]
 * @return string
 */
 function format_foreign_key($foreign_key) {
-	global $on_actions;
+	$onActions = implode("|", Driver::get()->getOnActions());
+
 	$db = $foreign_key["db"];
 	$ns = $foreign_key["ns"];
 	return " FOREIGN KEY (" . implode(", ", array_map('AdminNeo\idf_escape', $foreign_key["source"])) . ") REFERENCES "
@@ -633,8 +633,8 @@ function format_foreign_key($foreign_key) {
 		. ($ns != "" && $ns != $_GET["ns"] ? idf_escape($ns) . "." : "")
 		. idf_escape($foreign_key["table"])
 		. " (" . implode(", ", array_map('AdminNeo\idf_escape', $foreign_key["target"])) . ")" //! reuse $name - check in older MySQL versions
-		. (preg_match("~^($on_actions)\$~", $foreign_key["on_delete"]) ? " ON DELETE $foreign_key[on_delete]" : "")
-		. (preg_match("~^($on_actions)\$~", $foreign_key["on_update"]) ? " ON UPDATE $foreign_key[on_update]" : "")
+		. (preg_match("~^($onActions)\$~", $foreign_key["on_delete"]) ? " ON DELETE $foreign_key[on_delete]" : "")
+		. (preg_match("~^($onActions)\$~", $foreign_key["on_update"]) ? " ON UPDATE $foreign_key[on_update]" : "")
 	;
 }
 

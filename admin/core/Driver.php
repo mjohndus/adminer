@@ -31,6 +31,9 @@ abstract class Driver
 	/** @var string[] Grouping functions used in select. */
 	protected $grouping = [];
 
+	/** @var string[] List of actions used within the foreign keys. */
+	protected $onActions = ["RESTRICT", "CASCADE", "SET NULL", "SET DEFAULT", "NO ACTION"];
+
 	/** @var array Array of ["$type|$type2" => "$function/$function2"] functions used in editing, [0] - edit and insert, [1] - edit only */
 	protected $editFunctions = [];
 
@@ -137,6 +140,17 @@ abstract class Driver
 		return $this->grouping;
 	}
 
+	/**
+	 * @return string[]
+	 */
+	public function getOnActions(): array
+	{
+		return $this->onActions;
+	}
+
+	/**
+	 * @return string[]
+	 */
 	public function getEditFunctions(): array
 	{
 		return $this->editFunctions;

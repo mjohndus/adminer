@@ -290,6 +290,8 @@ if (isset($_GET["mssql"])) {
 				"count", "count distinct",
 			];
 
+			$this->onActions = ["CASCADE", "SET NULL", "SET DEFAULT", "NO ACTION"];
+
 			$this->editFunctions = [
 				[
 					"date|time" => "getdate",
@@ -654,14 +656,15 @@ WHERE OBJECT_NAME(i.object_id) = " . q($table)
 
 	function foreign_keys($table) {
 		$return = [];
-		$on_actions = ["CASCADE", "NO ACTION", "SET NULL", "SET DEFAULT"];
+		$onActions = Driver::get()->getOnActions();
+
 		foreach (get_rows("EXEC sp_fkeys @fktable_name = " . q($table) . ", @fktable_owner = " . q(get_schema())) as $row) {
 			$foreign_key = &$return[$row["FK_NAME"]];
 			$foreign_key["db"] = $row["PKTABLE_QUALIFIER"];
 			$foreign_key["ns"] = $row["PKTABLE_OWNER"];
 			$foreign_key["table"] = $row["PKTABLE_NAME"];
-			$foreign_key["on_update"] = $on_actions[$row["UPDATE_RULE"]];
-			$foreign_key["on_delete"] = $on_actions[$row["DELETE_RULE"]];
+			$foreign_key["on_update"] = $onActions[$row["UPDATE_RULE"]];
+			$foreign_key["on_delete"] = $onActions[$row["DELETE_RULE"]];
 			$foreign_key["source"][] = $row["FKCOLUMN_NAME"];
 			$foreign_key["target"][] = $row["PKCOLUMN_NAME"];
 		}
@@ -811,9 +814,6 @@ WHERE sys1.xtype = 'TR' AND sys2.name = " . q($table)
 	}
 
 	function driver_config() {
-		global $on_actions;
-		$on_actions = str_replace('RESTRICT|', '', $on_actions);
-
 		return [
 			'possible_drivers' => ["SQLSRV", "MSSQL", "PDO_SQLSRV", "PDO_DBLIB"],
 			'jush' => "mssql",
