@@ -396,6 +396,7 @@ $file = file_get_contents(__DIR__ . "/../$project/index.php");
 
 // Remove including source code for unsupported features in single-driver file.
 if ($single_driver) {
+	include __DIR__ . "/../admin/core/Connection.php";
 	include __DIR__ . "/../admin/include/pdo.inc.php";
 	include __DIR__ . "/../admin/core/Drivers.php";
 	include __DIR__ . "/../admin/core/Driver.php";
