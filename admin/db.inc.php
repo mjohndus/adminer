@@ -2,17 +2,12 @@
 
 namespace AdminNeo;
 
-/**
- * @var ?Min_DB $connection
- * @var ?Min_Driver $driver
- */
-
 $tables_views = array_merge((array) $_POST["tables"], (array) $_POST["views"]);
 
 if ($tables_views && !$error && !$_POST["search"]) {
 	$result = true;
 	$message = "";
-	if ($jush == "sql" && $_POST["tables"] && count($_POST["tables"]) > 1 && ($_POST["drop"] || $_POST["truncate"] || $_POST["copy"])) {
+	if (DIALECT == "sql" && $_POST["tables"] && count($_POST["tables"]) > 1 && ($_POST["drop"] || $_POST["truncate"] || $_POST["copy"])) {
 		queries("SET foreign_key_checks = 0"); // allows to truncate or drop several tables at once
 	}
 
@@ -35,14 +30,14 @@ if ($tables_views && !$error && !$_POST["search"]) {
 			$result = drop_tables($_POST["tables"]);
 		}
 		$message = lang('Tables have been dropped.');
-	} elseif ($jush == "sqlite" && $_POST["check"]) {
+	} elseif (DIALECT == "sqlite" && $_POST["check"]) {
 		foreach ((array) $_POST["tables"] as $table) {
 			foreach (get_rows("PRAGMA integrity_check(" . q($table) . ")") as $row) {
 				$message .= "<b>" . h($table) . "</b>: " . h($row["integrity_check"]) . "<br>";
 			}
 		}
-	} elseif ($jush != "sql") {
-		$result = ($jush == "sqlite"
+	} elseif (DIALECT != "sql") {
+		$result = (DIALECT == "sqlite"
 			? queries("VACUUM")
 			: apply_queries("VACUUM" . ($_POST["optimize"] ? "" : " ANALYZE"), $_POST["tables"])
 		);
@@ -171,7 +166,7 @@ if ($_GET["ns"] === "") {
 
 		echo "<tfoot><tr>";
 		echo "<td><th>" . lang('%d in total', count($tables_list));
-		echo "<td>" . h($jush == "sql" ? $connection->result("SELECT @@default_storage_engine") : "");
+		echo "<td>" . h(DIALECT == "sql" ? Connection::get()->getResult("SELECT @@default_storage_engine") : "");
 		echo "<td>" . h(db_collation(DB, collations()));
 		foreach (["Data_length", "Index_length", "Data_free"] as $key) {
 			echo "<td align='right' id='sum-$key'>";
@@ -188,19 +183,19 @@ if ($_GET["ns"] === "") {
 		if (Admin::get()->isDataEditAllowed()) {
 			echo "<div class='table-footer'><div class='field-sets'>\n";
 			$vacuum = "<input type='submit' class='button' value='" . lang('Vacuum') . "'> " . help_script("VACUUM");
-			$optimize = "<input type='submit' class='button' name='optimize' value='" . lang('Optimize') . "'> " . help_script($jush == "sql" ? "OPTIMIZE TABLE" : "VACUUM OPTIMIZE");
+			$optimize = "<input type='submit' class='button' name='optimize' value='" . lang('Optimize') . "'> " . help_script(DIALECT == "sql" ? "OPTIMIZE TABLE" : "VACUUM OPTIMIZE");
 			echo "<fieldset><legend>" . lang('Selected') . " <span id='selected'></span></legend><div class='fieldset-content'>"
-			. ($jush == "sqlite" ? $vacuum . "<input type='submit' class='button' name='check' value='" . lang('Check') . "'> " . help_script("PRAGMA integrity_check")
-			: ($jush == "pgsql" ? $vacuum . $optimize
-			: ($jush == "sql" ? "<input type='submit' class='button' value='" . lang('Analyze') . "'> " . help_script("ANALYZE TABLE")
+			. (DIALECT == "sqlite" ? $vacuum . "<input type='submit' class='button' name='check' value='" . lang('Check') . "'> " . help_script("PRAGMA integrity_check")
+			: (DIALECT == "pgsql" ? $vacuum . $optimize
+			: (DIALECT == "sql" ? "<input type='submit' class='button' value='" . lang('Analyze') . "'> " . help_script("ANALYZE TABLE")
 				. $optimize
 				. "<input type='submit' class='button' name='check' value='" . lang('Check') . "'> " . help_script("CHECK TABLE")
 				. "<input type='submit' class='button' name='repair' value='" . lang('Repair') . "'> " . help_script("REPAIR TABLE")
 			: "")))
-			. "<input type='submit' class='button' name='truncate' value='" . lang('Truncate') . "'> " . help_script($jush == "sqlite" ? "DELETE" : ("TRUNCATE" . ($jush == "pgsql" ? "" : " TABLE"))) . confirm()
+			. "<input type='submit' class='button' name='truncate' value='" . lang('Truncate') . "'> " . help_script(DIALECT == "sqlite" ? "DELETE" : ("TRUNCATE" . (DIALECT == "pgsql" ? "" : " TABLE"))) . confirm()
 			. "<input type='submit' class='button' name='drop' value='" . lang('Drop') . "'>" . help_script("DROP TABLE") . confirm() . "\n";
 			$databases = (support("scheme") ? Admin::get()->getSchemas() : Admin::get()->getDatabases());
-			if (count($databases) != 1 && $jush != "sqlite") {
+			if (count($databases) != 1 && DIALECT != "sqlite") {
 				$db = (isset($_POST["target"]) ? $_POST["target"] : (support("scheme") ? $_GET["ns"] : DB));
 				echo "<p>" . lang('Move to other database') . ": ";
 				echo ($databases ? html_select("target", $databases, $db) : '<input class="input" name="target" value="' . h($db) . '" autocapitalize="off">');
@@ -320,7 +315,7 @@ if ($_GET["ns"] === "") {
 				echo '<td><a href="' . h(ME) . 'event=' . urlencode($row["Name"]) . '">' . lang('Alter') . '</a>';
 			}
 			echo "</table>\n";
-			$event_scheduler = $connection->result("SELECT @@event_scheduler");
+			$event_scheduler = Connection::get()->getResult("SELECT @@event_scheduler");
 			if ($event_scheduler && $event_scheduler != "ON") {
 				echo "<p class='error'><code class='jush-sqlset'>event_scheduler</code>: " . h($event_scheduler) . "\n";
 			}

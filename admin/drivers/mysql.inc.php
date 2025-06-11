@@ -5,21 +5,31 @@ namespace AdminNeo;
 use mysqli;
 use PDO;
 
-add_driver("mysql", "MySQL");
+Drivers::add("mysql", "MySQL", ["MySQLi", "PDO_MySQL"]);
 
 if (isset($_GET["mysql"])) {
 	define("AdminNeo\DRIVER", "mysql");
+	define("AdminNeo\DIALECT", "sql");
 
 	// MySQLi supports everything, PDO_MySQL doesn't support orgtable
 	if (extension_loaded("mysqli")) {
-		class Min_DB extends MySQLi {
-			var $extension = "MySQLi";
+		define("AdminNeo\DRIVER_EXTENSION", "MySQLi");
 
-			function __construct() {
-				parent::init();
+		class MySqlConnection extends Connection
+		{
+			/** @var mysqli */
+			private $mysqli;
+
+			protected function __construct()
+			{
+				parent::__construct();
+
+				$this->mysqli = new mysqli();
+				$this->mysqli->init();
 			}
 
-			function connect($server = "", $username = "", $password = "", $database = null, $port = null, $socket = null) {
+			public function open(string $server, string $username, string $password, $database = null, $port = null, $socket = null): bool
+			{
 				mysqli_report(MYSQLI_REPORT_OFF);
 				list($host, $port) = explode(":", $server, 2); // part after : is used for port or socket
 
@@ -29,13 +39,13 @@ if (isset($_GET["mysql"])) {
 				$ssl_defined = $key || $certificate || $ca_certificate;
 
 				if ($ssl_defined) {
-					$this->ssl_set($key, $certificate, $ca_certificate, null, null);
+					$this->mysqli->ssl_set($key, $certificate, $ca_certificate, null, null);
 					$flags = Admin::get()->getConfig()->getSslTrustServerCertificate() ? MYSQLI_CLIENT_SSL_DONT_VERIFY_SERVER_CERT : MYSQLI_CLIENT_SSL;
 				} else {
 					$flags = 0;
 				}
 
-				$return = @$this->real_connect(
+				$return = @$this->mysqli->real_connect(
 					($server != "" ? $host : ini_get("mysqli.default_host")),
 					($server . $username != "" ? $username : ini_get("mysqli.default_user")),
 					($server . $username . $password != "" ? $password : ini_get("mysqli.default_pw")),
@@ -44,43 +54,85 @@ if (isset($_GET["mysql"])) {
 					(!is_numeric($port) ? $port : $socket),
 					$flags
 				);
-				$this->options(MYSQLI_OPT_LOCAL_INFILE, false);
+
+				$this->mysqli->options(MYSQLI_OPT_LOCAL_INFILE, false);
+
 				return $return;
 			}
 
-			function set_charset($charset) {
-				if (parent::set_charset($charset)) {
+			public function getServerInfo(): string
+			{
+				return $this->mysqli->get_server_info();
+			}
+
+			/**
+			 * @return int
+			 */
+			public function getAffectedRows(): int
+			{
+				return $this->mysqli->affected_rows;
+			}
+
+			public function getErrno(): int
+			{
+				return $this->mysqli->errno;
+			}
+
+			public function getError(): string
+			{
+				return $this->mysqli->error;
+			}
+
+			public function selectDatabase(string $name): bool
+			{
+				return $this->mysqli->select_db($name);
+			}
+
+			public function setCharset(string $charset): bool
+			{
+				if ($this->mysqli->set_charset($charset)) {
 					return true;
 				}
-				// the client library may not support utf8mb4
-				parent::set_charset('utf8');
-				return $this->query("SET NAMES $charset");
+
+				// The client library may not support utf8mb4.
+				$this->mysqli->set_charset('utf8');
+
+				return (bool)$this->query("SET NAMES $charset");
 			}
 
-			function result($query, $field = 0) {
-				$result = $this->query($query);
-				if (!$result) {
-					return false;
-				}
-				$row = $result->fetch_array();
-				return $row[$field];
-			}
-
-			function quote($string) {
-				return "'" . $this->escape_string($string) . "'";
-			}
-
-			public function next_result()
+			public function quote(string $string): string
 			{
-				return parent::more_results() && parent::next_result();
+				return "'" . $this->mysqli->escape_string($string) . "'";
+			}
+
+			public function query(string $query, bool $unbuffered = false)
+			{
+				return $this->mysqli->query($query);
+			}
+
+			public function multiQuery(string $query)
+			{
+				return $this->mysqli->multi_query($query);
+			}
+
+			public function storeResult($result = null)
+			{
+				return $this->mysqli->store_result();
+			}
+
+			public function nextResult(): bool
+			{
+				return $this->mysqli->more_results() && $this->mysqli->next_result();
 			}
 		}
 
 	} elseif (extension_loaded("pdo_mysql")) {
-		class Min_DB extends Min_PDO {
-			var $extension = "PDO_MySQL";
+		define("AdminNeo\DRIVER_EXTENSION", "PDO_MySQL");
 
-			function connect($server, $username, $password) {
+		class MySqlConnection extends PdoConnection
+		{
+			public function open(string $server, string $username, string $password): bool
+			{
 				$dsn = "mysql:charset=utf8;host=" . str_replace(":", ";unix_socket=", preg_replace('~:(\d)~', ';port=\1', $server));
 
 				$options = [PDO::MYSQL_ATTR_LOCAL_INFILE => false];
@@ -111,33 +163,125 @@ if (isset($_GET["mysql"])) {
 				return true;
 			}
 
-			function set_charset($charset) {
-				$this->query("SET NAMES $charset");
+			public function setCharset(string $charset): bool
+			{
+				return (bool)$this->query("SET NAMES $charset");
 			}
 
-			function select_db($database) {
+			public function selectDatabase(string $name): bool
+			{
 				// database selection is separated from the connection so dbname in DSN can't be used
-				return $this->query("USE " . idf_escape($database));
+				return (bool)$this->query("USE " . idf_escape($name));
 			}
 
-			function query($query, $unbuffered = false) {
+			public function query(string $query, bool $unbuffered = false)
+			{
 				$this->pdo->setAttribute(PDO::MYSQL_ATTR_USE_BUFFERED_QUERY, !$unbuffered);
+
 				return parent::query($query, $unbuffered);
 			}
 		}
-
 	}
 
 
 
-	class Min_Driver extends Min_SQL {
+	class MySqlDriver extends Driver
+	{
+		protected function __construct(Connection $connection, $admin)
+		{
+			parent::__construct($connection, $admin);
 
-		function insert($table, $set) {
-			return ($set ? parent::insert($table, $set) : queries("INSERT INTO " . table($table) . " ()\nVALUES ()"));
+			$this->types = [
+				lang('Numbers') => [
+					"tinyint" => 3, "smallint" => 5, "mediumint" => 8, "int" => 10, "bigint" => 20,
+					"decimal" => 66, "float" => 12, "double" => 21,
+				],
+				lang('Date and time') => [
+					"date" => 10, "datetime" => 19, "timestamp" => 19, "time" => 10, "year" => 4,
+				],
+				lang('Strings') => [
+					"char" => 255, "varchar" => 65535,
+					"tinytext" => 255, "text" => 65535, "mediumtext" => 16777215, "longtext" => 4294967295,
+				],
+				lang('Lists') => [
+					"enum" => 65535, "set" => 64,
+				],
+				lang('Binary') => [
+					"bit" => 20, "binary" => 255, "varbinary" => 65535,
+					"tinyblob" => 255, "blob" => 65535, "mediumblob" => 16777215, "longblob" => 4294967295,
+				],
+				lang('Geometry') => [
+					"geometry" => 0, "point" => 0, "linestring" => 0, "polygon" => 0,
+					"multipoint" => 0, "multilinestring" => 0, "multipolygon" => 0, "geometrycollection" => 0,
+				],
+			];
+
+			$this->unsigned = ["unsigned", "zerofill", "unsigned zerofill"];
+
+			$this->operators = [
+				"=", "<", ">", "<=", ">=", "!=",
+				"LIKE", "LIKE %%", "NOT LIKE",
+				"IN", "NOT IN", "FIND_IN_SET",
+				"IS NULL", "IS NOT NULL",
+				"REGEXP", "NOT REGEXP",
+				"SQL",
+			];
+
+			$this->likeOperator = "LIKE %%";
+			$this->regexpOperator = "REGEXP";
+
+			$this->functions = [
+				"char_length", "lower", "upper",
+				"round", "floor", "ceil",
+				"date", "from_unixtime", "unix_timestamp",
+				"sec_to_time", "time_to_sec",
+			];
+
+			$this->grouping = [
+				"sum", "min", "max", "avg",
+				"count", "count distinct",
+				"group_concat",
+			];
+
+			$this->editFunctions = [
+				[
+					"char" => "md5/sha1/password/encrypt/uuid",
+					"binary" => "md5/sha1",
+					"date|time" => "now",
+				], [
+					number_type() => "+/-",
+					"date" => "+ interval/- interval",
+					"time" => "addtime/subtime",
+					"char|text" => "concat",
+				]
+			];
+
+			if (min_version('5.7.8', '10.2', $connection)) {
+				$this->types[lang('Strings')]["json"] = 4294967295;
+			}
+
+			// UUID data type for Mariadb >= 10.7
+			if (min_version('', '10.7', $connection)) {
+				$this->types[lang('Strings')]["uuid"] = 128;
+				$this->editFunctions[0]['uuid'] = 'uuid';
+			}
+
+			if (min_version('9', '', $connection)) {
+				$this->types[lang('Numbers')]["vector"] = 16383;
+				$this->editFunctions[0]['vector'] = 'string_to_vector';
+			}
+
+			$this->systemDatabases = ["mysql", "information_schema", "performance_schema", "sys"];
 		}
 
-		function insertUpdate($table, $rows, $primary) {
-			$columns = array_keys(reset($rows));
+		public function insert(string $table, array $record)
+        {
+			return ($record ? parent::insert($table, $record) : queries("INSERT INTO " . table($table) . " ()\nVALUES ()"));
+		}
+
+		public function insertUpdate(string $table, array $records, array $primary)
+        {
+			$columns = array_keys(reset($records));
 			$prefix = "INSERT INTO " . table($table) . " (" . implode(", ", $columns) . ") VALUES\n";
 			$values = [];
 			foreach ($columns as $key) {
@@ -146,8 +290,8 @@ if (isset($_GET["mysql"])) {
 			$suffix = "\nON DUPLICATE KEY UPDATE " . implode(", ", $values);
 			$values = [];
 			$length = 0;
-			foreach ($rows as $set) {
-				$value = "(" . implode(", ", $set) . ")";
+			foreach ($records as $record) {
+				$value = "(" . implode(", ", $record) . ")";
 				if ($values && (strlen($prefix) + $length + strlen($value) + strlen($suffix) > 1e6)) { // 1e6 - default max_allowed_packet
 					if (!queries($prefix . implode(",\n", $values) . $suffix)) {
 						return false;
@@ -161,46 +305,57 @@ if (isset($_GET["mysql"])) {
 			return queries($prefix . implode(",\n", $values) . $suffix);
 		}
 
-		function slowQuery($query, $timeout) {
+		public function slowQuery(string $query, int $timeout): ?string
+        {
 			if (min_version('5.7.8', '10.1.2')) {
-				if (preg_match('~MariaDB~', $this->_conn->server_info)) {
+				if (preg_match('~MariaDB~', $this->connection->getServerInfo())) {
 					return "SET STATEMENT max_statement_time=$timeout FOR $query";
 				} elseif (preg_match('~^(SELECT\b)(.+)~is', $query, $match)) {
 					return "$match[1] /*+ MAX_EXECUTION_TIME(" . ($timeout * 1000) . ") */ $match[2]";
 				}
 			}
+
+            return null;
 		}
 
-		function convertSearch($idf, array $where, array $field) {
+		public function convertSearch(string $idf, array $where, array $field): string
+        {
 			return (preg_match('~char|text|enum|set~', $field["type"]) && !preg_match("~^utf8~", $field["collation"]) && preg_match('~[\x80-\xFF]~', $where['val'])
-				? "CONVERT($idf USING " . charset($this->_conn) . ")"
+				? "CONVERT($idf USING " . charset($this->connection) . ")"
 				: $idf
 			);
 		}
 
-		function warnings() {
-			$result = $this->_conn->query("SHOW WARNINGS");
+		public function warnings(): ?string
+        {
+			$result = $this->connection->query("SHOW WARNINGS");
 			if ($result && $result->num_rows) {
 				ob_start();
 				select($result); // select() usually needs to print a big table progressively
 				return ob_get_clean();
 			}
+
+            return null;
 		}
 
-		function tableHelp($name, $is_view = false) {
-			$maria = preg_match('~MariaDB~', $this->_conn->server_info);
+		public function tableHelp(string $name, bool $isView = false): ?string
+        {
+			$maria = preg_match('~MariaDB~', $this->connection->getServerInfo());
 			if (information_schema(DB)) {
 				return strtolower("information-schema-" . ($maria ? "$name-table/" : str_replace("_", "-", $name) . "-table.html"));
 			}
 			if (DB == "mysql") {
 				return ($maria ? "mysql$name-table/" : "system-schema.html"); //! more precise link
 			}
+
+            return null;
 		}
 
-		function hasCStyleEscapes() {
+		public function hasCStyleEscapes(): bool
+        {
 			static $c_style;
 			if ($c_style === null) {
-				$sql_mode = $this->_conn->result("SHOW VARIABLES LIKE 'sql_mode'", 1);
+				$sql_mode = $this->connection->getResult("SHOW VARIABLES LIKE 'sql_mode'", 1);
 				$c_style = (strpos($sql_mode, 'NO_BACKSLASH_ESCAPES') === false);
 			}
 			return $c_style;
@@ -209,6 +364,11 @@ if (isset($_GET["mysql"])) {
 	}
 
 
+
+	function create_driver(Connection $connection): Driver
+	{
+		return MySqlDriver::create($connection, Admin::get());
+	}
 
 	/** Escape database identifier
 	* @param string
@@ -229,17 +389,15 @@ if (isset($_GET["mysql"])) {
 	/**
 	 * Connects to the database with given credentials.
 	 *
-	 * @return Min_DB|string
+	 * @return Connection|string
 	 */
-	function connect()
+	function connect(bool $primary = false)
 	{
-		global $types, $structured_types, $edit_functions;
-
-		$connection = new Min_DB();
+		$connection = $primary ? MySqlConnection::create() : MySqlConnection::createSecondary();
 
 		$credentials = Admin::get()->getCredentials();
-		if (!$connection->connect($credentials[0], $credentials[1], $credentials[2])) {
-			$error = $connection->error;
+		if (!$connection->open($credentials[0], $credentials[1], $credentials[2])) {
+			$error = $connection->getError();
 
 			if (function_exists('iconv') && !is_utf8($error) && strlen($s = iconv("windows-1250", "utf-8", $error)) > strlen($error)) { // windows-1250 - most common Windows encoding
 				$error = $s;
@@ -248,28 +406,8 @@ if (isset($_GET["mysql"])) {
 			return $error;
 		}
 
-		$connection->set_charset(charset($connection));
+		$connection->setCharset(charset($connection));
 		$connection->query("SET sql_quote_show_create = 1, autocommit = 1");
-
-		if (min_version('5.7.8', '10.2', $connection)) {
-			$structured_types[lang('Strings')][] = "json";
-			$types["json"] = 4294967295;
-		}
-
-		// UUID data type for Mariadb >= 10.7
-		if (min_version('', '10.7', $connection)) {
-			$structured_types[lang('Strings')][] = "uuid";
-			$types["uuid"] = 128;
-
-			// insert/update function
-			$edit_functions[0]['uuid'] = 'uuid';
-		}
-
-		if (min_version(9, '', $connection)) {
-			$structured_types[lang('Numbers')][] = "vector";
-			$types["vector"] = 16383;
-			$edit_functions[0]['vector'] = 'string_to_vector';
-		}
 
 		return $connection;
 	}
@@ -320,9 +458,8 @@ if (isset($_GET["mysql"])) {
 	* @return string
 	*/
 	function db_collation($db, $collations) {
-		global $connection;
 		$return = null;
-		$create = $connection->result("SHOW CREATE DATABASE " . idf_escape($db), 1);
+		$create = Connection::get()->getResult("SHOW CREATE DATABASE " . idf_escape($db), 1);
 		if (preg_match('~ COLLATE ([^ ]+)~', $create, $match)) {
 			$return = $match[1];
 		} elseif (preg_match('~ CHARACTER SET ([^ ]+)~', $create, $match)) {
@@ -349,8 +486,7 @@ if (isset($_GET["mysql"])) {
 	* @return string
 	*/
 	function logged_user() {
-		global $connection;
-		return $connection->result("SELECT USER()");
+		return Connection::get()->getResult("SELECT USER()");
 	}
 
 	/** Get tables list
@@ -427,9 +563,7 @@ if (isset($_GET["mysql"])) {
 	* @return array [$name => ["field" => , "full_type" => , "type" => , "length" => , "unsigned" => , "default" => , "null" => , "auto_increment" => , "on_update" => , "collation" => , "privileges" => , "comment" => , "primary" => , "generated" => ]]
 	*/
 	function fields($table) {
-		global $connection;
-
-		$maria = preg_match('~MariaDB~', $connection->server_info);
+		$maria = preg_match('~MariaDB~', Connection::get()->getServerInfo());
 
 		$return = [];
 		foreach (get_rows("SELECT * FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = " . q($table) . " ORDER BY ORDINAL_POSITION") as $row) {
@@ -483,14 +617,15 @@ if (isset($_GET["mysql"])) {
 		return $return;
 	}
 
-	/** Get table indexes
-	* @param string
-	* @param string Min_DB to use
-	* @return array [$key_name => ["type" => , "columns" => [], "lengths" => [], "descs" => []]]
-	*/
-	function indexes($table, $connection2 = null) {
+	/**
+	 * Returns table indexes.
+	 *
+	 * @return array [$key_name => ["type" => , "columns" => [], "lengths" => [], "descs" => []]]
+	 */
+	function indexes(string $table, ?Connection $connection = null): array
+	{
 		$return = [];
-		foreach (get_rows("SHOW INDEX FROM " . table($table), $connection2) as $row) {
+		foreach (get_rows("SHOW INDEX FROM " . table($table), $connection) as $row) {
 			$name = $row["Key_name"];
 			$return[$name]["type"] = ($name == "PRIMARY" ? "PRIMARY" : ($row["Index_type"] == "FULLTEXT" ? "FULLTEXT" : ($row["Non_unique"] ? ($row["Index_type"] == "SPATIAL" ? "SPATIAL" : "INDEX") : "UNIQUE")));
 			$return[$name]["columns"][] = $row["Column_name"];
@@ -505,12 +640,12 @@ if (isset($_GET["mysql"])) {
 	* @return array [$name => ["db" => , "ns" => , "table" => , "source" => [], "target" => [], "on_delete" => , "on_update" => ]]
 	*/
 	function foreign_keys($table) {
-		global $connection, $on_actions;
 		static $pattern = '(?:`(?:[^`]|``)+`|"(?:[^"]|"")+")';
 		$return = [];
-		$create_table = $connection->result("SHOW CREATE TABLE " . table($table), 1);
+		$create_table = Connection::get()->getResult("SHOW CREATE TABLE " . table($table), 1);
 		if ($create_table) {
-			preg_match_all("~CONSTRAINT ($pattern) FOREIGN KEY ?\\(((?:$pattern,? ?)+)\\) REFERENCES ($pattern)(?:\\.($pattern))? \\(((?:$pattern,? ?)+)\\)(?: ON DELETE ($on_actions))?(?: ON UPDATE ($on_actions))?~", $create_table, $matches, PREG_SET_ORDER);
+			$onActions = implode("|", Driver::get()->getOnActions());
+			preg_match_all("~CONSTRAINT ($pattern) FOREIGN KEY ?\\(((?:$pattern,? ?)+)\\) REFERENCES ($pattern)(?:\\.($pattern))? \\(((?:$pattern,? ?)+)\\)(?: ON DELETE ($onActions))?(?: ON UPDATE ($onActions))?~", $create_table, $matches, PREG_SET_ORDER);
 			foreach ($matches as $match) {
 				preg_match_all("~$pattern~", $match[2], $source);
 				preg_match_all("~$pattern~", $match[5], $target);
@@ -532,21 +667,18 @@ if (isset($_GET["mysql"])) {
 	* @return array ["select" => ]
 	*/
 	function view($name) {
-		global $connection;
-		return ["select" => preg_replace('~^(?:[^`]|`[^`]*`)*\s+AS\s+~isU', '', $connection->result("SHOW CREATE VIEW " . table($name), 1))];
+		return ["select" => preg_replace('~^(?:[^`]|`[^`]*`)*\s+AS\s+~isU', '', Connection::get()->getResult("SHOW CREATE VIEW " . table($name), 1))];
 	}
 
 	/** Get sorted grouped list of collations
 	* @return array
 	*/
 	function collations() {
-		global $connection;
-
 		$return = [];
 
 		// Since MariaDB 10.10, one collation can be compatible with more character sets, so collations no longer have unique IDs.
 		// All combinations can be selected from information_schema.COLLATION_CHARACTER_SET_APPLICABILITY table.
-		$query = min_version('', '10.10', $connection) ?
+		$query = min_version('', '10.10', Connection::get()) ?
 			"SELECT CHARACTER_SET_NAME AS Charset, FULL_COLLATION_NAME AS Collation, IS_DEFAULT AS `Default` FROM information_schema.COLLATION_CHARACTER_SET_APPLICABILITY" :
 			"SHOW COLLATION";
 
@@ -579,8 +711,7 @@ if (isset($_GET["mysql"])) {
 	* @return string
 	*/
 	function error() {
-		global $connection;
-		return h(preg_replace('~^You have an error.*syntax to use~U', "Syntax error", $connection->error));
+		return h(preg_replace('~^You have an error.*syntax to use~U', "Syntax error", Connection::get()->getError()));
 	}
 
 	/** Create database
@@ -730,7 +861,6 @@ if (isset($_GET["mysql"])) {
 	* @return bool
 	*/
 	function move_tables($tables, $views, $target) {
-		global $connection;
 		$rename = [];
 		foreach ($tables as $table) {
 			$rename[] = table($table) . " TO " . idf_escape($target) . "." . table($table);
@@ -740,7 +870,7 @@ if (isset($_GET["mysql"])) {
 			foreach ($views as $table) {
 				$definitions[table($table)] = view($table);
 			}
-			$connection->select_db($target);
+			Connection::get()->selectDatabase($target);
 			$db = idf_escape(DB);
 			foreach ($definitions as $name => $view) {
 				if (!queries("CREATE VIEW $name AS " . str_replace(" $db.", " ", $view["select"])) || !queries("DROP VIEW $db.$name")) {
@@ -831,15 +961,15 @@ if (isset($_GET["mysql"])) {
 	 * @return array ["fields" => ["field" => , "type" => , "length" => , "unsigned" => , "inout" => , "collation" => ], "returns" => , "definition" => , "language" => ]
 	 */
 	function routine($name, $type) {
-		global $connection, $enum_length, $inout, $types;
-
 		$info = get_rows("SELECT ROUTINE_BODY, ROUTINE_COMMENT FROM information_schema.ROUTINES WHERE ROUTINE_SCHEMA = " . q(DB) . " AND ROUTINE_NAME = " . q($name))[0];
 
 		$aliases = ["bool", "boolean", "integer", "double precision", "real", "dec", "numeric", "fixed", "national char", "national varchar"];
 		$space = "(?:\\s|/\\*[\s\S]*?\\*/|(?:#|-- )[^\n]*\n?|--\r?\n)";
-		$type_pattern = "((" . implode("|", array_merge(array_keys($types), $aliases)) . ")\\b(?:\\s*\\(((?:[^'\")]|$enum_length)++)\\))?\\s*(zerofill\\s*)?(unsigned(?:\\s+zerofill)?)?)(?:\\s*(?:CHARSET|CHARACTER\\s+SET)\\s*['\"]?([^'\"\\s,]+)['\"]?)?";
-		$pattern = "$space*(" . ($type == "FUNCTION" ? "" : $inout) . ")?\\s*(?:`((?:[^`]|``)*)`\\s*|\\b(\\S+)\\s+)$type_pattern";
-		$create = $connection->result("SHOW CREATE $type " . idf_escape($name), 2);
+		$enumLengthPattern = Driver::EnumLengthPattern;
+		$type_pattern = "((" . implode("|", array_merge(array_keys(Driver::get()->getTypes()), $aliases)) . ")\\b(?:\\s*\\(((?:[^'\")]|$enumLengthPattern)++)\\))?\\s*(zerofill\\s*)?(unsigned(?:\\s+zerofill)?)?)(?:\\s*(?:CHARSET|CHARACTER\\s+SET)\\s*['\"]?([^'\"\\s,]+)['\"]?)?";
+		$inOut = implode("|", Driver::get()->getInOut());
+		$pattern = "$space*(" . ($type == "FUNCTION" ? "" : $inOut) . ")?\\s*(?:`((?:[^`]|``)*)`\\s*|\\b(\\S+)\\s+)$type_pattern";
+		$create = Connection::get()->getResult("SHOW CREATE $type " . idf_escape($name), 2);
 		preg_match("~\\(((?:$pattern\\s*,?)*)\\)\\s*" . ($type == "FUNCTION" ? "RETURNS\\s+$type_pattern\\s+" : "") . "(.*)~is", $create, $match);
 		$fields = [];
 		preg_match_all("~$pattern\\s*,?~is", $match[1], $matches, PREG_SET_ORDER);
@@ -848,7 +978,7 @@ if (isset($_GET["mysql"])) {
 			$fields[] = [
 				"field" => str_replace("``", "`", $param[2]) . $param[3],
 				"type" => strtolower($param[5]),
-				"length" => preg_replace_callback("~$enum_length~s", 'AdminNeo\normalize_enum', $param[6]),
+				"length" => preg_replace_callback("~$enumLengthPattern~s", 'AdminNeo\normalize_enum', $param[6]),
 				"unsigned" => strtolower(preg_replace('~\s+~', ' ', trim("$param[8] $param[7]"))),
 				"null" => 1,
 				"full_type" => $param[4],
@@ -899,16 +1029,16 @@ if (isset($_GET["mysql"])) {
 	* @return string
 	*/
 	function last_id() {
-		global $connection;
-		return $connection->result("SELECT LAST_INSERT_ID()"); // mysql_insert_id() truncates bigint
+		return Connection::get()->getResult("SELECT LAST_INSERT_ID()"); // mysql_insert_id() truncates bigint
 	}
 
-	/** Explain select
-	* @param Min_DB
-	* @param string
-	* @return Min_Result
-	*/
-	function explain($connection, $query) {
+	/**
+	 * Explains select query.
+	 *
+	 * @return Result|bool
+	 */
+	function explain(Connection $connection, string $query)
+	{
 		return $connection->query("EXPLAIN " . (min_version(5.1) && !min_version(5.7) ? "PARTITIONS " : "") . $query);
 	}
 
@@ -928,8 +1058,7 @@ if (isset($_GET["mysql"])) {
 	* @return string
 	*/
 	function create_sql($table, $auto_increment, $style) {
-		global $connection;
-		$return = $connection->result("SHOW CREATE TABLE " . table($table), 1);
+		$return = Connection::get()->getResult("SHOW CREATE TABLE " . table($table), 1);
 		if (!$auto_increment) {
 			$return = preg_replace('~ AUTO_INCREMENT=\d+~', '', $return); //! skip comments
 		}
@@ -1048,51 +1177,6 @@ if (isset($_GET["mysql"])) {
 	* @return int
 	*/
 	function max_connections() {
-		global $connection;
-		return $connection->result("SELECT @@max_connections");
-	}
-
-	/** Get driver config
-	* @return array ['possible_drivers' => , 'jush' => , 'types' => , 'structured_types' => , 'unsigned' => , 'operators' => , 'functions' => , 'grouping' => , 'edit_functions' => ]
-	*/
-	function driver_config() {
-		$types = []; ///< @var array [$type => $maximum_unsigned_length, ...]
-		$structured_types = []; ///< @var array [$description => [$type, ...], ...]
-		foreach ([
-			lang('Numbers') => ["tinyint" => 3, "smallint" => 5, "mediumint" => 8, "int" => 10, "bigint" => 20, "decimal" => 66, "float" => 12, "double" => 21],
-			lang('Date and time') => ["date" => 10, "datetime" => 19, "timestamp" => 19, "time" => 10, "year" => 4],
-			lang('Strings') => ["char" => 255, "varchar" => 65535, "tinytext" => 255, "text" => 65535, "mediumtext" => 16777215, "longtext" => 4294967295],
-			lang('Lists') => ["enum" => 65535, "set" => 64],
-			lang('Binary') => ["bit" => 20, "binary" => 255, "varbinary" => 65535, "tinyblob" => 255, "blob" => 65535, "mediumblob" => 16777215, "longblob" => 4294967295],
-			lang('Geometry') => ["geometry" => 0, "point" => 0, "linestring" => 0, "polygon" => 0, "multipoint" => 0, "multilinestring" => 0, "multipolygon" => 0, "geometrycollection" => 0],
-		] as $key => $val) {
-			$types += $val;
-			$structured_types[$key] = array_keys($val);
-		}
-		return [
-			'possible_drivers' => ["MySQLi", "MySQL", "PDO_MySQL"],
-			'jush' => "sql", ///< @var string JUSH identifier
-			'types' => $types,
-			'structured_types' => $structured_types,
-			'unsigned' => ["unsigned", "zerofill", "unsigned zerofill"], ///< @var array number variants
-			'operators' => ["=", "<", ">", "<=", ">=", "!=", "LIKE", "LIKE %%", "REGEXP", "IN", "FIND_IN_SET", "IS NULL", "NOT LIKE", "NOT REGEXP", "NOT IN", "IS NOT NULL", "SQL"], ///< @var array operators used in select
-			'operator_like' => "LIKE %%",
-			'operator_regexp' => 'REGEXP',
-			'functions' => ["char_length", "date", "from_unixtime", "unix_timestamp", "lower", "round", "floor", "ceil", "sec_to_time", "time_to_sec", "upper"], ///< @var array functions used in select
-			'grouping' => ["avg", "count", "count distinct", "group_concat", "max", "min", "sum"], ///< @var array grouping functions used in select
-			'edit_functions' => [ ///< @var array of array("$type|$type2" => "$function/$function2") functions used in editing, [0] - edit and insert, [1] - edit only
-				[
-					"char" => "md5/sha1/password/encrypt/uuid",
-					"binary" => "md5/sha1",
-					"date|time" => "now",
-				], [
-					number_type() => "+/-",
-					"date" => "+ interval/- interval",
-					"time" => "addtime/subtime",
-					"char|text" => "concat",
-				]
-			],
-			"system_databases" => ["mysql", "information_schema", "performance_schema", "sys"],
-		];
+		return Connection::get()->getResult("SELECT @@max_connections");
 	}
 }

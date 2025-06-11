@@ -3,8 +3,8 @@
 namespace AdminNeo;
 
 error_reporting(E_ALL & ~E_NOTICE & ~E_DEPRECATED);
-set_error_handler(function ($errno, $errstr) {
-	return (bool)preg_match('~^Undefined array key~', $errstr);
+set_error_handler(function($errno, $error) {
+	return (bool)preg_match('~^Undefined array key~', $error);
 }, E_WARNING);
 
 include __DIR__ . "/debug.inc.php";
@@ -44,7 +44,7 @@ if ($_GET["script"] == "version") {
 }
 
 // Allows including AdminNeo inside a function.
-global $connection, $driver, $drivers, $edit_functions, $enum_length, $error, $functions, $grouping, $HTTPS, $inout, $jush, $LANG, $languages, $on_actions, $permanent, $structured_types, $has_token, $token, $translations, $types, $unsigned, $VERSION;
+global $error, $HTTPS, $LANG, $languages, $permanent, $has_token, $token, $translations, $VERSION;
 
 if (!$_SERVER["REQUEST_URI"]) { // IIS 5 compatibility
 	$_SERVER["REQUEST_URI"] = $_SERVER["ORIG_PATH_INFO"];
@@ -75,8 +75,10 @@ remove_slashes([&$_GET, &$_POST, &$_COOKIE], $filter);
 include __DIR__ . "/lang.inc.php";
 include __DIR__ . "/../translations/$LANG.inc.php";
 
+include __DIR__ . "/../core/Connection.php";
 include __DIR__ . "/pdo.inc.php";
-include __DIR__ . "/driver.inc.php";
+include __DIR__ . "/../core/Drivers.php";
+include __DIR__ . "/../core/Driver.php";
 
 include __DIR__ . "/../drivers/mysql.inc.php";
 include __DIR__ . "/../drivers/pgsql.inc.php";
@@ -120,25 +122,9 @@ if (!$admin) {
 	Admin::create([], [], $errors);
 }
 
-if (defined("AdminNeo\DRIVER")) {
-	$on_actions = "RESTRICT|NO ACTION|CASCADE|SET NULL|SET DEFAULT"; ///< @var string used in foreign_keys()
-	$config = driver_config();
-	$possible_drivers = $config['possible_drivers'];
-	$jush = $config['jush'];
-	$types = $config['types'];
-	$structured_types = $config['structured_types'];
-	$unsigned = $config['unsigned'];
-	$operators = $config['operators'];
-	$operator_like = $config['operator_like'];
-	$operator_regexp = $config['operator_regexp'];
-	$functions = $config['functions'];
-	$grouping = $config['grouping'];
-	$edit_functions = $config['edit_functions'];
-
-	Admin::get()->setOperators($operators, $operator_like, $operator_regexp);
-	Admin::get()->setSystemObjects($config["system_databases"] ?? [], $config["system_schemas"] ?? []);
-} else {
+if (!defined("AdminNeo\DRIVER")) {
 	define("AdminNeo\DRIVER", null);
+	define("AdminNeo\DIALECT", null);
 }
 
 define("AdminNeo\SERVER", DRIVER ? $_GET[DRIVER] : null); // read from pgsql=localhost

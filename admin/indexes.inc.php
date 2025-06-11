@@ -2,11 +2,6 @@
 
 namespace AdminNeo;
 
-/**
- * @var ?Min_DB $connection
- * @var ?Min_Driver $driver
- */
-
 $TABLE = $_GET["indexes"];
 $index_types = ["PRIMARY", "UNIQUE", "INDEX"];
 $table_status = table_status($TABLE, true);
@@ -18,7 +13,7 @@ if (preg_match('~MyISAM|M?aria' . (min_version(5.7, '10.2.2') ? '|InnoDB' : '') 
 }
 $indexes = indexes($TABLE);
 $primary = [];
-if ($jush == "mongo") { // doesn't support primary key
+if (DIALECT == "mongo") { // doesn't support primary key
 	$primary = $indexes["_id_"];
 	unset($index_types[0]);
 	unset($indexes["_id_"]);
@@ -101,7 +96,7 @@ if (!$row) {
 	$indexes[] = ["columns" => [1 => ""]];
 	$row["indexes"] = $indexes;
 }
-$lengths = ($jush == "sql" || $jush == "mssql");
+$lengths = (DIALECT == "sql" || DIALECT == "mssql");
 $show_options = ($_POST ? $_POST["options"] : get_setting("index_options"));
 ?>
 
@@ -145,7 +140,7 @@ foreach ($row["indexes"] as $index) {
 				" name='indexes[$j][columns][$i]' title='" . lang('Column') . "'",
 				($fields ? array_combine($fields, $fields) : $fields),
 				$column,
-				"partial(" . ($i == count($index["columns"]) ? "indexesAddColumn" : "indexesChangeColumn") . ", '" . js_escape($jush == "sql" ? "" : $_GET["indexes"] . "_") . "')"
+				"partial(" . ($i == count($index["columns"]) ? "indexesAddColumn" : "indexesChangeColumn") . ", '" . js_escape(DIALECT == "sql" ? "" : $_GET["indexes"] . "_") . "')"
 			);
 			echo "<span class='idxopts" . ($show_options ? "" : " hidden") . "'>";
 			echo ($lengths ? "<input type='number' name='indexes[$j][lengths][$i]' class='input size' value='" . (h($index["lengths"][$key] ?? "")) . "' title='" . lang('Length') . "'>" : "");

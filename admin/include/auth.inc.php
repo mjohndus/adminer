@@ -2,12 +2,6 @@
 
 namespace AdminNeo;
 
-/** @var ?Min_DB $connection */
-$connection = null;
-
-/** @var ?Min_Driver $driver */
-$driver = null;
-
 $has_token = $_SESSION["token"];
 if (!$has_token) {
 	$_SESSION["token"] = rand(1, 1e6); // defense against cross-site request forgery
@@ -146,14 +140,14 @@ function check_invalid_login() {
 /**
  * @throws \Random\RandomException
  */
-function connect_to_db(): Min_DB
+function connect_to_db(): Connection
 {
 	if (Admin::get()->getConfig()->hasServers() && !Admin::get()->getConfig()->getServer(SERVER)) {
 		auth_error(lang('Invalid server or credentials.'));
 	}
 
-	$connection = connect();
-	if (!($connection instanceof Min_DB)) {
+	$connection = connect(true);
+	if (!($connection instanceof Connection)) {
 		connection_error($connection);
 	}
 
@@ -165,7 +159,7 @@ function connect_to_db(): Min_DB
  */
 function authenticate(): void
 {
-	// Note: Admin::get()->authenticate() method can use global $connection
+	// Note: Admin::get()->authenticate() method can use primary Database connection.
 	// That's why authentication has to be called after successful connection to the database.
 
 	$result = Admin::get()->authenticate($_GET["username"], get_password());
@@ -322,10 +316,10 @@ if (isset($_GET["username"]) && !DRIVER) {
 	exit;
 }
 
-if (isset($_GET["username"]) && !class_exists("AdminNeo\\Min_DB")) {
+if (isset($_GET["username"]) && !defined('AdminNeo\DRIVER_EXTENSION')) {
 	unset($_SESSION["pwds"][DRIVER]);
 	unset_permanent();
-	page_header(lang('No extension'), lang('None of the supported PHP extensions (%s) are available.', implode(", ", $possible_drivers)), false);
+	page_header(lang('No extension'), lang('None of the supported PHP extensions (%s) are available.', implode(", ", Drivers::getExtensions(DRIVER))), false);
 	page_footer("auth");
 	exit;
 }
@@ -343,7 +337,7 @@ Admin::get()->getConfig()->applyServer(SERVER);
 
 $connection = connect_to_db();
 authenticate();
-$driver = new Min_Driver($connection, Admin::get());
+create_driver($connection);
 
 if ($_POST["logout"] && $has_token && !verify_token()) {
 	page_header(lang('Logout'), lang('Invalid CSRF token. Send the form again.'));

@@ -2,24 +2,26 @@
 
 namespace AdminNeo;
 
-add_driver("elastic", "Elasticsearch 7 (beta)");
+Drivers::add("elastic", "Elasticsearch 7 (beta)", ["json + allow_url_fopen"]);
 
 if (isset($_GET["elastic"])) {
 	define("AdminNeo\DRIVER", "elastic");
+	define("AdminNeo\DIALECT", "elastic");
 
 	if (ini_bool('allow_url_fopen')) {
 		define("AdminNeo\ELASTIC_DB_NAME", "elastic");
+		define("AdminNeo\DRIVER_EXTENSION", "JSON");
 
-		class Min_DB {
-			var $extension = "JSON", $server_info, $errno, $error, $_url;
+		class ElasticConnection extends Connection
+		{
+			/** @var string */
+			private $serviceUrl;
 
 			/**
-			 * @param string $path
-			 * @param array|null $content
-			 * @param string $method
 			 * @return array|false
 			 */
-			function rootQuery($path, ?array $content = null, $method = 'GET') {
+			public function rootQuery(string $path, ?array $content = null, string $method = 'GET')
+			{
 				$options = [
 					'http' => [
 						'method' => $method,
@@ -36,7 +38,7 @@ if (isset($_GET["elastic"])) {
 					$options["ssl"] = ["verify_peer" => false];
 				}
 
-				$file = @file_get_contents("$this->_url/" . ltrim($path, '/'), false, stream_context_create($options));
+				$file = @file_get_contents("$this->serviceUrl/" . ltrim($path, '/'), false, stream_context_create($options));
 
 				if ($file === false) {
 					$this->error = lang('Invalid server or credentials.');
@@ -62,35 +64,33 @@ if (isset($_GET["elastic"])) {
 				return $return;
 			}
 
-			/** Performs query relative to actual selected DB
-			 * @param string $path
-			 * @param array|null $content
-			 * @param string $method
+			public function query(string $query, bool $unbuffered = false): bool
+			{
+				return false;
+			}
+
+			/**
+			 * Performs query relative to actual selected DB.
+			 *
 			 * @return array|false
 			 */
-			function query($path, ?array $content = null, $method = 'GET') {
+			public function sendRequest(string $path, ?array $content = null, string $method = 'GET')
+			{
 				// Support for global search through all tables
 				if ($path != "" && $path[0] == "S" && preg_match('/SELECT 1 FROM ([^ ]+) WHERE (.+) LIMIT ([0-9]+)/', $path, $matches)) {
-					global $driver;
-
 					$where = explode(" AND ", $matches[2]);
 
-					return $driver->select($matches[1], ["*"], $where, null, [], $matches[3]);
+					return Driver::get()->select($matches[1], ["*"], $where, [], [], $matches[3]);
 				}
 
 				return $this->rootQuery($path, $content, $method);
 			}
 
-			/**
-			 * @param string $server
-			 * @param string $username
-			 * @param string $password
-			 * @return bool
-			 */
-			function connect($server, $username, $password) {
-				$this->_url = build_http_url($server, $username, $password, "localhost", 9200);
+			public function open(string $server, string $username, string $password): bool
+			{
+				$this->serviceUrl = build_http_url($server, $username, $password, "localhost", 9200);
 
-				$return = $this->query('');
+				$return = $this->sendRequest('');
 				if (!$return) {
 					return false;
 				}
@@ -104,16 +104,18 @@ if (isset($_GET["elastic"])) {
 				return true;
 			}
 
-			function select_db($database) {
+			public function selectDatabase(string $name): bool
+			{
 				return true;
 			}
 
-			function quote($string) {
+			public function quote(string $string): string
+			{
 				return $string;
 			}
 		}
 
-		class Min_Result {
+		class Result {
 			var $num_rows, $_rows;
 
 			function __construct($rows) {
@@ -138,9 +140,43 @@ if (isset($_GET["elastic"])) {
 		}
 	}
 
-	class Min_Driver extends Min_SQL {
+	class ElasticDriver extends Driver
+	{
+		protected function __construct(Connection $connection, $admin)
+		{
+			parent::__construct($connection, $admin);
 
-		function select($table, $select, $where, $group, $order = [], ?int $limit = 1, $page = 0, $print = false) {
+			$this->types = [
+				lang('Numbers') => [
+					"long" => 3, "integer" => 5, "short" => 8, "byte" => 10,
+					"double" => 20, "float" => 66, "half_float" => 12, "scaled_float" => 21,
+					"boolean" => 1,
+				],
+				lang('Date and time') => [
+					"date" => 10,
+				],
+				lang('Strings') => [
+					"string" => 65535, "text" => 65535, "keyword" => 65535,
+				],
+				lang('Binary') => [
+					"binary" => 255,
+				],
+			];
+
+			$this->operators = [
+				"must(term)", "must(match)", "must(regexp)",
+				"should(term)", "should(match)", "should(regexp)",
+				"must_not(term)", "must_not(match)", "must_not(regexp)",
+			];
+
+			$this->likeOperator = "should(match)";
+			$this->regexpOperator = "should(regexp)";
+
+			$this->editFunctions = [["json"]];
+		}
+
+		public function select(string $table, array $select, array $where, array $group, array $order = [], ?int $limit = 1, int $page = 0, bool $print = false)
+		{
 			$data = [];
 			if ($select != ["*"]) {
 				$data["fields"] = array_values($select);
@@ -176,7 +212,7 @@ if (isset($_GET["elastic"])) {
 
 			$query = "$table/_search";
 			$start = microtime(true);
-			$search = $this->_conn->rootQuery($query, $data);
+			$search = $this->connection->rootQuery($query, $data);
 
 			if ($print) {
 				echo $this->admin->formatSelectQuery("\"GET $query\": " . json_encode($data), $start, !$search);
@@ -212,10 +248,10 @@ if (isset($_GET["elastic"])) {
 				$return[] = $row;
 			}
 
-			return new Min_Result($return);
+			return new Result($return);
 		}
 
-		private  function addQueryCondition($val, &$data)
+		private function addQueryCondition($val, &$data)
 		{
 			list($col, $op, $val) = explode(" ", $val, 3);
 
@@ -249,7 +285,8 @@ if (isset($_GET["elastic"])) {
 			}
 		}
 
-		function update($type, $record, $queryWhere, $limit = 0, $separator = "\n") {
+		public function update(string $table, array $record, string $queryWhere, int $limit = 0, string $separator = "\n")
+		{
 			//! use $limit
 			$parts = preg_split('~ *= *~', $queryWhere);
 			if (count($parts) != 2) {
@@ -257,21 +294,22 @@ if (isset($_GET["elastic"])) {
 			}
 
 			$id = trim($parts[1]);
-			$query = "$type/_doc/$id";
+			$query = "$table/_doc/$id";
 
 			// Save the query for later use in a flesh message. TODO: This is so ugly.
 			queries("\"POST $query\": " . json_encode($record));
 
-			$response = $this->_conn->query($query, $record, 'POST');
+			$response = $this->connection->sendRequest($query, $record, 'POST');
 			if ($response) {
-				$this->_conn->query("$type/_refresh");
+				$this->connection->sendRequest("$table/_refresh");
 			}
 
 			return $response;
 		}
 
-		function insert($type, $record) {
-			$query = "$type/_doc/";
+		public function insert(string $table, array $record)
+		{
+			$query = "$table/_doc/";
 
 			if (isset($record["_id"]) && $record["_id"] != "NULL") {
 				$query .= $record["_id"];
@@ -287,18 +325,19 @@ if (isset($_GET["elastic"])) {
 			// Save the query for later use in a flesh message. TODO: This is so ugly.
 			queries("\"POST $query\": " .json_encode($record));
 
-			$response = $this->_conn->query($query, $record, 'POST');
+			$response = $this->connection->sendRequest($query, $record, 'POST');
 			if (!$response) {
 				return false;
 			}
 
-			$this->_conn->query("$type/_refresh");
-			$this->_conn->last_id = $response['_id'];
+			$this->connection->sendRequest("$table/_refresh");
+			$this->connection->last_id = $response['_id'];
 
 			return $response['result'];
 		}
 
-		function delete($table, $queryWhere, $limit = 0) {
+		public function delete(string $table, string $queryWhere, int $limit = 0)
+		{
 			//! use $limit
 			$ids = [];
 			if ($_GET["where"]["_id"] ?? null) {
@@ -313,7 +352,7 @@ if (isset($_GET["elastic"])) {
 				}
 			}
 
-			$this->_conn->affected_rows = 0;
+			$affected_rows = 0;
 
 			foreach ($ids as $id) {
 				$query = "$table/_doc/$id";
@@ -321,35 +360,44 @@ if (isset($_GET["elastic"])) {
 				// Save the query for later use in a flesh message. TODO: This is so ugly.
 				queries("\"DELETE $query\"");
 
-				$response = $this->_conn->query($query, null, 'DELETE');
+				$response = $this->connection->sendRequest($query, null, 'DELETE');
 				if (isset($response['result']) && $response['result'] == 'deleted') {
-					$this->_conn->affected_rows++;
+					$affected_rows++;
 				}
 			}
 
-			$this->_conn->query("$table/_refresh");
+			$this->connection->sendRequest("$table/_refresh");
 
-			return $this->_conn->affected_rows;
+			$this->connection->setAffectedRows($affected_rows);
+
+			return $affected_rows;
 		}
 	}
 
-	/**
-	 * @return Min_DB|string
-	 */
-	function connect()
+
+
+	function create_driver(Connection $connection): Driver
 	{
-		$connection = new Min_DB();
+		return ElasticDriver::create($connection, Admin::get());
+	}
+
+	/**
+	 * @return Connection|string
+	 */
+	function connect(bool $primary = false)
+	{
+		$connection = $primary ? ElasticConnection::create() : ElasticConnection::createSecondary();
 
 		list($server, $username, $password) = Admin::get()->getCredentials();
 
-		if ($password != "" && $connection->connect($server, $username, "")) {
+		if ($password != "" && $connection->open($server, $username, "")) {
 			$result = Admin::get()->verifyDefaultPassword($password);
 
 			return $result === true ? $connection : $result;
 		}
 
-		if (!$connection->connect($server, $username, $password)) {
-			return $connection->error;
+		if (!$connection->open($server, $username, $password)) {
+			return $connection->getError();
 		}
 
 		return $connection;
@@ -386,7 +434,7 @@ if (isset($_GET["elastic"])) {
 	}
 
 	function count_tables($databases) {
-		$return = connection()->rootQuery('_aliases');
+		$return = Connection::get()->rootQuery('_aliases');
 		if (empty($return)) {
 			return [
 				ELASTIC_DB_NAME => 0
@@ -399,7 +447,7 @@ if (isset($_GET["elastic"])) {
 	}
 
 	function tables_list() {
-		$aliases = connection()->rootQuery('_aliases');
+		$aliases = Connection::get()->rootQuery('_aliases');
 		if (empty($aliases)) {
 			return [];
 		}
@@ -422,8 +470,8 @@ if (isset($_GET["elastic"])) {
 	}
 
 	function table_status($name = "", $fast = false) {
-		$stats = connection()->rootQuery('_stats');
-		$aliases = connection()->rootQuery('_aliases');
+		$stats = Connection::get()->rootQuery('_stats');
+		$aliases = Connection::get()->rootQuery('_aliases');
 
 		if (empty($stats) || empty($aliases)) {
 			return [];
@@ -488,24 +536,25 @@ if (isset($_GET["elastic"])) {
 	}
 
 	function error() {
-		return h(connection()->error);
+		return h(Connection::get()->getError());
 	}
 
 	function information_schema() {
 		//
 	}
 
-	function indexes($table, $connection2 = null) {
+	function indexes(string $table, ?Connection $connection = null): array
+	{
 		return [
 			["type" => "PRIMARY", "columns" => ["_id"]],
 		];
 	}
 
 	function fields($table) {
-		$mapping = connection()->rootQuery("_mapping");
+		$mapping = Connection::get()->rootQuery("_mapping");
 
 		if (!isset($mapping[$table])) {
-			$aliases = connection()->rootQuery('_aliases');
+			$aliases = Connection::get()->rootQuery('_aliases');
 
 			foreach ($aliases as $index_name => $index) {
 				foreach ($index["aliases"] as $alias_name => $alias) {
@@ -602,14 +651,14 @@ if (isset($_GET["elastic"])) {
 			// Save the query for later use in a flesh message. TODO: This is so ugly.
 			queries("\"POST $name/_mapping\": " . json_encode($mappings));
 
-			return connection()->rootQuery("$name/_mapping", $mappings, "POST");
+			return Connection::get()->rootQuery("$name/_mapping", $mappings, "POST");
 		} else {
 			$content = ["mappings" => $mappings];
 
 			// Save the query for later use in a flesh message. TODO: This is so ugly.
 			queries("\"PUT $name\": " . json_encode($content));
 
-			return connection()->rootQuery($name, $content, "PUT");
+			return Connection::get()->rootQuery($name, $content, "PUT");
 		}
 	}
 
@@ -625,45 +674,13 @@ if (isset($_GET["elastic"])) {
 			// Save the query for later use in a flesh message. TODO: This is so ugly.
 			queries("\"DELETE $table\"");
 
-			$return = $return && connection()->query($table, null, 'DELETE');
+			$return = $return && Connection::get()->sendRequest($table, null, 'DELETE');
 		}
 
 		return $return;
 	}
 
 	function last_id() {
-		return connection()->last_id;
-	}
-
-	function driver_config() {
-		$types = [];
-		$structured_types = [];
-
-		foreach ([
-			lang('Numbers') => ["long" => 3, "integer" => 5, "short" => 8, "byte" => 10, "double" => 20, "float" => 66, "half_float" => 12, "scaled_float" => 21, "boolean" => 1],
-			lang('Date and time') => ["date" => 10],
-			lang('Strings') => ["string" => 65535, "text" => 65535, "keyword" => 65535],
-			lang('Binary') => ["binary" => 255],
-		] as $key => $val) {
-			$types += $val;
-			$structured_types[$key] = array_keys($val);
-		}
-
-		return [
-			'possible_drivers' => ["json + allow_url_fopen"],
-			'jush' => "elastic",
-			'operators' => [
-				"must(term)", "must(match)", "must(regexp)",
-				"should(term)", "should(match)", "should(regexp)",
-				"must_not(term)", "must_not(match)", "must_not(regexp)",
-			],
-			'operator_like' => "should(match)",
-			'operator_regexp' => "should(regexp)",
-			'functions' => [],
-			'grouping' => [],
-			'edit_functions' => [["json"]],
-			'types' => $types,
-			'structured_types' => $structured_types,
-		];
+		return Connection::get()->last_id;
 	}
 }

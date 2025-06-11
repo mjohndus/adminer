@@ -2,11 +2,6 @@
 
 namespace AdminNeo;
 
-/**
- * @var ?Min_DB $connection
- * @var ?Min_Driver $driver
- */
-
 header("Content-Type: text/javascript; charset=utf-8");
 
 if ($_GET["script"] == "db") {
@@ -21,7 +16,7 @@ if ($_GET["script"] == "db") {
 				if ($table_status[$key] != "") {
 					$val = format_number($table_status[$key]);
 					if ($val >= 0) {
-						json_row("$key-$name", ($key == "Rows" && $val && $table_status["Engine"] == ($jush == "pgsql" ? "table" : "InnoDB")
+						json_row("$key-$name", ($key == "Rows" && $val && $table_status["Engine"] == (DIALECT == "pgsql" ? "table" : "InnoDB")
 							? "~ $val"
 							: $val
 						));
@@ -42,7 +37,7 @@ if ($_GET["script"] == "db") {
 	json_row("");
 
 } elseif ($_GET["script"] == "kill") {
-	$connection->query("KILL " . number($_POST["kill"]));
+	Connection::get()->query("KILL " . number($_POST["kill"]));
 
 } else { // connect
 	foreach (count_tables(Admin::get()->getDatabases()) as $db => $val) {

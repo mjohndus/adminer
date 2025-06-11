@@ -2,11 +2,6 @@
 
 namespace AdminNeo;
 
-/**
- * @var ?Min_DB $connection
- * @var ?Min_Driver $driver
- */
-
 $TABLE = $_GET["dump"];
 
 if ($_POST && !$error) {
@@ -29,16 +24,16 @@ if ($_POST && !$error) {
 
 	$is_sql = preg_match('~sql~', $_POST["format"]);
 	if ($is_sql) {
-		echo "-- AdminNeo $VERSION " . $drivers[DRIVER] . " " . str_replace("\n", " ", $connection->server_info) . " dump\n\n";
-		if ($jush == "sql") {
+		echo "-- AdminNeo $VERSION " . Drivers::get(DRIVER) . " " . str_replace("\n", " ", Connection::get()->getServerInfo()) . " dump\n\n";
+		if (DIALECT == "sql") {
 			echo "SET NAMES utf8;
 SET time_zone = '+00:00';
 SET foreign_key_checks = 0;
 " . ($_POST["data_style"] ? "SET sql_mode = 'NO_AUTO_VALUE_ON_ZERO';
 " : "") . "
 ";
-			$connection->query("SET time_zone = '+00:00'");
-			$connection->query("SET sql_mode = ''");
+			Connection::get()->query("SET time_zone = '+00:00'");
+			Connection::get()->query("SET sql_mode = ''");
 		}
 	}
 
@@ -53,8 +48,8 @@ SET foreign_key_checks = 0;
 
 	foreach ((array) $databases as $db) {
 		Admin::get()->dumpDatabase($db);
-		if ($connection->select_db($db)) {
-			if ($is_sql && preg_match('~CREATE~', $style) && ($create = $connection->result("SHOW CREATE DATABASE " . idf_escape($db), 1))) {
+		if (Connection::get()->selectDatabase($db)) {
+			if ($is_sql && preg_match('~CREATE~', $style) && ($create = Connection::get()->getResult("SHOW CREATE DATABASE " . idf_escape($db), 1))) {
 				set_utf8mb4($create);
 				if ($style == "DROP+CREATE") {
 					echo "DROP DATABASE IF EXISTS " . idf_escape($db) . ";\n";
@@ -91,13 +86,13 @@ SET foreign_key_checks = 0;
 
 				if ($_POST["events"]) {
 					foreach (get_rows("SHOW EVENTS", null, "-- ") as $row) {
-						$create = remove_definer($connection->result("SHOW CREATE EVENT " . idf_escape($row["Name"]), 3));
+						$create = remove_definer(Connection::get()->getResult("SHOW CREATE EVENT " . idf_escape($row["Name"]), 3));
 						set_utf8mb4($create);
 						$out .= ($style != 'DROP+CREATE' ? "DROP EVENT IF EXISTS " . idf_escape($row["Name"]) . ";;\n" : "") . "$create;;\n\n";
 					}
 				}
 
-				echo ($out && $jush == 'sql' ? "DELIMITER ;;\n\n$out" . "DELIMITER ;\n\n" : $out);
+				echo ($out && DIALECT == 'sql' ? "DELIMITER ;;\n\n$out" . "DELIMITER ;\n\n" : $out);
 			}
 
 			if ($_POST["table_style"] || $_POST["data_style"]) {
@@ -168,7 +163,7 @@ page_header(lang('Export') . ": $name", $error, ($_GET["export"] != "" ? ["table
 $db_style = ['', 'USE', 'DROP+CREATE', 'CREATE'];
 $table_style = ['', 'DROP+CREATE', 'CREATE'];
 $data_style = ['', 'TRUNCATE+INSERT', 'INSERT'];
-if ($jush == "sql") { //! use insertUpdate() in all drivers
+if (DIALECT == "sql") { //! use insertUpdate() in all drivers
 	$data_style[] = 'INSERT+UPDATE';
 }
 parse_str($_COOKIE["neo_export"], $row);
@@ -182,7 +177,7 @@ if (!isset($row["events"])) { // backwards compatibility
 
 echo "<tr><th>", lang('Format'), "</th><td>", html_select("format", Admin::get()->getDumpFormats(), $row["format"], false), "</td></tr>\n"; // false = radio
 
-if ($jush != "sqlite") {
+if (DIALECT != "sqlite") {
 	echo "<tr><th>", lang('Database'), "</th>";
 	echo "<td>", html_select('db_style', $db_style, $row["db_style"]);
 

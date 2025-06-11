@@ -4,17 +4,11 @@ namespace AdminNeo;
 
 abstract class Origin extends Plugin
 {
-	/** @var array */
-	private $systemDatabases;
-
-	/** @var array */
-	private $systemSchemas;
-
 	/** @var string[] */
 	private $errors;
 
-	/** @var static|Pluginer */
-	private static $instance;
+	/** @var static|Pluginer|null */
+	private static $instance = null;
 
 	/**
 	 * @param array $config Configuration array.
@@ -24,7 +18,7 @@ abstract class Origin extends Plugin
 	 */
 	public static function create(array $config = [], array $plugins = [], array $errors = [])
 	{
-		if (isset(self::$instance)) {
+		if (self::$instance) {
 			die("Admin instance already exists.\n");
 		}
 
@@ -67,7 +61,7 @@ abstract class Origin extends Plugin
 	 */
 	public static function get()
 	{
-		if (!isset(self::$instance)) {
+		if (!self::$instance) {
 			die("Admin instance not found. Create instance by Admin::create() method at first.\n");
 		}
 
@@ -90,19 +84,11 @@ abstract class Origin extends Plugin
 		return $this->config;
 	}
 
-	public abstract function setOperators(?array $operators, ?string $likeOperator, ?string $regexpOperator): void;
-
-	public abstract function getOperators(): ?array;
+	public abstract function getOperators(): array;
 
 	public abstract function getLikeOperator(): ?string;
 
 	public abstract function getRegexpOperator(): ?string;
-
-	public function setSystemObjects(array $databases, array $schemas): void
-	{
-		$this->systemDatabases = $databases;
-		$this->systemSchemas = $schemas;
-	}
 
 	/**
 	 * Initializes the Admin. This method is called right before the authentication process.
@@ -216,7 +202,9 @@ abstract class Origin extends Plugin
 	 */
 	public function getDatabases($flush = true): array
 	{
-		return $this->filterListWithWildcards(get_databases($flush), $this->config->getHiddenDatabases(), false, $this->systemDatabases);
+		return $this->filterListWithWildcards(
+			get_databases($flush), $this->config->getHiddenDatabases(), false, Driver::get()->getSystemDatabases()
+		);
 	}
 
 	/**
@@ -226,7 +214,9 @@ abstract class Origin extends Plugin
 	 */
 	public function getSchemas(): array
 	{
-		return $this->filterListWithWildcards(schemas(), $this->config->getHiddenSchemas(), false, $this->systemSchemas);
+		return $this->filterListWithWildcards(
+			schemas(), $this->config->getHiddenSchemas(), false, Driver::get()->getSystemSchemas()
+		);
 	}
 
 	/**

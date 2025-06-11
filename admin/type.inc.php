@@ -2,11 +2,6 @@
 
 namespace AdminNeo;
 
-/**
- * @var ?Min_DB $connection
- * @var ?Min_Driver $driver
- */
-
 $TYPE = $_GET["type"];
 $row = $_POST;
 
@@ -36,9 +31,10 @@ if (!$row) {
 <p>
 <?php
 if ($TYPE != "") {
+	$types = Driver::get()->getTypes();
 	$enums = type_values($types[$TYPE]);
 	if ($enums) {
-		echo "<code class='jush-$jush'>ENUM (" . h($enums) . ")</code>\n<p>";
+		echo "<code class='jush-" . DIALECT. "'>ENUM (" . h($enums) . ")</code>\n<p>";
 	}
 	echo "<input type='submit' class='button' name='drop' value='" . lang('Drop') . "'>" . confirm(lang('Drop %s?', $TYPE)) . "\n";
 } else {

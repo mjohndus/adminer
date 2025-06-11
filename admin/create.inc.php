@@ -2,11 +2,6 @@
 
 namespace AdminNeo;
 
-/**
- * @var ?Min_DB $connection
- * @var ?Min_Driver $driver
- */
-
 $TABLE = $_GET["create"];
 $partition_by = [];
 foreach (['HASH', 'LINEAR HASH', 'KEY', 'LINEAR KEY', 'RANGE', 'LIST'] as $key) {
@@ -66,7 +61,7 @@ if ($_POST && !process_fields($row["fields"]) && !$error) {
 					}
 				}
 				if ($foreign_key !== null) {
-					$foreign[idf_escape($field["field"])] = ($TABLE != "" && $jush != "sqlite" ? "ADD" : " ") . format_foreign_key([
+					$foreign[idf_escape($field["field"])] = ($TABLE != "" && DIALECT != "sqlite" ? "ADD" : " ") . format_foreign_key([
 						'table' => $foreign_keys[$field["type"]],
 						'source' => [$field["field"]],
 						'target' => [$type_field["field"]],
@@ -132,7 +127,7 @@ if ($_POST && !process_fields($row["fields"]) && !$error) {
 		queries_redirect(ME . (support("table") ? "table=" : "select=") . urlencode($name), $message, alter_table(
 			$TABLE,
 			$name,
-			($jush == "sqlite" && ($use_all_fields || $foreign) ? $all_fields : $fields),
+			(DIALECT == "sqlite" && ($use_all_fields || $foreign) ? $all_fields : $fields),
 			$foreign,
 			($row["Comment"] != $table_status["Comment"] ? $row["Comment"] : null),
 			($row["Engine"] && $row["Engine"] != $table_status["Engine"] ? $row["Engine"] : ""),
@@ -150,6 +145,8 @@ if ($TABLE != "") {
 }
 
 if (!$_POST) {
+	$types = Driver::get()->getTypes();
+
 	$row = [
 		"Engine" => $_COOKIE["neo_engine"],
 		"fields" => [["field" => "", "type" => (isset($types["int"]) ? "int" : (isset($types["integer"]) ? "integer" : "")), "on_update" => ""]],
@@ -210,7 +207,7 @@ foreach ($engines as $engine) {
 			echo " <select name='Engine'>", optionlist(["" => "(" . lang('engine') . ")"] + $engines, $row["Engine"]), "</select>", help_script_command("value", true);
 		}
 
-		if ($collations && !preg_match("~sqlite|mssql~", $jush)) {
+		if ($collations && !preg_match("~sqlite|mssql~", DIALECT)) {
 			echo " ", html_select("Collation", ["" => "(" . lang('collation') . ")"] + $collations, $row["Collation"]);
 		}
 

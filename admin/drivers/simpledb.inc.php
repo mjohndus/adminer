@@ -2,16 +2,26 @@
 
 namespace AdminNeo;
 
-add_driver("simpledb", "SimpleDB");
+Drivers::add("simpledb", "SimpleDB", ["SimpleXML + allow_url_fopen"]);
 
 if (isset($_GET["simpledb"])) {
 	define("AdminNeo\DRIVER", "simpledb");
+	define("AdminNeo\DIALECT", "simpledb");
 
 	if (class_exists('SimpleXMLElement') && ini_bool('allow_url_fopen')) {
-		class Min_DB {
-			var $extension = "SimpleXML", $server_info = '2009-04-15', $error, $timeout, $next, $affected_rows, $_url, $_result;
+		define("AdminNeo\DRIVER_EXTENSION", "SimpleXML");
 
-			function connect(string $server): bool
+		class SimpleDbConnection extends Connection
+		{
+			/** @var string */
+			private $serviceUrl;
+
+			/** @var int */
+			public $timeout = 0;
+
+			public $next;
+
+			public function open(string $server, string $username, string $password): bool
 			{
 				if ($server == '') {
 					$this->error = lang('Invalid server or credentials.');
@@ -27,36 +37,36 @@ if (isset($_GET["simpledb"])) {
 					return false;
 				}
 
-				$this->_url = build_http_url($server, '', '', '');
+				$this->serviceUrl = build_http_url($server, '', '', '');
+				$this->server_info = '2009-04-15';
 
-				return (bool) $this->workaroundLoginRequest('ListDomains', ['MaxNumberOfDomains' => 1]);
+				return (bool) sdb_request('ListDomains', ['MaxNumberOfDomains' => 1], $this);
 			}
 
-			// FIXME: This is so wrong :-( Move sdb_request to Min_DB!
-			private function workaroundLoginRequest($action, $params = []) {
-				global $connection;
-
-				$connection = $this;
-				$result = sdb_request($action, $params);
-				$connection = null;
-
-				return $result;
+			public function getServiceUrl(): string
+			{
+				return $this->serviceUrl;
 			}
 
-			function select_db($database) {
-				return ($database == "domain");
+			public function selectDatabase(string $name): bool
+			{
+				return $name == "domain";
 			}
 
-			function query($query) {
+			public function query(string $query, bool $unbuffered = false)
+			{
 				$params = ['SelectExpression' => $query, 'ConsistentRead' => 'true'];
 				if ($this->next) {
 					$params['NextToken'] = $this->next;
 				}
+
 				$result = sdb_request_all('Select', 'Item', $params, $this->timeout); //! respect $unbuffered
+
 				$this->timeout = 0;
 				if ($result === false) {
-					return $result;
+					return false;
 				}
+
 				if (preg_match('~^\s*SELECT\s+COUNT\(~i', $query)) {
 					$sum = 0;
 					foreach ($result as $item) {
@@ -67,28 +77,18 @@ if (isset($_GET["simpledb"])) {
 						'Value' => $sum,
 					]]]];
 				}
-				return new Min_Result($result);
+
+				return new Result($result);
 			}
 
-			function multi_query($query) {
-				return $this->_result = $this->query($query);
-			}
-
-			function store_result() {
-				return $this->_result;
-			}
-
-			function next_result() {
-				return false;
-			}
-
-			function quote($string) {
+			public function quote(string $string): string
+			{
 				return "'" . str_replace("'", "''", $string) . "'";
 			}
 
 		}
 
-		class Min_Result {
+		class Result {
 			var $num_rows, $_rows = [], $_offset = 0;
 
 			function __construct($result) {
@@ -152,11 +152,31 @@ if (isset($_GET["simpledb"])) {
 
 
 
-	class Min_Driver extends Min_SQL {
+	class SimpleDbDriver extends Driver
+	{
 		public $primary = "itemName()";
 
-		function _chunkRequest($ids, $action, $params, $expand = []) {
-			global $connection;
+		protected function __construct(Connection $connection, $admin)
+		{
+			parent::__construct($connection, $admin);
+
+			$this->operators = [
+				"=", "<", ">", "<=", ">=", "!=",
+				"LIKE", "LIKE %%", "NOT LIKE",
+				"IN",
+				"IS NULL", "IS NOT NULL",
+			];
+
+			$this->likeOperator = "LIKE %%";
+
+			$this->grouping = [
+				"count",
+			];
+
+			$this->editFunctions = [["json"]];
+		}
+
+		private function chunkRequest($ids, $action, $params, $expand = []) {
 			foreach (array_chunk($ids, 25) as $chunk) {
 				$params2 = $params;
 				foreach ($chunk as $i => $id) {
@@ -169,11 +189,11 @@ if (isset($_GET["simpledb"])) {
 					return false;
 				}
 			}
-			$connection->affected_rows = count($ids);
+			Connection::get()->setAffectedRows(count($ids));
 			return true;
 		}
 
-		function _extractIds($table, $queryWhere, $limit) {
+		private function extractIds($table, $queryWhere, $limit) {
 			$return = [];
 			if (preg_match_all("~itemName\(\) = (('[^']*+')+)~", $queryWhere, $matches)) {
 				$return = array_map('AdminNeo\idf_unescape', $matches[1]);
@@ -185,30 +205,32 @@ if (isset($_GET["simpledb"])) {
 			return $return;
 		}
 
-		function select($table, $select, $where, $group, $order = [], ?int $limit = 1, $page = 0, $print = false) {
-			global $connection;
-			$connection->next = $_GET["next"];
+		public function select(string $table, array $select, array $where, array $group, array $order = [], ?int $limit = 1, int $page = 0, bool $print = false)
+		{
+			Connection::get()->next = $_GET["next"];
 			$return = parent::select($table, $select, $where, $group, $order, $limit, $page, $print);
-			$connection->next = 0;
+			Connection::get()->next = 0;
 			return $return;
 		}
 
-		function delete($table, $queryWhere, $limit = 0) {
-			return $this->_chunkRequest(
-				$this->_extractIds($table, $queryWhere, $limit),
+		public function delete(string $table, string $queryWhere, int $limit = 0): bool
+		{
+			return $this->chunkRequest(
+				$this->extractIds($table, $queryWhere, $limit),
 				'BatchDeleteAttributes',
 				['DomainName' => $table]
 			);
 		}
 
-		function update($table, $set, $queryWhere, $limit = 0, $separator = "\n") {
+		public function update(string $table, array $record, string $queryWhere, int $limit = 0, string $separator = "\n"): bool
+		{
 			$delete = [];
 			$insert = [];
 			$i = 0;
-			$ids = $this->_extractIds($table, $queryWhere, $limit);
-			$id = idf_unescape($set["`itemName()`"]);
-			unset($set["`itemName()`"]);
-			foreach ($set as $key => $val) {
+			$ids = $this->extractIds($table, $queryWhere, $limit);
+			$id = idf_unescape($record["`itemName()`"]);
+			unset($record["`itemName()`"]);
+			foreach ($record as $key => $val) {
 				$key = idf_unescape($key);
 				if ($val == "NULL" || ($id != "" && [$id] != $ids)) {
 					$delete["Attribute." . count($delete) . ".Name"] = $key;
@@ -225,15 +247,16 @@ if (isset($_GET["simpledb"])) {
 				}
 			}
 			$params = ['DomainName' => $table];
-			return (!$insert || $this->_chunkRequest(($id != "" ? [$id] : $ids), 'BatchPutAttributes', $params, $insert))
-				&& (!$delete || $this->_chunkRequest($ids, 'BatchDeleteAttributes', $params, $delete))
+			return (!$insert || $this->chunkRequest(($id != "" ? [$id] : $ids), 'BatchPutAttributes', $params, $insert))
+				&& (!$delete || $this->chunkRequest($ids, 'BatchDeleteAttributes', $params, $delete))
 			;
 		}
 
-		function insert($table, $set) {
+		public function insert(string $table, array $record)
+		{
 			$params = ["DomainName" => $table];
 			$i = 0;
-			foreach ($set as $name => $value) {
+			foreach ($record as $name => $value) {
 				if ($value != "NULL") {
 					$name = idf_unescape($name);
 					if ($name == "itemName()") {
@@ -250,33 +273,47 @@ if (isset($_GET["simpledb"])) {
 			return sdb_request('PutAttributes', $params);
 		}
 
-		function insertUpdate($table, $rows, $primary) {
+		public function insertUpdate(string $table, array $records, array $primary): bool
+		{
 			//! use one batch request
-			foreach ($rows as $set) {
-				if (!$this->update($table, $set, "WHERE `itemName()` = " . q($set["`itemName()`"]))) {
+			foreach ($records as $record) {
+				if (!$this->update($table, $record, "WHERE `itemName()` = " . q($record["`itemName()`"]))) {
 					return false;
 				}
 			}
+
 			return true;
 		}
 
-		function begin() {
+		public function begin(): bool
+		{
 			return false;
 		}
 
-		function commit() {
+		public function commit(): bool
+		{
 			return false;
 		}
 
-		function rollback() {
+		public function rollback(): bool
+		{
 			return false;
 		}
 
-		function slowQuery($query, $timeout) {
-			$this->_conn->timeout = $timeout;
+		public function slowQuery(string $query, int $timeout): ?string
+		{
+			$this->connection->timeout = $timeout;
+
 			return $query;
 		}
 
+	}
+
+
+
+	function create_driver(Connection $connection): Driver
+	{
+		return SimpleDbDriver::create($connection, Admin::get());
 	}
 
 	/**
@@ -289,11 +326,11 @@ if (isset($_GET["simpledb"])) {
 	}
 
 	/**
-	 * @return Min_DB|string
+	 * @return Connection|string
 	 */
-	function connect()
+	function connect(bool $primary = false)
 	{
-		$connection = new Min_DB();
+		$connection = $primary ? SimpleDbConnection::create() : SimpleDbConnection::createSecondary();
 
 		list($server, , $password) = Admin::get()->getCredentials();
 		if ($password != "") {
@@ -303,8 +340,8 @@ if (isset($_GET["simpledb"])) {
 			}
 		}
 
-		if (!$connection->connect($server)) {
-			return $connection->error;
+		if (!$connection->open($server, "", "")) {
+			return $connection->getError();
 		}
 
 		return $connection;
@@ -331,12 +368,11 @@ if (isset($_GET["simpledb"])) {
 	}
 
 	function tables_list() {
-		global $connection;
 		$return = [];
 		foreach (sdb_request_all('ListDomains', 'DomainName') as $table) {
 			$return[(string) $table] = 'table';
 		}
-		if ($connection->error && defined("AdminNeo\PAGE_HEADER")) {
+		if (Connection::get()->getError() && defined("AdminNeo\PAGE_HEADER")) {
 			echo "<p class='error'>" . error() . "\n";
 		}
 		return $return;
@@ -367,18 +403,20 @@ if (isset($_GET["simpledb"])) {
 		return $return;
 	}
 
-	function explain($connection, $query) {
+	function explain(Connection $connection, string $query): bool
+	{
+		return false;
 	}
 
 	function error() {
-		global $connection;
-		return h($connection->error);
+		return h(Connection::get()->getError());
 	}
 
 	function information_schema() {
 	}
 
-	function indexes($table, $connection2 = null) {
+	function indexes(string $table, ?Connection $connection = null): array
+	{
 		return [
 			["type" => "PRIMARY", "columns" => ["itemName()"]],
 		];
@@ -441,8 +479,11 @@ if (isset($_GET["simpledb"])) {
 	function last_id() {
 	}
 
-	function sdb_request($action, $params = []) {
-		global $connection;
+	function sdb_request($action, $params = [], ?Connection $connection = null) {
+		if (!$connection) {
+			$connection = Connection::get();
+		}
+
 		list($host, $params['AWSAccessKeyId'], $secret) = Admin::get()->getCredentials();
 		$params['Action'] = $action;
 		$params['Timestamp'] = gmdate('Y-m-d\TH:i:s+00:00');
@@ -457,7 +498,7 @@ if (isset($_GET["simpledb"])) {
 		$query = str_replace('%7E', '~', substr($query, 1));
 		$query .= "&Signature=" . urlencode(base64_encode(hash_hmac('sha1', "POST\n" . preg_replace('~^https?://~', '', $host) . "\n/\n$query", $secret, true)));
 
-		$file = @file_get_contents($connection->_url, false, stream_context_create(['http' => [
+		$file = @file_get_contents($connection->getServiceUrl(), false, stream_context_create(['http' => [
 			'method' => 'POST', // may not fit in URL with GET
 			'content' => $query,
 			'ignore_errors' => 1,
@@ -465,7 +506,7 @@ if (isset($_GET["simpledb"])) {
 			'max_redirects' => 0,
 		]]));
 		if (!$file) {
-			$connection->error = error_get_last()['message'];
+			$connection->setError(error_get_last()['message']);
 			return false;
 		}
 		libxml_use_internal_errors(true);
@@ -473,15 +514,15 @@ if (isset($_GET["simpledb"])) {
 		$xml = simplexml_load_string($file);
 		if (!$xml) {
 			$error = libxml_get_last_error();
-			$connection->error = $error->message;
+			$connection->setError($error->message);
 			return false;
 		}
 		if ($xml->Errors) {
 			$error = $xml->Errors->Error;
-			$connection->error = "$error->Message ($error->Code)";
+			$connection->setError("$error->Message ($error->Code)");
 			return false;
 		}
-		$connection->error = '';
+		$connection->setError('');
 		$tag = $action . "Result";
 		return ($xml->$tag ? $xml->$tag : true);
 	}
@@ -511,17 +552,5 @@ if (isset($_GET["simpledb"])) {
 			}
 		} while ($xml->NextToken);
 		return $return;
-	}
-
-	function driver_config() {
-		return [
-			'possible_drivers' => ["SimpleXML + allow_url_fopen"],
-			'jush' => "simpledb",
-			'operators' => ["=", "<", ">", "<=", ">=", "!=", "LIKE", "LIKE %%", "IN", "IS NULL", "NOT LIKE", "IS NOT NULL"],
-			'operator_like' => "LIKE %%",
-			'functions' => [],
-			'grouping' => ["count"],
-			'edit_functions' => [["json"]],
-		];
 	}
 }

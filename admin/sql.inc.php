@@ -1,11 +1,6 @@
 <?php
 namespace AdminNeo;
 
-/**
- * @var ?Min_DB $connection
- * @var ?Min_Driver $driver
- */
-
 if (!$error && $_POST["export"]) {
 	dump_headers("sql");
 	Admin::get()->dumpTable("", "");
@@ -65,14 +60,14 @@ if (!$error && $_POST) {
 		$empty = true;
 		$connection2 = connect(); // connection for exploring indexes and EXPLAIN (to not replace FOUND_ROWS()) //! PDO - silent error
 		if (is_object($connection2) && DB != "") {
-			$connection2->select_db(DB);
+			$connection2->selectDatabase(DB);
 			if ($_GET["ns"] != "") {
 				set_schema($_GET["ns"], $connection2);
 			}
 		}
 		$commands = 0;
 		$errors = [];
-		$parse = '[\'"' . ($jush == "sql" ? '`#' : ($jush == "sqlite" ? '`[' : ($jush == "mssql" ? '[' : ''))) . ']|/\*|-- |$' . ($jush == "pgsql" ? '|\$[^$]*\$' : '');
+		$parse = '[\'"' . (DIALECT == "sql" ? '`#' : (DIALECT == "sqlite" ? '`[' : (DIALECT == "mssql" ? '[' : ''))) . ']|/\*|-- |$' . (DIALECT == "pgsql" ? '|\$[^$]*\$' : '');
 		$total_start = microtime(true);
 		parse_str($_COOKIE["neo_export"], $admin_export);
 		$dump_format = Admin::get()->getDumpFormats();
@@ -84,7 +79,7 @@ if (!$error && $_POST) {
 
 				$formatted_query = Admin::get()->formatSqlCommandQuery(trim($match[0]));
 				if ($formatted_query != "") {
-					echo "<pre><code class='jush-$jush'>$formatted_query</code></pre>\n";
+					echo "<pre><code class='jush-" . DIALECT . "'>$formatted_query</code></pre>\n";
 				}
 
 				$query = substr($query, strlen($match[0]));
@@ -101,7 +96,7 @@ if (!$error && $_POST) {
 					$offset = $pos + strlen($found);
 
 					if ($found && rtrim($found) != $delimiter) { // find matching quote or comment end
-						$c_style_escapes = $driver->hasCStyleEscapes() || ($jush == "pgsql" && ($pos > 0 && strtolower($query[$pos - 1]) == "e"));
+						$c_style_escapes = Driver::get()->hasCStyleEscapes() || (DIALECT == "pgsql" && ($pos > 0 && strtolower($query[$pos - 1]) == "e"));
 
 						$pattern = '(';
 						if ($found == '/*') {
@@ -131,8 +126,8 @@ if (!$error && $_POST) {
 						$empty = false;
 						$q = substr($query, 0, $pos + strlen($delimiter));
 						$commands++;
-						$print = "<pre id='sql-$commands'><code class='jush-$jush'>" . Admin::get()->formatSqlCommandQuery(trim($q)) . "</code></pre>\n";
-						if ($jush == "sqlite" && preg_match("~^$space*+ATTACH\\b~i", $q, $match)) {
+						$print = "<pre id='sql-$commands'><code class='jush-" . DIALECT . "'>" . Admin::get()->formatSqlCommandQuery(trim($q)) . "</code></pre>\n";
+						if (DIALECT == "sqlite" && preg_match("~^$space*+ATTACH\\b~i", $q, $match)) {
 							// PHP doesn't support setting SQLITE_LIMIT_ATTACHED
 							echo $print;
 							echo "<p class='error'>" . lang('ATTACH queries are not supported.') . "\n";
@@ -148,16 +143,16 @@ if (!$error && $_POST) {
 							}
 							$start = microtime(true);
 							//! don't allow changing of character_set_results, convert encoding of displayed query
-							if ($connection->multi_query($q) && is_object($connection2) && preg_match("~^$space*+USE\\b~i", $q)) {
+							if (Connection::get()->multiQuery($q) && is_object($connection2) && preg_match("~^$space*+USE\\b~i", $q)) {
 								$connection2->query($q);
 							}
 
 							do {
-								$result = $connection->store_result();
+								$result = Connection::get()->storeResult();
 
-								if ($connection->error) {
+								if (Connection::get()->getError()) {
 									echo ($_POST["only_errors"] ? $print : "");
-									echo "<p class='error'>", lang('Error in query'), (!empty($connection->errno) ? " ($connection->errno)" : ""), ": ", error() . "</p>\n";
+									echo "<p class='error'>", lang('Error in query'), (!empty(Connection::get()->getErrno()) ? " (" . Connection::get()->getErrno() . ")" : ""), ": ", error() . "</p>\n";
 
 									$errors[] = " <a href='#sql-$commands'>$commands</a>";
 									if ($_POST["error_stops"]) {
@@ -166,9 +161,9 @@ if (!$error && $_POST) {
 								} else {
 									$time = " <span class='time'>(" . format_time($start) . ")</span>";
 									$edit_link = (strlen($q) < 1000 ? " <a href='" . h(ME) . "sql=" . urlencode(trim($q)) . "'>" . icon("edit") . lang('Edit') . "</a>" : ""); // 1000 - maximum length of encoded URL in IE is 2083 characters
-									$affected = $connection->affected_rows; // getting warnings overwrites this
+									$affected = Connection::get()->getAffectedRows(); // getting warnings overwrites this
 
-									$warnings = ($_POST["only_errors"] ? "" : $driver->warnings());
+									$warnings = ($_POST["only_errors"] ? null : Driver::get()->warnings());
 									$warnings_id = "warnings-$commands";
 									$warnings_link = $warnings ? "<a href='#$warnings_id' class='toggle'>" . lang('Warnings') . icon_chevron_down() . "</a>" : null;
 
@@ -210,7 +205,7 @@ if (!$error && $_POST) {
 										}
 
 										if (!$_POST["only_errors"]) {
-											$title = isset($connection->info) ? "title='" . h($connection->info) . "'" : "";
+											$title = isset(Connection::get()->info) ? "title='" . h(Connection::get()->info) . "'" : "";
 											echo "<p class='message' $title>", lang('Query executed OK, %d row(s) affected.', $affected);
 											echo "$time $edit_link";
 											if ($warnings_link) {
@@ -250,7 +245,7 @@ if (!$error && $_POST) {
 								}
 
 								$start = microtime(true);
-							} while ($connection->next_result());
+							} while (Connection::get()->nextResult());
 						}
 
 						$query = substr($query, $offset);
@@ -334,7 +329,7 @@ if (!isset($_GET["import"]) && $history) {
 		$key = key($history);
 		list($q, $time, $elapsed) = $val;
 
-		echo " <pre><code class='jush-$jush'>", truncate_utf8(ltrim(str_replace("\n", " ", str_replace("\r", "", preg_replace('~^(#|-- ).*~m', '', $q))))), "</code></pre>";
+		echo " <pre><code class='jush-" . DIALECT . "'>", truncate_utf8(ltrim(str_replace("\n", " ", str_replace("\r", "", preg_replace('~^(#|-- ).*~m', '', $q))))), "</code></pre>";
 		echo '<p class="links">';
 		echo "<a href='" . h(ME . "sql=&history=$key") . "'>" . icon("edit") . lang('Edit') . "</a>";
 		echo " <span class='time' title='" . @date('Y-m-d', $time) . "'>" . @date("H:i:s", $time) . // @ - time zone may be not set

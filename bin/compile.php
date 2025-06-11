@@ -3,8 +3,8 @@
 namespace AdminNeo;
 
 error_reporting(E_ALL & ~E_NOTICE & ~E_DEPRECATED);
-set_error_handler(function ($errno, $errstr) {
-	return (bool)preg_match('~^Undefined array key~', $errstr);
+set_error_handler(function ($errno, $error) {
+	return (bool)preg_match('~^Undefined array key~', $error);
 }, E_WARNING);
 
 include __DIR__ . "/../admin/include/version.inc.php";
@@ -396,8 +396,10 @@ $file = file_get_contents(__DIR__ . "/../$project/index.php");
 
 // Remove including source code for unsupported features in single-driver file.
 if ($single_driver) {
+	include __DIR__ . "/../admin/core/Connection.php";
 	include __DIR__ . "/../admin/include/pdo.inc.php";
-	include __DIR__ . "/../admin/include/driver.inc.php";
+	include __DIR__ . "/../admin/core/Drivers.php";
+	include __DIR__ . "/../admin/core/Driver.php";
 
 	$_GET[$single_driver] = true; // to load the driver
 	include __DIR__ . "/../admin/drivers/$single_driver.inc.php";

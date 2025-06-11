@@ -2,11 +2,6 @@
 
 namespace AdminNeo;
 
-/**
- * @var ?Min_DB $connection
- * @var ?Min_Driver $driver
- */
-
 $TABLE = $_GET["edit"];
 $fields = fields($TABLE);
 $where = (isset($_GET["select"]) ? ($_POST["check"] && count($_POST["check"]) == 1 ? where_check($_POST["check"][0], $fields) : "") : where($_GET, $fields));
@@ -33,7 +28,7 @@ if ($_POST && !$error && !isset($_GET["select"])) {
 		queries_redirect(
 			$location,
 			lang('Item has been deleted.'),
-			$driver->delete($TABLE, $query_where, !$unique_array)
+			Driver::get()->delete($TABLE, $query_where, !$unique_array)
 		);
 
 	} else {
@@ -52,7 +47,7 @@ if ($_POST && !$error && !isset($_GET["select"])) {
 			queries_redirect(
 				$location,
 				lang('Item has been updated.'),
-				$driver->update($TABLE, $set, $query_where, !$unique_array)
+				Driver::get()->update($TABLE, $set, $query_where, !$unique_array)
 			);
 			if (is_ajax()) {
 				page_headers();
@@ -60,7 +55,7 @@ if ($_POST && !$error && !isset($_GET["select"])) {
 				exit;
 			}
 		} else {
-			$result = $driver->insert($TABLE, $set);
+			$result = Driver::get()->insert($TABLE, $set);
 			$last_id = ($result ? last_id() : 0);
 			queries_redirect($location, lang('Item%s has been inserted.', ($last_id ? " $last_id" : "")), $result); //! link
 		}
@@ -83,7 +78,7 @@ if ($_POST["save"]) {
 		$select = ["*"];
 	}
 	if ($select) {
-		$result = $driver->select($TABLE, $select, [$where], $select, [], (isset($_GET["select"]) ? 2 : 1));
+		$result = Driver::get()->select($TABLE, $select, [$where], $select, [], (isset($_GET["select"]) ? 2 : 1));
 		if (!$result) {
 			$error = error();
 		} else {
@@ -100,10 +95,10 @@ if ($_POST["save"]) {
 
 if (!support("table") && !$fields) {
 	if (!$where) { // insert
-		$result = $driver->select($TABLE, ["*"], $where, ["*"]);
+		$result = Driver::get()->select($TABLE, ["*"], $where, ["*"]);
 		$row = ($result ? $result->fetch_assoc() : false);
 		if (!$row) {
-			$row = [$driver->primary => ""];
+			$row = [Driver::get()->primary => ""];
 		}
 	}
 	if ($row) {
@@ -111,7 +106,7 @@ if (!support("table") && !$fields) {
 			if (!$where) {
 				$row[$key] = null;
 			}
-			$fields[$key] = ["field" => $key, "null" => ($key != $driver->primary), "auto_increment" => ($key == $driver->primary)];
+			$fields[$key] = ["field" => $key, "null" => ($key != Driver::get()->primary), "auto_increment" => ($key == Driver::get()->primary)];
 		}
 	}
 }

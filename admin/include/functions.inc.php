@@ -3,15 +3,6 @@
 
 namespace AdminNeo;
 
-/** Get database connection
-* @return Min_DB
-*/
-function connection() {
-	// can be used in customization, $connection is minified
-	global $connection;
-	return $connection;
-}
-
 /** Get AdminNeo version
 * @return string
 */
@@ -88,17 +79,18 @@ function bracket_escape($idf, $back = false) {
 }
 
 /** Check if connection has at least the given version
+*
 * @param string required version
 * @param string required MariaDB version
-* @param Min_DB defaults to $connection
+* @param ?Connection defaults to $connection
+*
 * @return bool
 */
-function min_version($version, $maria_db = "", $connection2 = null) {
-	global $connection;
-	if (!$connection2) {
-		$connection2 = $connection;
+function min_version($version, $maria_db = "", ?Connection $connection = null) {
+	if (!$connection) {
+		$connection = Connection::get();
 	}
-	$server_info = $connection2->server_info;
+	$server_info = $connection->getServerInfo();
 	if ($maria_db && preg_match('~([\d.]+)-MariaDB~', $server_info, $match)) {
 		$server_info = $match[1];
 		$version = $maria_db;
@@ -109,12 +101,13 @@ function min_version($version, $maria_db = "", $connection2 = null) {
 	return (version_compare($server_info, $version) >= 0);
 }
 
-/** Get connection charset
-* @param Min_DB
-* @return string
-*/
-function charset($connection) {
-	return (min_version("5.5.3", 0, $connection) ? "utf8mb4" : "utf8"); // SHOW CHARSET would require an extra query
+/**
+ * Returns connection charset.
+ */
+function charset(Connection $connection): string
+{
+	// Note: SHOW CHARSET would require an extra query
+	return (min_version("5.5.3", 0, $connection) ? "utf8mb4" : "utf8");
 }
 
 /** Return <script> element
@@ -362,13 +355,12 @@ function get_password() {
 	return $return;
 }
 
-/** Shortcut for $connection->quote($string)
+/** Shortcut for Database::get()->quote($string)
 * @param string
 * @return string
 */
 function q($string) {
-	global $connection;
-	return $connection->quote($string);
+	return Connection::get()->quote($string);
 }
 
 /** Get list of values from database
@@ -377,9 +369,8 @@ function q($string) {
 * @return array
 */
 function get_vals($query, $column = 0) {
-	global $connection;
 	$return = [];
-	$result = $connection->query($query);
+	$result = Connection::get()->query($query);
 	if (is_object($result)) {
 		while ($row = $result->fetch_row()) {
 			$return[] = $row[$column];
@@ -389,18 +380,19 @@ function get_vals($query, $column = 0) {
 }
 
 /** Get keys from first column and values from second
+*
 * @param string
-* @param Min_DB
+* @param ?Connection
 * @param bool
+*
 * @return array
 */
-function get_key_vals($query, $connection2 = null, $set_keys = true) {
-	global $connection;
-	if (!is_object($connection2)) {
-		$connection2 = $connection;
+function get_key_vals($query, ?Connection $connection = null, $set_keys = true) {
+	if (!$connection) {
+		$connection = Connection::get();
 	}
 	$return = [];
-	$result = $connection2->query($query);
+	$result = $connection->query($query);
 	if (is_object($result)) {
 		while ($row = $result->fetch_row()) {
 			if ($set_keys) {
@@ -414,21 +406,24 @@ function get_key_vals($query, $connection2 = null, $set_keys = true) {
 }
 
 /** Get all rows of result
+*
 * @param string
-* @param Min_DB
+ * @param Connection
 * @param string
+*
 * @return array of associative arrays
 */
-function get_rows($query, $connection2 = null, $error = "<p class='error'>") {
-	global $connection;
-	$conn = (is_object($connection2) ? $connection2 : $connection);
+function get_rows($query, ?Connection $connection = null, $error = "<p class='error'>") {
+	if (!$connection) {
+		$connection = Connection::get();
+	}
 	$return = [];
-	$result = $conn->query($query);
+	$result = $connection->query($query);
 	if (is_object($result)) { // can return true
 		while ($row = $result->fetch_assoc()) {
 			$return[] = $row;
 		}
-	} elseif (!$result && !is_object($connection2) && $error && (defined("AdminNeo\PAGE_HEADER") || $error == "-- ")) {
+	} elseif (!$result && !is_object($connection) && $error && (defined("AdminNeo\PAGE_HEADER") || $error == "-- ")) {
 		echo $error . error() . "\n";
 	}
 	return $return;
@@ -471,8 +466,6 @@ function escape_key($key) {
 * @return string
 */
 function where($where, $fields = []) {
-	global $connection, $jush;
-
 	$conditions = [];
 
 	foreach ((array) $where["where"] as $key => $val) {
@@ -480,12 +473,12 @@ function where($where, $fields = []) {
 		$column = escape_key($key);
 		$field_type = $fields[$key]["type"] ?? null;
 
-		if ($jush == "sql" && $field_type == "json") {
+		if (DIALECT == "sql" && $field_type == "json") {
 			$conditions[] = "$column = CAST(" . q($val) . " AS JSON)";
-		} elseif ($jush == "sql" && is_numeric($val) && strpos($val, ".") !== false) {
+		} elseif (DIALECT == "sql" && is_numeric($val) && strpos($val, ".") !== false) {
 			// LIKE because of floats but slow with ints.
 			$conditions[] = "$column LIKE " . q($val);
-		} elseif ($jush == "mssql" && strpos($field_type, "datetime") === false) {
+		} elseif (DIALECT == "mssql" && strpos($field_type, "datetime") === false) {
 			// LIKE because of text. But it does not work with datetime, datetime2 and smalldatetime.
 			$conditions[] = "$column LIKE " . q(preg_replace('~[_%[]~', '[\0]', $val));
 		} else {
@@ -493,8 +486,8 @@ function where($where, $fields = []) {
 		}
 
 		// Not just [a-z] to catch non-ASCII characters.
-		if ($jush == "sql" && preg_match('~char|text~', $field_type) && preg_match("~[^ -@]~", $val)) {
-			$conditions[] = "$column = " . q($val) . " COLLATE " . charset($connection) . "_bin";
+		if (DIALECT == "sql" && preg_match('~char|text~', $field_type) && preg_match("~[^ -@]~", $val)) {
+			$conditions[] = "$column = " . q($val) . " COLLATE " . charset(Connection::get()) . "_bin";
 		}
 	}
 
@@ -611,8 +604,7 @@ function set_session($key, $val) {
 * @return string
 */
 function auth_url($vendor, $server, $username, $db = null) {
-	global $drivers;
-	preg_match('~([^?]*)\??(.*)~', remove_from_uri(implode("|", array_keys($drivers)) . "|username|" . ($db !== null ? "db|" : "") . session_name()), $match);
+	preg_match('~([^?]*)\??(.*)~', remove_from_uri(implode("|", array_keys(Drivers::getList())) . "|username|" . ($db !== null ? "db|" : "") . session_name()), $match);
 	return "$match[1]?"
 		. (sid() ? session_name() . "=" . urlencode(session_id()) . "&" : "")
 		. urlencode($vendor) . "=" . urlencode($server) . "&"
@@ -659,10 +651,10 @@ function redirect($location, $message = null) {
 * @return bool
 */
 function query_redirect($query, $location, $message, $redirect = true, $execute = true, $failed = false, $time = "") {
-	global $connection, $error;
+	global $error;
 	if ($execute) {
 		$start = microtime(true);
-		$failed = !$connection->query($query);
+		$failed = !Connection::get()->query($query);
 		$time = format_time($start);
 	}
 	$sql = "";
@@ -681,10 +673,9 @@ function query_redirect($query, $location, $message, $redirect = true, $execute 
 
 /** Execute and remember query
 * @param string or null to return remembered queries, end with ';' to use DELIMITER
-* @return Min_Result|array or [$queries, $time] if $query = null
+* @return Result|array|bool or [$queries, $time] if $query = null
 */
 function queries($query) {
-	global $connection;
 	static $queries = [];
 	static $start;
 	if (!$start) {
@@ -697,7 +688,8 @@ function queries($query) {
 
 	if (support("sql")) {
 		$queries[] = (preg_match('~;$~', $query) ? "DELIMITER ;;\n$query;\nDELIMITER " : $query) . ";";
-		return $connection->query($query);
+
+		return Connection::get()->query($query);
 	} else {
 		// Save the query for later use in a flesh message. TODO: This is so ugly.
 		$queries[] = $query;
@@ -995,18 +987,17 @@ function enum_input(string $attrs, array $field, $value, ?string $empty = null, 
 * @return null
 */
 function input($field, $value, $function) {
-	global $types, $structured_types, $jush;
-
 	$name = h(bracket_escape($field["field"]));
 
+	$types = Driver::get()->getTypes();
 	$json_type = Admin::get()->detectJson($field["type"], $value, true);
 
-	$reset = ($jush == "mssql" && $field["auto_increment"]);
+	$reset = (DIALECT == "mssql" && $field["auto_increment"]);
 	if ($reset && !$_POST["save"]) {
 		$function = null;
 	}
 
-	if (in_array($field["type"], (array) $structured_types[lang('User types')])) {
+	if (in_array($field["type"], Driver::get()->getUserTypes())) {
 		$enums = type_values($types[$field["type"]]);
 		if ($enums) {
 			$field["type"] = "enum";
@@ -1066,7 +1057,7 @@ function input($field, $value, $function) {
 	} elseif ($json_type) {
 		echo "<textarea$attrs cols='50' rows='12' class='jush-js'>" . h($value) . '</textarea>';
 	} elseif (($text = preg_match('~text|lob|memo~i', $field["type"])) || preg_match("~\n~", $value)) {
-		if ($text && $jush != "sqlite") {
+		if ($text && DIALECT != "sqlite") {
 			$attrs .= " cols='50' rows='12'";
 		} else {
 			$rows = min(12, substr_count($value, "\n") + 1);
@@ -1078,7 +1069,7 @@ function input($field, $value, $function) {
 		$maxlength = !preg_match('~int~', $field["type"]) && preg_match('~^(\d+)(,(\d+))?$~', $field["length"], $match)
 			? ((preg_match("~binary~", $field["type"]) ? 2 : 1) * $match[1] + ($match[3] ? 1 : 0) + ($match[2] && !$field["unsigned"] ? 1 : 0))
 			: ($types && $types[$field["type"]] ? $types[$field["type"]] + ($field["unsigned"] ? 0 : 1) : 0);
-		if ($jush == 'sql' && min_version(5.6) && preg_match('~time~', $field["type"])) {
+		if (DIALECT == 'sql' && min_version(5.6) && preg_match('~time~', $field["type"])) {
 			$maxlength += 7; // microtime
 		}
 		// type='date' and type='time' display localized value which may be confusing, type='datetime' uses 'T' as date and time separator
@@ -1114,8 +1105,6 @@ function input($field, $value, $function) {
 * @return string|array|false|null False to leave the original value (copy original while cloning), null to skip the column
 */
 function process_input($field) {
-	global $driver;
-
 	if (stripos($field["default"], "GENERATED ALWAYS AS ") === 0) {
 		return null;
 	}
@@ -1149,7 +1138,7 @@ function process_input($field) {
 		if (!is_string($file)) {
 			return false; //! report errors
 		}
-		return $driver->quoteBinary($file);
+		return Driver::get()->quoteBinary($file);
 	}
 	return Admin::get()->processFieldInput($field, $value, $function);
 }
@@ -1158,7 +1147,6 @@ function process_input($field) {
 * @return array
 */
 function fields_from_edit() {
-	global $driver;
 	$return = [];
 	foreach ((array) $_POST["field_keys"] as $key => $val) {
 		if ($val != "") {
@@ -1173,7 +1161,7 @@ function fields_from_edit() {
 			"field" => $name,
 			"privileges" => ["insert" => 1, "update" => 1, "where" => 1, "order" => 1],
 			"null" => 1,
-			"auto_increment" => ($key == $driver->primary),
+			"auto_increment" => ($key == Driver::get()->primary),
 		];
 	}
 	return $return;
@@ -1187,8 +1175,6 @@ function fields_from_edit() {
  */
 function search_tables(): void
 {
-	global $connection;
-
 	$_GET["where"][0]["val"] = $_POST["query"];
 
 	$results = $errors = [];
@@ -1200,7 +1186,7 @@ function search_tables(): void
 			continue;
 		}
 
-		$result = $connection->query("SELECT" . limit("1 FROM " . table($table), " WHERE " . implode(" AND ", Admin::get()->processSelectionSearch(fields($table), [])), 1));
+		$result = Connection::get()->query("SELECT" . limit("1 FROM " . table($table), " WHERE " . implode(" AND ", Admin::get()->processSelectionSearch(fields($table), [])), 1));
 		if ($result && !$result->fetch_row()) {
 			continue;
 		}
@@ -1463,9 +1449,8 @@ function is_shortable(?array $field): bool
 * @return string
 */
 function count_rows($table, $where, $is_group, $group) {
-	global $jush;
 	$query = " FROM " . table($table) . ($where ? " WHERE " . implode(" AND ", $where) : "");
-	return ($is_group && ($jush == "sql" || count($group) == 1)
+	return ($is_group && (DIALECT == "sql" || count($group) == 1)
 		? "SELECT COUNT(DISTINCT " . implode(", ", $group) . ")$query"
 		: "SELECT COUNT(*)" . ($is_group ? " FROM (SELECT 1$query GROUP BY " . implode(", ", $group) . ") x" : $query)
 	);
@@ -1476,12 +1461,12 @@ function count_rows($table, $where, $is_group, $group) {
 * @return array of strings
 */
 function slow_query($query) {
-	global $token, $driver;
+	global $token;
 	$db = Admin::get()->getDatabase();
 	$timeout = Admin::get()->getQueryTimeout();
-	$slow_query = $driver->slowQuery($query, $timeout);
-	if (!$slow_query && support("kill") && is_object($connection2 = connect()) && ($db == "" || $connection2->select_db($db))) {
-		$kill = $connection2->result(connection_id()); // MySQL and MySQLi can use thread_id but it's not in PDO_MySQL
+	$slow_query = Driver::get()->slowQuery($query, $timeout);
+	if (!$slow_query && support("kill") && ($connection = connect()) && ($db == "" || $connection->selectDatabase($db))) {
+		$kill = $connection->getResult(connection_id()); // MySQL and MySQLi can use thread_id but it's not in PDO_MySQL
 		?>
 <script<?php echo nonce(); ?>>
 var timeout = setTimeout(function () {
@@ -1491,12 +1476,12 @@ var timeout = setTimeout(function () {
 </script>
 <?php
 	} else {
-		$connection2 = null;
+		$connection = null;
 	}
 	ob_flush();
 	flush();
-	$return = @get_key_vals(($slow_query ?: $query), $connection2, false); // @ - may be killed
-	if ($connection2) {
+	$return = @get_key_vals(($slow_query ?: $query), $connection, false); // @ - may be killed
+	if ($connection) {
 		echo script("clearTimeout(timeout);");
 		ob_flush();
 		flush();
@@ -1596,7 +1581,7 @@ function help_script_command($command, $side = false)
 * @return null
 */
 function edit_form($table, $fields, $row, $update) {
-	global $jush, $token, $error;
+	global $token, $error;
 	$table_name = Admin::get()->getTableName(table_status1($table, true));
 	$title = $update ? lang('Edit') : lang('Insert');
 
@@ -1623,12 +1608,12 @@ function edit_form($table, $fields, $row, $update) {
 				if ($field["type"] == "bit" && preg_match("~^b'([01]*)'\$~", $default, $regs)) {
 					$default = $regs[1];
 				}
-				if ($jush == "sql" && preg_match('~binary~', $field["type"])) {
+				if (DIALECT == "sql" && preg_match('~binary~', $field["type"])) {
 					$default = bin2hex($default); // same as UNHEX
 				}
 			}
 			$value = ($row !== null
-				? ($row[$name] != "" && $jush == "sql" && preg_match("~enum|set~", $field["type"]) && is_array($row[$name])
+				? ($row[$name] != "" && DIALECT == "sql" && preg_match("~enum|set~", $field["type"]) && is_array($row[$name])
 					? implode(",", $row[$name])
 					: (is_bool($row[$name]) ? +$row[$name] : $row[$name])
 				)

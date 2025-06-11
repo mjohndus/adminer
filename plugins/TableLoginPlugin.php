@@ -59,13 +59,13 @@ class TableLoginPlugin extends Plugin
 	public function authenticate(string $username, string $password): ?bool
 	{
 		if (DRIVER == "sqlite") {
-			connection()->select_db($this->database);
+			Connection::get()->selectDatabase($this->database);
 			$dbPrefix = "";
 		} else {
 			$dbPrefix = idf_escape($this->database) . ".";
 		}
 
-		$hash = connection()->result(
+		$hash = Connection::get()->getResult(
 			"SELECT password FROM $dbPrefix" . idf_escape($this->table) . " WHERE username = " . q($username)
 		);
 

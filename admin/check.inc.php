@@ -2,17 +2,12 @@
 
 namespace AdminNeo;
 
-/**
- * @var ?Min_DB $connection
- * @var ?Min_Driver $driver
- */
-
 $TABLE = $_GET["check"];
 $name = $_GET["name"];
 $row = $_POST;
 
 if ($row && !$error) {
-	if ($jush == "sqlite") {
+	if (DIALECT == "sqlite") {
 		$result = recreate_table($TABLE, $TABLE, array(), array(), array(), 0, array(), $name, ($row["drop"] ? "" : $row["clause"]));
 	} else {
 		$result = ($name == "" || queries("ALTER TABLE " . table($TABLE) . " DROP CONSTRAINT " . idf_escape($name)));
@@ -30,14 +25,14 @@ if ($row && !$error) {
 page_header(($name != "" ? lang('Alter check') . ": " . h($name) : lang('Create check')), $error, array("table" => $TABLE));
 
 if (!$row) {
-	$checks = $driver->checkConstraints($TABLE);
+	$checks = Driver::get()->checkConstraints($TABLE);
 	$row = array("name" => $name, "clause" => $checks[$name]);
 }
 ?>
 
 <form action="" method="post">
 <p><?php
-if ($jush != "sqlite") {
+if (DIALECT != "sqlite") {
 	echo lang('Name') . ': <input name="name" value="' . h($row["name"]) . '" class="input" data-maxlength="64" autocapitalize="off"> ';
 }
 echo doc_link([

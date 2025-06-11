@@ -2,11 +2,6 @@
 
 namespace AdminNeo;
 
-/**
- * @var ?Min_DB $connection
- * @var ?Min_Driver $driver
- */
-
 $TABLE = $_GET["foreign"];
 $name = $_GET["name"];
 $row = $_POST;
@@ -22,11 +17,11 @@ if ($_POST && !$error && !$_POST["add"] && !$_POST["change"] && !$_POST["change-
 		$row["target"] = $target;
 	}
 
-	if ($jush == "sqlite") {
+	if (DIALECT == "sqlite") {
 		$result = recreate_table($TABLE, $TABLE, [], [], [" $name" => ($row["drop"] ? "" : " " . format_foreign_key($row))]);
 	} else {
 		$alter = "ALTER TABLE " . table($TABLE);
-		$result = ($name == "" || queries("$alter DROP " . ($jush == "sql" ? "FOREIGN KEY " : "CONSTRAINT ") . idf_escape($name)));
+		$result = ($name == "" || queries("$alter DROP " . (DIALECT == "sql" ? "FOREIGN KEY " : "CONSTRAINT ") . idf_escape($name)));
 		if (!$row["drop"]) {
 			$result = queries("$alter ADD" . format_foreign_key($row));
 		}
@@ -64,7 +59,7 @@ if ($_POST) {
 <?php
 $source = array_keys(fields($TABLE)); //! no text and blob
 if ($row["db"] != "") {
-	$connection->select_db($row["db"]);
+	Connection::get()->selectDatabase($row["db"]);
 }
 if ($row["ns"] != "") {
 	$orig_schema = get_schema();
@@ -82,7 +77,7 @@ if (support("scheme")) {
 	if ($row["ns"] != "") {
 		set_schema($orig_schema);
 	}
-} elseif ($jush != "sqlite") {
+} elseif (DIALECT != "sqlite") {
 	$dbs = [];
 	foreach (Admin::get()->getDatabases() as $db) {
 		if (!information_schema($db)) {
@@ -107,8 +102,8 @@ foreach ($row["source"] as $key => $val) {
 ?>
 </table>
 <p>
-<?php echo lang('ON DELETE'); ?>: <?php echo html_select("on_delete", [-1 => ""] + explode("|", $on_actions), $row["on_delete"]); ?>
- <?php echo lang('ON UPDATE'); ?>: <?php echo html_select("on_update", [-1 => ""] + explode("|", $on_actions), $row["on_update"]); ?>
+<?php echo lang('ON DELETE'); ?>: <?php echo html_select("on_delete", [-1 => ""] + Driver::get()->getOnActions(), $row["on_delete"]); ?>
+<?php echo lang('ON UPDATE'); ?>: <?php echo html_select("on_update", [-1 => ""] + Driver::get()->getOnActions(), $row["on_update"]); ?>
 <?php echo doc_link([
 	'sql' => "innodb-foreign-key-constraints.html",
 	'mariadb' => "foreign-keys/",

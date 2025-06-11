@@ -10,25 +10,26 @@ use stdClass;
 * @author Jakub Vrana
 */
 
-add_driver("mssql", "MS SQL");
+Drivers::add("mssql", "MS SQL", ["SQLSRV", "PDO_SQLSRV", "PDO_DBLIB"]);
 
 if (isset($_GET["mssql"])) {
 	define("AdminNeo\DRIVER", "mssql");
+	define("AdminNeo\DIALECT", "mssql");
+
 	if (extension_loaded("sqlsrv")) {
-		class Min_DB {
-			var $extension = "sqlsrv", $_link, $_result, $server_info, $affected_rows, $errno, $error;
+		define("AdminNeo\DRIVER_EXTENSION", "sqlsrv");
 
-			function _get_error() {
-				$this->error = "";
-				foreach (sqlsrv_errors() as $error) {
-					$this->errno = $error["code"];
-					$this->error .= "$error[message]\n";
-				}
-				$this->error = rtrim($this->error);
-			}
+		class MsSqlConnection extends Connection
+		{
+			/** @var resource|false */
+			private $connection;
 
-			function connect($server, $username, $password) {
-				$connection_info = [
+			/** @var resource|false */
+			protected $multiResult;
+
+			public function open(string $server, string $username, string $password): bool
+			{
+				$connectionInfo = [
 					"UID" => $username,
 					"PWD" => $password,
 					"CharacterSet" => "UTF-8",
@@ -36,87 +37,104 @@ if (isset($_GET["mssql"])) {
 
 				$encrypt = Admin::get()->getConfig()->getSslEncrypt();
 				if ($encrypt !== null) {
-					$connection_info["Encrypt"] = $encrypt;
+					$connectionInfo["Encrypt"] = $encrypt;
 				}
 
 				$trust = Admin::get()->getConfig()->getSslTrustServerCertificate();
 				if ($trust !== null) {
-					$connection_info["TrustServerCertificate"] = $trust;
+					$connectionInfo["TrustServerCertificate"] = $trust;
 				}
 
 				$db = Admin::get()->getDatabase();
 				if ($db != "") {
-					$connection_info["Database"] = $db;
+					$connectionInfo["Database"] = $db;
 				}
 
-				$this->_link = @sqlsrv_connect(preg_replace('~:~', ',', $server), $connection_info);
-				if ($this->_link) {
-					$info = sqlsrv_server_info($this->_link);
+				$this->connection = @sqlsrv_connect(preg_replace('~:~', ',', $server), $connectionInfo);
+				if ($this->connection) {
+					$info = sqlsrv_server_info($this->connection);
 					$this->server_info = $info['SQLServerVersion'];
 				} else {
-					$this->_get_error();
+					$this->resolveError();
 				}
 
-				return (bool) $this->_link;
+				return (bool) $this->connection;
 			}
 
-			function quote($string) {
+			private function resolveError() {
+				$this->error = "";
+
+				foreach (sqlsrv_errors() as $error) {
+					$this->errno = $error["code"];
+					$this->error .= "$error[message]\n";
+				}
+
+				$this->error = rtrim($this->error);
+			}
+
+			public function quote(string $string): string
+			{
 				return (contains_unicode($string) ? "N" : "") . "'" . str_replace("'", "''", $string) . "'";
 			}
 
-			function select_db($database) {
-				return $this->query(use_sql($database));
+			public function selectDatabase(string $name): bool
+			{
+				return $this->query(use_sql($name));
 			}
 
-			function query($query, $unbuffered = false) {
-				$result = sqlsrv_query($this->_link, $query); //! , [], ($unbuffered ? [] : ["Scrollable" => "keyset"])
+			function query(string $query, bool $unbuffered = false)
+			{
+				$result = sqlsrv_query($this->connection, $query); //! , [], ($unbuffered ? [] : ["Scrollable" => "keyset"])
 				$this->error = "";
+
 				if (!$result) {
-					$this->_get_error();
+					$this->resolveError();
+
 					return false;
 				}
-				return $this->store_result($result);
+
+				return $this->storeResult($result);
 			}
 
-			function multi_query($query) {
-				$this->_result = sqlsrv_query($this->_link, $query);
+			public function multiQuery(string $query): bool
+			{
+				$this->multiResult = sqlsrv_query($this->connection, $query);
 				$this->error = "";
-				if (!$this->_result) {
-					$this->_get_error();
+
+				if (!$this->multiResult) {
+					$this->resolveError();
+
 					return false;
 				}
+
 				return true;
 			}
 
-			function store_result($result = null) {
+			public function storeResult($result = null)
+			{
 				if (!$result) {
-					$result = $this->_result;
+					$result = $this->multiResult;
 				}
 				if (!$result) {
 					return false;
 				}
+
 				if (sqlsrv_field_metadata($result)) {
-					return new Min_Result($result);
+					return new Result($result);
 				}
+
 				$this->affected_rows = sqlsrv_rows_affected($result);
+
 				return true;
 			}
 
-			function next_result() {
-				return $this->_result ? sqlsrv_next_result($this->_result) : null;
-			}
-
-			function result($query, $field = 0) {
-				$result = $this->query($query);
-				if (!is_object($result)) {
-					return false;
-				}
-				$row = $result->fetch_row();
-				return $row[$field];
+			public function nextResult(): bool
+			{
+				return $this->multiResult && sqlsrv_next_result($this->multiResult);
 			}
 		}
 
-		class Min_Result {
+		class Result {
 			var $_result, $_offset = 0, $_fields, $num_rows;
 
 			function __construct($result) {
@@ -166,10 +184,12 @@ if (isset($_GET["mssql"])) {
 		}
 
 	} elseif (extension_loaded("pdo_sqlsrv")) {
-		class Min_DB extends Min_PDO {
-			var $extension = "PDO_SQLSRV";
+		define("AdminNeo\DRIVER_EXTENSION", "PDO_SQLSRV");
 
-			function connect($server, $username, $password) {
+		class MsSqlConnection extends PdoConnection
+		{
+			public function open(string $server, string $username, string $password): bool
+			{
 				$options = [];
 
 				$encrypt = Admin::get()->getConfig()->getSslEncrypt();
@@ -177,9 +197,9 @@ if (isset($_GET["mssql"])) {
 					$options[] = "Encrypt=$encrypt";
 				}
 
-				$trustServerCertificate = Admin::get()->getConfig()->getSslTrustServerCertificate();
-				if ($trustServerCertificate !== null) {
-					$options[] = "TrustServerCertificate=$trustServerCertificate";
+				$trust = Admin::get()->getConfig()->getSslTrustServerCertificate();
+				if ($trust !== null) {
+					$options[] = "TrustServerCertificate=$trust";
 				}
 
 				$optionsString = $options ? (";" . implode(";", $options)) : "";
@@ -189,47 +209,112 @@ if (isset($_GET["mssql"])) {
 				return true;
 			}
 
-			function select_db($database) {
+			public function selectDatabase(string $name): bool
+			{
 				// database selection is separated from the connection so dbname in DSN can't be used
-				return $this->query(use_sql($database));
+				return $this->query(use_sql($name));
 			}
 
-			function quote($string) {
+			function quote(string $string): string
+			{
 				return (contains_unicode($string) ? "N" : "") . parent::quote($string);
 			}
 		}
 
 	} elseif (extension_loaded("pdo_dblib")) {
-		class Min_DB extends Min_PDO {
-			var $extension = "PDO_DBLIB";
+		define("AdminNeo\DRIVER_EXTENSION", "PDO_DBLIB");
 
-			function connect($server, $username, $password) {
+		class MsSqlConnection extends PdoConnection
+		{
+			public function open(string $server, string $username, string $password): bool
+			{
 				$this->dsn("dblib:charset=utf8;host=" . str_replace(":", ";unix_socket=", preg_replace('~:(\d)~', ';port=\1', $server)), $username, $password);
+
 				return true;
 			}
 
-			function select_db($database) {
-				return $this->query(use_sql($database));
+			public function selectDatabase(string $name): bool
+			{
+				return $this->query(use_sql($name));
 			}
 
-			function quote($string) {
+			function quote(string $string): string
+			{
 				return (contains_unicode($string) ? "N" : "") . parent::quote($string);
 			}
 		}
 	}
 
 
-	class Min_Driver extends Min_SQL {
+	class MsSqlDriver extends Driver
+	{
+		protected function __construct(Connection $connection, $admin)
+		{
+			parent::__construct($connection, $admin);
 
-		function insertUpdate($table, $rows, $primary) {
+			//! use sys.types
+			$this->types = [
+				lang('Numbers') => [
+					"tinyint" => 3, "smallint" => 5, "int" => 10, "bigint" => 20,
+					"bit" => 1, "decimal" => 0, "real" => 12, "float" => 53,
+					"smallmoney" => 10, "money" => 20,
+				],
+				lang('Date and time') => [
+					"date" => 10, "smalldatetime" => 19, "datetime" => 19, "datetime2" => 19, "time" => 8,
+					"datetimeoffset" => 10,
+				],
+				lang('Strings') => [
+					"char" => 8000, "varchar" => 8000, "text" => 2147483647,
+					"nchar" => 4000, "nvarchar" => 4000, "ntext" => 1073741823,
+				],
+				lang('Binary') => [
+					"binary" => 8000, "varbinary" => 8000, "image" => 2147483647,
+				],
+			];
+
+			$this->operators = [
+				"=", "<", ">", "<=", ">=", "!=",
+				"LIKE", "LIKE %%", "NOT LIKE",
+				"IN", "NOT IN",
+				"IS NULL", "IS NOT NULL",
+			];
+
+			$this->likeOperator = "LIKE %%";
+
+			$this->functions = [
+				"len", "lower", "upper",
+				"round",
+			];
+
+			$this->grouping = [
+				"sum", "min", "max", "avg",
+				"count", "count distinct",
+			];
+
+			$this->onActions = ["CASCADE", "SET NULL", "SET DEFAULT", "NO ACTION"];
+
+			$this->editFunctions = [
+				[
+					"date|time" => "getdate",
+				], [
+					"int|decimal|real|float|money|datetime" => "+/-",
+					"char|text" => "+",
+				]
+			];
+
+			$this->systemDatabases = ["INFORMATION_SCHEMA", "guest", "sys", "db_*"];
+		}
+
+		public function insertUpdate(string $table, array $records, array $primary)
+        {
 			$fields = fields($table);
 			$update = [];
 			$where = [];
-			$set = reset($rows);
-			$columns = "c" . implode(", c", range(1, count($set)));
+			$record = reset($records);
+			$columns = "c" . implode(", c", range(1, count($record)));
 			$c = 0;
 			$insert = array();
-			foreach ($set as $key => $val) {
+			foreach ($record as $key => $val) {
 				$c++;
 				$name = idf_unescape($key);
 				if (!$fields[$name]["auto_increment"]) {
@@ -242,29 +327,31 @@ if (isset($_GET["mssql"])) {
 				}
 			}
 			$values = [];
-			foreach ($rows as $set) {
-				$values[] = "(" . implode(", ", $set) . ")";
+			foreach ($records as $record) {
+				$values[] = "(" . implode(", ", $record) . ")";
 			}
 			if ($where) {
 				$identity = queries("SET IDENTITY_INSERT " . table($table) . " ON");
 				$return = queries("MERGE " . table($table) . " USING (VALUES\n\t" . implode(",\n\t", $values) . "\n) AS source ($columns) ON " . implode(" AND ", $where) //! source, c1 - possible conflict
 					. ($update ? "\nWHEN MATCHED THEN UPDATE SET " . implode(", ", $update) : "")
-					. "\nWHEN NOT MATCHED THEN INSERT (" . implode(", ", array_keys($identity ? $set : $insert)) . ") VALUES (" . ($identity ? $columns : implode(", ", $insert)) . ");" // ; is mandatory
+					. "\nWHEN NOT MATCHED THEN INSERT (" . implode(", ", array_keys($identity ? $record : $insert)) . ") VALUES (" . ($identity ? $columns : implode(", ", $insert)) . ");" // ; is mandatory
 				);
 				if ($identity) {
 					queries("SET IDENTITY_INSERT " . table($table) . " OFF");
 				}
 			} else {
-				$return = queries("INSERT INTO " . table($table) . " (" . implode(", ", array_keys($set)) . ") VALUES\n" . implode(",\n", $values));
+				$return = queries("INSERT INTO " . table($table) . " (" . implode(", ", array_keys($record)) . ") VALUES\n" . implode(",\n", $values));
 			}
 			return $return;
 		}
 
-		function begin() {
+		public function begin()
+        {
 			return queries("BEGIN TRANSACTION");
 		}
 
-		function tableHelp($name, $is_view = false) {
+		public function tableHelp(string $name, bool $isView = false): ?string
+        {
 			$links = array(
 				"sys" => "catalog-views/sys-",
 				"INFORMATION_SCHEMA" => "information-schema-views/",
@@ -273,8 +360,17 @@ if (isset($_GET["mssql"])) {
 			if ($link) {
 				return "relational-databases/system-$link" . preg_replace('~_~', '-', strtolower($name)) . "-transact-sql";
 			}
+
+            return null;
 		}
 
+	}
+
+
+
+	function create_driver(Connection $connection): Driver
+	{
+		return MsSqlDriver::create($connection, Admin::get());
 	}
 
 	/**
@@ -295,19 +391,19 @@ if (isset($_GET["mssql"])) {
 	}
 
 	/**
-	 * @return Min_DB|string
+	 * @return Connection|string
 	 */
-	function connect()
+	function connect(bool $primary = false)
 	{
-		$connection = new Min_DB();
+		$connection = $primary ? MsSqlConnection::create() : MsSqlConnection::createSecondary();
 
 		$credentials = Admin::get()->getCredentials();
 		if ($credentials[0] == "") {
 			$credentials[0] = "localhost:1433";
 		}
 
-		if (!$connection->connect($credentials[0], $credentials[1], $credentials[2])) {
-			return $connection->error;
+		if (!$connection->open($credentials[0], $credentials[1], $credentials[2])) {
+			return $connection->getError();
 		}
 
 		return $connection;
@@ -326,8 +422,7 @@ if (isset($_GET["mssql"])) {
 	}
 
 	function db_collation($db, $collations) {
-		global $connection;
-		return $connection->result("SELECT collation_name FROM sys.databases WHERE name = " . q($db));
+		return Connection::get()->getResult("SELECT collation_name FROM sys.databases WHERE name = " . q($db));
 	}
 
 	function engines() {
@@ -335,8 +430,7 @@ if (isset($_GET["mssql"])) {
 	}
 
 	function logged_user() {
-		global $connection;
-		return $connection->result("SELECT SUSER_NAME()");
+		return Connection::get()->getResult("SELECT SUSER_NAME()");
 	}
 
 	function tables_list() {
@@ -344,11 +438,10 @@ if (isset($_GET["mssql"])) {
 	}
 
 	function count_tables($databases) {
-		global $connection;
 		$return = [];
 		foreach ($databases as $db) {
-			$connection->select_db($db);
-			$return[$db] = $connection->result("SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES");
+			Connection::get()->selectDatabase($db);
+			$return[$db] = Connection::get()->getResult("SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES");
 		}
 		return $return;
 	}
@@ -408,7 +501,8 @@ WHERE o.schema_id = SCHEMA_ID(" . q(get_schema()) . ") AND o.type IN ('S', 'U', 
 		return $return;
 	}
 
-	function indexes($table, $connection2 = null) {
+	function indexes(string $table, ?Connection $connection = null): array
+	{
 		$return = [];
 		// sp_statistics doesn't return information about primary key
 		foreach (get_rows("SELECT i.name, key_ordinal, is_unique, is_primary_key, c.name AS column_name, is_descending_key
@@ -416,7 +510,7 @@ FROM sys.indexes i
 INNER JOIN sys.index_columns ic ON i.object_id = ic.object_id AND i.index_id = ic.index_id
 INNER JOIN sys.columns c ON ic.object_id = c.object_id AND ic.column_id = c.column_id
 WHERE OBJECT_NAME(i.object_id) = " . q($table)
-		, $connection2) as $row) {
+		, $connection) as $row) {
 			$name = $row["name"];
 			$return[$name]["type"] = ($row["is_primary_key"] ? "PRIMARY" : ($row["is_unique"] ? "UNIQUE" : "INDEX"));
 			$return[$name]["lengths"] = [];
@@ -427,8 +521,7 @@ WHERE OBJECT_NAME(i.object_id) = " . q($table)
 	}
 
 	function view($name) {
-		global $connection;
-		return ["select" => preg_replace('~^(?:[^[]|\[[^]]*])*\s+AS\s+~isU', '', $connection->result("SELECT VIEW_DEFINITION FROM INFORMATION_SCHEMA.VIEWS WHERE TABLE_SCHEMA = SCHEMA_NAME() AND TABLE_NAME = " . q($name)))];
+		return ["select" => preg_replace('~^(?:[^[]|\[[^]]*])*\s+AS\s+~isU', '', Connection::get()->getResult("SELECT VIEW_DEFINITION FROM INFORMATION_SCHEMA.VIEWS WHERE TABLE_SCHEMA = SCHEMA_NAME() AND TABLE_NAME = " . q($name)))];
 	}
 
 	function collations() {
@@ -444,8 +537,7 @@ WHERE OBJECT_NAME(i.object_id) = " . q($table)
 	}
 
 	function error() {
-		global $connection;
-		return nl2br(h(preg_replace('~^(\[[^]]*])+~m', '', $connection->error)));
+		return nl2br(h(preg_replace('~^(\[[^]]*])+~m', '', Connection::get()->getError())));
 	}
 
 	function create_database($db, $collation) {
@@ -548,14 +640,15 @@ WHERE OBJECT_NAME(i.object_id) = " . q($table)
 	}
 
 	function last_id() {
-		global $connection;
-		return $connection->result("SELECT SCOPE_IDENTITY()"); // @@IDENTITY can return trigger INSERT
+		return Connection::get()->getResult("SELECT SCOPE_IDENTITY()"); // @@IDENTITY can return trigger INSERT
 	}
 
-	function explain($connection, $query) {
+	function explain(Connection $connection, string $query)
+	{
 		$connection->query("SET SHOWPLAN_ALL ON");
 		$return = $connection->query($query);
 		$connection->query("SET SHOWPLAN_ALL OFF"); // connection is used also for indexes
+
 		return $return;
 	}
 
@@ -564,14 +657,15 @@ WHERE OBJECT_NAME(i.object_id) = " . q($table)
 
 	function foreign_keys($table) {
 		$return = [];
-		$on_actions = ["CASCADE", "NO ACTION", "SET NULL", "SET DEFAULT"];
+		$onActions = Driver::get()->getOnActions();
+
 		foreach (get_rows("EXEC sp_fkeys @fktable_name = " . q($table) . ", @fktable_owner = " . q(get_schema())) as $row) {
 			$foreign_key = &$return[$row["FK_NAME"]];
 			$foreign_key["db"] = $row["PKTABLE_QUALIFIER"];
 			$foreign_key["ns"] = $row["PKTABLE_OWNER"];
 			$foreign_key["table"] = $row["PKTABLE_NAME"];
-			$foreign_key["on_update"] = $on_actions[$row["UPDATE_RULE"]];
-			$foreign_key["on_delete"] = $on_actions[$row["DELETE_RULE"]];
+			$foreign_key["on_update"] = $onActions[$row["UPDATE_RULE"]];
+			$foreign_key["on_delete"] = $onActions[$row["DELETE_RULE"]];
 			$foreign_key["source"][] = $row["FKCOLUMN_NAME"];
 			$foreign_key["target"][] = $row["PKCOLUMN_NAME"];
 		}
@@ -635,25 +729,27 @@ WHERE sys1.xtype = 'TR' AND sys2.name = " . q($table)
 		];
 	}
 
-	function schemas() {
+	function schemas(): array
+	{
 		return get_vals("SELECT name FROM sys.schemas");
 	}
 
-	function get_schema() {
-		global $connection;
+	function get_schema(): string
+	{
 		if ($_GET["ns"] != "") {
 			return $_GET["ns"];
 		}
-		return $connection->result("SELECT SCHEMA_NAME()");
+		return Connection::get()->getResult("SELECT SCHEMA_NAME()");
 	}
 
-	function set_schema($schema) {
+	function set_schema(string $schema, ?Connection $connection = null): bool
+	{
 		$_GET["ns"] = $schema;
+
 		return true; // ALTER USER is permanent
 	}
 
 	function create_sql($table, $auto_increment, $style) {
-		global $driver;
 		if (is_view(table_status($table))) {
 			$view = view($table);
 			return "CREATE VIEW " . table($table) . " AS $view[select]";
@@ -677,7 +773,7 @@ WHERE sys1.xtype = 'TR' AND sys2.name = " . q($table)
 				$fields[] = ($index["type"] == "INDEX" ? "INDEX $name" : "CONSTRAINT $name " . ($index["type"] == "UNIQUE" ? "UNIQUE" : "PRIMARY KEY")) . " (" . implode(", ", $columns) . ")";
 			}
 		}
-		foreach ($driver->checkConstraints($table) as $name => $check) {
+		foreach (Driver::get()->checkConstraints($table) as $name => $check) {
 			$fields[] = "CONSTRAINT " . idf_escape($name) . " CHECK ($check)";
 		}
 		return "CREATE TABLE " . table($table) . " (\n\t" . implode(",\n\t", $fields) . "\n)";
@@ -716,41 +812,5 @@ WHERE sys1.xtype = 'TR' AND sys2.name = " . q($table)
 
 	function support($feature) {
 		return preg_match('~^(check|comment|columns|database|drop_col|dump|indexes|descidx|scheme|sql|table|trigger|view|view_trigger)$~', $feature); //! routine|
-	}
-
-	function driver_config() {
-		global $on_actions;
-		$on_actions = str_replace('RESTRICT|', '', $on_actions);
-		$types = [];
-		$structured_types = [];
-		foreach ([ //! use sys.types
-			lang('Numbers') => ["tinyint" => 3, "smallint" => 5, "int" => 10, "bigint" => 20, "bit" => 1, "decimal" => 0, "real" => 12, "float" => 53, "smallmoney" => 10, "money" => 20],
-			lang('Date and time') => ["date" => 10, "smalldatetime" => 19, "datetime" => 19, "datetime2" => 19, "time" => 8, "datetimeoffset" => 10],
-			lang('Strings') => ["char" => 8000, "varchar" => 8000, "text" => 2147483647, "nchar" => 4000, "nvarchar" => 4000, "ntext" => 1073741823],
-			lang('Binary') => ["binary" => 8000, "varbinary" => 8000, "image" => 2147483647],
-		] as $key => $val) {
-			$types += $val;
-			$structured_types[$key] = array_keys($val);
-		}
-		return [
-			'possible_drivers' => ["SQLSRV", "MSSQL", "PDO_SQLSRV", "PDO_DBLIB"],
-			'jush' => "mssql",
-			'types' => $types,
-			'structured_types' => $structured_types,
-			'unsigned' => [],
-			'operators' => ["=", "<", ">", "<=", ">=", "!=", "LIKE", "LIKE %%", "IN", "IS NULL", "NOT LIKE", "NOT IN", "IS NOT NULL"],
-			'operator_like' => "LIKE %%",
-			'functions' => ["len", "lower", "round", "upper"],
-			'grouping' => ["avg", "count", "count distinct", "max", "min", "sum"],
-			'edit_functions' => [
-				[
-					"date|time" => "getdate",
-				], [
-					"int|decimal|real|float|money|datetime" => "+/-",
-					"char|text" => "+",
-				]
-			],
-			"system_schemas" => ["INFORMATION_SCHEMA", "guest", "sys", "db_*"],
-		];
 	}
 }

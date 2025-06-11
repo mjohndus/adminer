@@ -30,9 +30,6 @@ include "include/editing.inc.php";
 include "include/bootstrap.inc.php";
 include "include/connect.inc.php";
 
-$enum_length = "'(?:''|[^'\\\\]|\\\\.)*'";
-$inout = "IN|OUT|INOUT";
-
 if (isset($_GET["select"]) && ($_POST["edit"] || $_POST["clone"]) && !$_POST["save"]) {
 	$_GET["edit"] = $_GET["select"];
 }

@@ -2,11 +2,6 @@
 
 namespace AdminNeo;
 
-/**
- * @var ?Min_DB $connection
- * @var ?Min_Driver $driver
- */
-
 $PROCEDURE = ($_GET["name"] ? $_GET["name"] : $_GET["procedure"]);
 $routine = (isset($_GET["function"]) ? "FUNCTION" : "PROCEDURE");
 $row = $_POST;
@@ -61,7 +56,7 @@ if (isset($_GET["function"])) {
 		(support("move_col") ? "<th></th>" : ""),
 		"<th>", lang('Return type'), "</th>";
 
-	edit_type("returns", $row["returns"], $charsets, [], ($jush == "pgsql" ? ["void", "trigger"] : []));
+	edit_type("returns", $row["returns"], $charsets, [], (DIALECT == "pgsql" ? ["void", "trigger"] : []));
 
 	echo "<td></td></tr></tbody>\n";
 }

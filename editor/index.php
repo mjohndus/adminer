@@ -28,8 +28,6 @@ include "core/Admin.php";
 include "../admin/include/bootstrap.inc.php";
 include "include/connect.inc.php";
 
-$drivers[DRIVER] = lang('Login');
-
 if (isset($_GET["select"]) && ($_POST["edit"] || $_POST["clone"]) && !$_POST["save"]) {
 	$_GET["edit"] = $_GET["select"];
 }

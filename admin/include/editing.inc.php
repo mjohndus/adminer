@@ -4,15 +4,15 @@
 namespace AdminNeo;
 
 /** Print select result
-* @param Min_Result
-* @param Min_DB connection to examine indexes
+*
+* @param Result
+* @param ?Connection connection to examine indexes
 * @param array
 * @param int
+*
 * @return array $orgtables
 */
-function select($result, $connection2 = null, $orgtables = [], $limit = 0) {
-	global $jush;
-
+function select($result, ?Connection $connection = null, $orgtables = [], $limit = 0) {
 	$links = []; // colno => orgtable - create links from these columns
 	$indexes = []; // orgtable => array(column => colno) - primary keys
 	$columns = []; // orgtable => array(column => ) - not selected columns in primary key
@@ -31,13 +31,13 @@ function select($result, $connection2 = null, $orgtables = [], $limit = 0) {
 				$orgtable = $field["orgtable"];
 				$orgname = $field["orgname"];
 				$return[$field["table"]] = $orgtable;
-				if ($orgtables && $jush == "sql") { // MySQL EXPLAIN
+				if ($orgtables && DIALECT == "sql") { // MySQL EXPLAIN
 					$links[$j] = ($name == "table" ? "table=" : ($name == "possible_keys" ? "indexes=" : null));
 				} elseif ($orgtable != "") {
 					if (!isset($indexes[$orgtable])) {
 						// find primary key in each table
 						$indexes[$orgtable] = [];
-						foreach (indexes($orgtable, $connection2) as $index) {
+						foreach (indexes($orgtable, $connection) as $index) {
 							if ($index["type"] == "PRIMARY") {
 								$indexes[$orgtable] = array_flip($index["columns"]);
 								break;
@@ -68,7 +68,7 @@ function select($result, $connection2 = null, $orgtables = [], $limit = 0) {
 		foreach ($row as $key => $val) {
 			$link = "";
 			if (isset($links[$key]) && !$columns[$links[$key]]) {
-				if ($orgtables && $jush == "sql") { // MySQL EXPLAIN
+				if ($orgtables && DIALECT == "sql") { // MySQL EXPLAIN
 					$table = $row[array_search("table=", $links)];
 					$link = ME . $links[$key] . urlencode($orgtables[$table] != "" ? $orgtables[$table] : $table);
 				} else {
@@ -155,8 +155,7 @@ function save_settings($settings) {
 * @return null
 */
 function textarea($name, $value, $rows = 10, $cols = 80) {
-	global $jush;
-	echo "<textarea name='" . h($name) . "' rows='$rows' cols='$cols' class='sqlarea jush-$jush' spellcheck='false' wrap='off'>";
+	echo "<textarea name='" . h($name) . "' rows='$rows' cols='$cols' class='sqlarea jush-" . DIALECT . "' spellcheck='false' wrap='off'>";
 	if (is_array($value)) {
 		foreach ($value as $val) { // not implode() to save memory
 			echo h($val[0]) . "\n\n\n"; // $val == array($query, $time, $elapsed)
@@ -211,22 +210,22 @@ function json_row($key, $val = null) {
 * @return null
 */
 function edit_type($key, $field, $collations, $foreign_keys = [], $extra_types = []) {
-	global $structured_types, $types, $unsigned, $on_actions;
 	$type = $field["type"] ?? null;
 	?>
 <td><select name="<?php echo h($key); ?>[type]" class="type" aria-labelledby="label-type"><?php
-if ($type && !isset($types[$type]) && !isset($foreign_keys[$type]) && !in_array($type, $extra_types)) {
+if ($type && !isset(Driver::get()->getTypes()[$type]) && !isset($foreign_keys[$type]) && !in_array($type, $extra_types)) {
 	$extra_types[] = $type;
 }
+$structured_types = Driver::get()->getStructuredTypes();
 if ($foreign_keys) {
 	$structured_types[lang('Foreign keys')] = $foreign_keys;
 }
 echo optionlist(array_merge($extra_types, $structured_types), $type);
 ?></select><td><input name="<?php echo h($key); ?>[length]" value="<?php echo h($field["length"] ?? null); ?>" size="3"<?php echo (!($field["length"] ?? null) && preg_match('~var(char|binary)$~', $type) ? " class='input required'" : " class='input'"); //! type="number" with enabled JavaScript ?> aria-labelledby="label-length"><td class="options"><?php
 	echo ($collations ? "<select name='" . h($key) . "[collation]'" . (preg_match('~(char|text|enum|set)$~', $type) ? "" : " class='hidden'") . '><option value="">(' . lang('collation') . ')' . optionlist($collations, $field["collation"] ?? null) . '</select>' : '');
-	echo ($unsigned ? "<select name='" . h($key) . "[unsigned]'" . (!$type || preg_match(number_type(), $type) ? "" : " class='hidden'") . '><option>' . optionlist($unsigned, $field["unsigned"] ?? null) . '</select>' : '');
+	echo (Driver::get()->getUnsigned() ? "<select name='" . h($key) . "[unsigned]'" . (!$type || preg_match(number_type(), $type) ? "" : " class='hidden'") . '><option>' . optionlist(Driver::get()->getUnsigned(), $field["unsigned"] ?? null) . '</select>' : '');
 	echo (isset($field['on_update']) ? "<select name='" . h($key) . "[on_update]'" . (preg_match('~timestamp|datetime~', $type) ? "" : " class='hidden'") . '>' . optionlist(["" => "(" . lang('ON UPDATE') . ")", "CURRENT_TIMESTAMP"], (preg_match('~^CURRENT_TIMESTAMP~i', $field["on_update"]) ? "CURRENT_TIMESTAMP" : $field["on_update"])) . '</select>' : '');
-	echo ($foreign_keys ? "<select name='" . h($key) . "[on_delete]'" . (preg_match("~`~", $type) ? "" : " class='hidden'") . "><option value=''>(" . lang('ON DELETE') . ")" . optionlist(explode("|", $on_actions), $field["on_delete"] ?? null) . "</select> " : " "); // space for IE
+	echo ($foreign_keys ? "<select name='" . h($key) . "[on_delete]'" . (preg_match("~`~", $type) ? "" : " class='hidden'") . "><option value=''>(" . lang('ON DELETE') . ")" . optionlist(Driver::get()->getOnActions(), $field["on_delete"] ?? null) . "</select> " : " "); // space for IE
 }
 
 /**
@@ -234,11 +233,9 @@ echo optionlist(array_merge($extra_types, $structured_types), $type);
  * @return array
  */
 function get_partitions_info($table) {
-	global $connection;
-
 	$from = "FROM information_schema.PARTITIONS WHERE TABLE_SCHEMA = " . q(DB) . " AND TABLE_NAME = " . q($table);
 
-	$result = $connection->query("SELECT PARTITION_METHOD, PARTITION_EXPRESSION, PARTITION_ORDINAL_POSITION $from ORDER BY PARTITION_ORDINAL_POSITION DESC LIMIT 1");
+	$result = Connection::get()->query("SELECT PARTITION_METHOD, PARTITION_EXPRESSION, PARTITION_ORDINAL_POSITION $from ORDER BY PARTITION_ORDINAL_POSITION DESC LIMIT 1");
 
 	$info = [];
 	list($info["partition_by"], $info["partition"],  $info["partitions"]) = $result->fetch_row();
@@ -255,8 +252,9 @@ function get_partitions_info($table) {
 * @return string
 */
 function process_length($length) {
-	global $enum_length;
-	return (preg_match("~^\\s*\\(?\\s*$enum_length(?:\\s*,\\s*$enum_length)*+\\s*\\)?\\s*\$~", $length) && preg_match_all("~$enum_length~", $length, $matches)
+	$enumLengthPattern = Driver::EnumLengthPattern;
+
+	return (preg_match("~^\\s*\\(?\\s*$enumLengthPattern(?:\\s*,\\s*$enumLengthPattern)*+\\s*\\)?\\s*\$~", $length) && preg_match_all("~$enumLengthPattern~", $length, $matches)
 		? "(" . implode(",", $matches[0]) . ")"
 		: preg_replace('~^[0-9].*~', '(\0)', preg_replace('~[^-0-9,+()[\]]~', '', $length))
 	);
@@ -268,11 +266,10 @@ function process_length($length) {
 * @return string
 */
 function process_type($field, $collate = "COLLATE") {
-	global $unsigned, $jush;
 	return " $field[type]"
 		. process_length($field["length"])
-		. (preg_match(number_type(), $field["type"]) && in_array($field["unsigned"], $unsigned) ? " $field[unsigned]" : "")
-		. (preg_match('~char|text|enum|set~', $field["type"]) && $field["collation"] ? " $collate " . ($jush == "mssql" ? $field["collation"] : q($field["collation"])) : "")
+		. (preg_match(number_type(), $field["type"]) && in_array($field["unsigned"], Driver::get()->getUnsigned()) ? " $field[unsigned]" : "")
+		. (preg_match('~char|text|enum|set~', $field["type"]) && $field["collation"] ? " $collate " . (DIALECT == "mssql" ? $field["collation"] : q($field["collation"])) : "")
 	;
 }
 
@@ -302,8 +299,6 @@ function process_field($field, $type_field) {
 * @return string
 */
 function default_value($field) {
-	global $jush;
-
 	$default = $field["default"];
 	if ($default === null) return "";
 
@@ -313,7 +308,7 @@ function default_value($field) {
 
 	if (preg_match('~char|binary|text|json|enum|set~', $field["type"]) || preg_match('~^(?![a-z])~i', $default)) {
 		// MySQL requires () around default value of text and json column.
-		if ($jush == "sql" && preg_match('~text|json~', $field["type"])) {
+		if (DIALECT == "sql" && preg_match('~text|json~', $field["type"])) {
 			return " DEFAULT (" . q($default) . ")";
 		} else {
 			return " DEFAULT " . q($default);
@@ -322,7 +317,7 @@ function default_value($field) {
 		// MariaDB exports CURRENT_TIMESTAMP as a function.
 		$default = str_ireplace("current_timestamp()", "CURRENT_TIMESTAMP", $default);
 
-		return " DEFAULT " . ($jush == "sqlite" ? "($default)" : $default);
+		return " DEFAULT " . (DIALECT == "sqlite" ? "($default)" : $default);
 	}
 }
 
@@ -350,8 +345,6 @@ function type_class($type) {
  * @param array $foreign_keys returned by referencable_primary()
  */
 function edit_fields(array $fields, array $collations, $type = "TABLE", $foreign_keys = []) {
-	global $inout;
-
 	$fields = array_values($fields);
 	$comment_class = ($_POST ? $_POST["comments"] : get_setting("comments")) ? "" : "class='hidden'";
 	?>
@@ -403,7 +396,7 @@ function edit_fields(array $fields, array $collations, $type = "TABLE", $foreign
 			echo "<td class='handle jsonly'>", icon_solo("handle"), "</td>";
 		}
 		if ($type == "PROCEDURE") {
-			echo "<td>", html_select("fields[$i][inout]", explode("|", $inout), $field["inout"]), "</td>\n";
+			echo "<td>", html_select("fields[$i][inout]", Driver::get()->getInOut(), $field["inout"]), "</td>\n";
 		}
 
 		echo "<th>";
@@ -576,11 +569,10 @@ function drop_create($drop, $create, $drop_created, $test, $drop_test, $location
 * @return string
 */
 function create_trigger($on, $row) {
-	global $jush;
 	$timing_event = " $row[Timing] $row[Event]" . (preg_match('~ OF~', $row["Event"]) ? " $row[Of]" : ""); // SQL injection
 	return "CREATE TRIGGER "
 		. idf_escape($row["Trigger"])
-		. ($jush == "mssql" ? $on . $timing_event : $timing_event . $on)
+		. (DIALECT == "mssql" ? $on . $timing_event : $timing_event . $on)
 		. rtrim(" $row[Type]\n$row[Statement]", ";")
 		. ";"
 	;
@@ -592,13 +584,13 @@ function create_trigger($on, $row) {
 * @return string
 */
 function create_routine($routine, $row) {
-	global $inout, $jush;
 	$set = [];
 	$fields = (array) $row["fields"];
 	ksort($fields); // enforce fields order
+	$inOut = implode("|", Driver::get()->getInOut());
 	foreach ($fields as $field) {
 		if ($field["field"] != "") {
-			$set[] = (preg_match("~^($inout)\$~", $field["inout"]) ? "$field[inout] " : "") . idf_escape($field["field"]) . process_type($field, "CHARACTER SET");
+			$set[] = (preg_match("~^($inOut)\$~", $field["inout"]) ? "$field[inout] " : "") . idf_escape($field["field"]) . process_type($field, "CHARACTER SET");
 		}
 	}
 	$definition = rtrim($row["definition"], ";");
@@ -607,7 +599,7 @@ function create_routine($routine, $row) {
 		. " (" . implode(", ", $set) . ")"
 		. ($routine == "FUNCTION" ? " RETURNS" . process_type($row["returns"], "CHARACTER SET") : "")
 		. ($row["language"] ? " LANGUAGE $row[language]" : "")
-		. ($jush == "pgsql" ? " AS " . q($definition) : "\n$definition;")
+		. (DIALECT == "pgsql" ? " AS " . q($definition) : "\n$definition;")
 	;
 }
 
@@ -620,11 +612,12 @@ function remove_definer($query) {
 }
 
 /** Format foreign key to use in SQL query
-* @param array ["db" => string, "ns" => string, "table" => string, "source" => array, "target" => array, "on_delete" => one of $on_actions, "on_update" => one of $on_actions]
+* @param array ["db" => string, "ns" => string, "table" => string, "source" => array, "target" => array, "on_delete" => one of Driver::$onActions, "on_update" => one of $on_actions]
 * @return string
 */
 function format_foreign_key($foreign_key) {
-	global $on_actions;
+	$onActions = implode("|", Driver::get()->getOnActions());
+
 	$db = $foreign_key["db"];
 	$ns = $foreign_key["ns"];
 	return " FOREIGN KEY (" . implode(", ", array_map('AdminNeo\idf_escape', $foreign_key["source"])) . ") REFERENCES "
@@ -632,8 +625,8 @@ function format_foreign_key($foreign_key) {
 		. ($ns != "" && $ns != $_GET["ns"] ? idf_escape($ns) . "." : "")
 		. idf_escape($foreign_key["table"])
 		. " (" . implode(", ", array_map('AdminNeo\idf_escape', $foreign_key["target"])) . ")" //! reuse $name - check in older MySQL versions
-		. (preg_match("~^($on_actions)\$~", $foreign_key["on_delete"]) ? " ON DELETE $foreign_key[on_delete]" : "")
-		. (preg_match("~^($on_actions)\$~", $foreign_key["on_update"]) ? " ON UPDATE $foreign_key[on_update]" : "")
+		. (preg_match("~^($onActions)\$~", $foreign_key["on_delete"]) ? " ON DELETE $foreign_key[on_delete]" : "")
+		. (preg_match("~^($onActions)\$~", $foreign_key["on_update"]) ? " ON UPDATE $foreign_key[on_update]" : "")
 	;
 }
 
@@ -679,13 +672,11 @@ function ini_bytes($ini) {
  */
 function doc_link(array $paths, string $text = "<sup>?</sup>"): string
 {
-	global $jush, $connection;
-
-	if (!($paths[$jush] ?? null)) {
+	if (!($paths[DIALECT] ?? null)) {
 		return "";
 	}
 
-	$server_info = $connection->server_info;
+	$server_info = Connection::get()->getServerInfo();
 	$version = preg_replace('~^(\d\.?\d).*~s', '\1', $server_info); // two most significant digits
 
 	$urls = [
@@ -702,7 +693,7 @@ function doc_link(array $paths, string $text = "<sup>?</sup>"): string
 		$paths['sql'] = $paths['mariadb'] ?? str_replace(".html", "/", $paths['sql']);
 	}
 
-	return "<a href='" . h($urls[$jush] . $paths[$jush] . ($jush == 'mssql' ? "?view=sql-server-ver$version" : "")) . "'" . target_blank() . ">$text</a>";
+	return "<a href='" . h($urls[DIALECT] . $paths[DIALECT] . (DIALECT == 'mssql' ? "?view=sql-server-ver$version" : "")) . "'" . target_blank() . ">$text</a>";
 }
 
 /** Compute size of database
@@ -710,8 +701,7 @@ function doc_link(array $paths, string $text = "<sup>?</sup>"): string
 * @return string formatted
 */
 function db_size($db) {
-	global $connection;
-	if (!$connection->select_db($db)) {
+	if (!Connection::get()->selectDatabase($db)) {
 		return "?";
 	}
 	$return = 0;
@@ -726,10 +716,9 @@ function db_size($db) {
 * @return null
 */
 function set_utf8mb4($create) {
-	global $connection;
 	static $set = false;
 	if (!$set && preg_match('~\butf8mb4~i', $create)) { // possible false positive
 		$set = true;
-		echo "SET NAMES " . charset($connection) . ";\n\n";
+		echo "SET NAMES " . charset(Connection::get()) . ";\n\n";
 	}
 }

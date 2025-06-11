@@ -6,12 +6,7 @@ class Admin extends Origin
 {
 	private $values = [];
 
-	public function setOperators(?array $operators, ?string $likeOperator, ?string $regexpOperator): void
-	{
-		//
-	}
-
-	public function getOperators(): ?array
+	public function getOperators(): array
 	{
 		return ["<=", ">="];
 	}
@@ -33,9 +28,7 @@ class Admin extends Origin
 
 	public function getDatabase(): ?string
 	{
-		global $connection;
-
-		if (!$connection) {
+		if (!Connection::get()) {
 			return null;
 		}
 
@@ -44,7 +37,7 @@ class Admin extends Origin
 		if ($databases) {
 			return $databases[(information_schema($databases[0]) ? 1 : 0)];
 		} else {
-			return $connection->result("SELECT SUBSTRING_INDEX(CURRENT_USER, '@', 1)");
+			return Connection::get()->getResult("SELECT SUBSTRING_INDEX(CURRENT_USER, '@', 1)");
 		}
 	}
 
@@ -60,9 +53,7 @@ class Admin extends Origin
 
 	public function printLoginForm(): void
 	{
-		global $drivers;
-
-		$driver = $this->config->getDefaultDriver($drivers);
+		$driver = $this->config->getDefaultDriver(Drivers::getList());
 		$server = $this->config->getDefaultServer();
 
 		echo "<table class='box'>\n";
@@ -358,8 +349,6 @@ ORDER BY ORDINAL_POSITION", null, "") as $row) { //! requires MySQL 5
 
 	public function processSelectionSearch(array $fields, array $indexes): array
 	{
-		global $driver;
-
 		$return = [];
 
 		foreach ((array) $_GET["where"] as $key => $where) {
@@ -380,7 +369,7 @@ ORDER BY ORDINAL_POSITION", null, "") as $row) { //! requires MySQL 5
 							$text_type = preg_match('~char|text|enum|set~', $field["type"]);
 							$value = $this->admin->processFieldInput($field, (!$op && $text_type && preg_match('~^[^%]+$~', $val) ? "%$val%" : $val));
 
-							$conds[] = $driver->convertSearch($name, $where, $field) . ($value == "NULL" ? " IS" . ($op == ">=" ? " NOT" : "") . " $value"
+							$conds[] = Driver::get()->convertSearch($name, $where, $field) . ($value == "NULL" ? " IS" . ($op == ">=" ? " NOT" : "") . " $value"
 								: (in_array($op, $this->admin->getOperators()) || $op == "=" ? " $op $value"
 								: ($text_type ? " LIKE $value"
 								: " IN (" . str_replace(",", "', '", $value) . ")"
@@ -553,9 +542,7 @@ ORDER BY ORDINAL_POSITION", null, "") as $row) { //! requires MySQL 5
 
 	public function dumpData(string $table, string $style, string $query): void
 	{
-		global $connection;
-
-		$result = $connection->query($query, 1); // 1 - MYSQLI_USE_RESULT
+		$result = Connection::get()->query($query, 1); // 1 - MYSQLI_USE_RESULT
 		if (!$result) {
 			return;
 		}
@@ -656,7 +643,6 @@ ORDER BY ORDINAL_POSITION", null, "") as $row) { //! requires MySQL 5
 	}
 
 	private function foreignKeyOptions($table, $column, $value = null) {
-		global $connection;
 		if (list($target, $id, $name) = $this->admin->getForeignColumnInfo(column_foreign_keys($table), $column)) {
 			$return = &$this->values[$target];
 			if ($return === null) {
@@ -664,7 +650,7 @@ ORDER BY ORDINAL_POSITION", null, "") as $row) { //! requires MySQL 5
 				$return = ($table_status["Rows"] > 1000 ? "" : ["" => ""] + get_key_vals("SELECT $id, $name FROM " . table($target) . " ORDER BY 2"));
 			}
 			if (!$return && $value !== null) {
-				return $connection->result("SELECT $name FROM " . table($target) . " WHERE $id = " . q($value));
+				return Connection::get()->getResult("SELECT $name FROM " . table($target) . " WHERE $id = " . q($value));
 			}
 			return $return;
 		}
