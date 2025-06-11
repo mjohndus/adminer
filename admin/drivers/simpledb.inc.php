@@ -524,7 +524,7 @@ if (isset($_GET["simpledb"])) {
 		}
 		$connection->setError('');
 		$tag = $action . "Result";
-		return ($xml->$tag ? $xml->$tag : true);
+		return $xml->$tag ?: true;
 	}
 
 	function sdb_request_all($action, $tag, $params = [], $timeout = 0) {

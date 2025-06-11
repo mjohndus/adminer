@@ -345,7 +345,7 @@ ORDER BY 1"
 
 	function views_table($columns) {
 		$owner = where_owner('');
-		return "(SELECT $columns FROM all_views WHERE " . ($owner ? $owner : "rownum < 0") . ")";
+		return "(SELECT $columns FROM all_views WHERE " . ($owner ?: "rownum < 0") . ")";
 	}
 
 	function tables_list() {
