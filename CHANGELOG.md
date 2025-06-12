@@ -7,6 +7,9 @@ AdminNeo 5.1.0
 ### Changes
 
 - Add defaultServer and defaultDatabase configuration parameters
+- Allow creating generated columns (by @vrana)
+- MS SQL: Add support for computed columns (by @vrana)
+- SQLite: Add support for generated columns (by @vrana)
 - Refine and standardize Japanese translation (by @yama)
 
 ### Bugfixes

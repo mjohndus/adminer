@@ -218,6 +218,10 @@ if (isset($_GET["mysql"])) {
 
 			$this->unsigned = ["unsigned", "zerofill", "unsigned zerofill"];
 
+			if (min_version('5.7', '10.2', $connection)) {
+				$this->generated = ["STORED", "VIRTUAL"];
+			}
+
 			$this->operators = [
 				"=", "<", ">", "<=", ">=", "!=",
 				"LIKE", "LIKE %%", "NOT LIKE",
@@ -569,8 +573,9 @@ if (isset($_GET["mysql"])) {
 		foreach (get_rows("SELECT * FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = " . q($table) . " ORDER BY ORDINAL_POSITION") as $row) {
 			$field = $row["COLUMN_NAME"];
 			$type = $row["COLUMN_TYPE"];
+			$extra = $row["EXTRA"];
 			// https://mariadb.com/kb/en/library/show-columns/, https://github.com/vrana/adminer/pull/359#pullrequestreview-276677186
-			$generated = preg_match('~^(VIRTUAL|PERSISTENT|STORED)~', $row["EXTRA"]);
+			preg_match('~^(VIRTUAL|PERSISTENT|STORED)~', $extra, $generated);
 			preg_match('~^([^( ]+)(?:\((.+)\))?( unsigned)?( zerofill)?$~', $type, $type_matches);
 
 			$default = $maria && $row["COLUMN_DEFAULT"] == "NULL" ? null : $row["COLUMN_DEFAULT"];
@@ -594,24 +599,29 @@ if (isset($_GET["mysql"])) {
 				}
 			}
 
+			$generated_expression = $row["GENERATION_EXPRESSION"];
+			// MySQL:
+			//   - concat(`name`,' ',`surname`) is stored as concat(`name`,_utf8mb4\\\' \\\',`surname`)
+			//   - length('test') is stored as length(_utf8mb4\'test\')
+			if (!$maria) {
+				$generated_expression = preg_replace("~(^|,|\()(_\w+)?('.*')($|,|\))~", '\1\3\4', stripslashes($generated_expression));
+			}
+
 			$return[$field] = [
 				"field" => $field,
 				"full_type" => $type,
 				"type" => $type_matches[1],
 				"length" => $type_matches[2],
 				"unsigned" => ltrim($type_matches[3] . $type_matches[4]),
-				"default" => ($generated
-					? ($maria ? $row["GENERATION_EXPRESSION"] : stripslashes($row["GENERATION_EXPRESSION"]))
-					: $default
-				),
+				"default" => ($generated ? $generated_expression : $default),
 				"null" => ($row["IS_NULLABLE"] == "YES"),
-				"auto_increment" => ($row["EXTRA"] == "auto_increment"),
-				"on_update" => (preg_match('~\bon update (\w+)~i', $row["EXTRA"], $type_matches) ? $type_matches[1] : ""), //! available since MySQL 5.1.23
+				"auto_increment" => ($extra == "auto_increment"),
+				"on_update" => (preg_match('~\bon update (\w+)~i', $extra, $type_matches) ? $type_matches[1] : ""), //! available since MySQL 5.1.23
 				"collation" => $row["COLLATION_NAME"],
 				"privileges" => array_flip(explode(",", $row["PRIVILEGES"])) + ["where" => 1, "order" => 1],
 				"comment" => $row["COLUMN_COMMENT"],
 				"primary" => ($row["COLUMN_KEY"] == "PRI"),
-				"generated" => $generated,
+				"generated" => ($generated[1] == "PERSISTENT" ? "STORED" : $generated[1]),
 			];
 		}
 		return $return;
@@ -792,10 +802,17 @@ if (isset($_GET["mysql"])) {
 	function alter_table($table, $name, $fields, $foreign, $comment, $engine, $collation, $auto_increment, $partitioning) {
 		$alter = [];
 		foreach ($fields as $field) {
-			$alter[] = ($field[1]
-				? ($table != "" ? ($field[0] != "" ? "CHANGE " . idf_escape($field[0]) : "ADD") : " ") . " " . implode($field[1]) . ($table != "" ? $field[2] : "")
-				: "DROP " . idf_escape($field[0])
-			);
+			if ($field[1]) {
+				$default = $field[1][3];
+				if (str_contains($default, " GENERATED")) {
+					// Swap DEFAULT and NULL. MariaDB doesn't support NULL on generated columns.
+					$field[1][3] = str_contains(Connection::get()->getServerInfo(), "MariaDB") ? "" : $field[1][2];
+					$field[1][2] = $default;
+				}
+				$alter[] = ($table != "" ? ($field[0] != "" ? "CHANGE " . idf_escape($field[0]) : "ADD") : " ") . " " . implode($field[1]) . ($table != "" ? $field[2] : "");
+			} else {
+				$alter[] = "DROP " . idf_escape($field[0]);
+			}
 		}
 		$alter = array_merge($alter, $foreign);
 		$status = ($comment !== null ? " COMMENT=" . q($comment) : "")

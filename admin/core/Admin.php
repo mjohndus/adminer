@@ -415,7 +415,7 @@ class Admin extends Origin
 			$default = h($field["default"]);
 			if (isset($field["default"])) {
 				echo " <span title='" . lang('Default value') . "'>[<b>";
-				echo $field["generated"] ? "<code class='jush-'" . DIALECT . ">$default</code>" : $default;
+				echo $field["generated"] ? "<code class='jush-" . DIALECT . "'>$default</code>" : $default;
 				echo "</b>]</span>";
 			}
 
