@@ -599,16 +599,21 @@ if (isset($_GET["mysql"])) {
 				}
 			}
 
+			$generated_expression = $row["GENERATION_EXPRESSION"];
+			// MySQL:
+			//   - concat(`name`,' ',`surname`) is stored as concat(`name`,_utf8mb4\\\' \\\',`surname`)
+			//   - length('test') is stored as length(_utf8mb4\'test\')
+			if (!$maria) {
+				$generated_expression = preg_replace("~(^|,|\()(_\w+)?('.*')($|,|\))~", '\1\3\4', stripslashes($generated_expression));
+			}
+
 			$return[$field] = [
 				"field" => $field,
 				"full_type" => $type,
 				"type" => $type_matches[1],
 				"length" => $type_matches[2],
 				"unsigned" => ltrim($type_matches[3] . $type_matches[4]),
-				"default" => ($generated
-					? ($maria ? $row["GENERATION_EXPRESSION"] : stripslashes($row["GENERATION_EXPRESSION"]))
-					: $default
-				),
+				"default" => ($generated ? $generated_expression : $default),
 				"null" => ($row["IS_NULLABLE"] == "YES"),
 				"auto_increment" => ($extra == "auto_increment"),
 				"on_update" => (preg_match('~\bon update (\w+)~i', $extra, $type_matches) ? $type_matches[1] : ""), //! available since MySQL 5.1.23
