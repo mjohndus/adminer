@@ -367,6 +367,36 @@
 </tbody></table>
 <table cellpadding="1" cellspacing="1" border="1">
 <thead>
+<tr><td rowspan="1" colspan="3" data-tags="">Generated columns</td></tr>
+</thead>
+<tbody>
+<tr><td>open</td><td>/adminneo/tests/admin.php?mysql=&username=test&db=adminneo_test&create=<datalist></datalist></td><td></td></tr>
+<tr><td>type</td><td>name=name<datalist></datalist></td><td>generated</td></tr>
+<tr><td>type</td><td>name=fields[1][field]<datalist></datalist></td><td>normal</td></tr>
+<tr><td>type</td><td>name=fields[1.1][field]<datalist></datalist></td><td>virtual</td></tr>
+<tr><td>select</td><td>name=fields[1.1][generated]<datalist></datalist></td><td>label=VIRTUAL</td></tr>
+<tr><td>type</td><td>name=fields[1.1][default]<datalist></datalist></td><td>normal + 100</td></tr>
+<tr><td>type</td><td>name=fields[1.11][field]<datalist></datalist></td><td>stored</td></tr>
+<tr><td>select</td><td>name=fields[1.11][generated]<datalist></datalist></td><td>label=STORED</td></tr>
+<tr><td>type</td><td>name=fields[1.11][default]<datalist></datalist></td><td>normal + 200</td></tr>
+<tr><td>clickAndWait</td><td>//input[@value='Save']<datalist></datalist></td><td></td></tr>
+<tr><td>verifyTextPresent</td><td>`normal` + 100<datalist></datalist></td><td></td></tr>
+<tr><td>verifyTextPresent</td><td>`normal` + 200<datalist></datalist></td><td></td></tr>
+<tr><td>click</td><td>link=Alter indexes<datalist></datalist></td><td></td></tr>
+<tr><td>select</td><td>name=indexes[1][columns][1]<datalist></datalist></td><td>label=virtual</td></tr>
+<tr><td>select</td><td>name=indexes[1][columns][11]<datalist></datalist></td><td>label=stored</td></tr>
+<tr><td>clickAndWait</td><td>//input[@value='Save']<datalist></datalist></td><td></td></tr>
+<tr><td>verifyTextPresent</td><td>Indexes have been altered.<datalist></datalist></td><td></td></tr>
+<tr><td>click</td><td>link=New item<datalist></datalist></td><td></td></tr>
+<tr><td>verifyTextNotPresent</td><td>virtual<datalist></datalist></td><td></td></tr>
+<tr><td>verifyTextNotPresent</td><td>stored<datalist></datalist></td><td></td></tr>
+<tr><td>type</td><td>name=fields[normal]<datalist></datalist></td><td>20</td></tr>
+<tr><td>click</td><td>xpath=//input[@value='Save']<datalist></datalist></td><td></td></tr>
+<tr><td>verifyTextPresent</td><td>120<datalist></datalist></td><td></td></tr>
+<tr><td>verifyTextPresent</td><td>220<datalist></datalist></td><td></td></tr>
+</tbody></table>
+<table cellpadding="1" cellspacing="1" border="1">
+<thead>
 <tr><td rowspan="1" colspan="3" data-tags="">Variables</td></tr>
 </thead>
 <tbody>
