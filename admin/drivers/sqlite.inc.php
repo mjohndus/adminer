@@ -223,7 +223,7 @@ if (isset($_GET["sqlite"])) {
 
 		public function checkConstraints(string $table): array
 		{
-			preg_match_all('~ CHECK *(\( *(((?>[^()]*[^() ])|(?1))*) *\))~', $this->connection->getResult("SELECT sql FROM sqlite_master WHERE type = 'table' AND name = " . q($table)), $matches); //! could be inside a comment
+			preg_match_all('~ CHECK *(\( *(((?>[^()]*[^() ])|(?1))*) *\))~', $this->connection->getValue("SELECT sql FROM sqlite_master WHERE type = 'table' AND name = " . q($table)), $matches); //! could be inside a comment
 			return array_combine($matches[2], $matches[2]);
 		}
 
@@ -271,14 +271,14 @@ if (isset($_GET["sqlite"])) {
 	}
 
 	function limit1($table, $query, $where, $separator = "\n") {
-		return (preg_match('~^INTO~', $query) || Connection::get()->getResult("SELECT sqlite_compileoption_used('ENABLE_UPDATE_DELETE_LIMIT')")
+		return (preg_match('~^INTO~', $query) || Connection::get()->getValue("SELECT sqlite_compileoption_used('ENABLE_UPDATE_DELETE_LIMIT')")
 			? limit($query, $where, 1, 0, $separator)
 			: " $query WHERE rowid = (SELECT rowid FROM " . table($table) . $where . $separator . "LIMIT 1)" //! use primary key in tables with WITHOUT rowid
 		);
 	}
 
 	function db_collation($db, $collations) {
-		return Connection::get()->getResult("PRAGMA encoding"); // there is no database list so $db == DB
+		return Connection::get()->getValue("PRAGMA encoding"); // there is no database list so $db == DB
 	}
 
 	function engines() {
@@ -300,7 +300,7 @@ if (isset($_GET["sqlite"])) {
 	function table_status($name = "") {
 		$return = [];
 		foreach (get_rows("SELECT name AS Name, type AS Engine, 'rowid' AS Oid, '' AS Auto_increment FROM sqlite_master WHERE type IN ('table', 'view') " . ($name != "" ? "AND name = " . q($name) : "ORDER BY name")) as $row) {
-			$row["Rows"] = Connection::get()->getResult("SELECT COUNT(*) FROM " . idf_escape($row["Name"]));
+			$row["Rows"] = Connection::get()->getValue("SELECT COUNT(*) FROM " . idf_escape($row["Name"]));
 			$return[$row["Name"]] = $row;
 		}
 		foreach (get_rows("SELECT * FROM sqlite_sequence", null, "") as $row) {
@@ -314,7 +314,7 @@ if (isset($_GET["sqlite"])) {
 	}
 
 	function fk_support($table_status) {
-		return !Connection::get()->getResult("SELECT sqlite_compileoption_used('OMIT_FOREIGN_KEY')");
+		return !Connection::get()->getValue("SELECT sqlite_compileoption_used('OMIT_FOREIGN_KEY')");
 	}
 
 	function fields($table) {
@@ -342,7 +342,7 @@ if (isset($_GET["sqlite"])) {
 				$primary = $name;
 			}
 		}
-		$sql = Connection::get()->getResult("SELECT sql FROM sqlite_master WHERE type = 'table' AND name = " . q($table));
+		$sql = Connection::get()->getValue("SELECT sql FROM sqlite_master WHERE type = 'table' AND name = " . q($table));
 		$idf = '(("[^"]*+")+|[a-z0-9_]+)';
 		preg_match_all('~' . $idf . '\s+text\s+COLLATE\s+(\'[^\']+\'|\S+)~i', $sql, $matches, PREG_SET_ORDER);
 		foreach ($matches as $match) {
@@ -366,7 +366,7 @@ if (isset($_GET["sqlite"])) {
 			$connection = Connection::get();
 		}
 		$return = [];
-		$sql = $connection->getResult("SELECT sql FROM sqlite_master WHERE type = 'table' AND name = " . q($table));
+		$sql = $connection->getValue("SELECT sql FROM sqlite_master WHERE type = 'table' AND name = " . q($table));
 		if (preg_match('~\bPRIMARY\s+KEY\s*\((([^)"]+|"[^"]*"|`[^`]*`)++)~i', $sql, $match)) {
 			$return[""] = ["type" => "PRIMARY", "columns" => [], "lengths" => [], "descs" => []];
 			preg_match_all('~((("[^"]*+")+|(?:`[^`]*+`)+)|(\S+))(\s+(ASC|DESC))?(,\s*|$)~i', $match[1], $matches, PREG_SET_ORDER);
@@ -421,7 +421,7 @@ if (isset($_GET["sqlite"])) {
 	}
 
 	function view($name) {
-		return ["select" => preg_replace('~^(?:[^`"[]+|`[^`]*`|"[^"]*")* AS\s+~iU', '', Connection::get()->getResult("SELECT sql FROM sqlite_master WHERE type = 'view' AND name = " . q($name)))]; //! identifiers may be inside []
+		return ["select" => preg_replace('~^(?:[^`"[]+|`[^`]*`|"[^"]*")* AS\s+~iU', '', Connection::get()->getValue("SELECT sql FROM sqlite_master WHERE type = 'view' AND name = " . q($name)))]; //! identifiers may be inside []
 	}
 
 	function collations() {
@@ -657,7 +657,7 @@ if (isset($_GET["sqlite"])) {
 				$triggers[] = "CREATE TRIGGER " . idf_escape($trigger_name) . " " . implode(" ", $timing_event) . " ON " . table($name) . "\n$trigger[Statement]";
 			}
 
-			$auto_increment = $auto_increment ? 0 : Connection::get()->getResult("SELECT seq FROM sqlite_sequence WHERE name = " . q($table)); // if $auto_increment is set then it will be updated later
+			$auto_increment = $auto_increment ? 0 : Connection::get()->getValue("SELECT seq FROM sqlite_sequence WHERE name = " . q($table)); // if $auto_increment is set then it will be updated later
 			if (!queries("DROP TABLE " . table($table)) // drop before creating indexes and triggers to allow using old names
 				|| ($table == $name && !queries("ALTER TABLE " . table($temp_name) . " RENAME TO " . table($name)))
 				|| !alter_indexes($name, $indexes)
@@ -732,7 +732,7 @@ if (isset($_GET["sqlite"])) {
 		$trigger_options = trigger_options();
 		preg_match(
 			"~^CREATE\\s+TRIGGER\\s*$idf\\s*(" . implode("|", $trigger_options["Timing"]) . ")\\s+([a-z]+)(?:\\s+OF\\s+($idf))?\\s+ON\\s*$idf\\s*(?:FOR\\s+EACH\\s+ROW\\s)?(.*)~is",
-			Connection::get()->getResult("SELECT sql FROM sqlite_master WHERE type = 'trigger' AND name = " . q($name)),
+			Connection::get()->getValue("SELECT sql FROM sqlite_master WHERE type = 'trigger' AND name = " . q($name)),
 			$match
 		);
 		$of = $match[3];
@@ -768,7 +768,7 @@ if (isset($_GET["sqlite"])) {
 	}
 
 	function last_id() {
-		return Connection::get()->getResult("SELECT LAST_INSERT_ROWID()");
+		return Connection::get()->getValue("SELECT LAST_INSERT_ROWID()");
 	}
 
 	function explain(Connection $connection, string $query)
@@ -784,7 +784,7 @@ if (isset($_GET["sqlite"])) {
 	}
 
 	function create_sql($table, $auto_increment, $style) {
-		$return = Connection::get()->getResult("SELECT sql FROM sqlite_master WHERE type IN ('table', 'view') AND name = " . q($table));
+		$return = Connection::get()->getValue("SELECT sql FROM sqlite_master WHERE type IN ('table', 'view') AND name = " . q($table));
 		foreach (indexes($table) as $name => $index) {
 			// Skip primary key and internal indexes.
 			if ($name == '' || strpos($name, "sqlite_") === 0) {

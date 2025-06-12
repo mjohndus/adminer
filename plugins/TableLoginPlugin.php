@@ -65,7 +65,7 @@ class TableLoginPlugin extends Plugin
 			$dbPrefix = idf_escape($this->database) . ".";
 		}
 
-		$hash = Connection::get()->getResult(
+		$hash = Connection::get()->getValue(
 			"SELECT password FROM $dbPrefix" . idf_escape($this->table) . " WHERE username = " . q($username)
 		);
 

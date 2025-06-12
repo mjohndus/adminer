@@ -1466,7 +1466,7 @@ function slow_query($query) {
 	$timeout = Admin::get()->getQueryTimeout();
 	$slow_query = Driver::get()->slowQuery($query, $timeout);
 	if (!$slow_query && support("kill") && ($connection = connect()) && ($db == "" || $connection->selectDatabase($db))) {
-		$kill = $connection->getResult(connection_id()); // MySQL and MySQLi can use thread_id but it's not in PDO_MySQL
+		$kill = $connection->getValue(connection_id()); // MySQL and MySQLi can use thread_id but it's not in PDO_MySQL
 		?>
 <script<?php echo nonce(); ?>>
 var timeout = setTimeout(function () {

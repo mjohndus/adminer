@@ -92,9 +92,16 @@ abstract class Connection
 	public abstract function query(string $query, bool $unbuffered = false);
 
 	/**
-	 * @return mixed
+	 * @deprecated
 	 */
-	public function getResult(string $query, int $field = 0)
+	public function getResult(string $query, int $field = 0) {
+		return $this->getValue($query, $field);
+	}
+
+	/**
+	 * @return mixed|false Returns false on error.
+	 */
+	public function getValue(string $query, int $fieldIndex = 0)
 	{
 		$result = $this->query($query);
 		if (!is_object($result)) {
@@ -103,7 +110,7 @@ abstract class Connection
 
 		$row = $result->fetch_row();
 
-		return $row ? $row[$field] : false;
+		return $row ? $row[$fieldIndex] : false;
 	}
 
 	/**

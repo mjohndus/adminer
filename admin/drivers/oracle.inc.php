@@ -91,14 +91,14 @@ if (isset($_GET["oracle"])) {
 				return $return;
 			}
 
-			public function getResult(string $query, int $field = 0)
+			public function getValue(string $query, int $fieldIndex = 0)
 			{
 				$result = $this->query($query);
 				if (!is_object($result) || !oci_fetch($result->_result)) {
 					return false;
 				}
 
-				return oci_result($result->_result, $field + 1);
+				return oci_result($result->_result, $fieldIndex + 1);
 			}
 		}
 
@@ -325,7 +325,7 @@ ORDER BY 1"
 	}
 
 	function db_collation($db, $collations) {
-		return Connection::get()->getResult("SELECT value FROM nls_database_parameters WHERE parameter = 'NLS_CHARACTERSET'"); //! respect $db
+		return Connection::get()->getValue("SELECT value FROM nls_database_parameters WHERE parameter = 'NLS_CHARACTERSET'"); //! respect $db
 	}
 
 	function engines() {
@@ -333,7 +333,7 @@ ORDER BY 1"
 	}
 
 	function logged_user() {
-		return Connection::get()->getResult("SELECT USER FROM DUAL");
+		return Connection::get()->getValue("SELECT USER FROM DUAL");
 	}
 
 	function where_owner($prefix, $owner = "owner") {
@@ -360,7 +360,7 @@ ORDER BY 1"
 	function count_tables($databases) {
 		$return = [];
 		foreach ($databases as $db) {
-			$return[$db] = Connection::get()->getResult("SELECT COUNT(*) FROM all_tables WHERE tablespace_name = " . q($db));
+			$return[$db] = Connection::get()->getValue("SELECT COUNT(*) FROM all_tables WHERE tablespace_name = " . q($db));
 		}
 		return $return;
 	}
@@ -580,7 +580,7 @@ AND c_src.TABLE_NAME = " . q($table);
 
 	function get_schema(): string
 	{
-		return Connection::get()->getResult("SELECT sys_context('USERENV', 'SESSION_USER') FROM dual");
+		return Connection::get()->getValue("SELECT sys_context('USERENV', 'SESSION_USER') FROM dual");
 	}
 
 	function set_schema(string $schema, ?Connection $connection = null): bool

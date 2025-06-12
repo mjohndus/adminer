@@ -119,14 +119,14 @@ if (isset($_GET["pgsql"])) {
 				return $return;
 			}
 
-			public function getResult(string $query, int $field = 0)
+			public function getValue(string $query, int $fieldIndex = 0)
 			{
 				$result = $this->query($query);
 				if (!$result || !$result->num_rows) {
 					return false;
 				}
 
-				return pg_fetch_result($result->_result, 0, $field);
+				return pg_fetch_result($result->_result, 0, $fieldIndex);
 			}
 
 			public function warnings(): ?string
@@ -384,7 +384,7 @@ if (isset($_GET["pgsql"])) {
 		{
 			static $c_style;
 			if ($c_style === null) {
-				$c_style = ($this->connection->getResult("SHOW standard_conforming_strings") == "off");
+				$c_style = ($this->connection->getValue("SHOW standard_conforming_strings") == "off");
 			}
 			return $c_style;
 		}
@@ -443,7 +443,7 @@ ORDER BY datname");
 	}
 
 	function db_collation($db, $collations) {
-		return Connection::get()->getResult("SELECT datcollate FROM pg_database WHERE datname = " . q($db));
+		return Connection::get()->getValue("SELECT datcollate FROM pg_database WHERE datname = " . q($db));
 	}
 
 	function engines() {
@@ -451,7 +451,7 @@ ORDER BY datname");
 	}
 
 	function logged_user() {
-		return Connection::get()->getResult("SELECT user");
+		return Connection::get()->getValue("SELECT user");
 	}
 
 	function tables_list() {
@@ -481,7 +481,7 @@ ORDER BY 1";
 	function table_status($name = "") {
 		static $has_size;
 		if ($has_size === null) {
-			$has_size = Connection::get()->getResult("SELECT 'pg_table_size'::regproc");
+			$has_size = Connection::get()->getValue("SELECT 'pg_table_size'::regproc");
 		}
 		$return = [];
 		foreach (
@@ -562,7 +562,7 @@ ORDER BY a.attnum"
 			$connection = Connection::get();
 		}
 		$return = [];
-		$table_oid = $connection->getResult("SELECT oid FROM pg_class WHERE relnamespace = (SELECT oid FROM pg_namespace WHERE nspname = current_schema()) AND relname = " . q($table));
+		$table_oid = $connection->getValue("SELECT oid FROM pg_class WHERE relnamespace = (SELECT oid FROM pg_namespace WHERE nspname = current_schema()) AND relname = " . q($table));
 		$columns = get_key_vals("SELECT attnum, attname FROM pg_attribute WHERE attrelid = $table_oid AND attnum > 0", $connection);
 		foreach (get_rows("SELECT relname, indisunique::int, indisprimary::int, indkey, indoption, (indpred IS NOT NULL)::int as indispartial FROM pg_index i, pg_class ci WHERE i.indrelid = $table_oid AND ci.oid = i.indexrelid ORDER BY indisprimary DESC, indisunique DESC", $connection) as $row) {
 			$relname = $row["relname"];
@@ -607,7 +607,7 @@ ORDER BY conkey, conname") as $row) {
 	}
 
 	function view($name) {
-		return ["select" => trim(Connection::get()->getResult("SELECT pg_get_viewdef(" . Connection::get()->getResult("SELECT oid FROM pg_class WHERE relnamespace = (SELECT oid FROM pg_namespace WHERE nspname = current_schema()) AND relname = " . q($name)) . ")"))];
+		return ["select" => trim(Connection::get()->getValue("SELECT pg_get_viewdef(" . Connection::get()->getValue("SELECT oid FROM pg_class WHERE relnamespace = (SELECT oid FROM pg_namespace WHERE nspname = current_schema()) AND relname = " . q($name)) . ")"))];
 	}
 
 	function collations() {
@@ -863,7 +863,7 @@ ORDER BY conkey, conname") as $row) {
 	function found_rows($table_status, $where) {
 		if (preg_match(
 			"~ rows=([0-9]+)~",
-			Connection::get()->getResult("EXPLAIN SELECT * FROM " . idf_escape($table_status["Name"]) . ($where ? " WHERE " . implode(" AND ", $where) : "")),
+			Connection::get()->getValue("EXPLAIN SELECT * FROM " . idf_escape($table_status["Name"]) . ($where ? " WHERE " . implode(" AND ", $where) : "")),
 			$regs
 		)) {
 			return $regs[1];
@@ -893,7 +893,7 @@ AND typelem = 0"
 
 	function get_schema(): string
 	{
-		return Connection::get()->getResult("SELECT current_schema()");
+		return Connection::get()->getValue("SELECT current_schema()");
 	}
 
 	function set_schema(string $schema, ?Connection $connection = null): bool
@@ -1051,6 +1051,6 @@ AND typelem = 0"
 	}
 
 	function max_connections() {
-		return Connection::get()->getResult("SHOW max_connections");
+		return Connection::get()->getValue("SHOW max_connections");
 	}
 }

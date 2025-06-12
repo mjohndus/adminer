@@ -37,7 +37,7 @@ class Admin extends Origin
 		if ($databases) {
 			return $databases[(information_schema($databases[0]) ? 1 : 0)];
 		} else {
-			return Connection::get()->getResult("SELECT SUBSTRING_INDEX(CURRENT_USER, '@', 1)");
+			return Connection::get()->getValue("SELECT SUBSTRING_INDEX(CURRENT_USER, '@', 1)");
 		}
 	}
 
@@ -650,7 +650,7 @@ ORDER BY ORDINAL_POSITION", null, "") as $row) { //! requires MySQL 5
 				$return = ($table_status["Rows"] > 1000 ? "" : ["" => ""] + get_key_vals("SELECT $id, $name FROM " . table($target) . " ORDER BY 2"));
 			}
 			if (!$return && $value !== null) {
-				return Connection::get()->getResult("SELECT $name FROM " . table($target) . " WHERE $id = " . q($value));
+				return Connection::get()->getValue("SELECT $name FROM " . table($target) . " WHERE $id = " . q($value));
 			}
 			return $return;
 		}

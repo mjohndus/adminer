@@ -359,7 +359,7 @@ if (isset($_GET["mysql"])) {
         {
 			static $c_style;
 			if ($c_style === null) {
-				$sql_mode = $this->connection->getResult("SHOW VARIABLES LIKE 'sql_mode'", 1);
+				$sql_mode = $this->connection->getValue("SHOW VARIABLES LIKE 'sql_mode'", 1);
 				$c_style = (strpos($sql_mode, 'NO_BACKSLASH_ESCAPES') === false);
 			}
 			return $c_style;
@@ -463,7 +463,7 @@ if (isset($_GET["mysql"])) {
 	*/
 	function db_collation($db, $collations) {
 		$return = null;
-		$create = Connection::get()->getResult("SHOW CREATE DATABASE " . idf_escape($db), 1);
+		$create = Connection::get()->getValue("SHOW CREATE DATABASE " . idf_escape($db), 1);
 		if (preg_match('~ COLLATE ([^ ]+)~', $create, $match)) {
 			$return = $match[1];
 		} elseif (preg_match('~ CHARACTER SET ([^ ]+)~', $create, $match)) {
@@ -490,7 +490,7 @@ if (isset($_GET["mysql"])) {
 	* @return string
 	*/
 	function logged_user() {
-		return Connection::get()->getResult("SELECT USER()");
+		return Connection::get()->getValue("SELECT USER()");
 	}
 
 	/** Get tables list
@@ -652,7 +652,7 @@ if (isset($_GET["mysql"])) {
 	function foreign_keys($table) {
 		static $pattern = '(?:`(?:[^`]|``)+`|"(?:[^"]|"")+")';
 		$return = [];
-		$create_table = Connection::get()->getResult("SHOW CREATE TABLE " . table($table), 1);
+		$create_table = Connection::get()->getValue("SHOW CREATE TABLE " . table($table), 1);
 		if ($create_table) {
 			$onActions = implode("|", Driver::get()->getOnActions());
 			preg_match_all("~CONSTRAINT ($pattern) FOREIGN KEY ?\\(((?:$pattern,? ?)+)\\) REFERENCES ($pattern)(?:\\.($pattern))? \\(((?:$pattern,? ?)+)\\)(?: ON DELETE ($onActions))?(?: ON UPDATE ($onActions))?~", $create_table, $matches, PREG_SET_ORDER);
@@ -677,7 +677,7 @@ if (isset($_GET["mysql"])) {
 	* @return array ["select" => ]
 	*/
 	function view($name) {
-		return ["select" => preg_replace('~^(?:[^`]|`[^`]*`)*\s+AS\s+~isU', '', Connection::get()->getResult("SHOW CREATE VIEW " . table($name), 1))];
+		return ["select" => preg_replace('~^(?:[^`]|`[^`]*`)*\s+AS\s+~isU', '', Connection::get()->getValue("SHOW CREATE VIEW " . table($name), 1))];
 	}
 
 	/** Get sorted grouped list of collations
@@ -986,7 +986,7 @@ if (isset($_GET["mysql"])) {
 		$type_pattern = "((" . implode("|", array_merge(array_keys(Driver::get()->getTypes()), $aliases)) . ")\\b(?:\\s*\\(((?:[^'\")]|$enumLengthPattern)++)\\))?\\s*(zerofill\\s*)?(unsigned(?:\\s+zerofill)?)?)(?:\\s*(?:CHARSET|CHARACTER\\s+SET)\\s*['\"]?([^'\"\\s,]+)['\"]?)?";
 		$inOut = implode("|", Driver::get()->getInOut());
 		$pattern = "$space*(" . ($type == "FUNCTION" ? "" : $inOut) . ")?\\s*(?:`((?:[^`]|``)*)`\\s*|\\b(\\S+)\\s+)$type_pattern";
-		$create = Connection::get()->getResult("SHOW CREATE $type " . idf_escape($name), 2);
+		$create = Connection::get()->getValue("SHOW CREATE $type " . idf_escape($name), 2);
 		preg_match("~\\(((?:$pattern\\s*,?)*)\\)\\s*" . ($type == "FUNCTION" ? "RETURNS\\s+$type_pattern\\s+" : "") . "(.*)~is", $create, $match);
 		$fields = [];
 		preg_match_all("~$pattern\\s*,?~is", $match[1], $matches, PREG_SET_ORDER);
@@ -1046,7 +1046,7 @@ if (isset($_GET["mysql"])) {
 	* @return string
 	*/
 	function last_id() {
-		return Connection::get()->getResult("SELECT LAST_INSERT_ID()"); // mysql_insert_id() truncates bigint
+		return Connection::get()->getValue("SELECT LAST_INSERT_ID()"); // mysql_insert_id() truncates bigint
 	}
 
 	/**
@@ -1075,7 +1075,7 @@ if (isset($_GET["mysql"])) {
 	* @return string
 	*/
 	function create_sql($table, $auto_increment, $style) {
-		$return = Connection::get()->getResult("SHOW CREATE TABLE " . table($table), 1);
+		$return = Connection::get()->getValue("SHOW CREATE TABLE " . table($table), 1);
 		if (!$auto_increment) {
 			$return = preg_replace('~ AUTO_INCREMENT=\d+~', '', $return); //! skip comments
 		}
@@ -1194,6 +1194,6 @@ if (isset($_GET["mysql"])) {
 	* @return int
 	*/
 	function max_connections() {
-		return Connection::get()->getResult("SELECT @@max_connections");
+		return Connection::get()->getValue("SELECT @@max_connections");
 	}
 }

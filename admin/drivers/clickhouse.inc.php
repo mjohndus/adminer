@@ -109,7 +109,7 @@ if (isset($_GET["clickhouse"])) {
 				return "'" . addcslashes($string, "\\'") . "'";
 			}
 
-			public function getResult(string $query, int $field = 0)
+			public function getValue(string $query, int $fieldIndex = 0)
 			{
 				$result = $this->query($query);
 
