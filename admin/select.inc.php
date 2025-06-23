@@ -412,9 +412,11 @@ if (!$columns && support("table")) {
 				}
 				$unique_idf = "";
 				foreach ($unique_array as $key => $val) {
-					if ((DIALECT == "sql" || DIALECT == "pgsql") && preg_match('~char|text|enum|set~', $fields[$key]["type"]) && strlen($val) > 64) {
+					$field = $fields[$key] ?? null;
+
+					if ((DIALECT == "sql" || DIALECT == "pgsql") && $field && preg_match('~char|text|enum|set~', $field["type"]) && strlen($val) > 64) {
 						$key = (strpos($key, '(') ? $key : idf_escape($key)); //! columns looking like functions
-						$key = "MD5(" . (DIALECT != 'sql' || preg_match("~^utf8~", $fields[$key]["collation"] ?? "") ? $key : "CONVERT($key USING " . charset(Connection::get()) . ")") . ")";
+						$key = "MD5(" . (DIALECT != 'sql' || preg_match("~^utf8~", $field["collation"] ?? "") ? $key : "CONVERT($key USING " . charset(Connection::get()) . ")") . ")";
 						$val = md5($val);
 					}
 					$unique_idf .= "&" . ($val !== null ? urlencode("where[" . bracket_escape($key) . "]") . "=" . urlencode($val === false ? "f" : $val) : "null%5B%5D=" . urlencode($key));
@@ -431,8 +433,8 @@ if (!$columns && support("table")) {
 
 				foreach ($row as $key => $val) {
 					if (isset($names[$key])) {
-						$field = $fields[$key];
-						$val = Driver::get()->value($val, $field);
+						$field = $fields[$key] ?? null;
+						$val = $field ? Connection::get()->formatValue($val, $field) : $val;
 
 						$link = "";
 						if ($field && preg_match('~blob|bytea|raw|file~', $field["type"]) && $val != "") {

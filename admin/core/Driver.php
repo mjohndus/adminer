@@ -361,20 +361,6 @@ abstract class Driver
 	}
 
 	/**
-	 * Converts value returned by database to actual value.
-	 *
-	 * @param ?string $val Value.
-	 * @param array $field Single field returned from fields().
-	 */
-	public function value(?string $val, array $field): ?string
-	{
-		return (method_exists($this->connection, 'value')
-			? $this->connection->value($val, $field)
-			: (is_resource($val) ? stream_get_contents($val) : $val)
-		);
-	}
-
-	/**
 	 * Quotes binary string.
 	 */
 	public function quoteBinary(string $string): string

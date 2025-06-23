@@ -87,6 +87,17 @@ abstract class Connection
 	public abstract function quote(string $string): string;
 
 	/**
+	 * Converts the value returned by database to the actual value.
+	 *
+	 * @param ?string $value Original value.
+	 * @param array $field Single field returned from fields().
+	 */
+	public function formatValue(?string $value, array $field): ?string
+	{
+		return $value;
+	}
+
+	/**
 	 * @return Result|bool
 	 */
 	public abstract function query(string $query, bool $unbuffered = false);

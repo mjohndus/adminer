@@ -9,5 +9,5 @@ header("Content-Disposition: attachment; filename=" . friendly_url("$TABLE-" . i
 $select = [idf_escape($_GET["field"])];
 $result = Driver::get()->select($TABLE, $select, [where($_GET, $fields)], $select);
 $row = ($result ? $result->fetch_row() : []);
-echo Driver::get()->value($row[0], $fields[$_GET["field"]]);
+echo Connection::get()->formatValue($row[0], $fields[$_GET["field"]]);
 exit; // don't output footer

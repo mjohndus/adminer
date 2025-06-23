@@ -67,9 +67,13 @@ if (isset($_GET["pgsql"])) {
 				return pg_escape_literal($this->connection, $string);
 			}
 
-			public function value(?string $val, array $field): ?string
+			public function formatValue(?string $value, array $field): ?string
 			{
-				return ($field["type"] == "bytea" && $val !== null ? pg_unescape_bytea($val) : $val);
+				if ($field["type"] == "bytea" && $value !== null) {
+					return pg_unescape_bytea($value);
+				}
+
+				return parent::formatValue($value, $field);
 			}
 
 			public function selectDatabase(string $name): bool
