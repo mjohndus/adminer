@@ -3,8 +3,21 @@
 namespace AdminNeo;
 
 return [
-	// label for database system selection (MySQL, SQLite, ...)
-	'Home' => null,
+	// text direction - 'ltr' or 'rtl'
+	'ltr' => 'ltr',
+	// thousands separator - must contain single byte
+	',' => '.',
+	'0123456789' => '0123456789',
+	// Editor - date format: $1 yyyy, $2 yy, $3 mm, $4 m, $5 dd, $6 d
+	'$1-$3-$5' => '$1-$3-$5',
+	// Editor - hint for date format - use language equivalents for day, month and year shortcuts
+	'YYYY-MM-DD' => 'YYYY-MM-DD',
+	// Editor - hint for time format - use language equivalents for hour, minute and second shortcuts
+	'HH:MM:SS' => 'HH:MM:SS',
+
+	// Bootstrap.
+
+	// Login.
 	'System' => 'Sistem',
 	'Server' => 'Server',
 	'Username' => 'Pengguna',
@@ -14,37 +27,43 @@ return [
 	'Logout' => 'Keluar',
 	'Logged as: %s' => 'Masuk sebagai: %s',
 	'Logout successful.' => 'Berhasil keluar.',
-	'Invalid server or credentials.' => null,
-	'Language' => 'Bahasa',
 	'Invalid CSRF token. Send the form again.' => 'Token CSRF tidak sah. Kirim ulang formulir.',
+
+	// Connection.
 	'No extension' => 'Ekstensi tidak ada',
+	// %s contains the list of the extensions, e.g. 'mysqli, PDO_MySQL'
 	'None of the supported PHP extensions (%s) are available.' => 'Ekstensi PHP yang didukung (%s) tidak ada.',
 	'Session support must be enabled.' => 'Dukungan sesi harus aktif.',
 	'Session expired, please login again.' => 'Sesi habis, silakan masuk lagi.',
 	'%s version: %s through PHP extension %s' => 'Versi %s: %s dengan ekstensi PHP %s',
+
+	// Settings.
+	'Language' => 'Bahasa',
+
 	'Refresh' => 'Segarkan',
 
-	// text direction - 'ltr' or 'rtl'
-	'ltr' => 'ltr',
-
+	// Privileges.
 	'Privileges' => 'Privilese',
 	'Create user' => 'Buat pengguna',
 	'User has been dropped.' => 'Pengguna berhasil dihapus.',
 	'User has been altered.' => 'Pengguna berhasil diubah.',
 	'User has been created.' => 'Pengguna berhasil dibuat.',
 	'Hashed' => 'Hashed*',
+
+	// Server.
+	'Process list' => 'Daftar proses',
+	'%d process(es) have been killed.' => '%d proses berhasil dihentikan.',
+	'Kill' => 'Hentikan',
+	'Variables' => 'Variabel',
+	'Status' => 'Status',
+
+	// Structure.
 	'Column' => 'Kolom',
 	'Routine' => 'Rutin',
 	'Grant' => 'Beri',
 	'Revoke' => 'Tarik',
 
-	'Process list' => 'Daftar proses',
-	'%d process(es) have been killed.' => '%d proses berhasil dihentikan.',
-	'Kill' => 'Hentikan',
-
-	'Variables' => 'Variabel',
-	'Status' => 'Status',
-
+	// Queries.
 	'SQL command' => 'Perintah SQL',
 	'%d query(s) executed OK.' => '%d kueri berhasil dijalankan.',
 	'Query executed OK, %d row(s) affected.' => 'Kueri berhasil, %d baris terpengaruh.',
@@ -53,12 +72,15 @@ return [
 	'Execute' => 'Jalankan',
 	'Stop on error' => 'Hentikan jika galat',
 	'Show only errors' => 'Hanya tampilkan galat',
+	'Time' => 'Waktu',
 	// sprintf() format for time of the command
 	'%.3f s' => '%.3f s',
 	'History' => 'Riwayat',
 	'Clear' => 'Bersihkan',
-
 	'Edit all' => 'Sunting semua',
+
+	// Import.
+	'Import' => 'Impor',
 	'File upload' => 'Unggah berkas',
 	'From server' => 'Dari server',
 	'Webserver file %s' => 'Berkas server web %s',
@@ -68,7 +90,9 @@ return [
 	'Unable to upload a file.' => 'Tidak dapat mengunggah berkas.',
 	'Maximum allowed file size is %sB.' => 'Besar berkas yang diizinkan adalah %sB.',
 	'Too big POST data. Reduce the data or increase the %s configuration directive.' => 'Data POST terlalu besar. Kurangi data atau perbesar direktif konfigurasi %s.',
+	'%d row(s) have been imported.' => '%d baris berhasil diimpor.',
 
+	// Export.
 	'Export' => 'Ekspor',
 	'Output' => 'Hasil',
 	'open' => 'buka',
@@ -76,26 +100,37 @@ return [
 	'Format' => 'Format',
 	'Data' => 'Data',
 
+	// Databases.
 	'Database' => 'Basis data',
 	'Use' => 'Gunakan',
 	'Invalid database.' => 'Basis data tidak sah.',
+	'Alter database' => 'Ubah basis data',
+	'Create database' => 'Buat basis data',
+	'Database schema' => 'Skema basis data',
+	'Permanent link' => 'Pranala permanen',
 	'Database has been dropped.' => 'Basis data berhasil dihapus.',
 	'Databases have been dropped.' => 'Basis data berhasil dihapus.',
 	'Database has been created.' => 'Basis data berhasil dibuat.',
 	'Database has been renamed.' => 'Basis data berhasil diganti namanya.',
 	'Database has been altered.' => 'Basis data berhasil diubah.',
-	'Alter database' => 'Ubah basis data',
-	'Create database' => 'Buat basis data',
-	'Database schema' => 'Skema basis data',
+	// SQLite errors.
+	'File exists.' => 'Berkas sudah ada.',
+	'Please use one of the extensions %s.' => 'Harap gunakan salah satu ekstensi %s.',
 
-	// link to current database schema layout
-	'Permanent link' => 'Pranala permanen',
+	// Schemas (PostgreSQL, MS SQL).
+	'Schema' => 'Skema',
+	'Alter schema' => 'Ubah skema',
+	'Create schema' => 'Buat skema',
+	'Schema has been dropped.' => 'Skema berhasil dihapus.',
+	'Schema has been created.' => 'Skema berhasil dibuat.',
+	'Schema has been altered.' => 'Skema berhasil diubah.',
+	'Invalid schema.' => 'Skema tidak sah.',
 
-	// thousands separator - must contain single byte
-	',' => '.',
-	'0123456789' => '0123456789',
+	// Table list.
 	'Engine' => 'Mesin',
+	'engine' => 'mesin',
 	'Collation' => 'Kolasi',
+	'collation' => 'kolasi',
 	'Data Length' => 'Panjang Data',
 	'Index Length' => 'Panjang Indeks',
 	'Data Free' => 'Data Bebas',
@@ -113,32 +148,7 @@ return [
 	'Copy' => 'Salin',
 	'Tables have been copied.' => 'Tabel berhasil disalin.',
 
-	'Routines' => 'Rutin',
-	'Routine has been called, %d row(s) affected.' => 'Rutin telah dipanggil, %d baris terpengaruh.',
-	'Call' => 'Panggilan',
-	'Parameter name' => 'Nama parameter',
-	'Create procedure' => 'Buat prosedur',
-	'Create function' => 'Buat fungsi',
-	'Routine has been dropped.' => 'Rutin berhasil dihapus.',
-	'Routine has been altered.' => 'Rutin berhasil diubah.',
-	'Routine has been created.' => 'Rutin berhasil dibuat.',
-	'Alter function' => 'Ubah fungsi',
-	'Alter procedure' => 'Ubah prosedur',
-	'Return type' => 'Jenis pengembalian',
-
-	'Events' => 'Even',
-	'Event has been dropped.' => 'Even berhasil dihapus.',
-	'Event has been altered.' => 'Even berhasil diubah.',
-	'Event has been created.' => 'Even berhasil dibuat.',
-	'Alter event' => 'Ubah even',
-	'Create event' => 'Buat even',
-	'At given time' => 'Pada waktu tertentu',
-	'Every' => 'Setiap',
-	'Schedule' => 'Jadwal',
-	'Start' => 'Mulai',
-	'End' => 'Selesai',
-	'On completion preserve' => 'Pertahankan saat selesai',
-
+	// Tables.
 	'Tables' => 'Tabel',
 	'Tables and views' => 'Tabel dan tampilan',
 	'Table' => 'Tabel',
@@ -151,9 +161,8 @@ return [
 	'Table has been altered.' => 'Tabel berhasil diubah.',
 	'Table has been created.' => 'Tabel berhasil dibuat.',
 	'Table name' => 'Nama tabel',
+	'Name' => 'Nama',
 	'Show structure' => 'Lihat struktur',
-	'engine' => 'mesin',
-	'collation' => 'kolasi',
 	'Column name' => 'Nama kolom',
 	'Type' => 'Jenis',
 	'Length' => 'Panjang',
@@ -167,12 +176,7 @@ return [
 	'Remove' => 'Hapus',
 	'Maximum number of allowed fields exceeded. Please increase %s.' => 'Sudah lebih dumlah ruas maksimum yang diizinkan. Harap naikkan %s.',
 
-	'Partition by' => 'Partisi menurut',
-	'Partition' => null,
-	'Partitions' => 'Partisi',
-	'Partition name' => 'Nama partisi',
-	'Values' => 'Nilai',
-
+	// Views.
 	'View' => 'Tampilan',
 	'View has been dropped.' => 'Tampilan berhasil dihapus.',
 	'View has been altered.' => 'Tampilan berhasil diubah.',
@@ -180,6 +184,13 @@ return [
 	'Alter view' => 'Ubah tampilan',
 	'Create view' => 'Buat tampilan',
 
+	// Partitions.
+	'Partition by' => 'Partisi menurut',
+	'Partitions' => 'Partisi',
+	'Partition name' => 'Nama partisi',
+	'Values' => 'Nilai',
+
+	// Indexes.
 	'Indexes' => 'Indeks',
 	'Indexes have been altered.' => 'Indeks berhasil diubah.',
 	'Alter indexes' => 'Ubah indeks',
@@ -187,6 +198,7 @@ return [
 	'Index Type' => 'Jenis Indeks',
 	'length' => 'panjang',
 
+	// Foreign keys.
 	'Foreign keys' => 'Kunci asing',
 	'Foreign key' => 'Kunci asing',
 	'Foreign key has been dropped.' => 'Kunci asing berhasil dihapus.',
@@ -203,6 +215,51 @@ return [
 	'ON UPDATE' => 'ON UPDATE',
 	'Source and target columns must have the same data type, there must be an index on the target columns and referenced data must exist.' => 'Kolom sumber dan sasaran harus memiliki jenis data yang sama. Kolom sasaran harus memiliki indeks dan data rujukan harus ada.',
 
+	// Routines.
+	'Routines' => 'Rutin',
+	'Routine has been called, %d row(s) affected.' => 'Rutin telah dipanggil, %d baris terpengaruh.',
+	'Call' => 'Panggilan',
+	'Parameter name' => 'Nama parameter',
+	'Create procedure' => 'Buat prosedur',
+	'Create function' => 'Buat fungsi',
+	'Routine has been dropped.' => 'Rutin berhasil dihapus.',
+	'Routine has been altered.' => 'Rutin berhasil diubah.',
+	'Routine has been created.' => 'Rutin berhasil dibuat.',
+	'Alter function' => 'Ubah fungsi',
+	'Alter procedure' => 'Ubah prosedur',
+	'Return type' => 'Jenis pengembalian',
+
+	// Events.
+	'Events' => 'Even',
+	'Event' => 'Even',
+	'Event has been dropped.' => 'Even berhasil dihapus.',
+	'Event has been altered.' => 'Even berhasil diubah.',
+	'Event has been created.' => 'Even berhasil dibuat.',
+	'Alter event' => 'Ubah even',
+	'Create event' => 'Buat even',
+	'At given time' => 'Pada waktu tertentu',
+	'Every' => 'Setiap',
+	'Schedule' => 'Jadwal',
+	'Start' => 'Mulai',
+	'End' => 'Selesai',
+	'On completion preserve' => 'Pertahankan saat selesai',
+
+	// Sequences (PostgreSQL).
+	'Sequences' => 'Deret',
+	'Create sequence' => 'Buat deret',
+	'Sequence has been dropped.' => 'Deret berhasil dihapus.',
+	'Sequence has been created.' => 'Deret berhasil dibuat.',
+	'Sequence has been altered.' => 'Deret berhasil diubah.',
+	'Alter sequence' => 'Ubah deret',
+
+	// User types (PostgreSQL)
+	'User types' => 'Jenis pengguna',
+	'Create type' => 'Buat jenis',
+	'Type has been dropped.' => 'Jenis berhasil dihapus.',
+	'Type has been created.' => 'Jenis berhasil dibuat.',
+	'Alter type' => 'Ubah jenis',
+
+	// Triggers.
 	'Triggers' => 'Pemicu',
 	'Add trigger' => 'Tambah pemicu',
 	'Trigger has been dropped.' => 'Pemicu berhasil dihapus.',
@@ -210,17 +267,16 @@ return [
 	'Trigger has been created.' => 'Pemicu berhasil dibuat.',
 	'Alter trigger' => 'Ubah pemicu',
 	'Create trigger' => 'Buat pemicu',
-	'Time' => 'Waktu',
-	'Event' => 'Even',
-	'Name' => 'Nama',
-	'Select' => 'Pilih',
+
+	// Table check constraints.
+
+	// Selection.
 	'Select data' => 'Pilih data',
+	'Select' => 'Pilih',
 	'Functions' => 'Fungsi',
 	'Aggregation' => 'Agregasi',
 	'Search' => 'Cari',
 	'anywhere' => 'di mana pun',
-	'Search data in tables' => 'Cari data dalam tabel',
-	'as a regular expression' => null,
 	'Sort' => 'Urutkan',
 	'descending' => 'menurun',
 	'Limit' => 'Batas',
@@ -228,6 +284,7 @@ return [
 	'Action' => 'Tindakan',
 	'Full table scan' => 'Pindai tabel lengkap',
 	'Unable to select the table' => 'Gagal memilih tabel',
+	'Search data in tables' => 'Cari data dalam tabel',
 	'No rows.' => 'Tidak ada baris.',
 	'%d row(s)' => '%d baris',
 	'Page' => 'Halaman',
@@ -235,30 +292,28 @@ return [
 	'Whole result' => 'Seluruh hasil',
 	'%d byte(s)' => '%d bita',
 
-	'Import' => 'Impor',
-	'%d row(s) have been imported.' => '%d baris berhasil diimpor.',
-
-	// in-place editing in select
+	// In-place editing in selection.
 	'Use edit link to modify this value.' => 'Gunakan pranala suntingan untuk mengubah nilai ini.',
 
-	// %s can contain auto-increment value
-	'Item%s has been inserted.' => 'Entri%s berhasil disisipkan.',
-	'Item has been deleted.' => 'Entri berhasil dihapus.',
-	'Item has been updated.' => 'Entri berhasil diperbarui.',
-	'%d item(s) have been affected.' => '%d entri terpengaruh.',
+	// Editing.
 	'New item' => 'Entri baru',
+	'Edit' => 'Sunting',
 	'original' => 'asli',
 	// label for value '' in enum data type
 	'empty' => 'kosong',
-	'Edit' => 'Sunting',
 	'Insert' => 'Sisipkan',
 	'Save' => 'Simpan',
 	'Save and continue edit' => 'Simpan dan lanjut menyunting',
 	'Save and insert next' => 'Simpan dan sisipkan berikutnya',
 	'Clone' => 'Gandakan',
 	'Delete' => 'Hapus',
+	// %s can contain auto-increment value, e.g. ' 123'
+	'Item%s has been inserted.' => 'Entri%s berhasil disisipkan.',
+	'Item has been deleted.' => 'Entri berhasil dihapus.',
+	'Item has been updated.' => 'Entri berhasil diperbarui.',
+	'%d item(s) have been affected.' => '%d entri terpengaruh.',
 
-	// data type descriptions
+	// Data type descriptions.
 	'Numbers' => 'Angka',
 	'Date and time' => 'Tanggal dan waktu',
 	'Strings' => 'String',
@@ -267,91 +322,11 @@ return [
 	'Network' => 'Jaringan',
 	'Geometry' => 'Geometri',
 	'Relations' => 'Relasi',
-	// date format in Editor: $1 yyyy, $2 yy, $3 mm, $4 m, $5 dd, $6 d
-	'$1-$3-$5' => '$1-$3-$5',
-	// hint for date format - use language equivalents for day, month and year shortcuts
-	'YYYY-MM-DD' => 'YYYY-MM-DD',
-	// hint for time format - use language equivalents for hour, minute and second shortcuts
-	'HH:MM:SS' => 'HH:MM:SS',
+
+	// Editor - data values.
 	'now' => 'now',
 	'yes' => 'yes',
 	'no' => 'no',
 
-	// general SQLite error in create, drop or rename database
-	'File exists.' => 'Berkas sudah ada.',
-	'Please use one of the extensions %s.' => 'Harap gunakan salah satu ekstensi %s.',
-
-	// PostgreSQL and MS SQL schema support
-	'Alter schema' => 'Ubah skema',
-	'Create schema' => 'Buat skema',
-	'Schema has been dropped.' => 'Skema berhasil dihapus.',
-	'Schema has been created.' => 'Skema berhasil dibuat.',
-	'Schema has been altered.' => 'Skema berhasil diubah.',
-	'Schema' => 'Skema',
-	'Invalid schema.' => 'Skema tidak sah.',
-
-	// PostgreSQL sequences support
-	'Sequences' => 'Deret',
-	'Create sequence' => 'Buat deret',
-	'Sequence has been dropped.' => 'Deret berhasil dihapus.',
-	'Sequence has been created.' => 'Deret berhasil dibuat.',
-	'Sequence has been altered.' => 'Deret berhasil diubah.',
-	'Alter sequence' => 'Ubah deret',
-
-	// PostgreSQL user types support
-	'User types' => 'Jenis pengguna',
-	'Create type' => 'Buat jenis',
-	'Type has been dropped.' => 'Jenis berhasil dihapus.',
-	'Type has been created.' => 'Jenis berhasil dibuat.',
-	'Alter type' => 'Ubah jenis',
-
-	'Drop %s?' => null,
-	'Materialized view' => null,
-	'Vacuum' => null,
-	'Selected' => null,
-	'overwrite' => null,
-	'DB' => null,
-	'Ctrl+click on a value to modify it.' => null,
-	'File must be in UTF-8 encoding.' => null,
-	'Modify' => null,
-	'Load more data' => null,
-	'Loading' => null,
-	'ATTACH queries are not supported.' => null,
-	'Warnings' => null,
-	'%d / ' => [],
-	'Limit rows' => null,
-	'AdminNeo does not support accessing a database without a password, <a href="https://www.adminneo.org/password"%s>more information</a>.' => null,
-	'Default value' => null,
-	'Too many unsuccessful logins, try again in %d minute(s).' => [],
-	'The action will be performed after successful login with the same credentials.' => null,
-	'Connecting to privileged ports is not allowed.' => null,
-	'There is a space in the input password which might be the cause.' => null,
-	'If you did not send this request from AdminNeo then close this page.' => null,
-	'You can upload a big SQL file via FTP and import it from server.' => null,
-	'Size' => null,
-	'Compute' => null,
-	'You are offline.' => null,
-	'You have no privileges to update this table.' => null,
-	'Saving' => null,
-	'Unknown error.' => null,
-	'Database does not support password.' => null,
-	'One Time Password' => null,
-	'Invalid OTP code.' => null,
-
-	'Schemas' => null,
-	'No schemas.' => null,
-	'Show schema' => null,
-	'No driver' => null,
-	'Database driver not found.' => null,
-
-	'Check has been dropped.' => null,
-	'Check has been altered.' => null,
-	'Check has been created.' => null,
-	'Alter check' => null,
-	'Create check' => null,
-	'Checks' => null,
-	'Invalid permanent login, please login again.' => null,
-
-	'Access denied.' => null,
-	'Enter OTP code.' => null,
+	// Plugins.
 ];

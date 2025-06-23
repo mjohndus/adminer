@@ -3,7 +3,21 @@
 namespace AdminNeo;
 
 return [
-	'Home' => null,
+	// text direction - 'ltr' or 'rtl'
+	'ltr' => 'venstre-til-høyre',
+	// thousands separator - must contain single byte
+	',' => ' ',
+	'0123456789' => '0123456789',
+	// Editor - date format: $1 yyyy, $2 yy, $3 mm, $4 m, $5 dd, $6 d
+	'$1-$3-$5' => '$6/$4 $1',
+	// Editor - hint for date format - use language equivalents for day, month and year shortcuts
+	'YYYY-MM-DD' => 'D/M ÅÅÅÅ',
+	// Editor - hint for time format - use language equivalents for hour, minute and second shortcuts
+	'HH:MM:SS' => 'HH:MM:SS',
+
+	// Bootstrap.
+
+	// Login.
 	'System' => 'System',
 	'Server' => 'Server',
 	'Username' => 'Brukernavn',
@@ -13,43 +27,69 @@ return [
 	'Logout' => 'Logg ut',
 	'Logged as: %s' => 'Logget inn som: %s',
 	'Logout successful.' => 'Utlogging vellykket.',
-	'Invalid server or credentials.' => null,
-	'Language' => 'Språk',
 	'Invalid CSRF token. Send the form again.' => 'Ugylding CSRF-token - Send inn skjemaet igjen.',
+
+	// Connection.
 	'No extension' => 'Ingen utvidelse',
+	// %s contains the list of the extensions, e.g. 'mysqli, PDO_MySQL'
 	'None of the supported PHP extensions (%s) are available.' => 'Ingen av de støttede PHP-utvidelsene (%s) er tilgjengelige.',
 	'Session support must be enabled.' => 'Økt-støtte må være skrudd på.',
 	'Session expired, please login again.' => 'Økt utløpt - vennligst logg inn på nytt.',
 	'%s version: %s through PHP extension %s' => '%s versjon: %s via PHP-utvidelse %s',
+
+	// Settings.
+	'Language' => 'Språk',
+
 	'Refresh' => 'Gjenoppfrisk',
-	'ltr' => 'venstre-til-høyre',
+
+	// Privileges.
 	'Privileges' => 'Privilegier',
 	'Create user' => 'Lag bruker',
 	'User has been dropped.' => 'Bruker slettet.',
 	'User has been altered.' => 'Bruker endret.',
 	'User has been created.' => 'Bruker opprettet.',
 	'Hashed' => 'Hashet',
+
+	// Server.
+	'Process list' => 'Prosessliste',
+	'%d process(es) have been killed.' => [
+		'%d prosess avsluttet.',
+		'%d prosesser avsluttet.',
+	],
+	'Kill' => 'Avslutt',
+	'Variables' => 'Variabler',
+	'Status' => 'Status',
+
+	// Structure.
 	'Column' => 'Kolonne',
 	'Routine' => 'Rutine',
 	'Grant' => 'Gi privilegier',
 	'Revoke' => 'Trekk tilbake',
-	'Process list' => 'Prosessliste',
-	'%d process(es) have been killed.' => ['%d prosess avsluttet.', '%d prosesser avsluttet.'],
-	'Kill' => 'Avslutt',
-	'Variables' => 'Variabler',
-	'Status' => 'Status',
+
+	// Queries.
 	'SQL command' => 'SQL-kommando',
-	'%d query(s) executed OK.' => ['%d kall utført OK.', '%d kall utført OK.'],
-	'Query executed OK, %d row(s) affected.' => ['Kall utført OK, %d rad påvirket.', 'Kall utført OK, %d rader påvirket.'],
+	'%d query(s) executed OK.' => [
+		'%d kall utført OK.',
+		'%d kall utført OK.',
+	],
+	'Query executed OK, %d row(s) affected.' => [
+		'Kall utført OK, %d rad påvirket.',
+		'Kall utført OK, %d rader påvirket.',
+	],
 	'No commands to execute.' => 'Ingen kommandoer å utføre.',
 	'Error in query' => 'Feil i forespørsel',
 	'Execute' => 'Kjør',
 	'Stop on error' => 'Stopp ved feil',
 	'Show only errors' => 'Vis bare feil',
+	'Time' => 'Tid',
+	// sprintf() format for time of the command
 	'%.3f s' => '%.3f s',
 	'History' => 'Historie',
 	'Clear' => 'Tøm skjema',
 	'Edit all' => 'Rediger alle',
+
+	// Import.
+	'Import' => 'Importer',
 	'File upload' => 'Filopplasting',
 	'From server' => 'Fra server',
 	'Webserver file %s' => 'Webserver-fil %s',
@@ -60,28 +100,51 @@ return [
 	'Maximum allowed file size is %sB.' => 'Maksimum tillatte filstørrelse er %sB.',
 	'Too big POST data. Reduce the data or increase the %s configuration directive.' => 'For stor datamengde i skjemaet. Reduser datamengden, eller øk størrelsen på %s-konfigurasjonsdirektivet.',
 	'You can upload a big SQL file via FTP and import it from server.' => 'Du kan laste opp en stor SQL-fil via FTP og importere den fra serveren.',
+	'File must be in UTF-8 encoding.' => 'Filen må være i UTF8-tegnkoding.',
+	'%d row(s) have been imported.' => [
+		'%d rad er importert.',
+		'%d rader er importert.',
+	],
+
+	// Export.
 	'Export' => 'Eksport',
 	'Output' => 'Resultat',
 	'open' => 'åpne',
 	'save' => 'lagre',
 	'Format' => 'Format',
 	'Data' => 'Data',
+
+	// Databases.
 	'Database' => 'Database',
 	'Use' => 'Bruk',
 	'Invalid database.' => 'Ugyldig database.',
+	'Alter database' => 'Endre database',
+	'Create database' => 'Opprett database',
+	'Database schema' => 'Databaseskjema',
+	'Permanent link' => 'Permanent lenke',
 	'Database has been dropped.' => 'Databasen har blitt slettet.',
 	'Databases have been dropped.' => 'Databasene har blitt slettet.',
 	'Database has been created.' => 'Databasen er opprettet.',
 	'Database has been renamed.' => 'Databasen har fått nytt navn.',
 	'Database has been altered.' => 'Databasen er endret.',
-	'Alter database' => 'Endre database',
-	'Create database' => 'Opprett database',
-	'Database schema' => 'Databaseskjema',
-	'Permanent link' => 'Permanent lenke',
-	',' => ' ',
-	'0123456789' => '0123456789',
+	// SQLite errors.
+	'File exists.' => 'Filen finnes.',
+	'Please use one of the extensions %s.' => 'Vennligst bruk en av filendelsene %s.',
+
+	// Schemas (PostgreSQL, MS SQL).
+	'Schema' => 'Skjema',
+	'Alter schema' => 'Endre skjema',
+	'Create schema' => 'Opprett skjema',
+	'Schema has been dropped.' => 'Skjemaet er slettet.',
+	'Schema has been created.' => 'Skjemaet er opprettet.',
+	'Schema has been altered.' => 'Skjemaet er endret.',
+	'Invalid schema.' => 'Ugylding skjema.',
+
+	// Table list.
 	'Engine' => 'Motor',
+	'engine' => 'mottor',
 	'Collation' => 'Tekstsortering',
+	'collation' => 'sortering',
 	'Data Length' => 'Datalengde',
 	'Index Length' => 'Indekslengde',
 	'Data Free' => 'Frie data',
@@ -99,30 +162,8 @@ return [
 	'Tables have been moved.' => 'Tabellene har blitt flyttet.',
 	'Copy' => 'Kopier',
 	'Tables have been copied.' => 'Tabellene har blitt kopiert.',
-	'Routines' => 'Rutiner',
-	'Routine has been called, %d row(s) affected.' => ['Rutinen er utført, %d rad påvirket.', 'Rutinen er utført, %d rader påvirket.'],
-	'Call' => 'Kall',
-	'Parameter name' => 'Parameternavn',
-	'Create procedure' => 'Opprett prosedyre',
-	'Create function' => 'Opprett funksjon',
-	'Routine has been dropped.' => 'Rutinen er slettet.',
-	'Routine has been altered.' => 'Rutinen er endret.',
-	'Routine has been created.' => 'Rutinen er opprettet.',
-	'Alter function' => 'Endre funksjon',
-	'Alter procedure' => 'Endre prosedyre',
-	'Return type' => 'Returtype',
-	'Events' => 'Eventer',
-	'Event has been dropped.' => 'Eventen er slettet.',
-	'Event has been altered.' => 'Eventen er endret.',
-	'Event has been created.' => 'Eventen er opprettet.',
-	'Alter event' => 'Endre event',
-	'Create event' => 'Opprett event',
-	'At given time' => 'På gitte tid',
-	'Every' => 'Hver',
-	'Schedule' => 'Tidsplan',
-	'Start' => 'Start',
-	'End' => 'Slutt',
-	'On completion preserve' => 'Ved fullførelse bevar',
+
+	// Tables.
 	'Tables' => 'Tabeller',
 	'Tables and views' => 'Tabeller og views',
 	'Table' => 'Tabell',
@@ -135,9 +176,8 @@ return [
 	'Table has been altered.' => 'Tabellen er endret.',
 	'Table has been created.' => 'Tabellen er opprettet.',
 	'Table name' => 'Tabellnavn',
+	'Name' => 'Navn',
 	'Show structure' => 'Vis struktur',
-	'engine' => 'mottor',
-	'collation' => 'sortering',
 	'Column name' => 'Kolonnenavn',
 	'Type' => 'Type',
 	'Length' => 'Lengde',
@@ -150,23 +190,30 @@ return [
 	'Move down' => 'Flytt ned',
 	'Remove' => 'Fjern',
 	'Maximum number of allowed fields exceeded. Please increase %s.' => 'Maksimum antall feltnavn overskredet - venligst øk %s.',
-	'Partition by' => 'Partisjoner ved',
-	'Partition' => null,
-	'Partitions' => 'Partisjoner',
-	'Partition name' => 'Partisjonsnavn',
-	'Values' => 'Verdier',
+
+	// Views.
 	'View' => 'View',
 	'View has been dropped.' => 'Viewet er slettet.',
 	'View has been altered.' => 'Viewet er endret.',
 	'View has been created.' => 'Viewet er opprettet.',
 	'Alter view' => 'Endre view',
 	'Create view' => 'Lag nytt view',
+
+	// Partitions.
+	'Partition by' => 'Partisjoner ved',
+	'Partitions' => 'Partisjoner',
+	'Partition name' => 'Partisjonsnavn',
+	'Values' => 'Verdier',
+
+	// Indexes.
 	'Indexes' => 'Indekser',
 	'Indexes have been altered.' => 'Indeksene er endret.',
 	'Alter indexes' => 'Endre indekser',
 	'Add next' => 'Legg til neste',
 	'Index Type' => 'Indekstype',
 	'length' => 'lengde',
+
+	// Foreign keys.
 	'Foreign keys' => 'Fremmednøkler',
 	'Foreign key' => 'Fremmednøkkel',
 	'Foreign key has been dropped.' => 'Fremmednøkkelen er slettet.',
@@ -182,6 +229,55 @@ return [
 	'ON DELETE' => 'ON DELETE',
 	'ON UPDATE' => 'ON UPDATE',
 	'Source and target columns must have the same data type, there must be an index on the target columns and referenced data must exist.' => 'Kilde- og mål-kolonner må ha samme datatype, det må være en indeks på mål-kolonnen, og dataene som refereres til må eksistere.',
+
+	// Routines.
+	'Routines' => 'Rutiner',
+	'Routine has been called, %d row(s) affected.' => [
+		'Rutinen er utført, %d rad påvirket.',
+		'Rutinen er utført, %d rader påvirket.',
+	],
+	'Call' => 'Kall',
+	'Parameter name' => 'Parameternavn',
+	'Create procedure' => 'Opprett prosedyre',
+	'Create function' => 'Opprett funksjon',
+	'Routine has been dropped.' => 'Rutinen er slettet.',
+	'Routine has been altered.' => 'Rutinen er endret.',
+	'Routine has been created.' => 'Rutinen er opprettet.',
+	'Alter function' => 'Endre funksjon',
+	'Alter procedure' => 'Endre prosedyre',
+	'Return type' => 'Returtype',
+
+	// Events.
+	'Events' => 'Eventer',
+	'Event' => 'Hendelse',
+	'Event has been dropped.' => 'Eventen er slettet.',
+	'Event has been altered.' => 'Eventen er endret.',
+	'Event has been created.' => 'Eventen er opprettet.',
+	'Alter event' => 'Endre event',
+	'Create event' => 'Opprett event',
+	'At given time' => 'På gitte tid',
+	'Every' => 'Hver',
+	'Schedule' => 'Tidsplan',
+	'Start' => 'Start',
+	'End' => 'Slutt',
+	'On completion preserve' => 'Ved fullførelse bevar',
+
+	// Sequences (PostgreSQL).
+	'Sequences' => 'Sekvenser',
+	'Create sequence' => 'Opprett sekvens',
+	'Sequence has been dropped.' => 'Sekvensen er slettet.',
+	'Sequence has been created.' => 'Sekvensen er opprettet.',
+	'Sequence has been altered.' => 'Sekvensen er endret.',
+	'Alter sequence' => 'Endre sekvens',
+
+	// User types (PostgreSQL)
+	'User types' => 'Brukertyper',
+	'Create type' => 'Opprett type',
+	'Type has been dropped.' => 'Type er slettet.',
+	'Type has been created.' => 'Type er opprettet.',
+	'Alter type' => 'Endre type',
+
+	// Triggers.
 	'Triggers' => 'Triggere',
 	'Add trigger' => 'Legg til trigger',
 	'Trigger has been dropped.' => 'Triggeren er slettet.',
@@ -189,17 +285,16 @@ return [
 	'Trigger has been created.' => 'Triggeren er opprettet.',
 	'Alter trigger' => 'Endre trigger',
 	'Create trigger' => 'Opprett trigger',
-	'Time' => 'Tid',
-	'Event' => 'Hendelse',
-	'Name' => 'Navn',
-	'Select' => 'Velg',
+
+	// Table check constraints.
+
+	// Selection.
 	'Select data' => 'Velg data',
+	'Select' => 'Velg',
 	'Functions' => 'Funksjoner',
 	'Aggregation' => 'Sammenfatning',
 	'Search' => 'Søk',
 	'anywhere' => 'hvorsomhelst',
-	'Search data in tables' => 'Søk data i tabeller',
-	'as a regular expression' => null,
 	'Sort' => 'Sorter',
 	'descending' => 'minkende',
 	'Limit' => 'Skranke',
@@ -207,36 +302,52 @@ return [
 	'Action' => 'Handling',
 	'Full table scan' => 'Full tabell-scan',
 	'Unable to select the table' => 'Kan ikke velge tabellen',
+	'Search data in tables' => 'Søk data i tabeller',
 	'No rows.' => 'Ingen rader.',
-	'%d row(s)' => ['%d rad', '%d rader'],
+	'%d row(s)' => [
+		'%d rad',
+		'%d rader',
+	],
 	'Page' => 'Side',
 	'last' => 'siste',
 	'Load more data' => 'Last mer data',
 	'Loading' => 'Laster',
 	'Whole result' => 'Hele resultatet',
-	'%d byte(s)' => ['%d byte', '%d bytes'],
-	'Import' => 'Importer',
-	'%d row(s) have been imported.' => ['%d rad er importert.', '%d rader er importert.'],
-	'File must be in UTF-8 encoding.' => 'Filen må være i UTF8-tegnkoding.',
+	'%d byte(s)' => [
+		'%d byte',
+		'%d bytes',
+	],
+
+	// In-place editing in selection.
 	'Modify' => 'Endre',
 	'Ctrl+click on a value to modify it.' => 'Ctrl+klikk på en verdi for å endre den.',
 	'Use edit link to modify this value.' => 'Bruk rediger-lengde for å endre dennne verdien.',
-	'Item%s has been inserted.' => 'Rad%s er satt inn.',
-	'Item has been deleted.' => 'Raden er slettet.',
-	'Item has been updated.' => 'Raden er oppdatert.',
-	'%d item(s) have been affected.' => ['%d rad påvirket.', '%d rader påvirket.'],
+
+	// Editing.
 	'New item' => 'Ny rad',
-	'original' => 'original',
-	'empty' => 'tom',
 	'Edit' => 'Rediger',
+	'original' => 'original',
+	// label for value '' in enum data type
+	'empty' => 'tom',
 	'Insert' => 'Sett inn',
 	'Save' => 'Lagre',
 	'Save and continue edit' => 'Lagre og fortsett å redigere',
 	'Save and insert next' => 'Lagre og sett inn neste',
+	'Saving' => 'Lagrer',
 	'Selected' => 'Valgt',
 	'Clone' => 'Klon',
 	'Delete' => 'Slett',
+	// %s can contain auto-increment value, e.g. ' 123'
+	'Item%s has been inserted.' => 'Rad%s er satt inn.',
+	'Item has been deleted.' => 'Raden er slettet.',
+	'Item has been updated.' => 'Raden er oppdatert.',
+	'%d item(s) have been affected.' => [
+		'%d rad påvirket.',
+		'%d rader påvirket.',
+	],
 	'You have no privileges to update this table.' => 'Du mangler rettighetene som trengs for å endre denne tabellen.',
+
+	// Data type descriptions.
 	'Numbers' => 'Nummer',
 	'Date and time' => 'Dato og tid',
 	'Strings' => 'Strenger',
@@ -245,71 +356,11 @@ return [
 	'Network' => 'Nettverk',
 	'Geometry' => 'Geometri',
 	'Relations' => 'Relasjoner',
-	'$1-$3-$5' => '$6/$4 $1',
-	'YYYY-MM-DD' => 'D/M ÅÅÅÅ',
-	'HH:MM:SS' => 'HH:MM:SS',
+
+	// Editor - data values.
 	'now' => 'nå',
 	'yes' => 'ja',
 	'no' => 'nei',
-	'File exists.' => 'Filen finnes.',
-	'Please use one of the extensions %s.' => 'Vennligst bruk en av filendelsene %s.',
-	'Alter schema' => 'Endre skjema',
-	'Create schema' => 'Opprett skjema',
-	'Schema has been dropped.' => 'Skjemaet er slettet.',
-	'Schema has been created.' => 'Skjemaet er opprettet.',
-	'Schema has been altered.' => 'Skjemaet er endret.',
-	'Schema' => 'Skjema',
-	'Invalid schema.' => 'Ugylding skjema.',
-	'Sequences' => 'Sekvenser',
-	'Create sequence' => 'Opprett sekvens',
-	'Sequence has been dropped.' => 'Sekvensen er slettet.',
-	'Sequence has been created.' => 'Sekvensen er opprettet.',
-	'Sequence has been altered.' => 'Sekvensen er endret.',
-	'Alter sequence' => 'Endre sekvens',
-	'User types' => 'Brukertyper',
-	'Create type' => 'Opprett type',
-	'Type has been dropped.' => 'Type er slettet.',
-	'Type has been created.' => 'Type er opprettet.',
-	'Alter type' => 'Endre type',
-	'Saving' => 'Lagrer',
 
-	'Drop %s?' => null,
-	'Materialized view' => null,
-	'overwrite' => null,
-	'DB' => null,
-	'ATTACH queries are not supported.' => null,
-	'Warnings' => null,
-	'%d / ' => [],
-	'Limit rows' => null,
-	'AdminNeo does not support accessing a database without a password, <a href="https://www.adminneo.org/password"%s>more information</a>.' => null,
-	'Default value' => null,
-	'Too many unsuccessful logins, try again in %d minute(s).' => [],
-	'The action will be performed after successful login with the same credentials.' => null,
-	'Connecting to privileged ports is not allowed.' => null,
-	'There is a space in the input password which might be the cause.' => null,
-	'If you did not send this request from AdminNeo then close this page.' => null,
-	'Size' => null,
-	'Compute' => null,
-	'You are offline.' => null,
-	'Unknown error.' => null,
-	'Database does not support password.' => null,
-	'One Time Password' => null,
-	'Invalid OTP code.' => null,
-
-	'Schemas' => null,
-	'No schemas.' => null,
-	'Show schema' => null,
-	'No driver' => null,
-	'Database driver not found.' => null,
-
-	'Check has been dropped.' => null,
-	'Check has been altered.' => null,
-	'Check has been created.' => null,
-	'Alter check' => null,
-	'Create check' => null,
-	'Checks' => null,
-	'Invalid permanent login, please login again.' => null,
-
-	'Access denied.' => null,
-	'Enter OTP code.' => null,
+	// Plugins.
 ];

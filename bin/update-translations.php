@@ -4,20 +4,43 @@ use function AdminNeo\find_available_languages;
 
 include __DIR__ . "/../admin/include/debug.inc.php";
 include __DIR__ . "/../admin/include/available.inc.php";
+include __DIR__ . "/../admin/include/polyfill.inc.php";
 
 $languages = find_available_languages();
+$keep_order = $clean = false;
+$lang = null;
+$template = "_template";
 
-$param = $argv[1] ?? null;
-if ($param && ($param == "-h" || $param == "--help")) {
-	echo "Usage:\n";
-	echo "  php bin/update-translations.php [language]\n";
-	echo "\n";
-	echo "Update admin/translations/*.inc.php from source code messages.\n";
-	exit;
+array_shift($argv);
+foreach ($argv as $key => $option) {
+	if ($option == "-h" || $option == "--help") {
+		echo "Usage:\n";
+		echo "  php bin/update-translations.php [-h] [--keep-order] [--clean] [language]\n";
+		echo "\n";
+		echo "Updates admin/translations/*.inc.php from the source code messages.\n";
+		echo "\n";
+		echo "OPTIONS:\n";
+		echo "  --keep-order - Do not move new texts to the end of the file.\n";
+		echo "  --clean      - Remove untranslated texts.\n";
+		echo "  -h, --help   - Print help.\n";
+		echo "\n";
+		echo "PARAMETERS:\n";
+		echo "  language     - Language code.\n";
+		exit;
+	}
+
+	if ($option == "--keep-order") {
+		$keep_order = true;
+		unset($argv[$key]);
+	} elseif ($option == "--clean") {
+		$clean = true;
+		unset($argv[$key]);
+	} else {
+		$lang = $option;
+	}
 }
 
-$lang = $param;
-if ($lang && $lang != "xx" && !isset($languages[$lang])) {
+if ($lang && $lang != $template && !isset($languages[$lang])) {
 	echo "⚠️ Unknown language: $lang\n";
 	exit(1);
 }
@@ -34,6 +57,9 @@ if ($lang) {
 	];
 }
 
+// Always update the template at first.
+$languages = [$template => true] + $languages;
+
 // Get all texts from the source code.
 $file_paths = array_merge(
 	glob(__DIR__ . "/../admin/*.php"),
@@ -45,13 +71,14 @@ $file_paths = array_merge(
 	glob(__DIR__ . "/../editor/include/*.php"),
 	glob(__DIR__ . "/../plugins/*.php")
 );
-$all_messages = [];
+
+$all_texts = [];
 foreach ($file_paths as $file_path) {
 	$source_code = file_get_contents($file_path);
 
 	// lang() always uses apostrophes.
-	if (preg_match_all("~lang\\(('(?:[^\\\\']+|\\\\.)*')([),])~", $source_code, $matches)) {
-		$all_messages += array_combine($matches[1], $matches[2]);
+	if (preg_match_all("~lang\\('([^\\\\']+|\\\\.)*'([),])~", $source_code, $matches)) {
+		$all_texts += array_combine($matches[1], $matches[2]);
 	}
 }
 
@@ -62,73 +89,144 @@ foreach ($languages as $language => $dummy) {
 	$lang = basename($filename, ".inc.php");
 	$period = ($lang == "bn" || $lang == 'hi' ? '।' : (preg_match('~^(ja|zh)~', $lang) ? '。' : ($lang == 'he' ? '' : '\.')));
 
-	$messages = $all_messages;
+	$texts = $all_texts;
+	$translations = require $file_path;
+	$content = file_get_contents(__DIR__ . "/../admin/translations/$template.inc.php");
 
-	$old_content = str_replace("\r", "", file_get_contents($file_path));
+	foreach ($translations as $en => $translation) {
+		if (!isset($texts[$en])) {
+			continue;
+		}
 
-	preg_match_all("~^(\\s*(?:// [^'].*\\s+)?)(?:// )?(('(?:[^\\\\']+|\\\\.)*') => (.*[^,\n])),?~m", $old_content, $matches, PREG_SET_ORDER | PREG_OFFSET_CAPTURE);
-
-	// Keep current messages.
-	$new_content = "";
-	foreach ($matches as $match) {
-		$indent = $match[1][0];
-		$line = $match[2][0];
-		$offset = $match[2][1];
-		$en = $match[3][0];
-		$translation = $match[4][0];
-
-		if (isset($messages[$en])) {
-			$new_content .= "$indent$line,\n";
-			unset($messages[$en]);
+		// Keep current translated texts.
+		if ($translation !== null || ($keep_order && !$clean)) {
+			$content = write_translation($content, $en, $translation, $language == $template);
+			unset($texts[$en]);
 
 			// Do not check untranslated texts and thousands separator.
-			if (preg_match('~(null|\[])$~', $translation) || $en == "','") {
+			if ($translation === null || $en == ",") {
 				continue;
 			}
 
-			// Check forbidden periods.
-			if (!$period && preg_match("~\.']?$~", $translation)) {
-				print_warning($filename, $old_content, $offset, $line, "Period is forbidden");
-			}
+			$term = "'$en' => " . format_translation($translation, true);
+			$variants = is_string($translation) ? [$translation] : $translation;
 
-			// Check mismatched periods. Period is optional in 'ja'.
-			// TODO Check in array.
-			if ($period && $lang != "ja" && ((substr($en, -2, 1) == ".") xor preg_match("~$period']?$~", $translation))) {
-				print_warning($filename, $old_content, $offset, $line, "Not matching period");
-			}
+			foreach ($variants as $variant) {
+				// Check forbidden periods.
+				if (!$period && preg_match("~\.$~", $variant)) {
+					print_warning($filename, $term, "Period is forbidden");
+				}
 
-			// Check mismatched placeholders.
-			if (preg_match('~%~', $en) xor preg_match('~%~', $translation)) {
-				print_warning($filename, $old_content, $offset, $line, "Not matching placeholder");
+				// Check mismatched periods. Period is optional in 'ja'.
+				if ($period && $lang != "ja" && ((substr($en, -1, 1) == ".") xor preg_match("~$period$~", $variant))) {
+					print_warning($filename, $term, "Not matching period");
+				}
+
+				// Check mismatched placeholders.
+				if (preg_match('~%~', $en) xor preg_match('~%~', $variant)) {
+					print_warning($filename, $term, "Not matching placeholder");
+				}
+			}
+		} else {
+			$content = delete_translation($content, $en);
+		}
+	}
+
+	// Move/add new texts to the end.
+	if ($texts) {
+		$first = true;
+
+		foreach ($texts as $en => $ending) {
+			$content = delete_translation($content, $en);
+
+			if (!$clean && ($lang != "en" || str_contains($en, "%d"))) {
+				$content = add_translation($content, $en, $first);
+				$first = false;
 			}
 		}
 	}
 
-	// Add new messages.
-	if ($messages) {
-		if ($lang != "en") {
-			$new_content .= "\n";
-		}
-
-		foreach ($messages as $id => $text) {
-			if ($text == "," && strpos($id, "%d")) {
-				$new_content .= "\t$id => [],\n";
-			} elseif ($lang != "en") {
-				$new_content .= "\t$id => null,\n";
-			}
-		}
+	// Cleanup en file.
+	if ($lang == "en") {
+		$content = preg_replace('~\t//.*~', "", $content);
+		$content = preg_replace('~\n{2,}([\t\]])~', "\n$1", $content);
 	}
 
-	$new_content = "<?php\n\nnamespace AdminNeo;\n\n\$translations = [\n$new_content];\n";
+	$old_content = str_replace("\r", "", file_get_contents($file_path));
+	if ($content != $old_content) {
+		file_put_contents($file_path, $content);
 
-	if ($new_content != $old_content) {
-		file_put_contents($file_path, $new_content);
-
-		echo "$filename updated\n";
+		echo "✳️ $filename updated\n";
+	} elseif ($lang != $template) {
+		echo "✔︎ $filename\n";
 	}
 }
 
-function print_warning(string $filename, string $content, int $offset, string $line, string $message): void
+/**
+ * @param string|array|null $translation
+ */
+function write_translation(string $content, string $en, $translation, bool $single_line): string
 {
-	echo "⚠️ $filename:" . (substr_count($content, "\n", 0, $offset) + 1) . " | $message: $line\n";
+	return preg_replace(
+		'~(\t\'' . preg_quote($en) . '\' => ).+,\n~',
+		"$1" . format_translation($translation, $single_line, true) . ",\n",
+		$content
+	);
+}
+
+function delete_translation(string $content, string $en): string
+{
+	return preg_replace(
+		'~\t+\'' . preg_quote($en) . '\' => .+,\n~',
+		"",
+		$content
+	);
+}
+
+function add_translation(string $content, string $en, bool $first = false): string
+{
+	if ($first) {
+		$content = preg_replace(
+			'~];~',
+			"\n\t// TODO New texts\n];",
+			$content
+		);
+	}
+
+	return preg_replace(
+		'~];~',
+		"\t'$en' => null,\n];",
+		$content
+	);
+}
+
+/**
+ * @param string|array|null $translation
+ */
+function format_translation($translation, bool $single_line = false, bool $escape_dollars = false): string
+{
+	$result = $translation === null ? "null" : var_export($translation, true);
+
+	if (is_array($translation)) {
+		$result = preg_replace('~\n\s+\d+ => ~', "\n\t\t", $result);
+		$result = preg_replace('~^array \(~', "[", $result);
+		$result = preg_replace('~,?\n\)$~', ",\n\t]", $result);
+
+		if ($single_line) {
+			$result = preg_replace('~,\n\s*~', ", ", $result);
+			$result = preg_replace('~\n\s*~', "", $result);
+			$result = str_replace(", ]", "]", $result);
+		}
+	}
+
+	if ($escape_dollars) {
+		$result = str_replace('$', '\$', $result);
+	}
+
+	return $result;
+}
+
+function print_warning(string $filename, string $term, string $message): void
+{
+	echo "⚠️ $filename | $message: $term\n";
 }

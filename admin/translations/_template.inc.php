@@ -3,12 +3,23 @@
 namespace AdminNeo;
 
 return [
+	// text direction - 'ltr' or 'rtl'
+	'ltr' => 'xx',
+	// thousands separator - must contain single byte
+	',' => 'x',
+	'0123456789' => 'xxxxxxxxxx',
+	// Editor - date format: $1 yyyy, $2 yy, $3 mm, $4 m, $5 dd, $6 d
+	'$1-$3-$5' => 'xx',
+	// Editor - hint for date format - use language equivalents for day, month and year shortcuts
+	'YYYY-MM-DD' => 'XX',
+	// Editor - hint for time format - use language equivalents for hour, minute and second shortcuts
+	'HH:MM:SS' => 'XX',
+
+	// Bootstrap.
 	'%s must return an array.' => '%s xx.',
 	'%s and %s must return an object created by %s method.' => '%s xx %s xx %s.',
-	'More information.' => 'Xx.',
 
-	// label for database system selection (MySQL, SQLite, ...)
-	'Home' => 'Xx',
+	// Login.
 	'System' => 'Xx',
 	'Server' => 'Xx',
 	'Username' => 'Xx',
@@ -24,9 +35,11 @@ return [
 	'Database does not support password.' => 'Xx.',
 	'Too many unsuccessful logins, try again in %d minute(s).' => ['Xx %d.', 'Xx %d.'],
 	'Invalid permanent login, please login again.' => 'Xx.',
-	'Language' => 'Xx',
 	'Invalid CSRF token. Send the form again.' => 'Xx.',
 	'If you did not send this request from AdminNeo then close this page.' => 'Xx.',
+	'The action will be performed after successful login with the same credentials.' => 'Xx.',
+
+	// Connection.
 	'No driver' => 'Xx',
 	'Database driver not found.' => 'Xx.',
 	'No extension' => 'Xx',
@@ -35,32 +48,38 @@ return [
 	'Connecting to privileged ports is not allowed.' => 'Xx.',
 	'Session support must be enabled.' => 'Xx.',
 	'Session expired, please login again.' => 'Xx.',
-	'The action will be performed after successful login with the same credentials.' => 'Xx.',
 	'%s version: %s through PHP extension %s' => '%s xx: %s xx %s',
+
+	// Settings.
+	'Language' => 'Xx',
+
+	'Home' => 'Xx',
 	'Refresh' => 'Xx',
 	'Info' => 'Xx',
+	'More information.' => 'Xx.',
 
-	// text direction - 'ltr' or 'rtl'
-	'ltr' => 'xx',
-
+	// Privileges.
 	'Privileges' => 'Xx',
 	'Create user' => 'Xx',
 	'User has been dropped.' => 'Xx.',
 	'User has been altered.' => 'Xx.',
 	'User has been created.' => 'Xx.',
 	'Hashed' => 'Xx',
+
+	// Server.
+	'Process list' => 'Xx',
+	'%d process(es) have been killed.' => ['%d xx.', '%d xx.'],
+	'Kill' => 'Xx',
+	'Variables' => 'Xx',
+	'Status' => 'Xx',
+
+	// Structure.
 	'Column' => 'Xx',
 	'Routine' => 'Xx',
 	'Grant' => 'Xx',
 	'Revoke' => 'Xx',
 
-	'Process list' => 'Xx',
-	'%d process(es) have been killed.' => ['%d xx.', '%d xx.'],
-	'Kill' => 'Xx',
-
-	'Variables' => 'Xx',
-	'Status' => 'Xx',
-
+	// Queries.
 	'SQL command' => 'Xx',
 	'HTTP request' => 'Xx',
 	'%d query(s) executed OK.' => ['%d xx.', '%d xx.'],
@@ -73,12 +92,15 @@ return [
 	'Execute' => 'Xx',
 	'Stop on error' => 'Xx',
 	'Show only errors' => 'Xx',
+	'Time' => 'Xx',
 	// sprintf() format for time of the command
 	'%.3f s' => '%.3f xx',
 	'History' => 'Xx',
 	'Clear' => 'Xx',
 	'Edit all' => 'Xx',
 
+	// Import.
+	'Import' => 'Xx',
 	'File upload' => 'Xx',
 	'From server' => 'Xx',
 	'Webserver file %s' => 'Xx %s',
@@ -89,37 +111,53 @@ return [
 	'Maximum allowed file size is %sB.' => 'Xx %sB.',
 	'Too big POST data. Reduce the data or increase the %s configuration directive.' => 'Xx %s.',
 	'You can upload a big SQL file via FTP and import it from server.' => 'Xx.',
+	'File must be in UTF-8 encoding.' => 'Xx.',
 	'You are offline.' => 'Xx.',
+	'%d row(s) have been imported.' => ['%d xx.', '%d xx.'],
 
+	// Export.
 	'Export' => 'Xx',
 	'Output' => 'Xx',
 	'open' => 'xx',
 	'save' => 'xx',
-	'Saving' => 'Xx',
 	'Format' => 'Xx',
 	'Data' => 'Xx',
 
+	// Databases.
 	'Database' => 'Xx',
 	'DB' => 'XX',
 	'Use' => 'Xx',
 	'Invalid database.' => 'Xx.',
+	'Alter database' => 'Xx',
+	'Create database' => 'Xx',
+	'Database schema' => 'Xx',
+	'Permanent link' => 'Xx',
 	'Database has been dropped.' => 'Xx.',
 	'Databases have been dropped.' => 'Xx.',
 	'Database has been created.' => 'Xx.',
 	'Database has been renamed.' => 'Xx.',
 	'Database has been altered.' => 'Xx.',
-	'Alter database' => 'Xx',
-	'Create database' => 'Xx',
-	'Database schema' => 'Xx',
+	// SQLite errors.
+	'File exists.' => 'Xx.',
+	'Please use one of the extensions %s.' => 'Xx %s.',
 
-	// link to current database schema layout
-	'Permanent link' => 'Xx',
+	// Schemas (PostgreSQL, MS SQL).
+	'Schema' => 'Xx',
+	'Schemas' => 'Xx',
+	'No schemas.' => 'Xx.',
+	'Show schema' => 'Xx',
+	'Alter schema' => 'Xx',
+	'Create schema' => 'Xx',
+	'Schema has been dropped.' => 'Xx.',
+	'Schema has been created.' => 'Xx.',
+	'Schema has been altered.' => 'Xx.',
+	'Invalid schema.' => 'Xx.',
 
-	// thousands separator - must contain single byte
-	',' => 'x',
-	'0123456789' => 'xxxxxxxxxx',
+	// Table list.
 	'Engine' => 'Xx',
+	'engine' => 'xx',
 	'Collation' => 'Xx',
+	'collation' => 'xx',
 	'Data Length' => 'Xx',
 	'Index Length' => 'Xx',
 	'Data Free' => 'Xx',
@@ -139,32 +177,7 @@ return [
 	'Tables have been copied.' => 'Xx.',
 	'overwrite' => 'xx',
 
-	'Routines' => 'Xx',
-	'Routine has been called, %d row(s) affected.' => ['Xx, %d.', 'Xx, %d.'],
-	'Call' => 'Xx',
-	'Parameter name' => 'Xx',
-	'Create procedure' => 'Xx',
-	'Create function' => 'Xx',
-	'Routine has been dropped.' => 'Xx.',
-	'Routine has been altered.' => 'Xx.',
-	'Routine has been created.' => 'Xx.',
-	'Alter function' => 'Xx',
-	'Alter procedure' => 'Xx',
-	'Return type' => 'Xx',
-
-	'Events' => 'Xx',
-	'Event has been dropped.' => 'Xx.',
-	'Event has been altered.' => 'Xx.',
-	'Event has been created.' => 'Xx.',
-	'Alter event' => 'Xx',
-	'Create event' => 'Xx',
-	'At given time' => 'Xx',
-	'Every' => 'Xx',
-	'Schedule' => 'Xx',
-	'Start' => 'Xx',
-	'End' => 'Xx',
-	'On completion preserve' => 'Xx',
-
+	// Tables.
 	'Tables' => 'Xx',
 	'Tables and views' => 'Xx',
 	'Table' => 'Xx',
@@ -177,9 +190,8 @@ return [
 	'Table has been altered.' => 'Xx.',
 	'Table has been created.' => 'Xx.',
 	'Table name' => 'Xx',
+	'Name' => 'Xx',
 	'Show structure' => 'Xx',
-	'engine' => 'xx',
-	'collation' => 'xx',
 	'Column name' => 'Xx',
 	'Type' => 'Xx',
 	'Length' => 'Xx',
@@ -197,12 +209,7 @@ return [
 	'Remove' => 'Xx',
 	'Maximum number of allowed fields exceeded. Please increase %s.' => 'Xx %s.',
 
-	'Partition by' => 'Xx',
-	'Partition' => 'Xx',
-	'Partitions' => 'Xx',
-	'Partition name' => 'Xx',
-	'Values' => 'Xx',
-
+	// Views.
 	'View' => 'Xx',
 	'Materialized view' => 'Xx',
 	'View has been dropped.' => 'Xx.',
@@ -211,6 +218,14 @@ return [
 	'Alter view' => 'Xx',
 	'Create view' => 'Xx',
 
+	// Partitions.
+	'Partition by' => 'Xx',
+	'Partition' => 'Xx',
+	'Partitions' => 'Xx',
+	'Partition name' => 'Xx',
+	'Values' => 'Xx',
+
+	// Indexes.
 	'Indexes' => 'Xx',
 	'Indexes have been altered.' => 'Xx.',
 	'Alter indexes' => 'Xx',
@@ -218,6 +233,7 @@ return [
 	'Index Type' => 'Xx',
 	'length' => 'xx',
 
+	// Foreign keys.
 	'Foreign keys' => 'Xx',
 	'Foreign key' => 'Xx',
 	'Foreign key has been dropped.' => 'Xx.',
@@ -234,6 +250,51 @@ return [
 	'ON UPDATE' => 'Xx',
 	'Source and target columns must have the same data type, there must be an index on the target columns and referenced data must exist.' => 'Xx.',
 
+	// Routines.
+	'Routines' => 'Xx',
+	'Routine has been called, %d row(s) affected.' => ['Xx, %d.', 'Xx, %d.'],
+	'Call' => 'Xx',
+	'Parameter name' => 'Xx',
+	'Create procedure' => 'Xx',
+	'Create function' => 'Xx',
+	'Routine has been dropped.' => 'Xx.',
+	'Routine has been altered.' => 'Xx.',
+	'Routine has been created.' => 'Xx.',
+	'Alter function' => 'Xx',
+	'Alter procedure' => 'Xx',
+	'Return type' => 'Xx',
+
+	// Events.
+	'Events' => 'Xx',
+	'Event' => 'Xx',
+	'Event has been dropped.' => 'Xx.',
+	'Event has been altered.' => 'Xx.',
+	'Event has been created.' => 'Xx.',
+	'Alter event' => 'Xx',
+	'Create event' => 'Xx',
+	'At given time' => 'Xx',
+	'Every' => 'Xx',
+	'Schedule' => 'Xx',
+	'Start' => 'Xx',
+	'End' => 'Xx',
+	'On completion preserve' => 'Xx',
+
+	// Sequences (PostgreSQL).
+	'Sequences' => 'Xx',
+	'Create sequence' => 'Xx',
+	'Sequence has been dropped.' => 'Xx.',
+	'Sequence has been created.' => 'Xx.',
+	'Sequence has been altered.' => 'Xx.',
+	'Alter sequence' => 'Xx',
+
+	// User types (PostgreSQL)
+	'User types' => 'Xx',
+	'Create type' => 'Xx',
+	'Type has been dropped.' => 'Xx.',
+	'Type has been created.' => 'Xx.',
+	'Alter type' => 'Xx',
+
+	// Triggers.
 	'Triggers' => 'Xx',
 	'Add trigger' => 'Xx',
 	'Trigger has been dropped.' => 'Xx.',
@@ -241,17 +302,22 @@ return [
 	'Trigger has been created.' => 'Xx.',
 	'Alter trigger' => 'Xx',
 	'Create trigger' => 'Xx',
-	'Time' => 'Xx',
-	'Event' => 'Xx',
-	'Name' => 'Xx',
-	'Select' => 'Xx',
+
+	// Table check constraints.
+	'Checks' => 'Xx',
+	'Create check' => 'Xx',
+	'Alter check' => 'Xx',
+	'Check has been created.' => 'Xx.',
+	'Check has been altered.' => 'Xx.',
+	'Check has been dropped.' => 'Xx.',
+
+	// Selection.
 	'Select data' => 'Xx',
+	'Select' => 'Xx',
 	'Functions' => 'Xx',
 	'Aggregation' => 'Xx',
 	'Search' => 'Xx',
 	'anywhere' => 'xx',
-	'Search data in tables' => 'Xx',
-	'as a regular expression' => 'xx',
 	'Sort' => 'Xx',
 	'descending' => 'xx',
 	'Limit' => 'Xx',
@@ -260,6 +326,8 @@ return [
 	'Action' => 'Xx',
 	'Full table scan' => 'Xx',
 	'Unable to select the table' => 'Xx',
+	'Search data in tables' => 'Xx',
+	'as a regular expression' => 'xx',
 	'No rows.' => 'Xx.',
 	'%d / ' => '%d / ',
 	'%d row(s)' => ['%d xx', '%d xx'],
@@ -270,35 +338,33 @@ return [
 	'Whole result' => 'Xx',
 	'%d byte(s)' => ['%d xx', '%d xx'],
 
-	'Import' => 'Xx',
-	'%d row(s) have been imported.' => ['%d xx.', '%d xx.'],
-	'File must be in UTF-8 encoding.' => 'Xx.',
-
-	// in-place editing in select
+	// In-place editing in selection.
 	'Modify' => 'Xx',
 	'Ctrl+click on a value to modify it.' => 'Xx.',
 	'Use edit link to modify this value.' => 'Xx.',
 
+	// Editing.
+	'New item' => 'Xx',
+	'Edit' => 'Xx',
+	'original' => 'xx',
+	// label for value '' in enum data type
+	'empty' => 'xx',
+	'Insert' => 'Xx',
+	'Save' => 'Xx',
+	'Save and continue edit' => 'Xx',
+	'Save and insert next' => 'Xx',
+	'Saving' => 'Xx',
+	'Selected' => 'Xx',
+	'Clone' => 'Xx',
+	'Delete' => 'Xx',
 	// %s can contain auto-increment value, e.g. ' 123'
 	'Item%s has been inserted.' => 'Xx%s.',
 	'Item has been deleted.' => 'Xx.',
 	'Item has been updated.' => 'Xx.',
 	'%d item(s) have been affected.' => ['%d xx.', '%d xx.'],
-	'New item' => 'Xx',
-	'original' => 'xx',
-	// label for value '' in enum data type
-	'empty' => 'xx',
-	'Edit' => 'Xx',
-	'Insert' => 'Xx',
-	'Save' => 'Xx',
-	'Save and continue edit' => 'Xx',
-	'Save and insert next' => 'Xx',
-	'Selected' => 'Xx',
-	'Clone' => 'Xx',
-	'Delete' => 'Xx',
 	'You have no privileges to update this table.' => 'Xx.',
 
-	// data type descriptions
+	// Data type descriptions.
 	'Numbers' => 'Xx',
 	'Date and time' => 'Xx',
 	'Strings' => 'Xx',
@@ -307,54 +373,11 @@ return [
 	'Network' => 'Xx',
 	'Geometry' => 'Xx',
 	'Relations' => 'Xx',
-	// date format in Editor: $1 yyyy, $2 yy, $3 mm, $4 m, $5 dd, $6 d
-	'$1-$3-$5' => 'xx',
-	// hint for date format - use language equivalents for day, month and year shortcuts
-	'YYYY-MM-DD' => 'XX',
-	// hint for time format - use language equivalents for hour, minute and second shortcuts
-	'HH:MM:SS' => 'XX',
+
+	// Editor - data values.
 	'now' => 'xx',
 	'yes' => 'xx',
 	'no' => 'xx',
-
-	// general SQLite error in create, drop or rename database
-	'File exists.' => 'Xx.',
-	'Please use one of the extensions %s.' => 'Xx %s.',
-
-	// PostgreSQL and MS SQL schema support
-	'Schema' => 'Xx',
-	'Schemas' => 'Xx',
-	'No schemas.' => 'Xx.',
-	'Show schema' => 'Xx',
-	'Alter schema' => 'Xx',
-	'Create schema' => 'Xx',
-	'Schema has been dropped.' => 'Xx.',
-	'Schema has been created.' => 'Xx.',
-	'Schema has been altered.' => 'Xx.',
-	'Invalid schema.' => 'Xx.',
-
-	// PostgreSQL sequences support
-	'Sequences' => 'Xx',
-	'Create sequence' => 'Xx',
-	'Sequence has been dropped.' => 'Xx.',
-	'Sequence has been created.' => 'Xx.',
-	'Sequence has been altered.' => 'Xx.',
-	'Alter sequence' => 'Xx',
-
-	// PostgreSQL user types support
-	'User types' => 'Xx',
-	'Create type' => 'Xx',
-	'Type has been dropped.' => 'Xx.',
-	'Type has been created.' => 'Xx.',
-	'Alter type' => 'Xx',
-
-	// Table check constraints
-	'Checks' => 'Xx',
-	'Create check' => 'Xx',
-	'Alter check' => 'Xx',
-	'Check has been created.' => 'Xx.',
-	'Check has been altered.' => 'Xx.',
-	'Check has been dropped.' => 'Xx.',
 
 	// Plugins.
 	'One Time Password' => 'Xx',

@@ -114,7 +114,7 @@ class Locale
 	public function translate($key, $number = null): string
 	{
 		$key = $this->convertTranslationKey($key);
-		$translation = $this->translations[$key] ?: $key;
+		$translation = $this->translations[$key] ?? $key;
 		$language = $this->language;
 
 		if (is_array($translation)) {
