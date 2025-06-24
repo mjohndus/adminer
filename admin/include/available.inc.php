@@ -37,7 +37,8 @@ function find_available_languages(): array
 		$paths = glob(__DIR__ . "/../translations/*");
 
 		foreach ($paths as $path) {
-			if (preg_match('~/([^/]+)\.inc\.php$~', $path, $matches)) {
+			// '_' will skip the template.
+			if (preg_match('~/([^/_]+)\.inc\.php$~', $path, $matches)) {
 				$languages[$matches[1]] = true;
 			}
 		}

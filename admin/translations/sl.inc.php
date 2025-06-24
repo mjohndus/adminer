@@ -2,9 +2,21 @@
 
 namespace AdminNeo;
 
-$translations = [
-	// label for database system selection (MySQL, SQLite, ...)
-	'Home' => null,
+return [
+	// text direction - 'ltr' or 'rtl'
+	'ltr' => 'ltr',
+	// thousands separator - must contain single byte
+	',' => ' ',
+	'0123456789' => '0123456789',
+	// Editor - date format: $1 yyyy, $2 yy, $3 mm, $4 m, $5 dd, $6 d
+	'$1-$3-$5' => '$6.$4.$1',
+	// Editor - hint for date format - use language equivalents for day, month and year shortcuts
+	'YYYY-MM-DD' => 'D.M.RRRR',
+	// Editor - hint for time format - use language equivalents for hour, minute and second shortcuts
+
+	// Bootstrap.
+
+	// Login.
 	'System' => 'Sistem',
 	'Server' => 'Strežnik',
 	'Username' => 'Uporabniško ime',
@@ -15,49 +27,74 @@ $translations = [
 	'Logged as: %s' => 'Prijavljen kot: %s',
 	'Logout successful.' => 'Prijava uspešna.',
 	'Invalid server or credentials.' => 'Neveljaven strežnik ali pravice.',
-	'Language' => 'Jezik',
 	'Invalid CSRF token. Send the form again.' => 'Neveljaven token CSRF. Pošljite formular še enkrat.',
+
+	// Connection.
 	'No extension' => 'Brez dodatkov',
+	// %s contains the list of the extensions, e.g. 'mysqli, PDO_MySQL'
 	'None of the supported PHP extensions (%s) are available.' => 'Noben od podprtih dodatkov za PHP (%s) ni na voljo.',
 	'Session support must be enabled.' => 'Podpora za seje mora biti omogočena.',
 	'Session expired, please login again.' => 'Seja je potekla. Prosimo, ponovno se prijavite.',
 	'%s version: %s through PHP extension %s' => 'Verzija %s: %s preko dodatka za PHP %s',
+
+	// Settings.
+	'Language' => 'Jezik',
+
 	'Refresh' => 'Osveži',
 
-	// text direction
-	'ltr' => 'ltr',
-
+	// Privileges.
 	'Privileges' => 'Pravice',
 	'Create user' => 'Ustvari uporabnika',
 	'User has been dropped.' => 'Uporabnik je odstranjen.',
 	'User has been altered.' => 'Uporabnik je spremenjen.',
 	'User has been created.' => 'Uporabnik je ustvarjen.',
 	'Hashed' => 'Zakodirano',
+
+	// Server.
+	'Process list' => 'Seznam procesov',
+	'%d process(es) have been killed.' => [
+		'Končan je %d proces.',
+		'Končana sta %d procesa.',
+		'Končani so %d procesi.',
+		'Končanih je %d procesov.',
+	],
+	'Kill' => 'Končaj',
+	'Variables' => 'Spremenljivke',
+	'Status' => 'Stanje',
+
+	// Structure.
 	'Column' => 'Stolpec',
 	'Routine' => 'Postopek',
 	'Grant' => 'Dovoli',
 	'Revoke' => 'Odvzemi',
 
-	'Process list' => 'Seznam procesov',
-	'%d process(es) have been killed.' => ['Končan je %d proces.', 'Končana sta %d procesa.', 'Končani so %d procesi.', 'Končanih je %d procesov.'],
-	'Kill' => 'Končaj',
-
-	'Variables' => 'Spremenljivke',
-	'Status' => 'Stanje',
-
+	// Queries.
 	'SQL command' => 'Ukaz SQL',
-	'%d query(s) executed OK.' => ['Uspešno se je končala %d poizvedba.', 'Uspešno sta se končali %d poizvedbi.', 'Uspešno so se končale %d poizvedbe.', 'Uspešno se je končalo %d poizvedb.'],
-	'Query executed OK, %d row(s) affected.' => ['Poizvedba se je uspešno izvedla, spremenjena je %d vrstica.', 'Poizvedba se je uspešno izvedla, spremenjeni sta %d vrstici.', 'Poizvedba se je uspešno izvedla, spremenjene so %d vrstice.', 'Poizvedba se je uspešno izvedla, spremenjenih je %d vrstic.'],
+	'%d query(s) executed OK.' => [
+		'Uspešno se je končala %d poizvedba.',
+		'Uspešno sta se končali %d poizvedbi.',
+		'Uspešno so se končale %d poizvedbe.',
+		'Uspešno se je končalo %d poizvedb.',
+	],
+	'Query executed OK, %d row(s) affected.' => [
+		'Poizvedba se je uspešno izvedla, spremenjena je %d vrstica.',
+		'Poizvedba se je uspešno izvedla, spremenjeni sta %d vrstici.',
+		'Poizvedba se je uspešno izvedla, spremenjene so %d vrstice.',
+		'Poizvedba se je uspešno izvedla, spremenjenih je %d vrstic.',
+	],
 	'No commands to execute.' => 'Ni ukazov za izvedbo.',
 	'Error in query' => 'Napaka v poizvedbi',
 	'Execute' => 'Izvedi',
 	'Stop on error' => 'Ustavi ob napaki',
 	'Show only errors' => 'Pokaži samo napake',
+	'Time' => 'Čas',
 	// sprintf() format for time of the command
 	'%.3f s' => '%.3f s',
 	'History' => 'Zgodovina',
 	'Clear' => 'Počisti',
 
+	// Import.
+	'Import' => 'Uvozi',
 	'File upload' => 'Naloži datoteko',
 	'From server' => 'z strežnika',
 	'Webserver file %s' => 'Datoteka na spletnem strežniku %s',
@@ -67,7 +104,14 @@ $translations = [
 	'Unable to upload a file.' => 'Ne morem naložiti datoteke.',
 	'Maximum allowed file size is %sB.' => 'Največja velikost datoteke je %sB.',
 	'Too big POST data. Reduce the data or increase the %s configuration directive.' => 'Preveliko podatkov za POST. Zmanjšajte število podatkov ali povečajte nastavitev za %s.',
+	'%d row(s) have been imported.' => [
+		'Uvožena je %d vrstica.',
+		'Uvoženi sta %d vrstici.',
+		'Uvožene so %d vrstice.',
+		'Uvoženih je %d vrstic.',
+	],
 
+	// Export.
 	'Export' => 'Izvozi',
 	'Output' => 'Izhod rezultata',
 	'open' => 'odpri',
@@ -75,23 +119,36 @@ $translations = [
 	'Format' => 'Format',
 	'Data' => 'Podatki',
 
+	// Databases.
 	'Database' => 'Baza',
 	'Use' => 'Uporabi',
 	'Invalid database.' => 'Neveljavna baza.',
+	'Alter database' => 'Spremeni bazo',
+	'Create database' => 'Ustvari bazo',
+	'Database schema' => 'Shema baze',
 	'Database has been dropped.' => 'Baza je zavržena.',
 	'Databases have been dropped.' => 'Baze so zavržene.',
 	'Database has been created.' => 'Baza je ustvarjena.',
 	'Database has been renamed.' => 'Baza je preimenovana.',
 	'Database has been altered.' => 'Baza je spremenjena.',
-	'Alter database' => 'Spremeni bazo',
-	'Create database' => 'Ustvari bazo',
-	'Database schema' => 'Shema baze',
+	// SQLite errors.
+	'File exists.' => 'Datoteka obstaja.',
+	'Please use one of the extensions %s.' => 'Prosim, uporabite enega od dodatkov %s.',
 
-	// thousands separator - must contain single byte
-	',' => ' ',
-	'0123456789' => '0123456789',
+	// Schemas (PostgreSQL, MS SQL).
+	'Schema' => 'Shema',
+	'Alter schema' => 'Spremeni shemo',
+	'Create schema' => 'Ustvari shemo',
+	'Schema has been dropped.' => 'Shema je zavržena.',
+	'Schema has been created.' => 'Shema je ustvarjena.',
+	'Schema has been altered.' => 'Shema je spremenjena.',
+	'Invalid schema.' => 'Neveljavna shema.',
+
+	// Table list.
 	'Engine' => 'Pogon',
+	'engine' => 'pogon',
 	'Collation' => 'Zbiranje',
+	'collation' => 'zbiranje',
 	'Data Length' => 'Velikost podatkov',
 	'Index Length' => 'Velikost indeksa',
 	'Data Free' => 'Podatkov prosto ',
@@ -109,32 +166,7 @@ $translations = [
 	'Copy' => 'Kopiraj',
 	'Tables have been copied.' => 'Tabele so kopirane.',
 
-	'Routines' => 'Postopki',
-	'Routine has been called, %d row(s) affected.' => ['Klican je bil postopek, spremenjena je %d vrstica.', 'Klican je bil postopek, spremenjeni sta %d vrstici.', 'Klican je bil postopek, spremenjene so %d vrstice.', 'Klican je bil postopek, spremenjenih je %d vrstic.'],
-	'Call' => 'Pokliči',
-	'Parameter name' => 'Ime parametra',
-	'Create procedure' => 'Ustvari postopek',
-	'Create function' => 'Ustvari funkcijo',
-	'Routine has been dropped.' => 'Postopek je zavržen.',
-	'Routine has been altered.' => 'Postopek je spremenjen.',
-	'Routine has been created.' => 'Postopek je ustvarjen.',
-	'Alter function' => 'Spremeni funkcijo',
-	'Alter procedure' => 'Spremeni postopek',
-	'Return type' => 'Vračalni tip',
-
-	'Events' => 'Dogodki',
-	'Event has been dropped.' => 'Dogodek je zavržen.',
-	'Event has been altered.' => 'Dogodek je spremenjen.',
-	'Event has been created.' => 'Dogodek je ustvarjen.',
-	'Alter event' => 'Spremeni dogodek',
-	'Create event' => 'Ustvari dogodek',
-	'At given time' => 'v danem času',
-	'Every' => 'vsake',
-	'Schedule' => 'Urnik',
-	'Start' => 'Začetek',
-	'End' => 'Konec',
-	'On completion preserve' => 'Po zaključku ohrani',
-
+	// Tables.
 	'Tables' => 'Tabele',
 	'Tables and views' => 'Tabele in pogledi',
 	'Table' => 'Tabela',
@@ -146,9 +178,8 @@ $translations = [
 	'Table has been altered.' => 'Tabela je spremenjena.',
 	'Table has been created.' => 'Tabela je ustvarjena.',
 	'Table name' => 'Ime tabele',
+	'Name' => 'Naziv',
 	'Show structure' => 'Pokaži zgradbo',
-	'engine' => 'pogon',
-	'collation' => 'zbiranje',
 	'Column name' => 'Ime stolpca',
 	'Type' => 'Tip',
 	'Length' => 'Dolžina',
@@ -162,12 +193,7 @@ $translations = [
 	'Remove' => 'Odstrani',
 	'Maximum number of allowed fields exceeded. Please increase %s.' => 'Največje število dovoljenih polje je preseženo. Prosimo, povečajte %s.',
 
-	'Partition by' => 'Porazdeli po',
-	'Partition' => null,
-	'Partitions' => 'Porazdelitve',
-	'Partition name' => 'Ime porazdelitve',
-	'Values' => 'Vrednosti',
-
+	// Views.
 	'View' => 'Pogledi',
 	'View has been dropped.' => 'Pogled je zavržen.',
 	'View has been altered.' => 'Pogled je spremenjen.',
@@ -175,6 +201,13 @@ $translations = [
 	'Alter view' => 'Spremeni pogled',
 	'Create view' => 'Ustvari pogled',
 
+	// Partitions.
+	'Partition by' => 'Porazdeli po',
+	'Partitions' => 'Porazdelitve',
+	'Partition name' => 'Ime porazdelitve',
+	'Values' => 'Vrednosti',
+
+	// Indexes.
 	'Indexes' => 'Indeksi',
 	'Indexes have been altered.' => 'Indeksi so spremenjeni.',
 	'Alter indexes' => 'Spremeni indekse',
@@ -182,6 +215,7 @@ $translations = [
 	'Index Type' => 'Tip indeksa',
 	'length' => 'dolžina',
 
+	// Foreign keys.
 	'Foreign keys' => 'Tuji ključi',
 	'Foreign key' => 'Tuj ključ',
 	'Foreign key has been dropped.' => 'Tuj ključ je zavržen.',
@@ -198,6 +232,56 @@ $translations = [
 	'ON UPDATE' => 'pri posodabljanju',
 	'Source and target columns must have the same data type, there must be an index on the target columns and referenced data must exist.' => 'Izvorni in ciljni stolpec mora imeti isti podatkovni tip. Obstajati mora indeks na ciljnih stolpcih in obstajati morajo referenčni podatki.',
 
+	// Routines.
+	'Routines' => 'Postopki',
+	'Routine has been called, %d row(s) affected.' => [
+		'Klican je bil postopek, spremenjena je %d vrstica.',
+		'Klican je bil postopek, spremenjeni sta %d vrstici.',
+		'Klican je bil postopek, spremenjene so %d vrstice.',
+		'Klican je bil postopek, spremenjenih je %d vrstic.',
+	],
+	'Call' => 'Pokliči',
+	'Parameter name' => 'Ime parametra',
+	'Create procedure' => 'Ustvari postopek',
+	'Create function' => 'Ustvari funkcijo',
+	'Routine has been dropped.' => 'Postopek je zavržen.',
+	'Routine has been altered.' => 'Postopek je spremenjen.',
+	'Routine has been created.' => 'Postopek je ustvarjen.',
+	'Alter function' => 'Spremeni funkcijo',
+	'Alter procedure' => 'Spremeni postopek',
+	'Return type' => 'Vračalni tip',
+
+	// Events.
+	'Events' => 'Dogodki',
+	'Event' => 'Dogodek',
+	'Event has been dropped.' => 'Dogodek je zavržen.',
+	'Event has been altered.' => 'Dogodek je spremenjen.',
+	'Event has been created.' => 'Dogodek je ustvarjen.',
+	'Alter event' => 'Spremeni dogodek',
+	'Create event' => 'Ustvari dogodek',
+	'At given time' => 'v danem času',
+	'Every' => 'vsake',
+	'Schedule' => 'Urnik',
+	'Start' => 'Začetek',
+	'End' => 'Konec',
+	'On completion preserve' => 'Po zaključku ohrani',
+
+	// Sequences (PostgreSQL).
+	'Sequences' => 'Sekvence',
+	'Create sequence' => 'Ustvari sekvenco',
+	'Sequence has been dropped.' => 'Sekvenca je zavržena.',
+	'Sequence has been created.' => 'Sekvence je ustvarjena.',
+	'Sequence has been altered.' => 'Sekvence je spremenjena.',
+	'Alter sequence' => 'Spremni sekvenco',
+
+	// User types (PostgreSQL)
+	'User types' => 'Uporabniški tipi',
+	'Create type' => 'Ustvari tip',
+	'Type has been dropped.' => 'Tip je zavržen.',
+	'Type has been created.' => 'Tip je ustvarjen.',
+	'Alter type' => 'Spremeni tip',
+
+	// Triggers.
 	'Triggers' => 'Sprožilniki',
 	'Add trigger' => 'Dodaj sprožilnik',
 	'Trigger has been dropped.' => 'Sprožilnik je odstranjen.',
@@ -205,55 +289,68 @@ $translations = [
 	'Trigger has been created.' => 'Sprožilnik je ustvarjen.',
 	'Alter trigger' => 'Spremeni sprožilnik',
 	'Create trigger' => 'Ustvari sprožilnik',
-	'Time' => 'Čas',
-	'Event' => 'Dogodek',
-	'Name' => 'Naziv',
-	'Select' => 'Izberi',
+
+	// Table check constraints.
+
+	// Selection.
 	'Select data' => 'Izberi podatke',
+	'Select' => 'Izberi',
 	'Functions' => 'Funkcije',
 	'Aggregation' => 'Združitev',
 	'Search' => 'Išči',
 	'anywhere' => 'kjerkoli',
-	'Search data in tables' => 'Išče podatke po tabelah',
-	'as a regular expression' => null,
 	'Sort' => 'Sortiraj',
 	'descending' => 'padajoče',
 	'Limit' => 'Limita',
 	'Text length' => 'Dolžina teksta',
 	'Action' => 'Dejanje',
 	'Unable to select the table' => 'Ne morem izbrati tabele',
+	'Search data in tables' => 'Išče podatke po tabelah',
 	'No rows.' => 'Ni vrstic.',
-	'%d row(s)' => ['%d vrstica', '%d vrstici', '%d vrstice', '%d vrstic'],
+	'%d row(s)' => [
+		'%d vrstica',
+		'%d vrstici',
+		'%d vrstice',
+		'%d vrstic',
+	],
 	'Page' => 'Stran',
 	'last' => 'Zadnja',
 	'Whole result' => 'Cel razultat',
-	'%d byte(s)' => ['%d bajt', '%d bajta', '%d bajti', '%d bajtov'],
+	'%d byte(s)' => [
+		'%d bajt',
+		'%d bajta',
+		'%d bajti',
+		'%d bajtov',
+	],
 
-	'Import' => 'Uvozi',
-	'%d row(s) have been imported.' => ['Uvožena je %d vrstica.', 'Uvoženi sta %d vrstici.', 'Uvožene so %d vrstice.', 'Uvoženih je %d vrstic.'],
-
-	// in-place editing in select
+	// In-place editing in selection.
 	'Ctrl+click on a value to modify it.' => 'Ctrl+klik na vrednost za urejanje.',
 	'Use edit link to modify this value.' => 'Uporabite urejanje povezave za spreminjanje te vrednosti.',
 
-	// %s can contain auto-increment value
-	'Item%s has been inserted.' => 'Predmet%s je vstavljen.',
-	'Item has been deleted.' => 'Predmet je izbrisan.',
-	'Item has been updated.' => 'Predmet je posodobljen.',
-	'%d item(s) have been affected.' => ['Spremenjen je %d predmet.', 'Spremenjena sta %d predmeta.', 'Spremenjeni so %d predmeti.', 'Spremenjenih je %d predmetov.'],
+	// Editing.
 	'New item' => 'Nov predmet',
+	'Edit' => 'Uredi',
 	'original' => 'original',
 	// label for value '' in enum data type
 	'empty' => 'prazno',
-	'Edit' => 'Uredi',
 	'Insert' => 'Vstavi',
 	'Save' => 'Shrani',
 	'Save and continue edit' => 'Shrani in nadaljuj z urejanjem',
 	'Save and insert next' => 'Shrani in vstavi tekst',
 	'Clone' => 'Kloniraj',
 	'Delete' => 'Izbriši',
+	// %s can contain auto-increment value, e.g. ' 123'
+	'Item%s has been inserted.' => 'Predmet%s je vstavljen.',
+	'Item has been deleted.' => 'Predmet je izbrisan.',
+	'Item has been updated.' => 'Predmet je posodobljen.',
+	'%d item(s) have been affected.' => [
+		'Spremenjen je %d predmet.',
+		'Spremenjena sta %d predmeta.',
+		'Spremenjeni so %d predmeti.',
+		'Spremenjenih je %d predmetov.',
+	],
 
-	// data type descriptions
+	// Data type descriptions.
 	'Numbers' => 'Števila',
 	'Date and time' => 'Datum in čas',
 	'Strings' => 'Nizi',
@@ -262,93 +359,9 @@ $translations = [
 	'Network' => 'Mrežni',
 	'Geometry' => 'Geometrčni',
 	'Relations' => 'Relacijski',
-	// date format in Editor: $1 yyyy, $2 yy, $3 mm, $4 m, $5 dd, $6 d
-	'$1-$3-$5' => '$6.$4.$1',
-	// hint for date format - use language equivalents for day, month and year shortcuts
-	'YYYY-MM-DD' => 'D.M.RRRR',
+
+	// Editor - data values.
 	'now' => 'zdaj',
 
-	// general SQLite error in create, drop or rename database
-	'File exists.' => 'Datoteka obstaja.',
-	'Please use one of the extensions %s.' => 'Prosim, uporabite enega od dodatkov %s.',
-
-	// PostgreSQL and MS SQL schema support
-	'Alter schema' => 'Spremeni shemo',
-	'Create schema' => 'Ustvari shemo',
-	'Schema has been dropped.' => 'Shema je zavržena.',
-	'Schema has been created.' => 'Shema je ustvarjena.',
-	'Schema has been altered.' => 'Shema je spremenjena.',
-	'Schema' => 'Shema',
-	'Invalid schema.' => 'Neveljavna shema.',
-
-	// PostgreSQL sequences support
-	'Sequences' => 'Sekvence',
-	'Create sequence' => 'Ustvari sekvenco',
-	'Sequence has been dropped.' => 'Sekvenca je zavržena.',
-	'Sequence has been created.' => 'Sekvence je ustvarjena.',
-	'Sequence has been altered.' => 'Sekvence je spremenjena.',
-	'Alter sequence' => 'Spremni sekvenco',
-
-	// PostgreSQL user types support
-	'User types' => 'Uporabniški tipi',
-	'Create type' => 'Ustvari tip',
-	'Type has been dropped.' => 'Tip je zavržen.',
-	'Type has been created.' => 'Tip je ustvarjen.',
-	'Alter type' => 'Spremeni tip',
-
-	'Drop %s?' => null,
-	'Tables have been optimized.' => null,
-	'Materialized view' => null,
-	'Vacuum' => null,
-	'Selected' => null,
-	'overwrite' => null,
-	'DB' => null,
-	'Permanent link' => null,
-	'File must be in UTF-8 encoding.' => null,
-	'Modify' => null,
-	'Load more data' => null,
-	'Loading' => null,
-	'ATTACH queries are not supported.' => null,
-	'Warnings' => null,
-	'%d / ' => [],
-	'Limit rows' => null,
-	'Edit all' => null,
-	'AdminNeo does not support accessing a database without a password, <a href="https://www.adminneo.org/password"%s>more information</a>.' => null,
-	'Default value' => null,
-	'Full table scan' => null,
-	'Too many unsuccessful logins, try again in %d minute(s).' => [],
-	'The action will be performed after successful login with the same credentials.' => null,
-	'Connecting to privileged ports is not allowed.' => null,
-	'There is a space in the input password which might be the cause.' => null,
-	'If you did not send this request from AdminNeo then close this page.' => null,
-	'You can upload a big SQL file via FTP and import it from server.' => null,
-	'Size' => null,
-	'Compute' => null,
-	'You are offline.' => null,
-	'You have no privileges to update this table.' => null,
-	'Saving' => null,
-	'Unknown error.' => null,
-	'Database does not support password.' => null,
-	'yes' => null,
-	'no' => null,
-	'HH:MM:SS' => null,
-	'One Time Password' => null,
-	'Invalid OTP code.' => null,
-
-	'Schemas' => null,
-	'No schemas.' => null,
-	'Show schema' => null,
-	'No driver' => null,
-	'Database driver not found.' => null,
-
-	'Check has been dropped.' => null,
-	'Check has been altered.' => null,
-	'Check has been created.' => null,
-	'Alter check' => null,
-	'Create check' => null,
-	'Checks' => null,
-	'Invalid permanent login, please login again.' => null,
-
-	'Access denied.' => null,
-	'Enter OTP code.' => null,
+	// Plugins.
 ];
