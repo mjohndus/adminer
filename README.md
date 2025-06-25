@@ -72,3 +72,11 @@ Main project files
 - bin/compile.php - Create a single file version.
 - bin/update-translations.php - Update translation files.
 - tests/katalon.html - Katalon Automation Recorder test suite.
+
+Updating translations 
+---------------------
+
+- Download the current source code.
+- Run `php bin/update-translations.php [language]` where `language` is the language code (e.g. `de`).
+- Translate all missing texts with `null` values and/or correct existing translations.
+- Create a pull request or send your updates by another channel (e.g., in new GitHub issue).
