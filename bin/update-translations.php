@@ -7,8 +7,8 @@ include __DIR__ . "/../admin/include/available.inc.php";
 include __DIR__ . "/../admin/include/polyfill.inc.php";
 
 $languages = find_available_languages();
-$keep_order = $clean = false;
-$lang = null;
+$to_end = $clean = false;
+$language = null;
 $template = "_template";
 
 array_shift($argv);
@@ -20,28 +20,28 @@ foreach ($argv as $key => $option) {
 		echo "Updates admin/translations/*.inc.php from the source code messages.\n";
 		echo "\n";
 		echo "OPTIONS:\n";
-		echo "  --keep-order - Do not move new texts to the end of the file.\n";
-		echo "  --clean      - Remove untranslated texts.\n";
-		echo "  -h, --help   - Print help.\n";
+		echo "  --to-end    - Group untranslated texts at the end of the list.\n";
+		echo "  --clean     - Delete untranslated texts.\n";
+		echo "  -h, --help  - Print help.\n";
 		echo "\n";
 		echo "PARAMETERS:\n";
 		echo "  language     - Language code.\n";
 		exit;
 	}
 
-	if ($option == "--keep-order") {
-		$keep_order = true;
+	if ($option == "--to-end") {
+		$to_end = true;
 		unset($argv[$key]);
 	} elseif ($option == "--clean") {
 		$clean = true;
 		unset($argv[$key]);
 	} else {
-		$lang = $option;
+		$language = $option;
 	}
 }
 
-if ($lang && $lang != $template && !isset($languages[$lang])) {
-	echo "⚠️ Unknown language: $lang\n";
+if ($language && $language != $template && !isset($languages[$language])) {
+	echo "⚠️ Unknown language: $language\n";
 	exit(1);
 }
 
@@ -51,9 +51,9 @@ if (isset($argv[2])) {
 	exit(1);
 }
 
-if ($lang) {
+if ($language) {
 	$languages = [
-		$lang => true,
+		$language => true,
 	];
 }
 
@@ -86,21 +86,24 @@ foreach ($file_paths as $file_path) {
 foreach ($languages as $language => $dummy) {
 	$file_path = __DIR__ . "/../admin/translations/$language.inc.php";
 	$filename = basename($file_path);
-	$lang = basename($filename, ".inc.php");
-	$period = ($lang == "bn" || $lang == 'hi' ? '।' : (preg_match('~^(ja|zh)~', $lang) ? '。' : ($lang == 'he' ? '' : '\.')));
+	$period = ($language == "bn" || $language == 'hi' ? '।' : (preg_match('~^(ja|zh)~', $language) ? '。' : ($language == 'he' ? '' : '\.')));
 
 	$texts = $all_texts;
 	$translations = require $file_path;
 	$content = file_get_contents(__DIR__ . "/../admin/translations/$template.inc.php");
 
 	foreach ($translations as $en => $translation) {
+		// Skip/remove the translation of nonexistent text.
 		if (!isset($texts[$en])) {
+			if ($language == $template) {
+				delete_translation($content, $en);
+			}
 			continue;
 		}
 
 		// Keep current translated texts.
-		if ($translation !== null || ($keep_order && !$clean)) {
-			$content = write_translation($content, $en, $translation, $language == $template);
+		if ($translation !== null || (!$to_end && !$clean)) {
+			write_translation($content, $en, $translation, $language == $template);
 			unset($texts[$en]);
 
 			// Do not check untranslated texts and thousands separator.
@@ -118,7 +121,7 @@ foreach ($languages as $language => $dummy) {
 				}
 
 				// Check mismatched periods. Period is optional in 'ja'.
-				if ($period && $lang != "ja" && ((substr($en, -1, 1) == ".") xor preg_match("~$period$~", $variant))) {
+				if ($period && $language != "ja" && ((substr($en, -1, 1) == ".") xor preg_match("~$period$~", $variant))) {
 					print_warning($filename, $term, "Not matching period");
 				}
 
@@ -127,27 +130,27 @@ foreach ($languages as $language => $dummy) {
 					print_warning($filename, $term, "Not matching placeholder");
 				}
 			}
-		} else {
-			$content = delete_translation($content, $en);
 		}
 	}
 
-	// Move/add new texts to the end.
-	if ($texts) {
-		$first = true;
+	// Process untranslated texts.
+	$first = true;
+	foreach ($texts as $en => $ending) {
+		if ($to_end || $clean) {
+			delete_translation($content, $en);
+		} elseif ($language != $template) {
+			write_translation($content, $en, null, false);
+			continue;
+		}
 
-		foreach ($texts as $en => $ending) {
-			$content = delete_translation($content, $en);
-
-			if (!$clean && ($lang != "en" || str_contains($en, "%d"))) {
-				$content = add_translation($content, $en, $first);
-				$first = false;
-			}
+		if (!$clean && ($language != "en" || str_contains($en, "%d"))) {
+			add_translation($content, $en, $first);
+			$first = false;
 		}
 	}
 
 	// Cleanup en file.
-	if ($lang == "en") {
+	if ($language == "en") {
 		$content = preg_replace('~\t//.*~', "", $content);
 		$content = preg_replace('~\n{2,}([\t\]])~', "\n$1", $content);
 	}
@@ -157,7 +160,7 @@ foreach ($languages as $language => $dummy) {
 		file_put_contents($file_path, $content);
 
 		echo "✳️ $filename updated\n";
-	} elseif ($lang != $template) {
+	} elseif ($language != $template || count($languages) == 1) {
 		echo "✔︎ $filename\n";
 	}
 }
@@ -165,25 +168,25 @@ foreach ($languages as $language => $dummy) {
 /**
  * @param string|array|null $translation
  */
-function write_translation(string $content, string $en, $translation, bool $single_line): string
+function write_translation(string &$content, string $en, $translation, bool $single_line): void
 {
-	return preg_replace(
+	$content = preg_replace(
 		'~(\t\'' . preg_quote($en) . '\' => ).+,\n~',
 		"$1" . format_translation($translation, $single_line, true) . ",\n",
 		$content
 	);
 }
 
-function delete_translation(string $content, string $en): string
+function delete_translation(string &$content, string $en): void
 {
-	return preg_replace(
+	$content = preg_replace(
 		'~\t+\'' . preg_quote($en) . '\' => .+,\n~',
 		"",
 		$content
 	);
 }
 
-function add_translation(string $content, string $en, bool $first = false): string
+function add_translation(string &$content, string $en, bool $first = false): void
 {
 	if ($first) {
 		$content = preg_replace(
@@ -193,7 +196,7 @@ function add_translation(string $content, string $en, bool $first = false): stri
 		);
 	}
 
-	return preg_replace(
+	$content = preg_replace(
 		'~];~',
 		"\t'$en' => null,\n];",
 		$content
