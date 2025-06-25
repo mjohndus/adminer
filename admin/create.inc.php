@@ -204,7 +204,8 @@ foreach ($engines as $engine) {
 		echo "<input class='input' name='name' data-maxlength='64' value='", h($row["name"]), "' autocapitalize='off'", (($TABLE == "" && !$_POST) ? " autofocus" : ""), ">";
 
 		if ($engines) {
-			echo " <select name='Engine'>", optionlist(["" => "(" . lang('engine') . ")"] + $engines, $row["Engine"]), "</select>", help_script_command("value", true);
+			echo " ", html_select("Engine", ["" => "(" . lang('engine') . ")"] + $engines, $row["Engine"]);
+			echo help_script_command("value", true);
 		}
 
 		if ($collations && !preg_match("~sqlite|mssql~", DIALECT)) {
@@ -255,7 +256,7 @@ if (support("partitioning")) {
 	print_fieldset_start("partition", lang('Partition by'), "split", (bool)$row["partition_by"]);
 	?>
 <p>
-<?php echo "<select name='partition_by'>" . optionlist(["" => ""] + $partition_by, $row["partition_by"]) . "</select>" . help_script_command("value.replace(/./, 'PARTITION BY \$&')", true) . script("qsl('select').onchange = partitionByChange;"); ?>
+<?php echo html_select("partition_by", ["" => ""] + $partition_by, $row["partition_by"]) . help_script_command("value.replace(/./, 'PARTITION BY \$&')", true) . script("qsl('select').onchange = partitionByChange;"); ?>
 (<input class="input" name="partition" value="<?php echo h($row["partition"]); ?>">)
 <?php echo lang('Partitions'); ?>: <input type="number" name="partitions" class="input size <?php echo ($partition_table || !$row["partition_by"] ? "hidden" : ""); ?>" value="<?php echo h($row["partitions"]); ?>">
 <table id="partition-table"<?php echo ($partition_table ? "" : " class='hidden'"); ?>>

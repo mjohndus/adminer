@@ -424,7 +424,7 @@ function edit_fields(array $fields, array $collations, $type = "TABLE", $foreign
 
 			echo "<td class='default-value'>";
 			if (Driver::get()->getGenerated()) {
-				echo "<select name='fields[$i][generated]'>" . optionlist(array_merge(["", "DEFAULT"], Driver::get()->getGenerated()), $field["generated"]) . "</select>";
+				echo html_select("fields[$i][generated]", array_merge(["", "DEFAULT"], Driver::get()->getGenerated()), $field["generated"]);
 			} else {
 				echo checkbox("fields[$i][generated]", 1, $field["generated"], "", "", "", "label-default");
 			}

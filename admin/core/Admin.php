@@ -510,12 +510,10 @@ class Admin extends Origin
 				icon("handle", "handle jsonly");
 
 			if (Driver::get()->getFunctions() || Driver::get()->getGrouping()) {
-				echo "<select name='columns[$i][fun]'>",
-					optionlist([-1 => ""] + array_filter([lang('Functions') => Driver::get()->getFunctions(), lang('Aggregation') => Driver::get()->getGrouping()]), $val["fun"]),
-					"</select>",
-					help_script_command("value && value.replace(/ |\$/, '(') + ')'", true),
-					script("qsl('select').onchange = (event) => { " . ($key !== "" ? "" : " qsl('select, input:not(.remove)', event.target.parentNode).onchange();") . " };", ""),
-					"($column)";
+				echo html_select("columns[$i][fun]", [-1 => ""] + array_filter([lang('Functions') => Driver::get()->getFunctions(), lang('Aggregation') => Driver::get()->getGrouping()]), $val["fun"]);
+				echo help_script_command("value && value.replace(/ |\$/, '(') + ')'", true);
+				echo script("qsl('select').onchange = (event) => { " . ($key !== "" ? "" : " qsl('select, input:not(.remove)', event.target.parentNode).onchange();") . " };", "");
+				echo "($column)";
 			} else {
 				echo $column;
 			}
