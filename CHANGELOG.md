@@ -17,7 +17,10 @@ AdminNeo 5.1.0
 
 - Fix displaying the last page instead of the first one on PHP 7 and older (regression from 5.0.0)
 - MySQL: Fix using undefined PDO constant on PHP 5
+- MariaDB: Fix parsing type of the generated column in view
 - MS SQL: Add missing support for Encrypt and TrustServerCertificate parameters in PDO_SQLSRV
+
+(Ported remaining relevant changes from Adminer 5.0.0-5.0.2.)
 
 AdminNeo 5.0.0
 --------------
