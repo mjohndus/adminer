@@ -572,8 +572,14 @@ if (isset($_GET["mysql"])) {
 		$return = [];
 		foreach (get_rows("SELECT * FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = " . q($table) . " ORDER BY ORDINAL_POSITION") as $row) {
 			$field = $row["COLUMN_NAME"];
-			$type = $row["COLUMN_TYPE"];
+
+			// Type definition can contain a comment in MariaDB.
+			// For example: timestamp /* mariadb-5.3 */
+			// Produced by: CREATE VIEW test_view AS SELECT from_unixtime(min(`start`)) AS `start` FROM test GROUP BY col;
+			$type = preg_replace('~\s?/\*.+\*/~U', "", $row["COLUMN_TYPE"]);
+
 			$extra = $row["EXTRA"];
+
 			// https://mariadb.com/kb/en/library/show-columns/, https://github.com/vrana/adminer/pull/359#pullrequestreview-276677186
 			preg_match('~^(VIRTUAL|PERSISTENT|STORED)~', $extra, $generated);
 			preg_match('~^([^( ]+)(?:\((.+)\))?( unsigned)?( zerofill)?$~', $type, $type_matches);
