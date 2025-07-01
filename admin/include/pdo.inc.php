@@ -13,7 +13,7 @@ if (extension_loaded('pdo')) {
 		/** @var PDO */
 		protected $pdo;
 
-		/** @var PDOStatement|false */
+		/** @var PdoResult|false */
 		protected $multiResult;
 
 		protected function dsn(string $dsn, string $username, string $password, array $options = []): void
@@ -35,15 +35,12 @@ if (extension_loaded('pdo')) {
 			return $this->pdo->quote($string);
 		}
 
-		/**
-		 * @return PDOStatement|false
-		 */
 		function query(string $query, bool $unbuffered = false)
 		{
-			$result = $this->pdo->query($query);
+			$statement = $this->pdo->query($query);
 
 			$this->error = "";
-			if (!$result) {
+			if (!$statement) {
 				list(, $this->errno, $this->error) = $this->pdo->errorInfo();
 				if (!$this->error) {
 					$this->error = lang('Unknown error.');
@@ -52,16 +49,12 @@ if (extension_loaded('pdo')) {
 				return false;
 			}
 
+			$result = new PdoResult($statement);
 			$this->storeResult($result);
 
 			return $result;
 		}
 
-		/**
-		 * @param ?PDOStatement|bool $result
-		 *
-		 * @return PDOStatement|bool
-		 */
 		public function storeResult($result = null)
 		{
 			if (!$result) {
@@ -71,58 +64,83 @@ if (extension_loaded('pdo')) {
 				}
 			}
 
-			if ($result->columnCount()) {
-				$result->num_rows = $result->rowCount(); // is not guaranteed to work with all drivers
-
+			if ($result->getColumnsCount()) {
 				return $result;
 			}
 
-			$this->affected_rows = $result->rowCount();
+			$this->affected_rows = $result->getRowsCount();
 
 			return true;
 		}
 
 		function nextResult(): bool
 		{
-			if (!$this->multiResult) {
-				return false;
-			}
-
-			$this->multiResult->_offset = 0;
-
-			return @$this->multiResult->nextRowset(); // @ - PDO_PgSQL doesn't support it
+			return $this->multiResult && $this->multiResult->nextRowset();
 		}
 	}
 
-	class PdoResult extends PDOStatement
+	class PdoResult extends Result
 	{
-		var $_offset = 0, $num_rows;
+		/** @var PDOStatement */
+		private $statement;
 
-		function fetch_assoc()
+		/** @var int */
+		private $offset = 0;
+
+		public function __construct(PDOStatement $statement)
 		{
-			return $this->fetch(PDO::FETCH_ASSOC);
+			// It is not guaranteed to work with all drivers.
+			parent::__construct($statement->columnCount() ? $statement->rowCount() : 0);
+
+			$this->statement = $statement;
 		}
 
-		function fetch_row()
+		public function getColumnsCount(): int
 		{
-			return $this->fetch(PDO::FETCH_NUM);
+			return $this->statement->columnCount();
 		}
 
-		function fetch_field()
+		public function fetchAssoc()
 		{
-			$row = (object)$this->getColumnMeta($this->_offset++);
-			$row->orgtable = $row->table ?? null;
-			$row->orgname = $row->name;
-			$row->charsetnr = (in_array("blob", $row->flags ?? []) ? 63 : 0);
-
-			return $row;
+			return $this->statement->fetch(PDO::FETCH_ASSOC);
 		}
 
-		function seek($offset)
+		public function fetchRow()
+		{
+			return $this->statement->fetch(PDO::FETCH_NUM);
+		}
+
+		public function fetchField()
+		{
+			$row = $this->statement->getColumnMeta($this->offset++);
+			if ($row === false) {
+				return false;
+			}
+
+			$row["orgtable"] = $row["table"] ?? null;
+			$row["orgname"] = $row["name"];
+			$row["charsetnr"] = (in_array("blob", $row["flags"] ?? []) ? 63 : 0);
+
+			return (object) $row;
+		}
+
+		public function seek(int $offset): bool
 		{
 			for ($i = 0; $i < $offset; $i++) {
-				$this->fetch();
+				if ($this->statement->fetch() === false) {
+					return false;
+				};
 			}
+
+			return true;
+		}
+
+		public function nextRowset(): bool
+		{
+			$this->offset = 0;
+
+			// @ - PDO_PgSQL doesn't support it
+			return @$this->statement->nextRowset();
 		}
 	}
 }

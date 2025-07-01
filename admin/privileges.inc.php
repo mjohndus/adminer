@@ -20,7 +20,7 @@ echo ($grant ? "" : "<input type='hidden' name='grant' value=''>\n");
 echo "<div class='scrollable'><table class='checkable'>\n";
 echo "<thead><tr><th>" . lang('Username') . "<th>" . lang('Server') . "<th></thead>\n";
 
-while ($row = $result->fetch_assoc()) {
+while ($row = $result->fetchAssoc()) {
 	echo '<tr><td>' . h($row["User"]) . "<td>" . h($row["Host"]) . '<td><a href="' . h(ME . 'user=' . urlencode($row["User"]) . '&host=' . urlencode($row["Host"])) . '">' . lang('Edit') . "</a>\n";
 }
 

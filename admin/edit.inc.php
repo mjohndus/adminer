@@ -82,12 +82,12 @@ if ($_POST["save"]) {
 		if (!$result) {
 			$error = error();
 		} else {
-			$row = $result->fetch_assoc();
+			$row = $result->fetchAssoc();
 			if (!$row) { // MySQLi returns null
 				$row = false;
 			}
 		}
-		if (isset($_GET["select"]) && (!$row || $result->fetch_assoc())) { // $result->num_rows != 1 isn't available in all drivers
+		if (isset($_GET["select"]) && (!$row || $result->fetchAssoc())) { // $result->getNumRows() != 1 isn't available in all drivers
 			$row = null;
 		}
 	}
@@ -96,7 +96,7 @@ if ($_POST["save"]) {
 if (!support("table") && !$fields) {
 	if (!$where) { // insert
 		$result = Driver::get()->select($TABLE, ["*"], $where, ["*"]);
-		$row = ($result ? $result->fetch_assoc() : false);
+		$row = ($result ? $result->fetchAssoc() : false);
 		if (!$row) {
 			$row = [Driver::get()->primary => ""];
 		}

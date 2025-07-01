@@ -81,7 +81,7 @@ if (isset($_GET["oracle"])) {
 
 				if ($return) {
 					if (oci_num_fields($result)) {
-						return new Result($result);
+						return new OracleResult($result);
 					}
 
 					$this->affected_rows = oci_num_rows($result);
@@ -94,50 +94,93 @@ if (isset($_GET["oracle"])) {
 			public function getValue(string $query, int $fieldIndex = 0)
 			{
 				$result = $this->query($query);
-				if (!is_object($result) || !oci_fetch($result->_result)) {
+				if (!is_object($result) || !oci_fetch($result->getResource())) {
 					return false;
 				}
 
-				return oci_result($result->_result, $fieldIndex + 1);
+				return oci_result($result->getResource(), $fieldIndex + 1);
 			}
 		}
 
-		class Result {
-			var $_result, $_offset = 1, $num_rows;
+		class OracleResult extends Result
+		{
+			/** @var resource */
+			private $resource;
 
-			function __construct($result) {
-				$this->_result = $result;
+			/** @var int */
+			private $offset = 1;
+
+			/**
+			 * @param resource $result
+			 */
+			public function __construct($result)
+			{
+				parent::__construct(0);
+
+				$this->resource = $result;
 			}
 
-			function _convert($row) {
-				foreach ((array) $row as $key => $val) {
-					if (is_a($val, 'OCI-Lob')) {
-						$row[$key] = $val->load();
+			public function __destruct()
+			{
+				oci_free_statement($this->resource);
+			}
+
+			/**
+			 * @return resource
+			 */
+			public function getResource()
+			{
+				return $this->resource;
+			}
+
+			public function fetchAssoc()
+			{
+				return $this->convertRow(oci_fetch_assoc($this->resource));
+			}
+
+			public function fetchRow()
+			{
+				return $this->convertRow(oci_fetch_row($this->resource));
+			}
+
+			/**
+			 * @param array|false $row
+			 *
+			 * @return array|false
+			 */
+			private function convertRow($row)
+			{
+				if (is_array($row)) {
+					foreach ($row as $key => $val) {
+						if (is_a($val, 'OCI-Lob')) {
+							$row[$key] = $val->load();
+						}
 					}
 				}
+
 				return $row;
 			}
 
-			function fetch_assoc() {
-				return $this->_convert(oci_fetch_assoc($this->_result));
-			}
+			public function fetchField()
+			{
+				$column = $this->offset++;
 
-			function fetch_row() {
-				return $this->_convert(oci_fetch_row($this->_result));
-			}
+				$name = oci_field_name($this->resource, $column);
+				if ($name === false) {
+					return false;
+				}
 
-			function fetch_field() {
-				$column = $this->_offset++;
-				$return = new \stdClass;
-				$return->name = oci_field_name($this->_result, $column);
-				$return->orgname = $return->name;
-				$return->type = oci_field_type($this->_result, $column);
-				$return->charsetnr = (preg_match("~raw|blob|bfile~", $return->type) ? 63 : 0); // 63 - binary
-				return $return;
-			}
+				$type = oci_field_type($this->resource, $column);
+				if ($type === false) {
+					return false;
+				}
 
-			function __destruct() {
-				oci_free_statement($this->_result);
+				return (object) [
+					'name' => $name,
+					'orgname' => $name,
+					'type' => $type,
+					'charsetnr' => (preg_match("~raw|blob|bfile~", $type) ? 63 : 0), // 63 - binary
+				];
 			}
 		}
 

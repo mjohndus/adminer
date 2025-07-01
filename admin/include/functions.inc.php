@@ -372,7 +372,7 @@ function get_vals($query, $column = 0) {
 	$return = [];
 	$result = Connection::get()->query($query);
 	if (is_object($result)) {
-		while ($row = $result->fetch_row()) {
+		while ($row = $result->fetchRow()) {
 			$return[] = $row[$column];
 		}
 	}
@@ -394,7 +394,7 @@ function get_key_vals($query, ?Connection $connection = null, $set_keys = true) 
 	$return = [];
 	$result = $connection->query($query);
 	if (is_object($result)) {
-		while ($row = $result->fetch_row()) {
+		while ($row = $result->fetchRow()) {
 			if ($set_keys) {
 				$return[$row[0]] = $row[1];
 			} else {
@@ -420,7 +420,7 @@ function get_rows($query, ?Connection $connection = null, $error = "<p class='er
 	$return = [];
 	$result = $connection->query($query);
 	if (is_object($result)) { // can return true
-		while ($row = $result->fetch_assoc()) {
+		while ($row = $result->fetchAssoc()) {
 			$return[] = $row;
 		}
 	} elseif (!$result && !is_object($connection) && $error && (defined("AdminNeo\PAGE_HEADER") || $error == "-- ")) {
@@ -1187,7 +1187,7 @@ function search_tables(): void
 		}
 
 		$result = Connection::get()->query("SELECT" . limit("1 FROM " . table($table), " WHERE " . implode(" AND ", Admin::get()->processSelectionSearch(fields($table), [])), 1));
-		if ($result && !$result->fetch_row()) {
+		if ($result && !$result->fetchRow()) {
 			continue;
 		}
 

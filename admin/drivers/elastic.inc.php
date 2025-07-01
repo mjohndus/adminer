@@ -115,27 +115,38 @@ if (isset($_GET["elastic"])) {
 			}
 		}
 
-		class Result {
-			var $num_rows, $_rows;
+		class ElasticResult extends Result
+		{
+			/** @var array */
+			private $rows;
 
-			function __construct($rows) {
-				$this->num_rows = count($rows);
-				$this->_rows = $rows;
+			public function __construct(array $rows) {
+				parent::__construct(count($rows));
 
-				reset($this->_rows);
+				$this->rows = $rows;
+
+				reset($this->rows);
 			}
 
-			function fetch_assoc() {
-				$return = current($this->_rows);
-				next($this->_rows);
+			public function fetchAssoc()
+			{
+				$return = current($this->rows);
+				next($this->rows);
 
 				return $return;
 			}
 
-			function fetch_row() {
-				$row = $this->fetch_assoc();
+			public function fetchRow()
+			{
+				$row = $this->fetchAssoc();
 
 				return $row ? array_values($row) : false;
+			}
+
+			public function fetchField()
+			{
+				// TODO: Implement fetch_field() method.
+				return false;
 			}
 		}
 	}
@@ -248,7 +259,7 @@ if (isset($_GET["elastic"])) {
 				$return[] = $row;
 			}
 
-			return new Result($return);
+			return new ElasticResult($return);
 		}
 
 		private function addQueryCondition($val, &$data)

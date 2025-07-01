@@ -76,6 +76,7 @@ include __DIR__ . "/../core/Locale.php";
 include __DIR__ . "/lang.inc.php";
 
 include __DIR__ . "/../core/Connection.php";
+include __DIR__ . "/../core/Result.php";
 include __DIR__ . "/pdo.inc.php";
 include __DIR__ . "/../core/Drivers.php";
 include __DIR__ . "/../core/Driver.php";

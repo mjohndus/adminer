@@ -12,7 +12,7 @@ namespace AdminNeo;
 *
 * @return array $orgtables
 */
-function select($result, ?Connection $connection = null, $orgtables = [], $limit = 0) {
+function select(Result $result, ?Connection $connection = null, $orgtables = [], $limit = 0) {
 	$links = []; // colno => orgtable - create links from these columns
 	$indexes = []; // orgtable => array(column => colno) - primary keys
 	$columns = []; // orgtable => array(column => ) - not selected columns in primary key
@@ -20,13 +20,13 @@ function select($result, ?Connection $connection = null, $orgtables = [], $limit
 	$types = []; // colno => type - display char in <code>
 	$return = []; // table => orgtable - mapping to use in EXPLAIN
 
-	for ($i=0; (!$limit || $i < $limit) && ($row = $result->fetch_row()); $i++) {
+	for ($i = 0; (!$limit || $i < $limit) && ($row = $result->fetchRow()); $i++) {
 		if (!$i) {
 			echo "<div class='scrollable'>\n";
 			echo "<table class='nowrap'>\n";
 			echo "<thead><tr>";
 			for ($j=0; $j < count($row); $j++) {
-				$field = (array)$result->fetch_field();
+				$field = (array)$result->fetchField();
 				$name = $field["name"];
 				$orgtable = $field["orgtable"];
 				$orgname = $field["orgname"];
@@ -238,7 +238,7 @@ function get_partitions_info($table) {
 	$result = Connection::get()->query("SELECT PARTITION_METHOD, PARTITION_EXPRESSION, PARTITION_ORDINAL_POSITION $from ORDER BY PARTITION_ORDINAL_POSITION DESC LIMIT 1");
 
 	$info = [];
-	list($info["partition_by"], $info["partition"],  $info["partitions"]) = $result->fetch_row();
+	list($info["partition_by"], $info["partition"],  $info["partitions"]) = $result->fetchRow();
 
 	$partitions = get_key_vals("SELECT PARTITION_NAME, PARTITION_DESCRIPTION $from AND PARTITION_NAME != '' ORDER BY PARTITION_ORDINAL_POSITION");
 	$info["partition_names"] = array_keys($partitions);

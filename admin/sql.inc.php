@@ -183,7 +183,7 @@ if (!$error && $_POST) {
 										if (!$_POST["only_errors"]) {
 											echo "<p class='links'>";
 
-											$num_rows = $result->num_rows;
+											$num_rows = $result->getRowsCount();
 											echo ($num_rows ? ($limit && $num_rows > $limit ? lang('%d / ', $limit) : "") . lang('%d row(s)', $num_rows) : "");
 
 											echo $time, $edit_link, $warnings_link;

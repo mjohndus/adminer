@@ -3,6 +3,7 @@
 namespace AdminNeo;
 
 use mysqli;
+use mysqli_result;
 use PDO;
 
 Drivers::add("mysql", "MySQL", ["MySQLi", "PDO_MySQL"]);
@@ -107,22 +108,62 @@ if (isset($_GET["mysql"])) {
 
 			public function query(string $query, bool $unbuffered = false)
 			{
-				return $this->mysqli->query($query);
+				$result = $this->mysqli->query($query);
+
+				return is_object($result) ? new MySqlResult($result) : $result;
 			}
 
-			public function multiQuery(string $query)
+			public function multiQuery(string $query): bool
 			{
 				return $this->mysqli->multi_query($query);
 			}
 
 			public function storeResult($result = null)
 			{
-				return $this->mysqli->store_result();
+				$result = $this->mysqli->store_result();
+				if (!$result) {
+					return false;
+				}
+
+				return new MySqlResult($result);
 			}
 
 			public function nextResult(): bool
 			{
 				return $this->mysqli->more_results() && $this->mysqli->next_result();
+			}
+		}
+
+		class MySqlResult extends Result
+		{
+			/** @var mysqli_result */
+			private $resource;
+
+			public function __construct(mysqli_result $resource)
+			{
+				parent::__construct($resource->num_rows);
+
+				$this->resource = $resource;
+			}
+
+			public function fetchAssoc()
+			{
+				return $this->resource->fetch_assoc();
+			}
+
+			public function fetchRow()
+			{
+				return $this->resource->fetch_row();
+			}
+
+			public function fetchField()
+			{
+				return $this->resource->fetch_field();
+			}
+
+			public function seek(int $offset): bool
+			{
+				return $this->resource->data_seek($offset);
 			}
 		}
 
@@ -333,7 +374,7 @@ if (isset($_GET["mysql"])) {
 		public function warnings(): ?string
         {
 			$result = $this->connection->query("SHOW WARNINGS");
-			if ($result && $result->num_rows) {
+			if ($result && $result->getRowsCount()) {
 				ob_start();
 				select($result); // select() usually needs to print a big table progressively
 				return ob_get_clean();

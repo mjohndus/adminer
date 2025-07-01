@@ -119,17 +119,16 @@ abstract class Connection
 			return false;
 		}
 
-		$row = $result->fetch_row();
+		$row = $result->fetchRow();
 
 		return $row ? $row[$fieldIndex] : false;
 	}
 
-	/**
-	 * @return Result|false
-	 */
-	public function multiQuery(string $query)
+	public function multiQuery(string $query): bool
 	{
-		return $this->multiResult = $this->query($query);
+		$this->multiResult = $this->query($query);
+
+		return (bool)($this->multiResult);
 	}
 
 	/**

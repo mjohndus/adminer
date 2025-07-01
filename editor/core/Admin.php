@@ -549,7 +549,7 @@ ORDER BY ORDINAL_POSITION", null, "") as $row) { //! requires MySQL 5
 			return;
 		}
 
-		while ($row = $result->fetch_assoc()) {
+		while ($row = $result->fetchAssoc()) {
 			if ($style == "table") {
 				dump_csv(array_keys($row));
 				$style = "INSERT";

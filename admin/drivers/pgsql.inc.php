@@ -112,7 +112,7 @@ if (isset($_GET["pgsql"])) {
 					$this->affected_rows = pg_affected_rows($result);
 					$return = true;
 				} else {
-					$return = new Result($result);
+					$return = new PgSqlResult($result);
 				}
 
 				if ($this->timeout) {
@@ -126,11 +126,11 @@ if (isset($_GET["pgsql"])) {
 			public function getValue(string $query, int $fieldIndex = 0)
 			{
 				$result = $this->query($query);
-				if (!$result || !$result->num_rows) {
+				if (!$result || !$result->getRowsCount()) {
 					return false;
 				}
 
-				return pg_fetch_result($result->_result, 0, $fieldIndex);
+				return $result->fetchValue($fieldIndex);
 			}
 
 			public function warnings(): ?string
@@ -141,37 +141,73 @@ if (isset($_GET["pgsql"])) {
 			}
 		}
 
-		class Result {
-			var $_result, $_offset = 0, $num_rows;
+		class PgSqlResult extends Result
+		{
+			/** @var resource */
+			private $resource;
 
-			function __construct($result) {
-				$this->_result = $result;
-				$this->num_rows = pg_num_rows($result);
+			/** @var int */
+			private $offset = 0;
+
+			/**
+			 * @param resource $resource
+			 */
+			public function __construct($resource)
+			{
+				parent::__construct(pg_num_rows($resource));
+
+				$this->resource = $resource;
 			}
 
-			function fetch_assoc() {
-				return pg_fetch_assoc($this->_result);
+			public function __destruct()
+			{
+				pg_free_result($this->resource);
 			}
 
-			function fetch_row() {
-				return pg_fetch_row($this->_result);
+			public function fetchAssoc()
+			{
+				return pg_fetch_assoc($this->resource);
 			}
 
-			function fetch_field() {
-				$column = $this->_offset++;
-				$return = new \stdClass;
-				if (function_exists('pg_field_table')) {
-					$return->orgtable = pg_field_table($this->_result, $column);
+			public function fetchRow()
+			{
+				return pg_fetch_row($this->resource);
+			}
+
+			/**
+			 * @return ?string|false
+			 */
+			public function fetchValue(int $fieldIndex)
+			{
+				return pg_fetch_result($this->resource, 0, $fieldIndex);
+			}
+
+			public function fetchField()
+			{
+				$column = $this->offset++;
+
+				$orgtable = pg_field_table($this->resource, $column);
+				if ($orgtable === false) {
+					return false;
 				}
-				$return->name = pg_field_name($this->_result, $column);
-				$return->orgname = $return->name;
-				$return->type = pg_field_type($this->_result, $column);
-				$return->charsetnr = ($return->type == "bytea" ? 63 : 0); // 63 - binary
-				return $return;
-			}
 
-			function __destruct() {
-				pg_free_result($this->_result);
+				$name = pg_field_name($this->resource, $column);
+				if ($name === false) {
+					return false;
+				}
+
+				$type = pg_field_type($this->resource, $column);
+				if ($type === false) {
+					return false;
+				}
+
+				return (object) [
+					'orgtable' => $orgtable,
+					'name' => $name,
+					'orgname' => $name,
+					'type' => $type,
+					'charsetnr' => ($type == "bytea" ? 63 : 0), // 63 - binary
+				];
 			}
 		}
 

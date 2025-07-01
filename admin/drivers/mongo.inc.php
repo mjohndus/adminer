@@ -119,15 +119,29 @@ if (isset($_GET["mongo"])) {
 			}
 		}
 
-		class Result {
-			var $num_rows, $_rows = [], $_offset = 0, $_charset = [];
+		class MongoResult extends Result
+		{
+			/** @var array */
+			private $rows;
 
-			function __construct($result) {
+			/** @var array */
+			private $charset;
+
+			/** @var int */
+			private $offset = 0;
+
+			/**
+			 * @param Cursor|array $result
+			 */
+			public function __construct($result)
+			{
+				$this->rows = $this->charset = [];
+
 				foreach ($result as $item) {
 					$row = [];
 					foreach ($item as $key => $val) {
 						if (is_a($val, 'MongoDB\BSON\Binary')) {
-							$this->_charset[$key] = 63;
+							$this->charset[$key] = 63;
 						}
 						$row[$key] =
 							(is_a($val, 'MongoDB\BSON\ObjectID') ? 'MongoDB\BSON\ObjectID("' . "$val\")" :
@@ -138,43 +152,54 @@ if (isset($_GET["mongo"])) {
 							$val // MongoMinKey, MongoMaxKey
 						)))));
 					}
-					$this->_rows[] = $row;
+
+					$this->rows[] = $row;
+
 					foreach ($row as $key => $val) {
-						if (!isset($this->_rows[0][$key])) {
-							$this->_rows[0][$key] = null;
+						if (!isset($this->rows[0][$key])) {
+							$this->rows[0][$key] = null;
 						}
 					}
 				}
-				$this->num_rows = count($this->_rows);
+
+				parent::__construct(count($this->rows));
 			}
 
-			function fetch_assoc() {
-				$row = current($this->_rows);
+			public function fetchAssoc()
+			{
+				$row = current($this->rows);
 				if (!$row) {
 					return $row;
 				}
-				$return = [];
-				foreach ($this->_rows[0] as $key => $val) {
-					$return[$key] = $row[$key];
+
+				$data = [];
+				foreach ($this->rows[0] as $key => $val) {
+					$data[$key] = $row[$key];
 				}
-				next($this->_rows);
-				return $return;
+
+				next($this->rows);
+
+				return $data;
 			}
 
-			function fetch_row() {
-				$return = $this->fetch_assoc();
-				if (!$return) {
-					return $return;
+			public function fetchRow()
+			{
+				$data = $this->fetchAssoc();
+				if (!$data) {
+					return $data;
 				}
-				return array_values($return);
+
+				return array_values($data);
 			}
 
-			function fetch_field() {
-				$keys = array_keys($this->_rows[0]);
-				$name = $keys[$this->_offset++];
+			public function fetchField()
+			{
+				$keys = array_keys($this->rows[0]);
+				$name = $keys[$this->offset++];
+
 				return (object) [
 					'name' => $name,
-					'charsetnr' => $this->_charset[$name],
+					'charsetnr' => $this->charset[$name],
 				];
 			}
 
@@ -230,7 +255,7 @@ if (isset($_GET["mongo"])) {
 			$query = new Query($where, ['projection' => $select, 'limit' => $limit, 'skip' => $skip, 'sort' => $sort]);
 
 			try {
-				return new Result(Connection::get()->executeQuery(Connection::get()->getDbName() . ".$table", $query));
+				return new MongoResult(Connection::get()->executeQuery(Connection::get()->getDbName() . ".$table", $query));
 			} catch (Exception $e) {
 				Connection::get()->setError($e->getMessage());
 				return false;
@@ -339,7 +364,7 @@ if (isset($_GET["mongo"])) {
 		if (!$fields) {
 			$result = Driver::get()->select($table, ["*"], [], [], [], 10);
 			if ($result) {
-				while ($row = $result->fetch_assoc()) {
+				while ($row = $result->fetchAssoc()) {
 					foreach ($row as $key => $val) {
 						$row[$key] = null;
 						$fields[$key] = [

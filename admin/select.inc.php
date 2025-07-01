@@ -53,7 +53,7 @@ if ($_GET["val"] && is_ajax()) {
 		$where[] = where_check($unique_idf, $fields);
 		$return = Driver::get()->select($TABLE, $select, $where, $select);
 		if ($return) {
-			echo reset($return->fetch_row());
+			echo reset($return->fetchRow());
 		}
 	}
 	exit;
@@ -316,7 +316,7 @@ if (!$columns && support("table")) {
 		echo "<form action='' method='post' enctype='multipart/form-data'>\n";
 		echo "<div class='table-footer-parent'>\n";
 		$rows = [];
-		while ($row = $result->fetch_assoc()) {
+		while ($row = $result->fetchAssoc()) {
 			if ($page && DIALECT == "oracle") {
 				unset($row["RNUM"]);
 			}

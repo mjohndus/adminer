@@ -70,7 +70,7 @@ if (isset($_GET["clickhouse"])) {
 					return false;
 				}
 
-				return new Result($return['rows'], $return['data'], $return['meta']);
+				return new ClickHouseResult($return['rows'], $return['data'], $return['meta']);
 			}
 
 			private function isQuerySelectLike($query): bool
@@ -117,50 +117,67 @@ if (isset($_GET["clickhouse"])) {
 			}
 		}
 
-		class Result {
-			var $num_rows, $_rows, $columns, $meta, $_offset = 0;
+		class ClickHouseResult extends Result
+		{
+			/** @var array */
+			private $rows;
 
-			/**
-			 * @param int $rows
-			 * @param array[] $data
-			 * @param array[] $meta
-			 */
-			function __construct($rows, array $data, array $meta) {
-				$this->_rows = [];
+			/** @var array */
+			private $columns;
+
+			/** @var array */
+			private $meta;
+
+			/** @var int */
+			private $offset = 0;
+
+			public function __construct(int $rowsCount, array $data, array $meta)
+			{
+				parent::__construct($rowsCount);
+
+				$this->rows = [];
 				foreach ($data as $item) {
-					$this->_rows[] = array_map(function ($val) {
+					$this->rows[] = array_map(function ($val) {
 						return is_scalar($val) ? $val : json_encode($val, JSON_UNESCAPED_UNICODE);
 					}, $item);
 				}
 
-				$this->num_rows = $rows;
 				$this->meta = $meta;
 				$this->columns = array_column($meta, 'name');
 
-				reset($this->_rows);
+				reset($this->rows);
 			}
 
-			function fetch_assoc() {
-				$row = current($this->_rows);
-				next($this->_rows);
-				return $row === false ? false : array_combine($this->columns, $row);
+			public function fetchAssoc()
+			{
+				$row = current($this->rows);
+				next($this->rows);
+
+				return $row !== false ? array_combine($this->columns, $row) : false;
 			}
 
-			function fetch_row() {
-				$row = current($this->_rows);
-				next($this->_rows);
+			public function fetchRow()
+			{
+				$row = current($this->rows);
+				next($this->rows);
+
 				return $row;
 			}
 
-			function fetch_field() {
-				$column = $this->_offset++;
-				$return = new \stdClass;
-				if ($column < count($this->columns)) {
-					$return->name = $this->meta[$column]['name'];
-					$return->orgname = $return->name;
-					$return->type = $this->meta[$column]['type'];
+			public function fetchField()
+			{
+				$column = $this->offset++;
+				if ($column >= count($this->columns)) {
+					return false;
 				}
-				return $return;
+
+				$column = $this->meta[$column];
+
+				return (object) [
+					'name' => $column['name'],
+					'orgname' => $column['name'],
+					'type' => $column['type'],
+				];
 			}
 		}
 	}

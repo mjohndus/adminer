@@ -78,7 +78,7 @@ if (isset($_GET["simpledb"])) {
 					]]]];
 				}
 
-				return new Result($result);
+				return new SimpleDbResult($result);
 			}
 
 			public function quote(string $string): string
@@ -88,18 +88,28 @@ if (isset($_GET["simpledb"])) {
 
 		}
 
-		class Result {
-			var $num_rows, $_rows = [], $_offset = 0;
+		class SimpleDbResult extends Result
+		{
+			/** @var array */
+			private $rows;
 
-			function __construct($result) {
+			/** @var int */
+			private $offset = 0;
+
+			public function __construct(array $result)
+			{
+				$this->rows = [];
+
 				foreach ($result as $item) {
 					$row = [];
 					if ($item->Name != '') { // SELECT COUNT(*)
 						$row['itemName()'] = (string) $item->Name;
 					}
+
 					foreach ($item->Attribute as $attribute) {
-						$name = $this->_processValue($attribute->Name);
-						$value = $this->_processValue($attribute->Value);
+						$name = $this->processValue($attribute->Name);
+						$value = $this->processValue($attribute->Value);
+
 						if (isset($row[$name])) {
 							$row[$name] = (array) $row[$name];
 							$row[$name][] = $value;
@@ -107,44 +117,55 @@ if (isset($_GET["simpledb"])) {
 							$row[$name] = $value;
 						}
 					}
-					$this->_rows[] = $row;
+
+					$this->rows[] = $row;
+
 					foreach ($row as $key => $val) {
-						if (!isset($this->_rows[0][$key])) {
-							$this->_rows[0][$key] = null;
+						if (!isset($this->rows[0][$key])) {
+							$this->rows[0][$key] = null;
 						}
 					}
 				}
-				$this->num_rows = count($this->_rows);
+
+				parent::__construct(count($this->rows));
 			}
 
-			function _processValue($element) {
+			private function processValue($element)
+			{
 				return (is_object($element) && $element['encoding'] == 'base64' ? base64_decode($element) : (string) $element);
 			}
 
-			function fetch_assoc() {
-				$row = current($this->_rows);
+			public function fetchAssoc()
+			{
+				$row = current($this->rows);
 				if (!$row) {
 					return $row;
 				}
-				$return = [];
-				foreach ($this->_rows[0] as $key => $val) {
-					$return[$key] = $row[$key];
+
+				$data = [];
+				foreach ($this->rows[0] as $key => $val) {
+					$data[$key] = $row[$key];
 				}
-				next($this->_rows);
-				return $return;
+
+				next($this->rows);
+
+				return $data;
 			}
 
-			function fetch_row() {
-				$return = $this->fetch_assoc();
-				if (!$return) {
-					return $return;
-				}
-				return array_values($return);
+			public function fetchRow()
+			{
+				$data = $this->fetchAssoc();
+
+				return $data ? array_values($data) : $data;
 			}
 
-			function fetch_field() {
-				$keys = array_keys($this->_rows[0]);
-				return (object) ['name' => $keys[$this->_offset++]];
+			public function fetchField()
+			{
+				$keys = array_keys($this->rows[0]);
+
+				return (object) [
+					'name' => $keys[$this->offset++]
+				];
 			}
 
 		}

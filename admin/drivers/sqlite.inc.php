@@ -4,6 +4,7 @@ namespace AdminNeo;
 
 use Exception;
 use SQLite3;
+use SQLite3Result;
 
 Drivers::add("sqlite", "SQLite", ["SQLite3", "PDO_SQLite"]);
 
@@ -40,7 +41,7 @@ if (isset($_GET["sqlite"])) {
 
 					return false;
 				} elseif ($result->numColumns()) {
-					return new Result($result);
+					return new SqLiteResult($result);
 				}
 
 				$this->affected_rows = $this->sqlite->changes();
@@ -60,33 +61,50 @@ if (isset($_GET["sqlite"])) {
 			}
 		}
 
-		class Result {
-			var $_result, $_offset = 0, $num_rows;
+		class SqLiteResult extends Result
+		{
+			/** @var SQLite3Result */
+			private $resource;
 
-			function __construct($result) {
-				$this->_result = $result;
+			/** @var int */
+			private $offset = 0;
+
+			public function __construct(SQLite3Result $resource)
+			{
+				parent::__construct(0);
+
+				$this->resource = $resource;
 			}
 
-			function fetch_assoc() {
-				return $this->_result->fetchArray(SQLITE3_ASSOC);
+			public function __destruct()
+			{
+				return $this->resource->finalize();
 			}
 
-			function fetch_row() {
-				return $this->_result->fetchArray(SQLITE3_NUM);
+			public function fetchAssoc()
+			{
+				return $this->resource->fetchArray(SQLITE3_ASSOC);
 			}
 
-			function fetch_field() {
-				$column = $this->_offset++;
-				$type = $this->_result->columnType($column);
+			public function fetchRow()
+			{
+				return $this->resource->fetchArray(SQLITE3_NUM);
+			}
+
+			public function fetchField()
+			{
+				$column = $this->offset++;
+
+				$type = $this->resource->columnType($column);
+				if ($type === false) {
+					return false;
+				}
+
 				return (object) [
-					"name" => $this->_result->columnName($column),
+					"name" => $this->resource->columnName($column),
 					"type" => $type,
 					"charsetnr" => ($type == SQLITE3_BLOB ? 63 : 0), // 63 - binary
 				];
-			}
-
-			function __destruct() {
-				return $this->_result->finalize();
 			}
 		}
 

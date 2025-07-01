@@ -64,7 +64,7 @@ class JsonDumpPlugin extends Plugin
 			echo '"' . addcslashes($table, "\r\n\"\\") . "\": [\n";
 
 			$first = true;
-			while ($row = $result->fetch_assoc()) {
+			while ($row = $result->fetchAssoc()) {
 				echo($first ? "" : ", ");
 
 				foreach ($row as $key => $val) {

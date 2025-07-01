@@ -45,7 +45,7 @@ if ($tables_views && !$error && !$_POST["search"]) {
 	} elseif (!$_POST["tables"]) {
 		$message = lang('No tables.');
 	} elseif ($result = queries(($_POST["optimize"] ? "OPTIMIZE" : ($_POST["check"] ? "CHECK" : ($_POST["repair"] ? "REPAIR" : "ANALYZE"))) . " TABLE " . implode(", ", array_map('AdminNeo\idf_escape', $_POST["tables"])))) {
-		while ($row = $result->fetch_assoc()) {
+		while ($row = $result->fetchAssoc()) {
 			$message .= "<b>" . h($row["Table"]) . "</b>: " . h($row["Msg_text"]) . "<br>";
 		}
 	}

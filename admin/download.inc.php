@@ -8,6 +8,6 @@ header("Content-Type: application/octet-stream");
 header("Content-Disposition: attachment; filename=" . friendly_url("$TABLE-" . implode("_", $_GET["where"])) . "." . friendly_url($_GET["field"]));
 $select = [idf_escape($_GET["field"])];
 $result = Driver::get()->select($TABLE, $select, [where($_GET, $fields)], $select);
-$row = ($result ? $result->fetch_row() : []);
+$row = ($result ? $result->fetchRow() : []);
 echo Connection::get()->formatValue($row[0], $fields[$_GET["field"]]);
 exit; // don't output footer

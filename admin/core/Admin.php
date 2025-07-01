@@ -982,14 +982,13 @@ class Admin extends Origin
 				$keys = [];
 				$generatedKeys = [];
 				$suffix = "";
-				$fetch_function = ($table != '' ? 'fetch_assoc' : 'fetch_row');
 
-				while ($row = $result->$fetch_function()) {
+				while ($row = ($table != '' ? $result->fetchAssoc() : $result->fetchRow())) {
 					if (!$keys) {
 						$values = [];
 
 						foreach ($row as $val) {
-							$field = $result->fetch_field();
+							$field = $result->fetchField();
 							if (!empty($fields[$field->name]['generated'])) {
 								$generatedKeys[$field->name] = true;
 								continue;
