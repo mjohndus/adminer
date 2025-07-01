@@ -47,6 +47,11 @@ class SqlLogPlugin extends Plugin
 			$this->filename = $dbName . ($dbName ? "-" : "") . "log.sql";
 		}
 
+		$folder = dirname($this->filename);
+		if (!is_dir($folder)) {
+			@mkdir($folder, 0777, true);
+		}
+
 		$fp = fopen($this->filename, "a");
 
 		flock($fp, LOCK_EX);

@@ -23,6 +23,7 @@ AdminNeo 5.1.0
 - Plugins: Use protected visibility of member properties
 - Force inline editing with the Shift key when clicking on a link.
 - Editor: Display database views
+- SqlLoginPlugin: Auto-create log folder structure (by @jesobreira)
 
 ### Bugfixes
 
