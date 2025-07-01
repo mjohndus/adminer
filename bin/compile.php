@@ -472,8 +472,9 @@ preg_match_all('~^use ([^; ]+);~m', $file, $matches);
 $file = preg_replace('~^use ([^; ]+);~m', "", $file);
 $usages = implode("\n", array_combine($matches[1], $matches[0]));
 
-$pos = strpos($file, "namespace AdminNeo;\n") + strlen("namespace AdminNeo;\n");
-$file = substr($file, 0, $pos) . $usages . str_replace("namespace AdminNeo;\n", "", substr($file, $pos));
+$namespace_string = "namespace AdminNeo;\n";
+$pos = strpos($file, $namespace_string) + strlen($namespace_string);
+$file = substr($file, 0, $pos) . $usages . str_replace($namespace_string, "", substr($file, $pos));
 
 // Integrate static files.
 preg_match_all('~link_files\("([^"]+)", \[([^]]+)]\)~', $file, $matches);
