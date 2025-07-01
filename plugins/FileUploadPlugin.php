@@ -19,13 +19,13 @@ use Exception;
 class FileUploadPlugin extends Plugin
 {
 	/** @var string */
-	private $uploadPath;
+	protected $uploadPath;
 
 	/** @var string */
-	private $linkPath;
+	protected $linkPath;
 
 	/** @var string */
-	private $extensions;
+	protected $extensions;
 
 	/**
 	 * @param string $uploadPath Path to a writable directory where uploading data will be stored.

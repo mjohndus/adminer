@@ -20,10 +20,10 @@ namespace AdminNeo;
 class TinyMcePlugin extends Plugin
 {
 	/** @var string */
-	private $path;
+	protected $path;
 
 	/** @var string */
-	private $licenseKey;
+	protected $licenseKey;
 
 	public function __construct(string $path = "tinymce/tinymce.min.js", string $licenseKey = "gpl")
 	{

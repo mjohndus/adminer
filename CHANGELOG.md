@@ -12,6 +12,7 @@ AdminNeo 5.1.0
 - SQLite: Add support for generated columns (by @vrana)
 - PostgreSQL: Add support for indexes on materialized views (by @vrana)
 - Refine and standardize Japanese translation (by @yama)
+- Plugins: Use protected visibility of member properties
 
 ### Bugfixes
 

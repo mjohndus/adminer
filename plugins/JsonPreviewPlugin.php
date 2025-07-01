@@ -17,22 +17,22 @@ namespace AdminNeo;
 class JsonPreviewPlugin extends Plugin
 {
 	/** @var bool */
-	private $inSelection;
+	protected $inSelection;
 
 	/** @var bool */
-	private $inEdit;
+	protected $inEdit;
 
 	/** @var int */
-	private $maxLevel;
+	protected $maxLevel;
 
 	/** @var int */
-	private $maxTextLength;
+	protected $maxTextLength;
 
 	/** @var string */
-	private $linkIdBase;
+	protected $linkIdBase;
 
 	/** @var int */
-	private $counter = 1;
+	protected $counter = 1;
 
 	/**
 	 * @param bool $inSelection Whether apply JSON preview in selection table.
