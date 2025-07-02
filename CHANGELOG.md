@@ -22,7 +22,7 @@ AdminNeo 5.1.0
 - MS SQL: Add missing support for Encrypt and TrustServerCertificate parameters in PDO_SQLSRV
 - Select: Allow ordering by COUNT(*) (regression from 4.9.0) (by @vrana)
 
-(Ported remaining relevant changes from Adminer 5.0.0-5.0.2.)
+(Ported remaining relevant changes from Adminer 5.0.0-5.0.4.)
 
 AdminNeo 5.0.0
 --------------
