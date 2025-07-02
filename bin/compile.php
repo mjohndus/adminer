@@ -58,7 +58,7 @@ function put_file(array $match, string $current_path = ""): string
 
 	$content = file_get_contents(__DIR__ . "/../$project/" . ($current_path ? "$current_path/" : "") . $file_path);
 
-	if ($filename == "lang.inc.php") {
+	if ($filename == "Locale.php") {
 		$content = str_replace(
 			'return $key; // !compile: convert translation key',
 			'static $en_translations = null;
@@ -82,7 +82,7 @@ function put_file(array $match, string $current_path = ""): string
 		);
 
 		if (!$count) {
-			echo "function lang() not found\n";
+			echo "function convertTranslationKey() not found\n";
 		}
 
 		if ($selected_languages) {
