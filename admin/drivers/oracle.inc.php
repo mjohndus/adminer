@@ -94,11 +94,8 @@ if (isset($_GET["oracle"])) {
 			public function getValue(string $query, int $fieldIndex = 0)
 			{
 				$result = $this->query($query);
-				if (!is_object($result) || !oci_fetch($result->getResource())) {
-					return false;
-				}
 
-				return oci_result($result->getResource(), $fieldIndex + 1);
+				return is_object($result) ? $result->fetchValue($fieldIndex) : false;
 			}
 		}
 
@@ -125,14 +122,6 @@ if (isset($_GET["oracle"])) {
 				oci_free_statement($this->resource);
 			}
 
-			/**
-			 * @return resource
-			 */
-			public function getResource()
-			{
-				return $this->resource;
-			}
-
 			public function fetchAssoc()
 			{
 				return $this->convertRow(oci_fetch_assoc($this->resource));
@@ -141,6 +130,14 @@ if (isset($_GET["oracle"])) {
 			public function fetchRow()
 			{
 				return $this->convertRow(oci_fetch_row($this->resource));
+			}
+
+			/**
+			 * @return mixed|false
+			 */
+			public function fetchValue(int $fieldIndex)
+			{
+				return oci_fetch($this->resource) ? oci_result($this->resource, $fieldIndex + 1) : false;
 			}
 
 			/**

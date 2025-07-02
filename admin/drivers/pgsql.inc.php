@@ -126,11 +126,8 @@ if (isset($_GET["pgsql"])) {
 			public function getValue(string $query, int $fieldIndex = 0)
 			{
 				$result = $this->query($query);
-				if (!$result || !$result->getRowsCount()) {
-					return false;
-				}
 
-				return $result->fetchValue($fieldIndex);
+				return is_object($result) ? $result->fetchValue($fieldIndex) : false;
 			}
 
 			public function warnings(): ?string
@@ -179,7 +176,7 @@ if (isset($_GET["pgsql"])) {
 			 */
 			public function fetchValue(int $fieldIndex)
 			{
-				return pg_fetch_result($this->resource, 0, $fieldIndex);
+				return $this->getRowsCount() ? pg_fetch_result($this->resource, 0, $fieldIndex) : false;
 			}
 
 			public function fetchField()
@@ -788,7 +785,6 @@ ORDER BY conkey, conname") as $row) {
 
 	function truncate_tables($tables) {
 		return queries("TRUNCATE " . implode(", ", array_map('AdminNeo\table', $tables)));
-		return true;
 	}
 
 	function drop_views($views) {
