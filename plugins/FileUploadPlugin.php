@@ -78,7 +78,7 @@ class FileUploadPlugin extends Plugin
 
 		// Create a directory for the current table.
 		$targetDir = $this->uploadPath . "/" . $this->encodeFs($dbName) . "/" . $this->encodeFs($tableName);
-		if (!file_exists($targetDir) && !mkdir($targetDir, 0777, true)) {
+		if (!is_dir($targetDir) && !@mkdir($targetDir, 0777, true)) {
 			return false;
 		}
 

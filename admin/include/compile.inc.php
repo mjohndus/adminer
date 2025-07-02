@@ -25,8 +25,8 @@ function generate_linked_file(string $name, array $file_paths): ?string
 	}
 
 	$temp_dir = get_temp_dir() . "/adminneo";
-	if (!file_exists($temp_dir)) {
-		mkdir($temp_dir);
+	if (!is_dir($temp_dir) && !@mkdir($temp_dir)) {
+		return $links[$name] = null;
 	}
 
 	if (!file_exists("$temp_dir/$linked_filename")) {
