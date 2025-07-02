@@ -229,23 +229,29 @@ function optionlist($options, $selected = null, $use_keys = false) {
 	return $return;
 }
 
+/** Generate HTML <select>
+* @param string
+* @param array
+* @param string
+* @param string
+* @param string
+* @return string
+*/
+function html_select($name, $options, $value = "", $onchange = "", $labelled_by = "") {
+	return "<select name='" . h($name) . "'"
+		. ($labelled_by ? " aria-labelledby='$labelled_by'" : "")
+		. ">" . optionlist($options, $value) . "</select>"
+		. ($onchange ? script("qsl('select').onchange = function () { $onchange };", "") : "")
+	;
+}
+
 /** Generate HTML radio list
 * @param string
 * @param array
 * @param string
-* @param string|bool true for no onchange, false for radio
-* @param string
 * @return string
 */
-function html_select($name, $options, $value = "", $onchange = true, $labelled_by = "") {
-	if ($onchange) {
-		return "<select name='" . h($name) . "'"
-			. ($labelled_by ? " aria-labelledby='$labelled_by'" : "")
-			. ">" . optionlist($options, $value) . "</select>"
-			. (is_string($onchange) ? script("qsl('select').onchange = function () { $onchange };", "") : "")
-		;
-	}
-
+function html_radios($name, $options, $value = "") {
 	$result = "<span class='labels'>";
 	foreach ($options as $key => $val) {
 		$result .= "<label><input type='radio' name='" . h($name) . "' value='" . h($key) . "'" . ($key == $value ? " checked" : "") . ">" . h($val) . "</label>";

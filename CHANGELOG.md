@@ -12,6 +12,7 @@ AdminNeo 5.1.0
 - SQLite: Add support for generated columns (by @vrana)
 - PostgreSQL: Add support for indexes on materialized views (by @vrana)
 - Refine and standardize Japanese translation (by @yama)
+- Plugins: Use protected visibility of member properties
 
 ### Bugfixes
 
@@ -19,8 +20,9 @@ AdminNeo 5.1.0
 - MySQL: Fix using undefined PDO constant on PHP 5
 - MariaDB: Fix parsing type of the generated column in view
 - MS SQL: Add missing support for Encrypt and TrustServerCertificate parameters in PDO_SQLSRV
+- Select: Allow ordering by COUNT(*) (regression from 4.9.0) (by @vrana)
 
-(Ported remaining relevant changes from Adminer 5.0.0-5.0.2.)
+(Ported remaining relevant changes from Adminer 5.0.0-5.0.4.)
 
 AdminNeo 5.0.0
 --------------

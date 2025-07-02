@@ -17,7 +17,8 @@ namespace AdminNeo;
  */
 class ForeignEditPlugin extends Plugin
 {
-	private $limit;
+	protected $limit;
+
 	private $foreignTables = [];
 	private $foreignOptions = [];
 

@@ -95,8 +95,8 @@ if (support("scheme")) {
 $j = 0;
 foreach ($row["source"] as $key => $val) {
 	echo "<tr>";
-	echo "<td>" . html_select("source[" . (+$key) . "]", [-1 => ""] + $source, $val, ($j == count($row["source"]) - 1 ? "foreignAddRow.call(this);" : 1), "label-source");
-	echo "<td>" . html_select("target[" . (+$key) . "]", $target, $row["target"][$key] ?? null, 1, "label-target");
+	echo "<td>" . html_select("source[" . (+$key) . "]", [-1 => ""] + $source, $val, ($j == count($row["source"]) - 1 ? "foreignAddRow.call(this);" : ""), "label-source");
+	echo "<td>" . html_select("target[" . (+$key) . "]", $target, $row["target"][$key] ?? null, "", "label-target");
 	$j++;
 }
 ?>

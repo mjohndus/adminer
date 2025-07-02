@@ -31,13 +31,13 @@ namespace AdminNeo;
 class TableLoginPlugin extends Plugin
 {
 	/** @var string */
-	private $database;
+	protected $database;
 
 	/** @var string */
-	private $table;
+	protected $table;
 
 	/** @var string[] */
-	private $credentials;
+	protected $credentials;
 
 	/**
 	 * @param string $database Database name.

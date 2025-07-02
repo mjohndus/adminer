@@ -30,10 +30,10 @@ namespace AdminNeo;
 class TranslationPlugin extends Plugin
 {
 	/** @var string */
-	private $table;
+	protected $table;
 
 	/** @var int */
-	private $maxLength;
+	protected $maxLength;
 
 	/** @var ?string */
 	private $language = null;

@@ -636,7 +636,7 @@ if (isset($_GET["mysql"])) {
 				}
 				if ($maria || $is_text) {
 					$default = preg_replace_callback("~^'(.*)'$~", function ($matches) {
-						return str_replace("''", "'", stripslashes($matches[1]));
+						return stripslashes(str_replace("''", "'", $matches[1]));
 					}, $default);
 				}
 

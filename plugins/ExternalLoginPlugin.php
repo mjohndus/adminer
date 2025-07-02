@@ -19,13 +19,13 @@ namespace AdminNeo;
 class ExternalLoginPlugin extends Plugin
 {
 	/** @var bool */
-	private $authenticated;
+	protected $authenticated;
 
 	/** @var bool */
-	private $hasServers = false;
+	protected $hasServers = false;
 
 	/** @var bool */
-	private $autologin = false;
+	protected $autologin = false;
 
 	/**
 	 * @param bool $authenticated Whether the user is authenticated by the external service.

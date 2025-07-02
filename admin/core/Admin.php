@@ -493,11 +493,11 @@ class Admin extends Origin
 	{
 		print_fieldset_start("select", lang('Select'), "columns", (bool)$select, true);
 
-		$_GET["columns"][""] = [];
+		$select[""] = [];
 		$i = 0;
 
-		foreach ($_GET["columns"] as $key => $val) {
-			if ($key != "" && ($val["col"] ?? null) == "") continue;
+		foreach ($select as $key => $val) {
+			$val = $_GET["columns"][$key] ?? [];
 
 			$column = select_input(
 				"name='columns[$i][col]'",
@@ -510,7 +510,7 @@ class Admin extends Origin
 				icon("handle", "handle jsonly");
 
 			if (Driver::get()->getFunctions() || Driver::get()->getGrouping()) {
-				echo html_select("columns[$i][fun]", [-1 => ""] + array_filter([lang('Functions') => Driver::get()->getFunctions(), lang('Aggregation') => Driver::get()->getGrouping()]), $val["fun"]);
+				echo html_select("columns[$i][fun]", [-1 => ""] + array_filter([lang('Functions') => Driver::get()->getFunctions(), lang('Aggregation') => Driver::get()->getGrouping()]), $val["fun"] ?? null);
 				echo help_script_command("value && value.replace(/ |\$/, '(') + ')'", true);
 				echo script("qsl('select').onchange = (event) => { " . ($key !== "" ? "" : " qsl('select, input:not(.remove)', event.target.parentNode).onchange();") . " };", "");
 				echo "($column)";

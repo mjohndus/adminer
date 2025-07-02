@@ -18,7 +18,7 @@ namespace AdminNeo;
 class OtpLoginPlugin extends Plugin
 {
 	/** @var string */
-	private $secret;
+	protected $secret;
 
 	/**
 	 * @param string $secret Decoded secret, e.g. base64_decode("ENCODED_SECRET").

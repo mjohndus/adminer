@@ -175,7 +175,7 @@ if (!isset($row["events"])) { // backwards compatibility
 	$row["triggers"] = $row["table_style"];
 }
 
-echo "<tr><th>", lang('Format'), "</th><td>", html_select("format", Admin::get()->getDumpFormats(), $row["format"], false), "</td></tr>\n"; // false = radio
+echo "<tr><th>", lang('Format'), "</th><td>", html_radios("format", Admin::get()->getDumpFormats(), $row["format"]), "</td></tr>\n";
 
 if (DIALECT != "sqlite") {
 	echo "<tr><th>", lang('Database'), "</th>";
@@ -206,7 +206,7 @@ echo "</span></td></tr>";
 
 echo "<tr><th>", lang('Data'), "</th><td>", html_select('data_style', $data_style, $row["data_style"]), "</td></tr>";
 
-echo "<tr><th>", lang('Output'), "</th><td>", html_select("output", Admin::get()->getDumpOutputs(), $row["output"], false), "</td></tr>\n"; // false = radio
+echo "<tr><th>", lang('Output'), "</th><td>", html_radios("output", Admin::get()->getDumpOutputs(), $row["output"]), "</td></tr>\n";
 
 ?>
 </table>
