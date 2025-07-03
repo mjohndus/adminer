@@ -224,7 +224,7 @@ function validate_theme(string $theme, string $color_variant): array
  */
 function get_available_themes(): array
 {
-	return find_available_themes(); // !compile available themes
+	return find_available_themes(); // !compile: available themes
 }
 
 /**

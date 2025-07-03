@@ -78,13 +78,9 @@ function put_file(array $match, string $current_path = ""): string
 			}
 
 			return $key;',
-			$content, $count
+			$content
 		);
-
-		if (!$count) {
-			echo "function convertTranslationKey() not found\n";
-		}
-
+	} elseif ($filename == "lang.inc.php") {
 		if ($selected_languages) {
 			$available_languages = array_fill_keys($selected_languages, true);
 		} else {
@@ -552,7 +548,7 @@ $file = str_replace(
 );
 
 $file = str_replace(
-	'return find_available_themes(); // !compile available themes',
+	'return find_available_themes(); // !compile: available themes',
 	'return ' . var_export($available_themes, true) . ';',
 	$file
 );
@@ -567,6 +563,8 @@ if ($custom_config) {
 		'$this->params = array_merge(' . var_export($custom_config, true) . ', $params);',
 		$file
 	);
+} else {
+	$file = str_replace('// !compile: custom config', '', $file);
 }
 
 // Print version and compilation parameters.
@@ -577,6 +575,13 @@ $file = str_replace(
 	"Compiled with\n * " . implode(" * ", $compilation_info),
 	$file
 );
+
+// Check whether all code replacements have been done.
+if (preg_match_all('~\n\s*(.+!compile:.+)\n~', $file, $matches)) {
+	foreach ($matches[1] as $match) {
+		echo "⚠️ unresolved code replacement: $match\n";
+	}
+}
 
 // Remove superfluous PHP tags.
 $file = preg_replace("~<\\?php\\s*\\?>\n?|\\?>\n?<\\?php~", '', $file);
