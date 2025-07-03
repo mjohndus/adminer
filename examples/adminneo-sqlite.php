@@ -17,4 +17,4 @@ function adminneo_instance()
 	return Admin::create($config);
 }
 
-include "index.php";
+include "../compiled/adminneo.php";

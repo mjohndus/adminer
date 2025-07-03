@@ -15,11 +15,11 @@ use AdminNeo\ZipOutputPlugin;
 
 function adminneo_instance()
 {
-	class PluginsAdmin extends Admin
+	class CustomAdmin extends Admin
 	{
-		public function getServiceTitle(): string
+		public function getServiceTitle()
 		{
-			return 'Plugins Test';
+			return 'Admin Example';
 		}
 	}
 
@@ -62,7 +62,7 @@ function adminneo_instance()
 		new FrameSupportPlugin(),
 	];
 
-	return PluginsAdmin::create($config, $plugins);
+	return CustomAdmin::create($config, $plugins);
 }
 
-include "index.php";
+include "../compiled/adminneo.php";

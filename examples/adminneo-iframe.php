@@ -6,7 +6,7 @@
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1"/>
 
-	<title>IFRAME test</title>
+	<title>IFRAME example</title>
 
 	<style>
 		body {
@@ -33,9 +33,9 @@
 	</style>
 </head>
 <body>
-<h1>IFRAME test</h1>
+<h1>IFRAME example</h1>
 
-<iframe id="adminneo-frame" src="plugins.php<?= $queryString != "" ? "?$queryString" : ""; ?>"></iframe>
+<iframe id="adminneo-frame" src="adminneo-custom.php<?= $queryString != "" ? "?$queryString" : ""; ?>"></iframe>
 <p id="message"></p>
 
 <script>

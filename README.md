@@ -64,14 +64,11 @@ Main project files
 ------------------
 
 - admin/index.php - Development version of AdminNeo.
-- admin/plugins.php - Plugins example.
 - editor/index.php - Development version of EditorNeo.
-- editor/plugins.php - Plugins example.
-- editor/example.php - Customizations example.
-- editor/sqlite.php - SQLite example.
 - bin/compile.php - Create a single file version.
 - bin/update-translations.php - Update translation files.
-- tests/katalon.html - Katalon Automation Recorder test suite.
+- examples - Examples of customizations and plugins usage.
+- tests - Katalon Automation Recorder test suites.
 
 Updating translations 
 ---------------------

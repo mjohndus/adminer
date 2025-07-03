@@ -6,12 +6,18 @@ function adminneo_instance()
 {
 	class SQLiteEditor extends Admin
 	{
-		public function getDatabase(): ?string
+		public function getServiceTitle()
+		{
+			// Custom name in title and heading.
+			return 'SQLite Example';
+		}
+
+		public function getDatabase()
 		{
 			return "/path/to/your/database_file.db";
 		}
 
-		public function getLoginFormRow(string $fieldName, string $label, string $field): string
+		public function getLoginFormRow($fieldName, $label, $field)
 		{
 			// Hide username field.
 			if ($fieldName == "username") {
@@ -24,6 +30,7 @@ function adminneo_instance()
 
 	$config = [
 		"colorVariant" => "green",
+		// Default driver is required only if EditorNeo is compiled with multiple drivers.
 		"defaultDriver" => "sqlite",
 		// Warning! Inline the result of password_hash() so that the password is not visible in the source code.
 		"defaultPasswordHash" => password_hash("YOUR_PASSWORD_HERE", PASSWORD_DEFAULT),
@@ -32,4 +39,4 @@ function adminneo_instance()
 	return SQLiteEditor::create($config);
 }
 
-include "index.php";
+include "../compiled/editorneo.php";

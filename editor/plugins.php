@@ -21,17 +21,17 @@ function adminneo_instance()
 		}
 	}
 
+	$config = [
+		"colorVariant" => "green",
+		"jsonValuesDetection" => true,
+		"jsonValuesAutoFormat" => true,
+	];
+
 	$plugins = [
 		new JsonPreviewPlugin(),
 		new TranslationPlugin(),
 		new SlugifyEditPlugin(),
 		new FrameSupportPlugin(),
-	];
-
-	$config = [
-		"colorVariant" => "green",
-		"jsonValuesDetection" => true,
-		"jsonValuesAutoFormat" => true,
 	];
 
 	return PluginsEditor::create($config, $plugins);
