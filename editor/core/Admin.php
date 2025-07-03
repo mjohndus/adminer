@@ -34,11 +34,16 @@ class Admin extends Origin
 
 		// Returns the first available database.
 		$databases = $this->admin->getDatabases(false);
-		if ($databases) {
-			return $databases[(information_schema($databases[0]) ? 1 : 0)];
-		} else {
-			return Connection::get()->getValue("SELECT SUBSTRING_INDEX(CURRENT_USER, '@', 1)");
+		$systemDatabases = Driver::get()->getSystemDatabases();
+
+		foreach ($databases as $database) {
+			if (!in_array($database, $systemDatabases)) {
+				return $database;
+			}
 		}
+
+		// Return username if no database is available.
+		return Connection::get()->getValue("SELECT SUBSTRING_INDEX(CURRENT_USER, '@', 1)");
 	}
 
 	public function getQueryTimeout(): int

@@ -23,6 +23,7 @@ AdminNeo 5.1.0
 - MS SQL: Add missing support for Encrypt and TrustServerCertificate parameters in PDO_SQLSRV
 - Select: Allow ordering by COUNT(*) (regression from 4.9.0) (by @vrana)
 - Fix opening custom links in selection table to a new tab
+- Editor: Fix autoselecting the first available database
 
 (Ported remaining relevant changes from Adminer 5.0.0-5.0.4.)
 
