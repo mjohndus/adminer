@@ -13,6 +13,7 @@ AdminNeo 5.1.0
 - PostgreSQL: Add support for indexes on materialized views (by @vrana)
 - Refine and standardize Japanese translation (by @yama)
 - Plugins: Use protected visibility of member properties
+- Force inline editing with the Shift key when clicking on a link.
 
 ### Bugfixes
 
@@ -21,6 +22,7 @@ AdminNeo 5.1.0
 - MariaDB: Fix parsing type of the generated column in view
 - MS SQL: Add missing support for Encrypt and TrustServerCertificate parameters in PDO_SQLSRV
 - Select: Allow ordering by COUNT(*) (regression from 4.9.0) (by @vrana)
+- Fix opening custom links in selection table to a new tab
 
 (Ported remaining relevant changes from Adminer 5.0.0-5.0.4.)
 
