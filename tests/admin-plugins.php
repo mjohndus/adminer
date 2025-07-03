@@ -65,4 +65,6 @@ function adminneo_instance()
 	return PluginsAdmin::create($config, $plugins);
 }
 
-include "index.php";
+chdir("../admin/");
+
+require "../admin/index.php";

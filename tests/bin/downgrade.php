@@ -3,8 +3,8 @@
 
 namespace AdminNeo;
 
-require __DIR__ . "/../vendor/vrana/phpshrink/phpShrink.php";
-include __DIR__ . "/../admin/include/compile.inc.php";
+require __DIR__ . "/../../vendor/vrana/phpshrink/phpShrink.php";
+require __DIR__ . "/../../admin/include/compile.inc.php";
 
 function check(string $code, string $expected): void
 {

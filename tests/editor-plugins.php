@@ -37,4 +37,6 @@ function adminneo_instance()
 	return PluginsEditor::create($config, $plugins);
 }
 
-include "index.php";
+chdir("../editor/");
+
+require "../editor/index.php";
