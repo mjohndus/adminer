@@ -51,7 +51,7 @@ if (isset($_GET["mssql"])) {
 				$this->connection = @sqlsrv_connect(preg_replace('~:~', ',', $server), $connectionInfo);
 				if ($this->connection) {
 					$info = sqlsrv_server_info($this->connection);
-					$this->server_info = $info['SQLServerVersion'];
+					$this->serverInfo = $info['SQLServerVersion'];
 				} else {
 					$this->resolveError();
 				}
@@ -121,7 +121,7 @@ if (isset($_GET["mssql"])) {
 					return new MsSqlResult($result);
 				}
 
-				$this->affected_rows = sqlsrv_rows_affected($result);
+				$this->affectedRows = sqlsrv_rows_affected($result);
 
 				return true;
 			}

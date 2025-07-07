@@ -38,7 +38,7 @@ if (isset($_GET["simpledb"])) {
 				}
 
 				$this->serviceUrl = build_http_url($server, '', '', '');
-				$this->server_info = '2009-04-15';
+				$this->serverInfo = '2009-04-15';
 
 				return (bool) sdb_request('ListDomains', ['MaxNumberOfDomains' => 1], $this);
 			}

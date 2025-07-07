@@ -54,12 +54,12 @@ if (isset($_GET["pgsql"])) {
 				restore_error_handler();
 
 				if ($this->connection) {
-					$this->server_info = pg_version($this->connection)["server"];
+					$this->serverInfo = pg_version($this->connection)["server"];
 
 					// Append CockroachDB version.
 					$version = get_cockroach_version($this);
 					if ($version) {
-						$this->server_info .= "-$version";
+						$this->serverInfo .= "-$version";
 					}
 
 					pg_set_client_encoding($this->connection, "UTF8");
@@ -118,7 +118,7 @@ if (isset($_GET["pgsql"])) {
 					$this->error = pg_last_error($this->connection);
 					$return = false;
 				} elseif (!pg_num_fields($result)) {
-					$this->affected_rows = pg_affected_rows($result);
+					$this->affectedRows = pg_affected_rows($result);
 					$return = true;
 				} else {
 					$return = new PgSqlResult($result);
@@ -241,7 +241,7 @@ if (isset($_GET["pgsql"])) {
 				// Append CockroachDB version.
 				$version = get_cockroach_version($this);
 				if ($version) {
-					$this->server_info .= "-$version";
+					$this->serverInfo .= "-$version";
 				}
 
 				return true;

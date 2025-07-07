@@ -27,7 +27,7 @@ if (extension_loaded('pdo')) {
 				auth_error(h($ex->getMessage())); // TODO: Just return error text.
 			}
 
-			$this->server_info = @$this->pdo->getAttribute(PDO::ATTR_SERVER_VERSION);
+			$this->serverInfo = @$this->pdo->getAttribute(PDO::ATTR_SERVER_VERSION);
 		}
 
 		function quote(string $string): string
@@ -68,7 +68,7 @@ if (extension_loaded('pdo')) {
 				return $result;
 			}
 
-			$this->affected_rows = $result->getRowsCount();
+			$this->affectedRows = $result->getRowsCount();
 
 			return true;
 		}

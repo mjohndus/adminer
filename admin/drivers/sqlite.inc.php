@@ -25,7 +25,7 @@ if (isset($_GET["sqlite"])) {
 				$this->sqlite = new SQLite3($server);
 
 				$version = $this->sqlite->version();
-				$this->server_info = $version["versionString"];
+				$this->serverInfo = $version["versionString"];
 
 				return true;
 			}
@@ -44,7 +44,7 @@ if (isset($_GET["sqlite"])) {
 					return new SqLiteResult($result);
 				}
 
-				$this->affected_rows = $this->sqlite->changes();
+				$this->affectedRows = $this->sqlite->changes();
 
 				return true;
 			}

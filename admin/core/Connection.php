@@ -5,10 +5,10 @@ namespace AdminNeo;
 abstract class Connection
 {
 	/** @var string */
-	protected $server_info;
+	protected $serverInfo;
 
 	/** @var int */
-	protected $affected_rows = 0;
+	protected $affectedRows = 0;
 
 	/** @var int */
 	protected $errno = 0;
@@ -54,7 +54,7 @@ abstract class Connection
 
 	public function getServerInfo(): string
 	{
-		return $this->server_info;
+		return $this->serverInfo;
 	}
 
 	public function isMariaDB(): bool
@@ -69,12 +69,12 @@ abstract class Connection
 
 	public function getAffectedRows(): int
 	{
-		return $this->affected_rows;
+		return $this->affectedRows;
 	}
 
-	public function setAffectedRows(int $affected_rows): void
+	public function setAffectedRows(int $affectedRows): void
 	{
-		$this->affected_rows = $affected_rows;
+		$this->affectedRows = $affectedRows;
 	}
 
 	public function getErrno(): int
@@ -115,7 +115,8 @@ abstract class Connection
 	/**
 	 * @deprecated
 	 */
-	public function getResult(string $query, int $field = 0) {
+	public function getResult(string $query, int $field = 0)
+	{
 		return $this->getValue($query, $field);
 	}
 

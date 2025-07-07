@@ -533,6 +533,7 @@ abstract class Origin extends Plugin
 		if (is_array($value)) {
 			$flags = JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | ($this->config->isJsonValuesAutoFormat() ? JSON_PRETTY_PRINT : 0);
 			$value = json_encode($value, $flags);
+
 			return true;
 		}
 

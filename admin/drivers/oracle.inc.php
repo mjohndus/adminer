@@ -23,7 +23,7 @@ if (isset($_GET["oracle"])) {
 			{
 				$this->connection = @oci_new_connect($username, $password, $server, "AL32UTF8");
 				if ($this->connection) {
-					$this->server_info = oci_server_version($this->connection);
+					$this->serverInfo = oci_server_version($this->connection);
 
 					return true;
 				}
@@ -84,7 +84,7 @@ if (isset($_GET["oracle"])) {
 						return new OracleResult($result);
 					}
 
-					$this->affected_rows = oci_num_rows($result);
+					$this->affectedRows = oci_num_rows($result);
 					oci_free_statement($result);
 				}
 

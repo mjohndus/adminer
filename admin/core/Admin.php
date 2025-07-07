@@ -4,7 +4,7 @@ namespace AdminNeo;
 
 class Admin extends Origin
 {
-    public function getOperators(): array
+	public function getOperators(): array
 	{
 		return Driver::get()->getOperators();
 	}
@@ -197,14 +197,14 @@ class Admin extends Origin
 	}
 
 	/**
-     * Returns formatted query that will be printed in "Select data" page before its execution.
-     * Query printed in select before execution.
-     *
+	 * Returns formatted query that will be printed in "Select data" page before its execution.
+	 * Query printed in select before execution.
+	 *
 	 * @param string $query Query to be executed.
 	 * @param float $start Start time.
 	 * @param bool $failed Whether the execution failed.
 	 *
- 	 * @return string HTML to be printed.
+	 * @return string HTML to be printed.
 	 */
 	public function formatSelectQuery(string $query, float $start, bool $failed = false): string
 	{
@@ -218,14 +218,14 @@ class Admin extends Origin
 		$syntax = DIALECT == "elastic" ? "js" : DIALECT;
 		$return = "<pre><code class='jush-$syntax'>" . h(str_replace("\n", " ", $query)) . "</code></pre>\n";
 
-        $return .= "<p class='links'>";
-        if ($supportSql) {
+		$return .= "<p class='links'>";
+		if ($supportSql) {
 			$return .= "<a href='" . h(ME) . "sql=" . urlencode($query) . "'>" . icon("edit") . lang('Edit') . "</a>";
 		}
-        if ($warnings) {
+		if ($warnings) {
 			$return .= "<a href='#warnings' class='toggle'>" . lang('Warnings') . icon_chevron_down() . "</a>";
-        }
-        $return .= " <span class='time'>(" . format_time($start) . ")</span>";
+		}
+		$return .= " <span class='time'>(" . format_time($start) . ")</span>";
 		$return .= "</p>\n";
 
 		if ($warnings) {
@@ -388,8 +388,14 @@ class Admin extends Origin
 		echo "<div class='scrollable'>\n";
 		echo "<table class='nowrap'>\n";
 
-		echo "<thead><tr><th>", lang('Column'), "</th><td>", lang('Type'), "</td><td>", lang('Collation'), "</td>",
-			(support("comment") ? "<td>" . lang('Comment') . "</td>" : ""), "</thead>\n";
+		echo "<thead><tr>";
+		echo "<th>", lang('Column'), "</th>";
+		echo "<td>", lang('Type'), "</td>";
+		echo "<td>", lang('Collation'), "</td>";
+		if (support("comment")) {
+			echo "<td>", lang('Comment'), "</td>";
+		}
+		echo "</tr></thead>\n";
 
 		$user_types = Driver::get()->getUserTypes();
 
@@ -474,8 +480,7 @@ class Admin extends Origin
 			foreach ($index["columns"] as $key => $val) {
 				$print[] = "<i>" . h($val) . "</i>"
 					. ($index["lengths"][$key] ? "(" . $index["lengths"][$key] . ")" : "")
-					. ($index["descs"][$key] ? " DESC" : "")
-				;
+					. ($index["descs"][$key] ? " DESC" : "");
 			}
 			echo "<tr title='" . h($name) . "'><th>$index[type]<td>" . implode(", ", $print) . "\n";
 		}
@@ -506,8 +511,8 @@ class Admin extends Origin
 				$key !== "" ? "selectFieldChange" : "selectAddRow"
 			);
 
-			echo "<div ", ($key != "" ? "" : "class='no-sort'"), ">",
-				icon("handle", "handle jsonly");
+			echo "<div ", ($key != "" ? "" : "class='no-sort'"), ">";
+			echo icon("handle", "handle jsonly");
 
 			if (Driver::get()->getFunctions() || Driver::get()->getGrouping()) {
 				echo html_select("columns[$i][fun]", [-1 => ""] + array_filter([lang('Functions') => Driver::get()->getFunctions(), lang('Aggregation') => Driver::get()->getGrouping()]), $val["fun"] ?? null);
@@ -518,9 +523,9 @@ class Admin extends Origin
 				echo $column;
 			}
 
-			echo " <button class='button light remove jsonly' title='" . h(lang('Remove')) . "'>", icon_solo("remove"), "</button>",
-				script("qsl('#fieldset-select .remove').onclick = selectRemoveRow;", ""),
-				"</div>\n";
+			echo " <button class='button light remove jsonly' title='", h(lang('Remove')), "'>", icon_solo("remove"), "</button>";
+			echo script("qsl('#fieldset-select .remove').onclick = selectRemoveRow;", "");
+			echo "</div>\n";
 
 			$i++;
 		}
@@ -549,22 +554,22 @@ class Admin extends Origin
 		}
 
 		$change_next = "this.parentNode.firstChild.onchange();";
-		foreach (array_merge((array) $_GET["where"], [[]]) as $i => $val) {
+		foreach (array_merge((array)$_GET["where"], [[]]) as $i => $val) {
 			if (!$val || ("$val[col]$val[val]" != "" && in_array($val["op"], $this->getOperators()))) {
-				echo "<div>",
-					select_input(
-						" name='where[$i][col]'",
-						$columns,
-						$val["col"],
-						($val ? "selectFieldChange" : "selectAddRow"),
-						"(" . lang('anywhere') . ")"
-					),
-					html_select("where[$i][op]", $this->getOperators(), $val["op"], $change_next),
-					"<input type='search' class='input' name='where[$i][val]' value='" . h($val["val"]) . "'>",
-					script("mixin(qsl('input'), {oninput: function () { $change_next }, onkeydown: selectSearchKeydown, onsearch: selectSearchSearch});", ""),
-					" <button class='button light remove jsonly' title='" . h(lang('Remove')) . "'>", icon_solo("remove"), "</button>",
-					script('qsl("#fieldset-search .remove").onclick = selectRemoveRow;', ""),
-					"</div>\n";
+				echo "<div>";
+				echo select_input(
+					" name='where[$i][col]'",
+					$columns,
+					$val["col"],
+					($val ? "selectFieldChange" : "selectAddRow"),
+					"(" . lang('anywhere') . ")"
+				);
+				echo html_select("where[$i][op]", $this->getOperators(), $val["op"], $change_next);
+				echo "<input type='search' class='input' name='where[$i][val]' value='" . h($val["val"]) . "'>";
+				echo script("mixin(qsl('input'), {oninput: function () { $change_next }, onkeydown: selectSearchKeydown, onsearch: selectSearchSearch});", "");
+				echo " <button class='button light remove jsonly' title='" . h(lang('Remove')) . "'>", icon_solo("remove"), "</button>";
+				echo script('qsl("#fieldset-search .remove").onclick = selectRemoveRow;', "");
+				echo "</div>\n";
 			}
 		}
 
@@ -584,16 +589,16 @@ class Admin extends Origin
 		$_GET["order"][""] = "";
 		$i = 0;
 
-		foreach ((array) $_GET["order"] as $key => $val) {
+		foreach ((array)$_GET["order"] as $key => $val) {
 			if ($key != "" && $val == "") continue;
 
-			echo "<div ", ($key != "" ? "" : "class='no-sort'"), ">",
-				icon("handle", "handle jsonly"),
-				select_input("name='order[$i]'", $columns, $val, $key !== "" ? "selectFieldChange" : "selectAddRow"),
-				" ", checkbox("desc[$i]", 1, isset($_GET["desc"][$key]), lang('descending')),
-				" <button class='button light remove jsonly' title='" . h(lang('Remove')), "'>", icon_solo("remove"), "</button>",
-				script('qsl("#fieldset-sort .remove").onclick = selectRemoveRow;', ""),
-				"</div>\n";
+			echo "<div ", ($key != "" ? "" : "class='no-sort'"), ">";
+			echo icon("handle", "handle jsonly");
+			echo select_input("name='order[$i]'", $columns, $val, $key !== "" ? "selectFieldChange" : "selectAddRow");
+			echo " ", checkbox("desc[$i]", 1, isset($_GET["desc"][$key]), lang('descending'));
+			echo " <button class='button light remove jsonly' title='", h(lang('Remove')), "'>", icon_solo("remove"), "</button>";
+			echo script('qsl("#fieldset-sort .remove").onclick = selectRemoveRow;', "");
+			echo "</div>\n";
 
 			$i++;
 		}
@@ -606,10 +611,10 @@ class Admin extends Origin
 	 */
 	public function printSelectionLimit(?int $limit): void
 	{
-		echo "<fieldset><legend>" . lang('Limit') . "</legend><div class='fieldset-content'>", // <div> for easy styling
-			"<input type='number' name='limit' class='input size' value='" . h($limit) . "'>",
-			script("qsl('input').oninput = selectFieldChange;", ""),
-			"</div></fieldset>\n";
+		echo "<fieldset><legend>" . lang('Limit') . "</legend><div class='fieldset-content'>";
+		echo "<input type='number' name='limit' class='input size' value='" . h($limit) . "'>";
+		echo script("qsl('input').oninput = selectFieldChange;", "");
+		echo "</div></fieldset>\n";
 	}
 
 	/**
@@ -636,6 +641,7 @@ class Admin extends Origin
 		echo " <span id='noindex' title='" . lang('Full table scan') . "'></span>";
 		echo "<script" . nonce() . ">\n";
 		echo "var indexColumns = ";
+
 		$columns = [];
 		foreach ($indexes as $index) {
 			$current_key = reset($index["columns"]);
@@ -643,10 +649,12 @@ class Admin extends Origin
 				$columns[$current_key] = 1;
 			}
 		}
+
 		$columns[""] = 1;
 		foreach ($columns as $key => $val) {
 			json_row($key);
 		}
+
 		echo ";\n";
 		echo "selectFieldChange.call(gid('form')['select']);\n";
 		echo "</script>\n";
@@ -664,7 +672,8 @@ class Admin extends Origin
 	{
 		$select = []; // select expressions, empty for *
 		$group = []; // expressions without aggregation - will be used for GROUP BY if an aggregation function is used
-		foreach ((array) $_GET["columns"] as $key => $val) {
+
+		foreach ((array)$_GET["columns"] as $key => $val) {
 			if ($val["fun"] == "count" || ($val["col"] != "" && (!$val["fun"] || in_array($val["fun"], Driver::get()->getFunctions()) || in_array($val["fun"], Driver::get()->getGrouping())))) {
 				$select[$key] = apply_sql_function($val["fun"], ($val["col"] != "" ? idf_escape($val["col"]) : "*"));
 				if (!in_array($val["fun"], Driver::get()->getGrouping())) {
@@ -672,6 +681,7 @@ class Admin extends Origin
 				}
 			}
 		}
+
 		return [$select, $group];
 	}
 
@@ -690,7 +700,7 @@ class Admin extends Origin
 			}
 		}
 
-		foreach ((array) $_GET["where"] as $where) {
+		foreach ((array)$_GET["where"] as $where) {
 			$col = $where["col"];
 			$op = $where["op"];
 			$val = $where["val"];
@@ -723,7 +733,7 @@ class Admin extends Origin
 					$cols = [];
 					foreach ($fields as $name => $field) {
 						if (isset($field["privileges"]["where"])
-                            && (preg_match('~^[-\d.' . (preg_match('~IN$~', $op) ? ',' : '') . ']+$~', $val) || !preg_match('~' . number_type() . '|bit~', $field["type"]))
+							&& (preg_match('~^[-\d.' . (preg_match('~IN$~', $op) ? ',' : '') . ']+$~', $val) || !preg_match('~' . number_type() . '|bit~', $field["type"]))
 							&& (!preg_match("~[\x80-\xFF]~", $val) || preg_match('~char|text|enum|set~', $field["type"]))
 							&& (!preg_match('~date|timestamp~', $field["type"]) || preg_match('~^\d+-\d+-\d+~', $val))
 							&& (!preg_match('~^elastic~', DRIVER) || $field["type"] != "boolean" || preg_match('~true|false~', $val)) // Elasticsearch needs boolean value properly formatted.
@@ -748,13 +758,13 @@ class Admin extends Origin
 	public function processSelectionOrder(array $fields, array $indexes): array
 	{
 		$return = [];
-		foreach ((array) $_GET["order"] as $key => $val) {
+		foreach ((array)$_GET["order"] as $key => $val) {
 			if ($val != "") {
 				$return[] = (preg_match('~^((COUNT\(DISTINCT |[A-Z0-9_]+\()(`(?:[^`]|``)+`|"(?:[^"]|"")+")\)|COUNT\(\*\))$~', $val) ? $val : idf_escape($val)) //! MS SQL uses []
-					. (isset($_GET["desc"][$key]) ? " DESC" : "")
-				;
+					. (isset($_GET["desc"][$key]) ? " DESC" : "");
 			}
 		}
+
 		return $return;
 	}
 
@@ -777,6 +787,7 @@ class Admin extends Origin
 	{
 		$return = ($field["null"] ? "NULL/" : "");
 		$update = isset($_GET["select"]) || where($_GET);
+
 		foreach (Driver::get()->getEditFunctions() as $key => $functions) {
 			if (!$key || (!isset($_GET["call"]) && $update)) { // relative functions
 				foreach ($functions as $pattern => $val) {
@@ -785,13 +796,16 @@ class Admin extends Origin
 					}
 				}
 			}
+
 			if ($key && !preg_match('~enum|set|blob|bytea|raw|file|bool~', $field["type"])) {
 				$return .= "/SQL";
 			}
 		}
+
 		if ($field["auto_increment"] && !$update) {
 			$return = lang('Auto Increment');
 		}
+
 		return explode("/", $return);
 	}
 
@@ -992,7 +1006,7 @@ class Admin extends Origin
 							if (!empty($fields[$field->name]['generated'])) {
 								$generatedKeys[$field->name] = true;
 								continue;
-                            }
+							}
 							$keys[] = $field->name;
 							$key = idf_escape($field->name);
 							$values[] = "$key = VALUES($key)";
@@ -1017,7 +1031,7 @@ class Admin extends Origin
 							if (isset($generatedKeys[$key])) {
 								unset($row[$key]);
 								continue;
-                            }
+							}
 
 							$field = $fields[$key];
 							$row[$key] = ($val !== null
@@ -1097,7 +1111,7 @@ class Admin extends Origin
 
 		if ($missing == "auth") {
 			$output = "";
-			foreach ((array) $_SESSION["pwds"] as $vendor => $servers) {
+			foreach ((array)$_SESSION["pwds"] as $vendor => $servers) {
 				foreach ($servers as $server => $usernames) {
 					foreach ($usernames as $username => $password) {
 						if ($password !== null) {
@@ -1176,7 +1190,7 @@ class Admin extends Origin
 						}
 					}
 					?>
-					initSyntaxHighlighting('<?php echo preg_replace('~^(\d\.?\d).*~s', '\1', Connection::get()->getServerInfo()); ?>'<?php echo (Connection::get()->isMariaDB() ? ", true" : ""); ?>);
+					initSyntaxHighlighting('<?php echo preg_replace('~^(\d\.?\d).*~s', '\1', Connection::get()->getServerInfo()); ?>'<?php echo(Connection::get()->isMariaDB() ? ", true" : ""); ?>);
 				</script>
 				<?php
 			}

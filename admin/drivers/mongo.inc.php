@@ -30,7 +30,7 @@ if (isset($_GET["mongo"])) {
 
 			public function open(string $server, string $username, string $password, string $dbName = "", ?string $authSource = null): bool
 			{
-				$this->server_info = MONGODB_VERSION;
+				$this->serverInfo = MONGODB_VERSION;
 
 				$options = [];
 				if ($username . $password != "") {
@@ -86,7 +86,7 @@ if (isset($_GET["mongo"])) {
 			{
 				try {
 					$results = $this->manager->executeBulkWrite($namespace, $bulk);
-					$this->affected_rows = $results->$counter();
+					$this->affectedRows = $results->$counter();
 
 					return true;
 				} catch (Exception $e) {
