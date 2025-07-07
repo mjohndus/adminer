@@ -28,7 +28,7 @@ AdminNeo 5.1.0
 - Fix opening custom links in selection table to a new tab
 - Editor: Fix autoselecting the first available database
 
-(Ported remaining relevant changes from Adminer 5.0.0-5.0.4.)
+(Ported remaining relevant changes from Adminer 5.0.0-5.0.5.)
 
 AdminNeo 5.0.0
 --------------
