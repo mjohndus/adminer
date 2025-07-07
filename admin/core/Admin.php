@@ -1175,9 +1175,8 @@ class Admin extends Origin
 							echo "jushLinks.$val = jushLinks." . DIALECT . ";\n";
 						}
 					}
-					$server_info = Connection::get()->getServerInfo();
 					?>
-					initSyntaxHighlighting('<?php echo preg_replace('~^(\d\.?\d).*~s', '\1', $server_info); ?>'<?php echo (preg_match('~MariaDB~', $server_info) ? ", true" : ""); ?>);
+					initSyntaxHighlighting('<?php echo preg_replace('~^(\d\.?\d).*~s', '\1', Connection::get()->getServerInfo()); ?>'<?php echo (Connection::get()->isMariaDB() ? ", true" : ""); ?>);
 				</script>
 				<?php
 			}

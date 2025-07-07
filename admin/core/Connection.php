@@ -57,6 +57,16 @@ abstract class Connection
 		return $this->server_info;
 	}
 
+	public function isMariaDB(): bool
+	{
+		return str_contains($this->getServerInfo(), "MariaDB");
+	}
+
+	public function isCockroachDB(): bool
+	{
+		return str_contains($this->getServerInfo(), "CockroachDB");
+	}
+
 	public function getAffectedRows(): int
 	{
 		return $this->affected_rows;
