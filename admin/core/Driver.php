@@ -111,7 +111,9 @@ abstract class Driver
 
 	public function getUserTypes(): array
 	{
-		return array_keys($this->types[lang('User types')] ?? []);
+		$key = lang('User types');
+
+		return array_keys($this->types[$key] ?? []);
 	}
 
 	/**
