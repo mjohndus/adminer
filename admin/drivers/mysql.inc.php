@@ -324,6 +324,19 @@ if (isset($_GET["mysql"])) {
 			return ($record ? parent::insert($table, $record) : queries("INSERT INTO " . table($table) . " ()\nVALUES ()"));
 		}
 
+		public function getUnconvertFunction(array $field): string
+		{
+			if (preg_match("~binary~", $field["type"])) {
+				return "<code class='jush-sql'>UNHEX</code>";
+			} elseif ($field["type"] == "bit") {
+				return doc_link(array('sql' => 'bit-value-literals.html'), "<code>b''</code>");
+			} elseif (preg_match("~geometry|point|linestring|polygon~", $field["type"])) {
+				return "<code class='jush-sql'>GeomFromText</code>";
+			} else {
+				return "";
+			}
+		}
+
 		public function insertUpdate(string $table, array $records, array $primary)
         {
 			$columns = array_keys(reset($records));
@@ -353,7 +366,7 @@ if (isset($_GET["mysql"])) {
 		public function slowQuery(string $query, int $timeout): ?string
         {
 			if (min_version('5.7.8', '10.1.2')) {
-				if (preg_match('~MariaDB~', $this->connection->getServerInfo())) {
+				if ($this->connection->isMariaDB()) {
 					return "SET STATEMENT max_statement_time=$timeout FOR $query";
 				} elseif (preg_match('~^(SELECT\b)(.+)~is', $query, $match)) {
 					return "$match[1] /*+ MAX_EXECUTION_TIME(" . ($timeout * 1000) . ") */ $match[2]";
@@ -385,7 +398,7 @@ if (isset($_GET["mysql"])) {
 
 		public function tableHelp(string $name, bool $isView = false): ?string
         {
-			$maria = preg_match('~MariaDB~', $this->connection->getServerInfo());
+			$maria = $this->connection->isMariaDB();
 			if (information_schema(DB)) {
 				return strtolower("information-schema-" . ($maria ? "$name-table/" : str_replace("_", "-", $name) . "-table.html"));
 			}
@@ -608,7 +621,7 @@ if (isset($_GET["mysql"])) {
 	* @return array [$name => ["field" => , "full_type" => , "type" => , "length" => , "unsigned" => , "default" => , "null" => , "auto_increment" => , "on_update" => , "collation" => , "privileges" => , "comment" => , "primary" => , "generated" => ]]
 	*/
 	function fields($table) {
-		$maria = preg_match('~MariaDB~', Connection::get()->getServerInfo());
+		$maria = Connection::get()->isMariaDB();
 
 		$return = [];
 		foreach (get_rows("SELECT * FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = " . q($table) . " ORDER BY ORDINAL_POSITION") as $row) {
@@ -853,7 +866,7 @@ if (isset($_GET["mysql"])) {
 				$default = $field[1][3];
 				if (str_contains($default, " GENERATED")) {
 					// Swap DEFAULT and NULL. MariaDB doesn't support NULL on generated columns.
-					$field[1][3] = str_contains(Connection::get()->getServerInfo(), "MariaDB") ? "" : $field[1][2];
+					$field[1][3] = Connection::get()->isMariaDB() ? "" : $field[1][2];
 					$field[1][2] = $default;
 				}
 				$alter[] = ($table != "" ? ($field[0] != "" ? "CHANGE " . idf_escape($field[0]) : "ADD") : " ") . " " . implode($field[1]) . ($table != "" ? $field[2] : "");

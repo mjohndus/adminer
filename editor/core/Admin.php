@@ -617,17 +617,19 @@ ORDER BY ORDINAL_POSITION", null, "") as $row) { //! requires MySQL 5
 	{
 		echo "<nav id='tables'><menu>";
 
-		foreach ($tables as $row) {
+		foreach ($tables as $status) {
 			// Skip views and tables without a name.
-			if (!isset($row["Engine"]) || ($name = $this->admin->getTableName($row)) == "") {
+			$name = $this->admin->getTableName($status);
+			if ($name == "") {
 				continue;
 			}
 
-			$active = $_GET["select"] == $row["Name"] || $_GET["edit"] == $row["Name"];
-			$selectUrl = h(ME) . 'select=' . urlencode($row["Name"]);
+			$active = $_GET["select"] == $status["Name"] || $_GET["edit"] == $status["Name"];
+			$class = "primary" . (is_view($status) ? " view" : "");
+			$selectUrl = h(ME) . 'select=' . urlencode($status["Name"]);
 
 			echo "<li>";
-			echo "<a href='$selectUrl'", bold($active, "primary"), " data-primary='true' title='$name'>$name</a>";
+			echo "<a href='$selectUrl'", bold($active, $class), " data-primary='true' title='$name'>$name</a>";
 			echo "</li>\n";
 		}
 

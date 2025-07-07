@@ -56,6 +56,12 @@ if (isset($_GET["pgsql"])) {
 				if ($this->connection) {
 					$this->server_info = pg_version($this->connection)["server"];
 
+					// Append CockroachDB version.
+					$version = get_cockroach_version($this);
+					if ($version) {
+						$this->server_info .= "-$version";
+					}
+
 					pg_set_client_encoding($this->connection, "UTF8");
 				}
 
@@ -64,7 +70,10 @@ if (isset($_GET["pgsql"])) {
 
 			public function quote(string $string): string
 			{
-				return pg_escape_literal($this->connection, $string);
+				return (function_exists('pg_escape_literal')
+					? pg_escape_literal($this->connection, $string) // available since PHP 5.4.4
+					: "'" . pg_escape_string($this->connection, $string) . "'"
+				);
 			}
 
 			public function formatValue(?string $value, array $field): ?string
@@ -228,6 +237,12 @@ if (isset($_GET["pgsql"])) {
 				}
 
 				$this->dsn($dsn, $username, $password);
+
+				// Append CockroachDB version.
+				$version = get_cockroach_version($this);
+				if ($version) {
+					$this->server_info .= "-$version";
+				}
 
 				return true;
 			}
@@ -436,6 +451,13 @@ if (isset($_GET["pgsql"])) {
 		return PgSqlDriver::create($connection, Admin::get());
 	}
 
+	function get_cockroach_version(Connection $connection): ?string
+	{
+		$version = $connection->getValue("SHOW crdb_version");
+
+		return $version ? preg_replace('~ \(.*~', '', $version) : null;
+	}
+
 	function idf_escape($idf) {
 		return '"' . str_replace('"', '""', $idf) . '"';
 	}
@@ -585,7 +607,8 @@ ORDER BY a.attnum"
 			}
 			$row["generated"] = ($row["attgenerated"] == "s" ? "STORED" : "");
 			$row["null"] = !$row["attnotnull"];
-			$row["auto_increment"] = $row['attidentity'] || preg_match('~^nextval\(~i', $row["default"]);
+			$row["auto_increment"] = $row['attidentity'] || preg_match('~^nextval\(~i', $row["default"])
+				|| preg_match('~^unique_rowid\(~', $row["default"]); // CockroachDB
 			$row["privileges"] = ["insert" => 1, "select" => 1, "update" => 1, "where" => 1, "order" => 1];
 			if (preg_match('~(.+)::[^,)]+(.*)~', $row["default"], $match)) {
 				$row["default"] = ($match[1] == "NULL" ? null : idf_unescape($match[1]) . $match[2]);
@@ -1077,7 +1100,11 @@ AND typelem = 0"
 	}
 
 	function support($feature) {
-		return preg_match('~^(check|database|table|columns|sql|indexes|descidx|comment|view|' . (min_version(9.3) ? 'materializedview|' : '') . 'scheme|routine|processlist|sequence|trigger|type|variables|drop_col|kill|dump)$~', $feature);
+		if ($feature == "processlist") {
+			return !Connection::get()->isCockroachDB();
+		}
+
+		return preg_match('~^(check|database|table|columns|sql|indexes|descidx|comment|view|' . (min_version(9.3) ? 'materializedview|' : '') . 'scheme|routine|sequence|trigger|type|variables|drop_col|kill|dump)$~', $feature);
 	}
 
 	function kill_process($val) {

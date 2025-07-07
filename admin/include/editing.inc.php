@@ -701,7 +701,7 @@ function doc_link(array $paths, string $text = "<sup>?</sup>"): string
 		'elastic' => "https://www.elastic.co/guide/en/elasticsearch/reference/$version/",
 	];
 
-	if (preg_match('~MariaDB~', $server_info)) {
+	if (Connection::get()->isMariaDB()) {
 		$urls['sql'] = "https://mariadb.com/kb/en/";
 		$paths['sql'] = $paths['mariadb'] ?? str_replace(".html", "/", $paths['sql']);
 	}

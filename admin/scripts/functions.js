@@ -971,7 +971,7 @@ function functionChange() {
  * @this HTMLTableCellElement
  */
 function skipOriginal(first) {
-	const fnSelect = this.previousSibling.firstChild;
+	const fnSelect = qs('select', this.previousSibling);
 	if (!fnSelect) {
 		return;
 	}
