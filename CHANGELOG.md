@@ -15,6 +15,7 @@ AdminNeo 5.1.0
 - SQLite: Add support for generated columns (by @vrana)
 - Add support for CockroachDB (by @vrana)
 - Align numbers right (by @vrana)
+- Display comment in title of field (by @vrana)
 - Remember export setting at SQL command
 - Refine and standardize Japanese translation (by @yama)
 - Plugins: Use protected visibility of member properties
