@@ -210,9 +210,8 @@ ORDER BY ORDINAL_POSITION", null, "") as $row) { //! requires MySQL 5
 			$text = "<a href='$link'" . (is_web_url($link) ? target_blank() : "") . ">$text</a>";
 		}
 
-		if (!$link && !$this->looksLikeBool($field) && preg_match(number_type(), $field["type"])) {
-			$text = "<div class='number'>$text</div>"; // Firefox doesn't support <colgroup>
-		} elseif (preg_match('~date~', $field["type"])) {
+		// Firefox doesn't support <colgroup>
+		if (preg_match('~date~', $field["type"])) {
 			$text = "<div class='datetime'>$text</div>";
 		}
 

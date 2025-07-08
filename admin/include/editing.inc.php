@@ -93,7 +93,9 @@ function select(Result $result, ?Connection $connection = null, $orgtables = [],
 			if ($link) {
 				$val = "<a href='" . h($link) . "'" . (is_web_url($link) ? target_blank() : '') . ">$val</a>";
 			}
-			echo "<td>$val";
+			// https://dev.mysql.com/doc/dev/mysql-server/latest/field__types_8h.html
+			$class = $types[$key] <= 9 || $types[$key] == 246 ? "class='number'" : "";
+			echo "<td $class>$val</td>";
 		}
 	}
 	echo ($i ? "</table>\n</div>" : "<p class='message'>" . lang('No rows.')) . "\n";
@@ -120,31 +122,6 @@ function referencable_primary($self) {
 		}
 	}
 	return $return;
-}
-
-/** Get settings stored in a cookie
-* @return array
-*/
-function get_settings() {
-	parse_str($_COOKIE["neo_settings"], $settings);
-	return $settings;
-}
-
-/** Get setting stored in a cookie
-* @param string
-* @return array
-*/
-function get_setting($key) {
-	$settings = get_settings();
-	return $settings[$key];
-}
-
-/** Store settings to a cookie
-* @param array
-* @return bool
-*/
-function save_settings($settings) {
-	return cookie("neo_settings", http_build_query($settings + get_settings()));
 }
 
 /** Print SQL <textarea> tag

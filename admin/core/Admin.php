@@ -122,7 +122,7 @@ class Admin extends Origin
 	 */
 	public function getFieldName(array $field, int $order = 0): string
 	{
-		return '<span title="' . h($field["full_type"]) . '">' . h($field["field"]) . '</span>';
+		return '<span title="' . h($field["full_type"] . ($field["comment"] != "" ? " : $field[comment]" : '')) . '">' . h($field["field"]) . '</span>';
 	}
 
 	/**
@@ -1118,7 +1118,7 @@ class Admin extends Origin
 							$dbs = $_SESSION["db"][$vendor][$server][$username];
 							foreach (($dbs ? array_keys($dbs) : [""]) as $db) {
 								$server_name = $this->admin->getServerName($server);
-								$title = h(Drivers::get($vendor))
+								$title = h(get_driver_name($vendor, $server))
 									. ($username != "" || $server_name != "" ? " - " : "")
 									. h($username)
 									. ($username != "" && $server_name != "" ? "@" : "")

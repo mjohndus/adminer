@@ -211,7 +211,7 @@ if ($auth) {
 	save_login($driver, $server, $username, $password, $db);
 
 	if ($auth["permanent"]) {
-		$key = base64_encode($driver) . "-" . base64_encode($server) . "-" . base64_encode($username) . "-" . base64_encode($db);
+		$key = implode("-", array_map("base64_encode", [$driver, $server, $username, $db]));
 		$private = Admin::get()->getPrivateKey(true);
 		$encrypted_password = $private ? encrypt_string($password, $private) : false;
 		$permanent[$key] = "$key:" . base64_encode($encrypted_password ?: "");

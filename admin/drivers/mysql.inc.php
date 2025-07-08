@@ -66,6 +66,11 @@ if (isset($_GET["mysql"])) {
 				return $this->mysqli->get_server_info();
 			}
 
+			public function getVersion(): string
+			{
+				return str_replace("-MariaDB", "", $this->getServerInfo());
+			}
+
 			/**
 			 * @return int
 			 */
@@ -466,6 +471,12 @@ if (isset($_GET["mysql"])) {
 
 		$connection->setCharset(charset($connection));
 		$connection->query("SET sql_quote_show_create = 1, autocommit = 1");
+
+		if ($primary) {
+			$name = $connection->isMariaDB() ? "MariaDB" : "MySQL";
+			Drivers::setName(DRIVER, $name);
+			save_driver_name(DRIVER, $credentials[0], $name);
+		}
 
 		return $connection;
 	}

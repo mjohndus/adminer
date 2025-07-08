@@ -5,11 +5,8 @@ namespace AdminNeo;
 $TABLE = $_GET["dump"];
 
 if ($_POST && !$error) {
-	$cookie = "";
-	foreach (["output", "format", "db_style", "types", "routines", "events", "table_style", "auto_increment", "triggers", "data_style"] as $key) {
-		$cookie .= "&$key=" . urlencode($_POST[$key]);
-	}
-	cookie("neo_export", substr($cookie, 1));
+	$dump_settings = array_intersect_key($_POST, array_flip(["output", "format", "db_style", "types", "routines", "events", "table_style", "auto_increment", "triggers", "data_style"]));
+	save_settings($dump_settings, "neo_dump");
 
 	$subjects = array_flip($_POST["databases"] ?? []) + array_flip($_POST["tables"] ?? []) + array_flip($_POST["data"] ?? []);
 	if (count($subjects) == 1) {
@@ -166,47 +163,52 @@ $data_style = ['', 'TRUNCATE+INSERT', 'INSERT'];
 if (DIALECT == "sql") { //! use insertUpdate() in all drivers
 	$data_style[] = 'INSERT+UPDATE';
 }
-parse_str($_COOKIE["neo_export"], $row);
-if (!$row) {
-	$row = ["output" => "file", "format" => "sql", "db_style" => (DB != "" ? "" : "CREATE"), "table_style" => "DROP+CREATE", "data_style" => "INSERT"];
-}
-if (!isset($row["events"])) { // backwards compatibility
-	$row["routines"] = $row["events"] = ($_GET["dump"] == "");
-	$row["triggers"] = $row["table_style"];
+$dump_settings = get_settings("neo_dump");
+if (!$dump_settings) {
+	$dump_settings = [
+		"format" => "sql",
+		"db_style" => (DB == "" ? "CREATE" : ""),
+		"table_style" => "DROP+CREATE",
+		"data_style" => "INSERT",
+		"routines" => $_GET["dump"] == "",
+		"events" => $_GET["dump"] == "",
+		"triggers" => true,
+		"output" => "file",
+	];
 }
 
-echo "<tr><th>", lang('Format'), "</th><td>", html_radios("format", Admin::get()->getDumpFormats(), $row["format"]), "</td></tr>\n";
+echo "<tr><th>", lang('Format'), "</th><td>", html_radios("format", Admin::get()->getDumpFormats(), $dump_settings["format"]), "</td></tr>\n";
 
 if (DIALECT != "sqlite") {
 	echo "<tr><th>", lang('Database'), "</th>";
-	echo "<td>", html_select('db_style', $db_style, $row["db_style"]);
+	echo "<td>", html_select('db_style', $db_style, $dump_settings["db_style"]);
 
 	echo "<span class='labels'>";
 	if (support("type")) {
-		echo checkbox("types", 1, $row["types"], lang('User types'));
+		echo checkbox("types", 1, $dump_settings["types"], lang('User types'));
 	}
 	if (support("routine")) {
-		echo checkbox("routines", 1, $row["routines"], lang('Routines'));
+		echo checkbox("routines", 1, $dump_settings["routines"], lang('Routines'));
 	}
 	if (support("event")) {
-		echo checkbox("events", 1, $row["events"], lang('Events'));
+		echo checkbox("events", 1, $dump_settings["events"], lang('Events'));
 	}
 	echo "</span></td></tr>";
 }
 
 echo "<tr><th>", lang('Tables'), "</th><td>";
-echo html_select('table_style', $table_style, $row["table_style"]);
+echo html_select('table_style', $table_style, $dump_settings["table_style"]);
 
 echo " <span class='labels'>";
-echo checkbox("auto_increment", 1, $row["auto_increment"], lang('Auto Increment'));
+echo checkbox("auto_increment", 1, $dump_settings["auto_increment"], lang('Auto Increment'));
 if (support("trigger")) {
-	echo checkbox("triggers", 1, $row["triggers"], lang('Triggers'));
+	echo checkbox("triggers", 1, $dump_settings["triggers"], lang('Triggers'));
 }
 echo "</span></td></tr>";
 
-echo "<tr><th>", lang('Data'), "</th><td>", html_select('data_style', $data_style, $row["data_style"]), "</td></tr>";
+echo "<tr><th>", lang('Data'), "</th><td>", html_select('data_style', $data_style, $dump_settings["data_style"]), "</td></tr>";
 
-echo "<tr><th>", lang('Output'), "</th><td>", html_radios("output", Admin::get()->getDumpOutputs(), $row["output"]), "</td></tr>\n";
+echo "<tr><th>", lang('Output'), "</th><td>", html_radios("output", Admin::get()->getDumpOutputs(), $dump_settings["output"]), "</td></tr>\n";
 
 ?>
 </table>

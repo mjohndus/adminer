@@ -29,6 +29,7 @@ include __DIR__ . "/../core/Server.php";
 include __DIR__ . "/../core/Config.php";
 include __DIR__ . "/polyfill.inc.php";
 include __DIR__ . "/functions.inc.php";
+include __DIR__ . "/html.inc.php";
 include __DIR__ . "/available.inc.php";
 include __DIR__ . "/compile.inc.php";
 
@@ -36,7 +37,10 @@ include __DIR__ . "/compile.inc.php";
 include __DIR__ . "/../file.inc.php";
 
 if ($_GET["script"] == "version") {
-	$file = open_file_with_lock(get_temp_dir() . "/adminneo.version");
+	$filename = get_temp_dir() . "/adminneo.version";
+	unlink($filename); // It may not be writable by us.
+
+	$file = open_file_with_lock($filename);
 	if ($file) {
 		write_and_unlock_file($file, serialize(["version" => $_POST["version"]]));
 	}
@@ -71,6 +75,22 @@ remove_slashes([&$_GET, &$_POST, &$_COOKIE], $filter);
 
 @set_time_limit(0); // @ - can be disabled
 @ini_set("precision", 15); // @ - can be disabled, 15 - internal PHP precision
+
+// Migrate changed cookies.
+if (!isset($_COOKIE["neo_dump"]) && str_contains($_COOKIE["neo_export"] ?? "", "db_style")) {
+	$_COOKIE["neo_dump"] = $_COOKIE["neo_export"];
+	cookie("neo_dump", $_COOKIE["neo_dump"]);
+
+	unset($_COOKIE["neo_export"]);
+	cookie("neo_export", "", -3600);
+}
+if (isset($_COOKIE["neo_import"])) {
+	$_COOKIE["neo_export"] = $_COOKIE["neo_import"];
+	cookie("neo_export", $_COOKIE["neo_export"]);
+
+	unset($_COOKIE["neo_import"]);
+	cookie("neo_import", "", -3600);
+}
 
 include __DIR__ . "/../core/Locale.php";
 include __DIR__ . "/lang.inc.php";
