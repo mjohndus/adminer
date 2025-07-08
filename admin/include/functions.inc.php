@@ -232,7 +232,7 @@ function optionlist($options, $selected = null, $use_keys = false) {
 /** Generate HTML <select>
 * @param string
 * @param array
-* @param string
+* @param ?string
 * @param string
 * @param string
 * @return string
@@ -546,15 +546,16 @@ function convert_fields($columns, $fields, $select = []) {
 	return $return;
 }
 
-/** Set cookie valid on current path
-* @param string
-* @param string
-* @param int number of seconds, 0 for session cookie
-* @return bool
-*/
-function cookie($name, $value, $lifetime = 2592000) { // 2592000 - 30 days
+/**
+ * Sets cookie valid on the current path.
+ *
+ * @param int $lifetime Number of seconds, 0 for session cookie, 2592000 = 30 days.
+ */
+function cookie(string $name, string $value, int $lifetime = 2592000): void
+{
 	global $HTTPS;
-	return header("Set-Cookie: $name=" . urlencode($value)
+
+	header("Set-Cookie: $name=" . urlencode($value)
 		. ($lifetime ? "; expires=" . gmdate("D, d M Y H:i:s", time() + $lifetime) . " GMT" : "")
 		. "; path=" . preg_replace('~\?.*~', '', $_SERVER["REQUEST_URI"])
 		. ($HTTPS ? "; secure" : "")

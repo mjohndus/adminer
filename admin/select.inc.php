@@ -8,7 +8,7 @@ $indexes = indexes($TABLE);
 $fields = fields($TABLE);
 $foreign_keys = column_foreign_keys($TABLE);
 $oid = $table_status["Oid"];
-parse_str($_COOKIE["neo_import"], $import_settings);
+$export_settings = get_settings("neo_export");
 
 $rights = []; // privilege => 0
 $columns = []; // selectable columns
@@ -88,7 +88,9 @@ if ($_POST && !$error) {
 	}
 	$where_check = ($where_check ? "\nWHERE " . implode(" AND ", $where_check) : "");
 	if ($_POST["export"]) {
-		cookie("neo_import", "output=" . urlencode($_POST["output"]) . "&format=" . urlencode($_POST["format"]));
+		$export_settings = ["output" => $_POST["output"], "format" => $_POST["format"]];
+		save_settings($export_settings, "neo_export");
+
 		dump_headers($TABLE);
 		Admin::get()->dumpTable($TABLE, "");
 		$from = ($select ? implode(", ", $select) : "*")
@@ -200,13 +202,13 @@ if ($_POST && !$error) {
 	} elseif (!preg_match('~~u', $file)) {
 		$error = lang('File must be in UTF-8 encoding.');
 	} else {
-		cookie("neo_import", "output=" . urlencode($import_settings["output"]) . "&format=" . urlencode($_POST["separator"]));
+		save_settings(["format" => $_POST["import_format"]], "neo_export");
 
 		$cols = array_keys($fields);
 		preg_match_all('~(?>"[^"]*"|[^"\r\n]+)+~', $file, $matches);
 		$affected = count($matches[0]);
 		Driver::get()->begin();
-		$separator = ($_POST["separator"] == "csv" ? "," : ($_POST["separator"] == "tsv" ? "\t" : ";"));
+		$separator = ($_POST["import_format"] == "csv;" ? ";" : ($_POST["import_format"] == "tsv" ? "\t" : ","));
 		$rows = [];
 		foreach ($matches[0] as $key => $val) {
 			preg_match_all("~((?>\"[^\"]*\")+|[^$separator]*)$separator~", $val . $separator, $matches2);
@@ -625,9 +627,9 @@ if (!$columns && support("table")) {
 				}
 				if ($format) {
 					print_fieldset_start("export", lang('Export') . " <span id='selected2'></span>", "export");
-					echo html_select("format", $format, $import_settings["format"]);
+					echo html_select("format", $format, $export_settings["format"] ?? null);
 					$output = Admin::get()->getDumpOutputs();
-					echo ($output ? " " . html_select("output", $output, $import_settings["output"]) : "");
+					echo ($output ? " " . html_select("output", $output, $export_settings["output"] ?? null) : "");
 					echo " <input type='submit' class='button' name='export' value='" . lang('Export') . "'>\n";
 					print_fieldset_end("export");
 				}
@@ -645,7 +647,7 @@ if (!$columns && support("table")) {
 				echo "</p>";
 				echo "<p id='import'" . ($_POST["import"] ? "" : " class='hidden'") . ">";
 				echo "<input type='file' name='csv_file'> ";
-				echo html_select("separator", ["csv" => "CSV,", "csv;" => "CSV;", "tsv" => "TSV"], $import_settings["format"]);
+				echo html_select("import_format", ["csv" => "CSV,", "csv;" => "CSV;", "tsv" => "TSV"], $export_settings["format"]);
 				echo " <input type='submit' class='button default' name='import' value='" . lang('Import') . "'>";
 				echo "</p>";
 			}

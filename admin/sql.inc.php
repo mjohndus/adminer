@@ -2,6 +2,9 @@
 namespace AdminNeo;
 
 if (!$error && $_POST["export"]) {
+	$export_settings = ["output" => $_POST["output"], "format" => $_POST["format"]];
+	save_settings($export_settings, "neo_export");
+
 	dump_headers("sql");
 	Admin::get()->dumpTable("", "");
 	Admin::get()->dumpData("", "table", $_POST["query"]);
@@ -69,7 +72,7 @@ if (!$error && $_POST) {
 		$errors = [];
 		$parse = '[\'"' . (DIALECT == "sql" ? '`#' : (DIALECT == "sqlite" ? '`[' : (DIALECT == "mssql" ? '[' : ''))) . ']|/\*|-- |$' . (DIALECT == "pgsql" ? '|\$[^$]*\$' : '');
 		$total_start = microtime(true);
-		parse_str($_COOKIE["neo_export"], $admin_export);
+		$export_settings = get_settings("neo_export");
 		$dump_format = Admin::get()->getDumpFormats();
 		unset($dump_format["sql"]);
 
@@ -231,8 +234,8 @@ if (!$error && $_POST) {
 
 									if ($export) {
 										echo "<form id='$export_id' action='' method='post' class='hidden'><p>\n";
-										echo html_select("output", Admin::get()->getDumpOutputs(), $admin_export["output"]) . " ";
-										echo html_select("format", $dump_format, $admin_export["format"]);
+										echo html_select("format", $dump_format, $export_settings["format"] ?? null);
+										echo html_select("output", Admin::get()->getDumpOutputs(), $export_settings["output"] ?? null) . " ";
 										echo "<input type='hidden' name='query' value='", h($q), "'>";
 										echo "<input type='hidden' name='token' value='$token'>";
 										echo " <input type='submit' class='button' name='export' value='" . lang('Export') . "'>";

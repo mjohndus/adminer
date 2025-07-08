@@ -20,7 +20,7 @@ if (DIALECT == "mongo") { // doesn't support primary key
 }
 $row = $_POST;
 if ($row) {
-	save_settings(array("index_options" => $row["options"]));
+	save_settings(["index_options" => $row["options"]]);
 }
 if ($_POST && !$error && !$_POST["add"] && !$_POST["drop_col"]) {
 	$alter = [];

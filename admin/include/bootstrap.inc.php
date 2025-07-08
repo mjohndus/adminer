@@ -72,6 +72,22 @@ remove_slashes([&$_GET, &$_POST, &$_COOKIE], $filter);
 @set_time_limit(0); // @ - can be disabled
 @ini_set("precision", 15); // @ - can be disabled, 15 - internal PHP precision
 
+// Migrate changed cookies.
+if (!isset($_COOKIE["neo_dump"]) && str_contains($_COOKIE["neo_export"] ?? "", "db_style")) {
+	$_COOKIE["neo_dump"] = $_COOKIE["neo_export"];
+	cookie("neo_dump", $_COOKIE["neo_dump"]);
+
+	unset($_COOKIE["neo_export"]);
+	cookie("neo_export", "", -3600);
+}
+if (isset($_COOKIE["neo_import"])) {
+	$_COOKIE["neo_export"] = $_COOKIE["neo_import"];
+	cookie("neo_export", $_COOKIE["neo_export"]);
+
+	unset($_COOKIE["neo_import"]);
+	cookie("neo_import", "", -3600);
+}
+
 include __DIR__ . "/../core/Locale.php";
 include __DIR__ . "/lang.inc.php";
 

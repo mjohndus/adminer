@@ -14,6 +14,7 @@ AdminNeo 5.1.0
 - PostgreSQL: Add support for indexes on materialized views (by @vrana)
 - Add support for CockroachDB (by @vrana)
 - Align numbers right (by @vrana)
+- Remember export setting at SQL command
 - Refine and standardize Japanese translation (by @yama)
 - Plugins: Use protected visibility of member properties
 - Force inline editing with the Shift key when clicking on a link.
