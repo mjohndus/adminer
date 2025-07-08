@@ -19,6 +19,13 @@ class Drivers
 		self::$extensions[$id] = $extensions;
 	}
 
+	public static function setName(string $id, string $name): void
+	{
+		if (isset(self::$drivers[$id])) {
+			self::$drivers[$id] = $name;
+		}
+	}
+
 	/**
 	 * Returns driver name.
 	 */
@@ -54,12 +61,4 @@ class Drivers
 function get_drivers(): array
 {
 	return Drivers::getList();
-}
-
-/**
- * @deprecated
- */
-function get_driver_name(string $id): ?string
-{
-	return Drivers::get($id);
 }

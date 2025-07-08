@@ -57,6 +57,11 @@ abstract class Connection
 		return $this->serverInfo;
 	}
 
+	public function getVersion(): string
+	{
+		return $this->getServerInfo();
+	}
+
 	public function isMariaDB(): bool
 	{
 		return str_contains($this->getServerInfo(), "MariaDB");

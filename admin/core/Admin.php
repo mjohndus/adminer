@@ -1118,7 +1118,7 @@ class Admin extends Origin
 							$dbs = $_SESSION["db"][$vendor][$server][$username];
 							foreach (($dbs ? array_keys($dbs) : [""]) as $db) {
 								$server_name = $this->admin->getServerName($server);
-								$title = h(Drivers::get($vendor))
+								$title = h(get_driver_name($vendor, $server))
 									. ($username != "" || $server_name != "" ? " - " : "")
 									. h($username)
 									. ($username != "" && $server_name != "" ? "@" : "")

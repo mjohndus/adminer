@@ -149,6 +149,24 @@ function sid() {
 	return $return;
 }
 
+/**
+ * Saves driver name for given server.
+ */
+function save_driver_name(string $driver, string $server, string $name): void
+{
+	restart_session();
+	$_SESSION["drivers"][$driver][$server] = $name;
+	stop_session();
+}
+
+/**
+ * Returns driver name for the given server.
+ */
+function get_driver_name(string $driver, ?string $server = null): string
+{
+	return $_SESSION["drivers"][$driver][$server] ?? Drivers::get($driver);
+}
+
 /** Set password to session
 * @param string
 * @param string

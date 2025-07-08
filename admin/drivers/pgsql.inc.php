@@ -482,6 +482,12 @@ if (isset($_GET["pgsql"])) {
 			$connection->query("SET application_name = 'AdminNeo'");
 		}
 
+		if ($primary) {
+			$name = $connection->isCockroachDB() ? "CockroachDB" : "PostgreSQL";
+			Drivers::setName(DRIVER, $name);
+			save_driver_name(DRIVER, $credentials[0], $name);
+		}
+
 		return $connection;
 	}
 
@@ -1101,10 +1107,13 @@ AND typelem = 0"
 
 	function support($feature) {
 		if ($feature == "processlist") {
+			// https://github.com/cockroachdb/cockroach/issues/24745
 			return !Connection::get()->isCockroachDB();
+		} elseif ($feature == "materializedview") {
+			return min_version(9.3);
 		}
 
-		return preg_match('~^(check|database|table|columns|sql|indexes|descidx|comment|view|' . (min_version(9.3) ? 'materializedview|' : '') . 'scheme|routine|sequence|trigger|type|variables|drop_col|kill|dump)$~', $feature);
+		return preg_match('~^(check|database|table|columns|sql|indexes|descidx|comment|view|scheme|routine|sequence|trigger|type|variables|drop_col|kill|dump)$~', $feature);
 	}
 
 	function kill_process($val) {

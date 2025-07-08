@@ -43,7 +43,7 @@ if (!(DB != "" ? Connection::get()->selectDatabase(DB) : isset($_GET["sql"]) || 
 			echo "<p class='links top-links'>$links_html</p>\n";
 		}
 
-		echo "<p>" . lang('%s version: %s through PHP extension %s', Drivers::get(DRIVER), "<b>" . h(Connection::get()->getServerInfo()) . "</b>", "<b>" . DRIVER_EXTENSION . "</b>") . "\n";
+		echo "<p>" . lang('%s version: %s through PHP extension %s', Drivers::get(DRIVER), "<b>" . h(Connection::get()->getVersion()) . "</b>", "<b>" . DRIVER_EXTENSION . "</b>") . "\n";
 		echo "<p>" . lang('Logged as: %s', "<b>" . h(logged_user()) . "</b>") . "\n";
 		$databases = Admin::get()->getDatabases();
 		if ($databases) {
