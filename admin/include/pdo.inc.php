@@ -19,7 +19,6 @@ if (extension_loaded('pdo')) {
 		protected function dsn(string $dsn, string $username, string $password, array $options = []): void
 		{
 			$options[PDO::ATTR_ERRMODE] = PDO::ERRMODE_SILENT;
-			$options[PDO::ATTR_STATEMENT_CLASS] = [PdoResult::class];
 
 			try {
 				$this->pdo = new PDO($dsn, $username, $password, $options);
