@@ -666,15 +666,14 @@ function doc_link(array $paths, string $text = "<sup>?</sup>"): string
 		return "";
 	}
 
-	$server_info = Connection::get()->getServerInfo();
-	$version = preg_replace('~^(\d\.?\d).*~s', '\1', $server_info); // two most significant digits
+	$version = preg_replace('~^(\d\.?\d).*~s', '\1', Connection::get()->getVersion()); // two most significant digits
 
 	$urls = [
 		'sql' => "https://dev.mysql.com/doc/refman/$version/en/",
 		'sqlite' => "https://www.sqlite.org/",
 		'pgsql' => "https://www.postgresql.org/docs/$version/",
 		'mssql' => "https://learn.microsoft.com/en-us/sql/",
-		'oracle' => "https://www.oracle.com/pls/topic/lookup?ctx=db" . preg_replace('~^.* (\d+)\.(\d+)\.\d+\.\d+\.\d+.*~s', '\1\2', $server_info) . "&id=",
+		'oracle' => "https://www.oracle.com/pls/topic/lookup?ctx=db" . str_replace(".", "", $version) . "&id=",
 		'elastic' => "https://www.elastic.co/guide/en/elasticsearch/reference/$version/",
 	];
 

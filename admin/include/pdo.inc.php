@@ -26,7 +26,7 @@ if (extension_loaded('pdo')) {
 				auth_error(h($ex->getMessage())); // TODO: Just return error text.
 			}
 
-			$this->serverInfo = @$this->pdo->getAttribute(PDO::ATTR_SERVER_VERSION);
+			$this->version = preg_replace('~^\D*([\d.]+).*~', "$1", (string)@$this->pdo->getAttribute(PDO::ATTR_SERVER_VERSION));
 		}
 
 		function quote(string $string): string

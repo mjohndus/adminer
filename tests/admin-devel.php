@@ -11,6 +11,7 @@ function adminneo_instance()
 	$config = [
 		"colorVariant" => "green",
 		"defaultPasswordHash" => "",
+		"sslTrustServerCertificate" => true,
 	];
 
 	return Admin::create($config);

@@ -51,7 +51,7 @@ if (isset($_GET["mssql"])) {
 				$this->connection = @sqlsrv_connect(preg_replace('~:~', ',', $server), $connectionInfo);
 				if ($this->connection) {
 					$info = sqlsrv_server_info($this->connection);
-					$this->serverInfo = $info['SQLServerVersion'];
+					$this->version = $info['SQLServerVersion'];
 				} else {
 					$this->resolveError();
 				}

@@ -23,7 +23,7 @@ if (isset($_GET["oracle"])) {
 			{
 				$this->connection = @oci_new_connect($username, $password, $server, "AL32UTF8");
 				if ($this->connection) {
-					$this->serverInfo = oci_server_version($this->connection);
+					$this->version = oci_server_version($this->connection);
 
 					return true;
 				}

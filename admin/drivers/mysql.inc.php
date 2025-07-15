@@ -46,7 +46,7 @@ if (isset($_GET["mysql"])) {
 					$flags = 0;
 				}
 
-				$return = @$this->mysqli->real_connect(
+				$connected = @$this->mysqli->real_connect(
 					($server != "" ? $host : ini_get("mysqli.default_host")),
 					($server . $username != "" ? $username : ini_get("mysqli.default_user")),
 					($server . $username . $password != "" ? $password : ini_get("mysqli.default_pw")),
@@ -58,17 +58,14 @@ if (isset($_GET["mysql"])) {
 
 				$this->mysqli->options(MYSQLI_OPT_LOCAL_INFILE, false);
 
-				return $return;
-			}
+				if ($connected) {
+					$info = $this->mysqli->get_server_info();
 
-			public function getServerInfo(): string
-			{
-				return $this->mysqli->get_server_info();
-			}
+					$this->version = str_replace("-MariaDB", "", $info);
+					$this->flavor = str_contains($info, "MariaDB") ? "mariadb" : null;
+				}
 
-			public function getVersion(): string
-			{
-				return str_replace("-MariaDB", "", $this->getServerInfo());
+				return $connected;
 			}
 
 			/**
@@ -205,6 +202,9 @@ if (isset($_GET["mysql"])) {
 				}
 
 				$this->dsn($dsn, $username, $password, $options);
+
+				$versionInfo = @$this->pdo->getAttribute(PDO::ATTR_SERVER_VERSION);
+				$this->flavor = str_contains($versionInfo, "MariaDB") ? "mariadb" : null;
 
 				return true;
 			}
@@ -477,10 +477,9 @@ if (isset($_GET["mysql"])) {
 		$connection->setCharset(charset($connection));
 		$connection->query("SET sql_quote_show_create = 1, autocommit = 1");
 
-		if ($primary) {
-			$name = $connection->isMariaDB() ? "MariaDB" : "MySQL";
-			Drivers::setName(DRIVER, $name);
-			save_driver_name(DRIVER, $credentials[0], $name);
+		if ($primary && $connection->isMariaDB()) {
+			Drivers::setName(DRIVER, "MariaDB");
+			save_driver_name(DRIVER, $credentials[0], "MariaDB");
 		}
 
 		return $connection;

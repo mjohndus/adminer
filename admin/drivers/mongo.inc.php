@@ -30,7 +30,7 @@ if (isset($_GET["mongo"])) {
 
 			public function open(string $server, string $username, string $password, string $dbName = "", ?string $authSource = null): bool
 			{
-				$this->serverInfo = MONGODB_VERSION;
+				$this->version = MONGODB_VERSION;
 
 				$options = [];
 				if ($username . $password != "") {

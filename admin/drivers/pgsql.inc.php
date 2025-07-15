@@ -54,13 +54,10 @@ if (isset($_GET["pgsql"])) {
 				restore_error_handler();
 
 				if ($this->connection) {
-					$this->serverInfo = pg_version($this->connection)["server"];
+					$versionInfo = $this->getValue("SELECT version()");
 
-					// Append CockroachDB version.
-					$version = get_cockroach_version($this);
-					if ($version) {
-						$this->serverInfo .= "-$version";
-					}
+					$this->flavor = str_contains($versionInfo, "CockroachDB") ? "cockroach" : null;
+					$this->version = preg_replace('~^\D*([\d.]+).*~', "$1", $versionInfo);
 
 					pg_set_client_encoding($this->connection, "UTF8");
 				}
@@ -238,11 +235,8 @@ if (isset($_GET["pgsql"])) {
 
 				$this->dsn($dsn, $username, $password);
 
-				// Append CockroachDB version.
-				$version = get_cockroach_version($this);
-				if ($version) {
-					$this->serverInfo .= "-$version";
-				}
+				$versionInfo = $this->getValue("SELECT version()");
+				$this->flavor = str_contains($versionInfo, "CockroachDB") ? "cockroach" : null;
 
 				return true;
 			}
@@ -451,13 +445,6 @@ if (isset($_GET["pgsql"])) {
 		return PgSqlDriver::create($connection, Admin::get());
 	}
 
-	function get_cockroach_version(Connection $connection): ?string
-	{
-		$version = $connection->getValue("SHOW crdb_version");
-
-		return $version ? preg_replace('~ \(.*~', '', $version) : null;
-	}
-
 	function idf_escape($idf) {
 		return '"' . str_replace('"', '""', $idf) . '"';
 	}
@@ -482,10 +469,9 @@ if (isset($_GET["pgsql"])) {
 			$connection->query("SET application_name = 'AdminNeo'");
 		}
 
-		if ($primary) {
-			$name = $connection->isCockroachDB() ? "CockroachDB" : "PostgreSQL";
-			Drivers::setName(DRIVER, $name);
-			save_driver_name(DRIVER, $credentials[0], $name);
+		if ($primary && $connection->isCockroachDB()) {
+			Drivers::setName(DRIVER, "CockroachDB");
+			save_driver_name(DRIVER, $credentials[0], "CockroachDB");
 		}
 
 		return $connection;

@@ -87,9 +87,14 @@ if (isset($_GET["clickhouse"])) {
 			{
 				$this->serviceUrl = build_http_url($server, $username, $password, "localhost", 8123);
 
-				$return = $this->query('SELECT 1');
+				$result = $this->query("SELECT version()");
+				if (!$result) {
+					return false;
+				}
 
-				return (bool)$return;
+				$this->version = $result->fetchRow()[0];
+
+				return true;
 			}
 
 			public function selectDatabase(string $name): bool

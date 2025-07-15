@@ -1190,7 +1190,7 @@ class Admin extends Origin
 						}
 					}
 					?>
-					initSyntaxHighlighting('<?php echo preg_replace('~^(\d\.?\d).*~s', '\1', Connection::get()->getServerInfo()); ?>'<?php echo(Connection::get()->isMariaDB() ? ", true" : ""); ?>);
+					initSyntaxHighlighting('<?php echo Connection::get()->getVersion(); ?>'<?php echo(Connection::get()->isMariaDB() ? ", true" : ""); ?>);
 				</script>
 				<?php
 			}

@@ -100,7 +100,7 @@ if (isset($_GET["elastic"])) {
 					return false;
 				}
 
-				$this->serverInfo = $return['version']['number'];
+				$this->version = $return['version']['number'];
 				return true;
 			}
 

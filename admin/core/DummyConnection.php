@@ -8,7 +8,7 @@ class DummyConnection extends Connection
 	{
 		parent::__construct();
 
-		$this->serverInfo = "1000";
+		$this->version = "1000";
 	}
 
 	public function open(string $server, string $username, string $password): bool

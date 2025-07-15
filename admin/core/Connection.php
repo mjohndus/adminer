@@ -4,8 +4,11 @@ namespace AdminNeo;
 
 abstract class Connection
 {
+	/** @var ?string */
+	protected $flavor = null;
+
 	/** @var string */
-	protected $serverInfo;
+	protected $version;
 
 	/** @var int */
 	protected $affectedRows = 0;
@@ -52,29 +55,29 @@ abstract class Connection
 
 	public abstract function open(string $server, string $username, string $password): bool;
 
-	public function getServerInfo(): string
+	public function getFlavor(): ?string
 	{
-		return $this->serverInfo;
-	}
-
-	public function getVersion(): string
-	{
-		return $this->getServerInfo();
-	}
-
-	public function isMinVersion(string $version): bool
-	{
-		return version_compare($this->getVersion(), $version) >= 0;
+		return $this->flavor;
 	}
 
 	public function isMariaDB(): bool
 	{
-		return str_contains($this->getServerInfo(), "MariaDB");
+		return $this->flavor == "mariadb";
 	}
 
 	public function isCockroachDB(): bool
 	{
-		return str_contains($this->getServerInfo(), "CockroachDB");
+		return $this->flavor == "cockroach";
+	}
+
+	public function getVersion(): string
+	{
+		return $this->version;
+	}
+
+	public function isMinVersion(string $version): bool
+	{
+		return version_compare($this->version, $version) >= 0;
 	}
 
 	public function getAffectedRows(): int

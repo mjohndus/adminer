@@ -24,8 +24,7 @@ if (isset($_GET["sqlite"])) {
 			{
 				$this->sqlite = new SQLite3($server);
 
-				$version = $this->sqlite->version();
-				$this->serverInfo = $version["versionString"];
+				$this->version = $this->sqlite->version()["versionString"];
 
 				return true;
 			}
