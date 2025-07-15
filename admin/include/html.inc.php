@@ -302,7 +302,7 @@ function input($field, $value, $function, $autofocus = false) {
 	$name = h(bracket_escape($field["field"]));
 
 	$types = Driver::get()->getTypes();
-	$json_type = Admin::get()->detectJson($field["type"], $value, true);
+	$json_type = isset($field["type"]) && Admin::get()->detectJson($field["type"], $value, true);
 
 	$reset = (DIALECT == "mssql" && $field["auto_increment"]);
 	if ($reset && !$_POST["save"]) {

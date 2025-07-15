@@ -31,6 +31,7 @@ AdminNeo 5.1.0
 - MySQL: Fix using undefined PDO constant on PHP 5
 - MariaDB: Fix parsing type of the generated column in view
 - MS SQL: Add missing support for Encrypt and TrustServerCertificate parameters in PDO_SQLSRV
+- MongoDB: Fix broken driver
 - Select: Allow ordering by COUNT(*) (regression from 4.9.0) (by @vrana)
 - Fix opening custom links in selection table to a new tab
 - Editor: Fix autoselecting the first available database

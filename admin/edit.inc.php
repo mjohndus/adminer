@@ -95,7 +95,7 @@ if ($_POST["save"]) {
 
 if (!support("table") && !$fields) {
 	if (!$where) { // insert
-		$result = Driver::get()->select($TABLE, ["*"], $where, ["*"]);
+		$result = Driver::get()->select($TABLE, ["*"], [], ["*"]);
 		$row = ($result ? $result->fetchAssoc() : false);
 		if (!$row) {
 			$row = [Driver::get()->primary => ""];

@@ -841,7 +841,9 @@ class Admin extends Origin
 			return q($value);
 		}
 
-		$this->admin->detectJson($field["type"], $value, false);
+		if (isset($field["type"])) {
+			$this->admin->detectJson($field["type"], $value, false);
+		}
 
 		$name = $field["field"];
 		$return = q($value);

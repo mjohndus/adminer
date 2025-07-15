@@ -122,7 +122,7 @@ if ($_POST && !process_fields($row["fields"]) && !$error) {
 
 		$message = lang('Table has been altered.');
 		if ($TABLE == "") {
-			cookie("neo_engine", $row["Engine"]);
+			cookie("neo_engine", $row["Engine"] ?? "");
 			$message = lang('Table has been created.');
 		}
 		$name = trim($row["name"]);

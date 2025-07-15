@@ -28,7 +28,7 @@ if (isset($_GET["mongo"])) {
 			/** @var string */
 			private $dbName;
 
-			public function open(string $server, string $username, string $password, string $dbName = "", ?string $authSource = null): bool
+			public function open(string $server, string $username, string $password, ?string $dbName = null, ?string $authSource = null): bool
 			{
 				$this->version = MONGODB_VERSION;
 
@@ -38,7 +38,7 @@ if (isset($_GET["mongo"])) {
 					$options["password"] = $password;
 				}
 
-				if ($dbName != "") {
+				if ($dbName) {
 					$options["db"] = $dbName;
 				}
 
@@ -47,38 +47,30 @@ if (isset($_GET["mongo"])) {
 				}
 
 				$this->manager = new Manager($server, $options);
-				$this->dbName = $dbName;
+				$this->dbName = $dbName ?: "default";
 
-				$this->executeCommand(['ping' => 1]);
-
-				return true;
+				return (bool)$this->executeCommand(['ping' => 1]);
 			}
 
-			/**
-			 * @return Cursor|array
-			 */
-			public function executeCommand(array $command)
+			public function executeCommand(array $command, bool $adminDb = false): ?Cursor
 			{
 				try {
-					return $this->manager->executeCommand($this->dbName, new Command($command));
+					return $this->manager->executeCommand($adminDb ? "admin" : $this->dbName, new Command($command));
 				} catch (\MongoDB\Driver\Exception\Exception $exception) {
 					$this->error = $exception->getMessage();
 
-					return [];
+					return null;
 				}
 			}
 
-			/**
-			 * @return Cursor|array
-			 */
-			public function executeQuery(string $namespace, Query $query, ?array $options = null)
+			public function executeQuery(string $namespace, Query $query, ?array $options = null): ?Cursor
 			{
 				try {
 					return $this->manager->executeQuery($namespace, $query, $options);
 				} catch (\MongoDB\Driver\Exception\Exception $exception) {
 					$this->error = $exception->getMessage();
 
-					return [];
+					return null;
 				}
 			}
 
@@ -230,6 +222,8 @@ if (isset($_GET["mongo"])) {
 			$this->regexpOperator = "regex";
 
 			$this->editFunctions = [["json"]];
+
+			$this->systemDatabases = ["admin", "config", "local"];
 		}
 
 		public function select(string $table, array $select, array $where, array $group, array $order = [], ?int $limit = 1, int $page = 0, bool $print = false)
@@ -303,7 +297,7 @@ if (isset($_GET["mongo"])) {
 			$bulk = new BulkWrite([]);
 			$bulk->insert($record);
 
-			return Connection::get()->executeBulkWrite(Connection::get()->getDbName() . "$table", $bulk, 'getInsertedCount');
+			return Connection::get()->executeBulkWrite(Connection::get()->getDbName() . ".$table", $bulk, 'getInsertedCount');
 		}
 	}
 
@@ -313,13 +307,19 @@ if (isset($_GET["mongo"])) {
 	}
 
 	function get_databases($flush) {
-		$return = [];
-		foreach (Connection::get()->executeCommand(['listDatabases' => 1]) as $dbs) {
+		$cursor = Connection::get()->executeCommand(['listDatabases' => 1], true);
+		if (!$cursor) {
+			return [];
+		}
+
+		$databases = [];
+		foreach ($cursor as $dbs) {
 			foreach ($dbs->databases as $db) {
-				$return[] = $db->name;
+				$databases[] = $db->name;
 			}
 		}
-		return $return;
+
+		return $databases;
 	}
 
 	function count_tables($databases) {
@@ -328,10 +328,16 @@ if (isset($_GET["mongo"])) {
 	}
 
 	function tables_list() {
+		$cursor = Connection::get()->executeCommand(['listCollections' => 1]);
+		if (!$cursor) {
+			return [];
+		}
+
 		$collections = [];
-		foreach (Connection::get()->executeCommand(['listCollections' => 1]) as $result) {
+		foreach ($cursor as $result) {
 			$collections[$result->name] = 'table';
 		}
+
 		return $collections;
 	}
 
@@ -341,22 +347,29 @@ if (isset($_GET["mongo"])) {
 
 	function indexes(string $table, ?Connection $connection = null): array
 	{
-		$return = [];
-		foreach (Connection::get()->executeCommand(['listIndexes' => $table]) as $index) {
+		$cursor = Connection::get()->executeCommand(['listIndexes' => $table]);
+		if (!$cursor) {
+			return [];
+		}
+
+		$indexes = [];
+		foreach ($cursor as $index) {
 			$descs = [];
 			$columns = [];
 			foreach (get_object_vars($index->key) as $column => $type) {
 				$descs[] = ($type == -1 ? '1' : null);
 				$columns[] = $column;
 			}
-			$return[$index->name] = [
+
+			$indexes[$index->name] = [
 				"type" => ($index->name == "_id_" ? "PRIMARY" : (isset($index->unique) ? "UNIQUE" : "INDEX")),
 				"columns" => $columns,
 				"lengths" => [],
 				"descs" => $descs,
 			];
 		}
-		return $return;
+
+		return $indexes;
 	}
 
 	function fields($table) {
@@ -389,8 +402,13 @@ if (isset($_GET["mongo"])) {
 
 	function found_rows($table_status, $where) {
 		$where = where_to_query($where);
-		$toArray = Connection::get()->executeCommand(['count' => $table_status['Name'], 'query' => $where])->toArray();
-		return $toArray[0]->n;
+
+		$cursor = Connection::get()->executeCommand(['count' => $table_status['Name'], 'query' => $where]);
+		if (!$cursor) {
+			return 0;
+		}
+
+		return $cursor->toArray()[0]->n;
 	}
 
 	function sql_query_where_parser($queryWhere) {
@@ -537,25 +555,33 @@ if (isset($_GET["mongo"])) {
 	function alter_indexes($table, $alter) {
 		foreach ($alter as $val) {
 			list($type, $name, $set) = $val;
+
 			if ($set == "DROP") {
-				$return =  Connection::get()->executeCommand(["deleteIndexes" => $table, "index" => $name]);
+				$cursor = Connection::get()->executeCommand(["dropIndexes" => $table, "index" => $name]);
 			} else {
 				$columns = [];
 				foreach ($set as $column) {
 					$column = preg_replace('~ DESC$~', '', $column, 1, $count);
-					$columns[$column] = ($count ? -1 : 1);
+					$columns[$column] = $count ? -1 : 1;
 				}
-				$return =  Connection::get()->_db->selectCollection($table)->ensureIndex($columns, [
-					"unique" => ($type == "UNIQUE"),
-					"name" => $name,
-					//! "sparse"
-				]);
+
+				$command = [
+					"createIndexes" => $table,
+					"indexes" => [[
+						"key" => $columns,
+						"name" => $name,
+						"unique" => $type == "UNIQUE",
+						// TODO "sparse"
+					]],
+				];
+				$cursor = Connection::get()->executeCommand($command);
 			}
-			if ($return['errmsg']) {
-				Connection::get()->setError($return['errmsg']);
+
+			if (!$cursor) {
 				return false;
 			}
 		}
+
 		return true;
 	}
 
@@ -592,28 +618,36 @@ if (isset($_GET["mongo"])) {
 
 	function alter_table($table, $name, $fields, $foreign, $comment, $engine, $collation, $auto_increment, $partitioning) {
 		if ($table == "") {
-			Connection::get()->_db->createCollection($name);
-			return true;
+			return (bool)Connection::get()->executeCommand(["create" => $name]);
 		}
+
+		return false;
 	}
 
 	function drop_tables($tables) {
-		foreach ($tables as $table) {
-			$response = Connection::get()->_db->selectCollection($table)->drop();
-			if (!$response['ok']) {
+		foreach ($tables as $name) {
+			if (!Connection::get()->executeCommand(["drop" => $name])) {
 				return false;
 			}
 		}
+
 		return true;
 	}
 
 	function truncate_tables($tables) {
-		foreach ($tables as $table) {
-			$response =  Connection::get()->_db->selectCollection($table)->remove();
-			if (!$response['ok']) {
+		foreach ($tables as $name) {
+			$command = [
+				"delete" => $name,
+				"deletes" => [[
+					"q" => (object)[],
+					"limit" => 0,
+				]],
+			];
+			if (!Connection::get()->executeCommand($command)) {
 				return false;
 			}
 		}
+
 		return true;
 	}
 }
