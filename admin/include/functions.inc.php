@@ -2,12 +2,12 @@
 
 namespace AdminNeo;
 
-/** Get AdminNeo version
-* @return string
-*/
-function version() {
-	global $VERSION;
-	return $VERSION;
+/**
+ * @deprecated
+ */
+function version(): string
+{
+	return VERSION;
 }
 
 /** Unescape database identifier

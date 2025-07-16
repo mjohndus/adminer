@@ -16,9 +16,7 @@ include __DIR__ . "/../vendor/vrana/phpshrink/phpShrink.php";
 
 function is_dev_version(): bool
 {
-	global $VERSION;
-
-	return (bool)preg_match('~-dev$~', $VERSION);
+	return (bool)preg_match('~-dev$~', VERSION);
 }
 
 function add_apo_slashes(string $s): string
@@ -549,7 +547,7 @@ if ($custom_config) {
 }
 
 // Print version and compilation parameters.
-$file = str_replace("!compile: version", "v$VERSION", $file);
+$file = str_replace("!compile: version", "v" . VERSION, $file);
 
 $file = str_replace(
 	"!compile: parameters\n",
@@ -593,7 +591,7 @@ if ($output_file_path) {
 
 if (!$output_name) {
 	$output_name = "{$project}neo"
-		. (is_dev_version() ? "" : "-$VERSION")
+		. (is_dev_version() ? "" : "-" . VERSION)
 		. ($single_driver ? "-$single_driver" : "")
 		. ($single_language ? "-$single_language" : "")
 		. ".php";

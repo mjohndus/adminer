@@ -21,7 +21,7 @@ if ($_POST && !$error) {
 
 	$is_sql = preg_match('~sql~', $_POST["format"]);
 	if ($is_sql) {
-		echo "-- AdminNeo $VERSION " . Drivers::get(DRIVER) . " " . Connection::get()->getVersion() . " dump\n\n";
+		echo "-- AdminNeo " . VERSION . " " . Drivers::get(DRIVER) . " " . Connection::get()->getVersion() . " dump\n\n";
 		if (DIALECT == "sql") {
 			echo "SET NAMES utf8;
 SET time_zone = '+00:00';

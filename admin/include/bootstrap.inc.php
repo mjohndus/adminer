@@ -48,7 +48,7 @@ if ($_GET["script"] == "version") {
 }
 
 // Allows including AdminNeo inside a function.
-global $error, $HTTPS, $permanent, $has_token, $token, $VERSION;
+global $error, $HTTPS, $permanent, $has_token, $token;
 
 if (!$_SERVER["REQUEST_URI"]) { // IIS 5 compatibility
 	$_SERVER["REQUEST_URI"] = $_SERVER["ORIG_PATH_INFO"];
