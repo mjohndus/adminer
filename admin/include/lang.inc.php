@@ -62,13 +62,13 @@ if (isset($_POST["lang"]) && verify_token()) { // $error not yet available
 }
 
 $available_languages = get_available_languages();
-$LANG = array_keys($available_languages)[0];
+$language = array_keys($available_languages)[0];
 
 if (isset($_COOKIE["neo_lang"]) && isset($available_languages[$_COOKIE["neo_lang"]])) {
 	cookie("neo_lang", $_COOKIE["neo_lang"]);
-	$LANG = $_COOKIE["neo_lang"];
+	$language = $_COOKIE["neo_lang"];
 } elseif (isset($available_languages[$_SESSION["lang"]])) {
-	$LANG = $_SESSION["lang"];
+	$language = $_SESSION["lang"];
 } elseif (isset($_SERVER["HTTP_ACCEPT_LANGUAGE"])) {
 	$accept_language = [];
 	preg_match_all('~([-a-z]+)(;q=([0-9.]+))?~', str_replace("_", "-", strtolower($_SERVER["HTTP_ACCEPT_LANGUAGE"])), $matches, PREG_SET_ORDER);
@@ -79,16 +79,16 @@ if (isset($_COOKIE["neo_lang"]) && isset($available_languages[$_COOKIE["neo_lang
 	arsort($accept_language);
 	foreach ($accept_language as $key => $q) {
 		if (isset($available_languages[$key])) {
-			$LANG = $key;
+			$language = $key;
 			break;
 		}
 
 		$key = preg_replace('~-.*~', '', $key);
 		if (!isset($accept_language[$key]) && isset($available_languages[$key])) {
-			$LANG = $key;
+			$language = $key;
 			break;
 		}
 	}
 }
 
-Locale::create($LANG);
+Locale::create($language);
