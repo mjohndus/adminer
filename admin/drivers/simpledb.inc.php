@@ -37,7 +37,12 @@ if (isset($_GET["simpledb"])) {
 					return false;
 				}
 
-				$this->serviceUrl = build_http_url($server, '', '', '');
+				$this->serviceUrl = build_http_url($server, "", "", "");
+				if (!$this->serviceUrl) {
+					$this->error = lang('Invalid server or credentials.');
+					return false;
+				}
+
 				$this->version = '2009-04-15';
 
 				return (bool) sdb_request('ListDomains', ['MaxNumberOfDomains' => 1], $this);
@@ -346,10 +351,7 @@ if (isset($_GET["simpledb"])) {
 		return strpos(rtrim($hostPath, '/'), '/') === false;
 	}
 
-	/**
-	 * @return Connection|string
-	 */
-	function connect(bool $primary = false)
+	function connect(bool $primary = false, ?string &$error = null): ?Connection
 	{
 		$connection = $primary ? SimpleDbConnection::create() : SimpleDbConnection::createSecondary();
 
@@ -357,12 +359,14 @@ if (isset($_GET["simpledb"])) {
 		if ($password != "") {
 			$result = Admin::get()->verifyDefaultPassword($password);
 			if ($result !== true) {
-				return $result;
+				$error = $result;
+				return null;
 			}
 		}
 
 		if (!$connection->open($server, "", "")) {
-			return $connection->getError();
+			$error = $connection->getError();
+			return null;
 		}
 
 		return $connection;

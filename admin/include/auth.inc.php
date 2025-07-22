@@ -16,37 +16,41 @@ if ($_COOKIE["neo_permanent"]) {
 	}
 }
 
-function validate_server_input() {
+/**
+ * @throws \Random\RandomException
+ */
+function validate_server_input(array &$permanent): void
+{
 	if (SERVER == "") {
 		return;
 	}
 
 	$parts = parse_url(SERVER);
 	if (!$parts) {
-		auth_error(lang('Invalid server or credentials.'));
+		auth_error(lang('Invalid server or credentials.'), $permanent);
 	}
 
 	// Check proper URL parts.
 	if (isset($parts['user']) || isset($parts['pass']) || isset($parts['query']) || isset($parts['fragment'])) {
-		auth_error(lang('Invalid server or credentials.'));
+		auth_error(lang('Invalid server or credentials.'), $permanent);
 	}
 
 	// Allow only HTTP/S scheme.
 	if (isset($parts['scheme']) && !preg_match('~^(https?)$~i', $parts['scheme'])) {
-		auth_error(lang('Invalid server or credentials.'));
+		auth_error(lang('Invalid server or credentials.'), $permanent);
 	}
 
 	// Note that "localhost" and IP address without a scheme is parsed as a path.
-	$hostPath = (isset($parts['host']) ? $parts['host'] : '') . (isset($parts['path']) ? $parts['path'] : '');
+	$hostPath = ($parts['host'] ?? '') . ($parts['path'] ?? '');
 
 	// Validate host.
 	if (!is_server_host_valid($hostPath)) {
-		auth_error(lang('Invalid server or credentials.'));
+		auth_error(lang('Invalid server or credentials.'), $permanent);
 	}
 
 	// Check privileged ports.
 	if (isset($parts['port']) && ($parts['port'] < 1024 || $parts['port'] > 65535)) {
-		auth_error(lang('Connecting to privileged ports is not allowed.'));
+		auth_error(lang('Connecting to privileged ports is not allowed.'), $permanent);
 	}
 }
 
@@ -61,24 +65,16 @@ if (!function_exists('AdminNeo\is_server_host_valid')) {
 	}
 }
 
-/**
- * @param string $server
- * @param string $username
- * @param string $password
- * @param string $defaultServer
- * @param int|null $defaultPort
- * @return string
- */
-function build_http_url($server, $username, $password, $defaultServer, $defaultPort = null) {
+function build_http_url(string $server, string $username, string $password, string $defaultServer, ?int $defaultPort = null): ?string
+{
 	if (!preg_match('~^(https?://)?([^:]*)(:\d+)?$~', rtrim($server, '/'), $matches)) {
-		auth_error(lang('Invalid server or credentials.'));
-		return false;
+		return null;
 	}
 
 	return ($matches[1] ?: "http://") .
 		($username !== "" || $password !== "" ? "$username:$password@" : "") .
 		($matches[2] !== "" ? $matches[2] : $defaultServer) .
-		(isset($matches[3]) ? $matches[3] : ($defaultPort ? ":$defaultPort" : ""));
+		($matches[3] ?? ($defaultPort ? ":$defaultPort" : ""));
 }
 
 function add_invalid_login() {
@@ -116,7 +112,8 @@ function add_invalid_login() {
 	write_and_unlock_file($file, serialize($invalids));
 }
 
-function check_invalid_login() {
+function check_invalid_login(array &$permanent): void
+{
 	$base_name = get_temp_dir() . "/adminneo.invalid";
 
 	$invalids = [];
@@ -133,22 +130,22 @@ function check_invalid_login() {
 
 	$next_attempt = ($invalid && $invalid[1] > 29 ? $invalid[0] - time() : 0); // allow 30 invalid attempts
 	if ($next_attempt > 0) { //! do the same with permanent login
-		auth_error(lang('Too many unsuccessful logins, try again in %d minute(s).', ceil($next_attempt / 60)));
+		auth_error(lang('Too many unsuccessful logins, try again in %d minute(s).', ceil($next_attempt / 60)), $permanent);
 	}
 }
 
 /**
  * @throws \Random\RandomException
  */
-function connect_to_db(): Connection
+function connect_to_db(array &$permanent): Connection
 {
 	if (Admin::get()->getConfig()->hasServers() && !Admin::get()->getConfig()->getServer(SERVER)) {
-		auth_error(lang('Invalid server or credentials.'));
+		auth_error(lang('Invalid server or credentials.'), $permanent);
 	}
 
-	$connection = connect(true);
-	if (!($connection instanceof Connection)) {
-		connection_error($connection);
+	$connection = connect(true, $error);
+	if (!$connection) {
+		connection_error(h($error), $permanent);
 	}
 
 	return $connection;
@@ -157,33 +154,31 @@ function connect_to_db(): Connection
 /**
  * @throws \Random\RandomException
  */
-function authenticate(): void
+function authenticate(array &$permanent): void
 {
 	// Note: Admin::get()->authenticate() method can use primary Database connection.
 	// That's why authentication has to be called after successful connection to the database.
 
 	$result = Admin::get()->authenticate($_GET["username"], get_password());
 	if ($result !== true) {
-		connection_error($result);
+		connection_error($result, $permanent);
 	}
 }
 
 /**
+ * @param string $error HTML formatted error message.
+ *
  * @throws \Random\RandomException
  */
-function connection_error($result): void
+function connection_error(string $error, array &$permanent): void
 {
-	if (is_string($result)) {
-		$error = $result;
-	} else {
-		$error = lang('Invalid server or credentials.');
-	}
+	$error = $error ?: lang('Invalid server or credentials.');
 
 	if (preg_match('~^ +| +$~', get_password())) {
 		$error .= "<br>" . lang('There is a space in the input password which might be the cause.');
 	}
 
-	auth_error($error);
+	auth_error($error, $permanent);
 }
 
 Admin::get()->init();
@@ -231,15 +226,16 @@ if ($auth) {
 	foreach (["pwds", "db", "dbs", "queries"] as $key) {
 		set_session($key, null);
 	}
-	unset_permanent();
+	unset_permanent($permanent);
 	redirect(SERVER_HOME_URL, lang('Logout successful.'));
 
 } elseif ($permanent && !$_SESSION["pwds"]) {
 	session_regenerate_id();
 	$private = Admin::get()->getPrivateKey();
+
 	foreach ($permanent as $key => $val) {
 		list(, $cipher) = explode(":", $val);
-		list($driver, $server, $username, $db) = array_map('base64_decode', explode("-", $key));
+		list($driver, $server, $username, $db) = array_map("base64_decode", explode("-", $key));
 		$password = $private ? decrypt_string(base64_decode($cipher), $private) : false;
 
 		save_login($driver, $server, $username, $password, $db);
@@ -255,23 +251,28 @@ function save_login(string $driver, string $server, string $username, $password,
 	$_SESSION["db"][$driver][$server][$username][$db] = true;
 }
 
-function unset_permanent() {
-	global $permanent;
+function unset_permanent(array &$permanent): void
+{
 	foreach ($permanent as $key => $val) {
-		list($driver, $server, $username, $db) = array_map('base64_decode', explode("-", $key));
+		list($driver, $server, $username, $db) = array_map("base64_decode", explode("-", $key));
+
 		if ($driver == DRIVER && $server == SERVER && $username == $_GET["username"] && $db == DB) {
 			unset($permanent[$key]);
 		}
 	}
+
 	cookie("neo_permanent", implode(" ", $permanent));
 }
 
-/** Renders an error message and a login form
- * @param string plain text
- * @return null exits
+/**
+ * Renders an error message and a login form.
+ *
+ * @param string $error HTML formatted error message.
+ *
  * @throws \Random\RandomException
  */
-function auth_error($error) {
+function auth_error(string $error, array &$permanent): void
+{
 	global $has_token;
 	$session_name = session_name();
 	if (isset($_GET["username"])) {
@@ -288,7 +289,7 @@ function auth_error($error) {
 				}
 				set_password(DRIVER, SERVER, $_GET["username"], null);
 			}
-			unset_permanent();
+			unset_permanent($permanent);
 		}
 	}
 	if (!$_COOKIE[$session_name] && $_GET[$session_name] && ini_bool("session.use_only_cookies")) {
@@ -318,7 +319,7 @@ if (isset($_GET["username"]) && !DRIVER) {
 
 if (isset($_GET["username"]) && !defined('AdminNeo\DRIVER_EXTENSION')) {
 	unset($_SESSION["pwds"][DRIVER]);
-	unset_permanent();
+	unset_permanent($permanent);
 	page_header(lang('No extension'), lang('None of the supported PHP extensions (%s) are available.', implode(", ", Drivers::getExtensions(DRIVER))), false);
 	page_footer("auth");
 	exit;
@@ -327,16 +328,16 @@ if (isset($_GET["username"]) && !defined('AdminNeo\DRIVER_EXTENSION')) {
 stop_session(true);
 
 if (!isset($_GET["username"]) || get_password() === null) {
-	auth_error("");
+	auth_error("", $permanent);
 }
 
-validate_server_input();
-check_invalid_login();
+validate_server_input($permanent);
+check_invalid_login($permanent);
 
 Admin::get()->getConfig()->applyServer(SERVER);
 
-$connection = connect_to_db();
-authenticate();
+$connection = connect_to_db($permanent);
+authenticate($permanent);
 create_driver($connection);
 
 if ($_POST["logout"] && $has_token && !verify_token()) {

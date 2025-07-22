@@ -16,17 +16,20 @@ if (extension_loaded('pdo')) {
 		/** @var PdoResult|false */
 		protected $multiResult;
 
-		protected function dsn(string $dsn, string $username, string $password, array $options = []): void
+		protected function dsn(string $dsn, string $username, string $password, array $options = []): bool
 		{
 			$options[PDO::ATTR_ERRMODE] = PDO::ERRMODE_SILENT;
 
 			try {
 				$this->pdo = new PDO($dsn, $username, $password, $options);
-			} catch (Exception $ex) {
-				auth_error(h($ex->getMessage())); // TODO: Just return error text.
+			} catch (Exception $exception) {
+				$this->error = $exception->getMessage();
+				return false;
 			}
 
 			$this->version = preg_replace('~^\D*([\d.]+).*~', "$1", (string)@$this->pdo->getAttribute(PDO::ATTR_SERVER_VERSION));
+
+			return true;
 		}
 
 		function quote(string $string): string

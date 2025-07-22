@@ -10,7 +10,7 @@ if (!ob_get_level()) {
  * Prints page header.
  *
  * @param string $title Used in title and h2, should be HTML escaped.
- * @param string $error
+ * @param string $error HTML formatted error message.
  * @param mixed $breadcrumb ["key" => "link", "key2" => ["link", "desc"], 0 => "desc"], null for nothing, false for driver only, true for driver and server
  */
 function page_header(string $title, string $error = "", $breadcrumb = []): void

@@ -114,9 +114,7 @@ if (isset($_GET["sqlite"])) {
 		{
 			public function open(string $server, string $username, string $password): bool
 			{
-				$this->dsn(DRIVER . ":$server", "", "");
-
-				return true;
+				return $this->dsn(DRIVER . ":$server", "", "");
 			}
 		}
 	}
@@ -273,10 +271,7 @@ if (isset($_GET["sqlite"])) {
 		return idf_escape($idf);
 	}
 
-	/**
-	 * @return Connection|string
-	 */
-	function connect(bool $primary = false)
+	function connect(bool $primary = false, ?string &$error = null): ?Connection
 	{
 		$connection = $primary ? SqLiteConnection::create() : SqLiteConnection::createSecondary();
 
@@ -284,7 +279,8 @@ if (isset($_GET["sqlite"])) {
 		if ($password != "") {
 			$result = Admin::get()->verifyDefaultPassword($password);
 			if ($result !== true) {
-				return $result;
+				$error = $result;
+				return null;
 			}
 		}
 

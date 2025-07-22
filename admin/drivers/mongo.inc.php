@@ -81,8 +81,8 @@ if (isset($_GET["mongo"])) {
 					$this->affectedRows = $results->$counter();
 
 					return true;
-				} catch (Exception $e) {
-					$this->error = $e->getMessage();
+				} catch (Exception $exception) {
+					$this->error = $exception->getMessage();
 
 					return false;
 				}
@@ -528,10 +528,7 @@ if (isset($_GET["mongo"])) {
 		return $credentials[1];
 	}
 
-	/**
-	 * @return Connection|string
-	 */
-	function connect(bool $primary = false)
+	function connect(bool $primary = false, ?string &$error = null): ?Connection
 	{
 		$connection = $primary ? MongoConnection::create() : MongoConnection::createSecondary();
 
@@ -544,9 +541,9 @@ if (isset($_GET["mongo"])) {
 		$dbName = Admin::get()->getDatabase();
 		$authSource = getenv("MONGO_AUTH_SOURCE") ?: null;
 
-		$connection->open("mongodb://$server", $username, $password, $dbName, $authSource);
-		if ($connection->getError()) {
-			return $connection->getError();
+		if (!$connection->open("mongodb://$server", $username, $password, $dbName, $authSource)) {
+			$error = $connection->getError();
+			return null;
 		}
 
 		return $connection;

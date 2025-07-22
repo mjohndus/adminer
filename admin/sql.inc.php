@@ -61,13 +61,16 @@ if (!$error && $_POST) {
 		$delimiter = ";";
 		$offset = 0;
 		$empty = true;
-		$connection2 = connect(); // connection for exploring indexes and EXPLAIN (to not replace FOUND_ROWS()) //! PDO - silent error
-		if (is_object($connection2) && DB != "") {
+
+		// connection for exploring indexes and EXPLAIN (to not replace FOUND_ROWS()) //! PDO - silent error
+		$connection2 = connect();
+		if ($connection2 && DB != "") {
 			$connection2->selectDatabase(DB);
 			if ($_GET["ns"] != "") {
 				set_schema($_GET["ns"], $connection2);
 			}
 		}
+
 		$commands = 0;
 		$errors = [];
 		$parse = '[\'"' . (DIALECT == "sql" ? '`#' : (DIALECT == "sqlite" ? '`[' : (DIALECT == "mssql" ? '[' : ''))) . ']|/\*|-- |$' . (DIALECT == "pgsql" ? '|\$[^$]*\$' : '');

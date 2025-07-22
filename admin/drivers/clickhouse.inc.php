@@ -86,6 +86,10 @@ if (isset($_GET["clickhouse"])) {
 			public function open(string $server, string $username, string $password): bool
 			{
 				$this->serviceUrl = build_http_url($server, $username, $password, "localhost", 8123);
+				if (!$this->serviceUrl) {
+					$this->error = lang('Invalid server or credentials.');
+					return false;
+				}
 
 				$result = $this->query("SELECT version()");
 				if (!$result) {
@@ -337,16 +341,15 @@ if (isset($_GET["clickhouse"])) {
 		return strpos(rtrim($hostPath, '/'), '/') === false;
 	}
 
-	/**
-	 * @return Connection|string
-	 */
-	function connect(bool $primary = false)
+	function connect(bool $primary = false, ?string &$error = null): ?Connection
 	{
 		$connection = $primary ? ClickHouseConnection::create() : ClickHouseConnection::createSecondary();
 
 		$credentials = Admin::get()->getCredentials();
+
 		if (!$connection->open($credentials[0], $credentials[1], $credentials[2])) {
-			return $connection->getError();
+			$error = $connection->getError();
+			return null;
 		}
 
 		return $connection;

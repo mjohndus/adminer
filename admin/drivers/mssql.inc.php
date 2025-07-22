@@ -240,9 +240,7 @@ if (isset($_GET["mssql"])) {
 
 				$optionsString = $options ? (";" . implode(";", $options)) : "";
 
-				$this->dsn("sqlsrv:Server=" . str_replace(":", ",", $server) . $optionsString, $username, $password);
-
-				return true;
+				return $this->dsn("sqlsrv:Server=" . str_replace(":", ",", $server) . $optionsString, $username, $password);
 			}
 
 			public function selectDatabase(string $name): bool
@@ -264,9 +262,7 @@ if (isset($_GET["mssql"])) {
 		{
 			public function open(string $server, string $username, string $password): bool
 			{
-				$this->dsn("dblib:charset=utf8;host=" . str_replace(":", ";unix_socket=", preg_replace('~:(\d)~', ';port=\1', $server)), $username, $password);
-
-				return true;
+				return $this->dsn("dblib:charset=utf8;host=" . str_replace(":", ";unix_socket=", preg_replace('~:(\d)~', ';port=\1', $server)), $username, $password);
 			}
 
 			public function selectDatabase(string $name): bool
@@ -428,10 +424,7 @@ if (isset($_GET["mssql"])) {
 		return ($_GET["ns"] != "" ? idf_escape($_GET["ns"]) . "." : "") . idf_escape($idf);
 	}
 
-	/**
-	 * @return Connection|string
-	 */
-	function connect(bool $primary = false)
+	function connect(bool $primary = false, ?string &$error = null): ?Connection
 	{
 		$connection = $primary ? MsSqlConnection::create() : MsSqlConnection::createSecondary();
 
@@ -441,7 +434,8 @@ if (isset($_GET["mssql"])) {
 		}
 
 		if (!$connection->open($credentials[0], $credentials[1], $credentials[2])) {
-			return $connection->getError();
+			$error = $connection->getError();
+			return null;
 		}
 
 		return $connection;

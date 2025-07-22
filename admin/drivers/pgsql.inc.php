@@ -104,7 +104,7 @@ if (isset($_GET["pgsql"])) {
 			public function query(string $query, bool $unbuffered = false)
 			{
 				if (!$this->connection) {
-					$this->error = "Invalid connection";
+					$this->error = "Invalid connection.";
 					return false;
 				}
 
@@ -233,7 +233,9 @@ if (isset($_GET["pgsql"])) {
 					$dsn .= " sslmode='$ssl_mode'";
 				}
 
-				$this->dsn($dsn, $username, $password);
+				if (!$this->dsn($dsn, $username, $password)) {
+					return false;
+				}
 
 				$versionInfo = $this->getValue("SELECT version()");
 				$this->flavor = str_contains($versionInfo, "CockroachDB") ? "cockroach" : null;
@@ -453,16 +455,14 @@ if (isset($_GET["pgsql"])) {
 		return idf_escape($idf);
 	}
 
-	/**
-	 * @return Connection|string
-	 */
-	function connect(bool $primary = false)
+	function connect(bool $primary = false, ?string &$error = null): ?Connection
 	{
 		$connection = $primary ? PgSqlConnection::create() : PgSqlConnection::createSecondary();
 
 		$credentials = Admin::get()->getCredentials();
 		if (!$connection->open($credentials[0], $credentials[1], $credentials[2])) {
-			return $connection->getError();
+			$error = $connection->getError();
+			return null;
 		}
 
 		if ($connection->isMinVersion("9")) {

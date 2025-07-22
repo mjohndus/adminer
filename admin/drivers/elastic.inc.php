@@ -89,6 +89,10 @@ if (isset($_GET["elastic"])) {
 			public function open(string $server, string $username, string $password): bool
 			{
 				$this->serviceUrl = build_http_url($server, $username, $password, "localhost", 9200);
+				if (!$this->serviceUrl) {
+					$this->error = lang('Invalid server or credentials.');
+					return false;
+				}
 
 				$return = $this->sendRequest('');
 				if (!$return) {
@@ -392,10 +396,7 @@ if (isset($_GET["elastic"])) {
 		return ElasticDriver::create($connection, Admin::get());
 	}
 
-	/**
-	 * @return Connection|string
-	 */
-	function connect(bool $primary = false)
+	function connect(bool $primary = false, ?string &$error = null): ?Connection
 	{
 		$connection = $primary ? ElasticConnection::create() : ElasticConnection::createSecondary();
 
@@ -403,12 +404,17 @@ if (isset($_GET["elastic"])) {
 
 		if ($password != "" && $connection->open($server, $username, "")) {
 			$result = Admin::get()->verifyDefaultPassword($password);
+			if ($result !== true) {
+				$error = $result;
+				return null;
+			}
 
-			return $result === true ? $connection : $result;
+			return $connection;
 		}
 
 		if (!$connection->open($server, $username, $password)) {
-			return $connection->getError();
+			$error = $connection->getError();
+			return null;
 		}
 
 		return $connection;

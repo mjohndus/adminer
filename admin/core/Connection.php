@@ -17,7 +17,7 @@ abstract class Connection
 	protected $errno = 0;
 
 	/** @var string */
-	protected $error = '';
+	protected $error = "";
 
 	/** @var Result|false */
 	protected $multiResult;

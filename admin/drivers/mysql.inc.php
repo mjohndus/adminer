@@ -201,7 +201,9 @@ if (isset($_GET["mysql"])) {
 					$options[PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT] = !$trustServerCertificate;
 				}
 
-				$this->dsn($dsn, $username, $password, $options);
+				if (!$this->dsn($dsn, $username, $password, $options)) {
+					return false;
+				}
 
 				$versionInfo = @$this->pdo->getAttribute(PDO::ATTR_SERVER_VERSION);
 				$this->flavor = str_contains($versionInfo, "MariaDB") ? "mariadb" : null;
@@ -457,13 +459,13 @@ if (isset($_GET["mysql"])) {
 	/**
 	 * Connects to the database with given credentials.
 	 *
-	 * @return Connection|string
+	 * @param ?string $error Plain text error message.
 	 */
-	function connect(bool $primary = false)
+	function connect(bool $primary = false, ?string &$error = null): ?Connection
 	{
 		$connection = $primary ? MySqlConnection::create() : MySqlConnection::createSecondary();
-
 		$credentials = Admin::get()->getCredentials();
+
 		if (!$connection->open($credentials[0], $credentials[1], $credentials[2])) {
 			$error = $connection->getError();
 
@@ -471,7 +473,7 @@ if (isset($_GET["mysql"])) {
 				$error = $s;
 			}
 
-			return $error;
+			return null;
 		}
 
 		$connection->setCharset(charset($connection));

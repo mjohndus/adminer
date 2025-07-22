@@ -142,7 +142,7 @@ abstract class Origin extends Plugin
 	/**
 	 * Authenticate the user.
 	 *
-	 * @return bool|string true for success, string for error message, false for unknown error.
+	 * @return bool|string true for success, HTML formatted error message, false for unknown error.
 	 */
 	public function authenticate(string $username, string $password)
 	{

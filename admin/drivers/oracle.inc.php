@@ -191,9 +191,7 @@ if (isset($_GET["oracle"])) {
 
 			public function open(string $server, string $username, string $password): bool
 			{
-				$this->dsn("oci:dbname=//$server;charset=AL32UTF8", $username, $password);
-
-				return true;
+				return $this->dsn("oci:dbname=//$server;charset=AL32UTF8", $username, $password);
 			}
 
 			public function selectDatabase(string $name): bool
@@ -329,16 +327,15 @@ if (isset($_GET["oracle"])) {
 		return idf_escape($idf);
 	}
 
-	/**
-	 * @return Connection|string
-	 */
-	function connect(bool $primary = false)
+	function connect(bool $primary = false, ?string &$error = null): ?Connection
 	{
 		$connection = $primary ? OracleConnection::create() : OracleConnection::createSecondary();
 
 		$credentials = Admin::get()->getCredentials();
+
 		if (!$connection->open($credentials[0], $credentials[1], $credentials[2])) {
-			return $connection->getError();
+			$error = $connection->getError();
+			return null;
 		}
 
 		return $connection;
