@@ -374,12 +374,10 @@ function convert_fields($columns, $fields, $select = []) {
  */
 function cookie(string $name, string $value, int $lifetime = 2592000): void
 {
-	global $HTTPS;
-
 	header("Set-Cookie: $name=" . urlencode($value)
 		. ($lifetime ? "; expires=" . gmdate("D, d M Y H:i:s", time() + $lifetime) . " GMT" : "")
 		. "; path=" . preg_replace('~\?.*~', '', $_SERVER["REQUEST_URI"])
-		. ($HTTPS ? "; secure" : "")
+		. (HTTPS ? "; secure" : "")
 		. "; HttpOnly; SameSite=lax",
 		false);
 }
