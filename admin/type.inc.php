@@ -20,8 +20,6 @@ if ($TYPE != "") {
 	page_header(lang('Create type'), $error, [lang('Create type')]);
 }
 
-page_header($TYPE != "" ? lang('Alter type') . ": " . h($TYPE) : lang('Create type'), $error);
-
 if (!$row) {
 	$row["as"] = "AS ";
 }
