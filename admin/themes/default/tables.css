@@ -188,6 +188,7 @@ tr .actions .icon {
 
 .table-footer.sticky {
 	border-top: 1px solid var(--panel-border);
+	z-index: 2; /* To be over the thead. */
 }
 
 .table-footer .field-sets {
