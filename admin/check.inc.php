@@ -8,7 +8,7 @@ $row = $_POST;
 
 if ($row && !$error) {
 	if (DIALECT == "sqlite") {
-		$result = recreate_table($TABLE, $TABLE, array(), array(), array(), 0, array(), $name, ($row["drop"] ? "" : $row["clause"]));
+		$result = recreate_table($TABLE, $TABLE, [], [], [], 0, [], $name, ($row["drop"] ? "" : $row["clause"]));
 	} else {
 		$result = ($name == "" || queries("ALTER TABLE " . table($TABLE) . " DROP CONSTRAINT " . idf_escape($name)));
 		if (!$row["drop"]) {
@@ -26,7 +26,7 @@ page_header(($name != "" ? lang('Alter check') . ": " . h($name) : lang('Create 
 
 if (!$row) {
 	$checks = Driver::get()->checkConstraints($TABLE);
-	$row = array("name" => $name, "clause" => $checks[$name]);
+	$row = ["name" => $name, "clause" => $checks[$name]];
 }
 ?>
 

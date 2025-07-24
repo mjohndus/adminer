@@ -347,7 +347,7 @@ if (isset($_GET["mssql"])) {
 			$record = reset($records);
 			$columns = "c" . implode(", c", range(1, count($record)));
 			$c = 0;
-			$insert = array();
+			$insert = [];
 			foreach ($record as $key => $val) {
 				$c++;
 				$name = idf_unescape($key);
@@ -386,10 +386,10 @@ if (isset($_GET["mssql"])) {
 
 		public function tableHelp(string $name, bool $isView = false): ?string
         {
-			$links = array(
+			$links = [
 				"sys" => "catalog-views/sys-",
 				"INFORMATION_SCHEMA" => "information-schema-views/",
-			);
+			];
 			$link = $links[get_schema()];
 			if ($link) {
 				return "relational-databases/system-$link" . preg_replace('~_~', '-', strtolower($name)) . "-transact-sql";
@@ -793,7 +793,7 @@ WHERE sys1.xtype = 'TR' AND sys2.name = " . q($table)
 			$view = view($table);
 			return "CREATE VIEW " . table($table) . " AS $view[select]";
 		}
-		$fields = array();
+		$fields = [];
 		$primary = false;
 		foreach (fields($table) as $name => $field) {
 			$val = process_field($field, $field);
@@ -804,7 +804,7 @@ WHERE sys1.xtype = 'TR' AND sys2.name = " . q($table)
 		}
 		foreach (indexes($table) as $name => $index) {
 			if (!$primary || $index["type"] != "PRIMARY") {
-				$columns = array();
+				$columns = [];
 				foreach ($index["columns"] as $key => $val) {
 					$columns[] = idf_escape($val) . ($index["descs"][$key] ? " DESC" : "");
 				}
@@ -819,7 +819,7 @@ WHERE sys1.xtype = 'TR' AND sys2.name = " . q($table)
 	}
 
 	function foreign_keys_sql($table) {
-		$fields = array();
+		$fields = [];
 		foreach (foreign_keys($table) as $foreign) {
 			$fields[] = ltrim(format_foreign_key($foreign));
 		}
