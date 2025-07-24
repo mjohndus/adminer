@@ -4,7 +4,7 @@ namespace AdminNeo;
 
 $tables_views = array_merge((array) $_POST["tables"], (array) $_POST["views"]);
 
-if ($tables_views && !$error && !$_POST["search"]) {
+if ($tables_views && !$post_error && !$_POST["search"]) {
 	$result = true;
 	$message = "";
 	if (DIALECT == "sql" && $_POST["tables"] && count($_POST["tables"]) > 1 && ($_POST["drop"] || $_POST["truncate"] || $_POST["copy"])) {
@@ -54,9 +54,9 @@ if ($tables_views && !$error && !$_POST["search"]) {
 }
 
 if ($_GET["ns"] == "") {
-	page_header(lang('Database') . ": " . h(DB), $error, true);
+	page_header(lang('Database') . ": " . h(DB), true);
 } else {
-	page_header(lang('Schema') . ": " . h($_GET["ns"]), $error, true);
+	page_header(lang('Schema') . ": " . h($_GET["ns"]), true);
 }
 
 Admin::get()->printDatabaseMenu();

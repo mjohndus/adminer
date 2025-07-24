@@ -5,7 +5,7 @@ namespace AdminNeo;
 abstract class Origin extends Plugin
 {
 	/** @var string[] */
-	private $errors;
+	private $errors = [];
 
 	/** @var static|Pluginer|null */
 	private static $instance = null;
@@ -16,11 +16,13 @@ abstract class Origin extends Plugin
 	 *
 	 * @return static|Pluginer
 	 */
-	public static function create(array $config = [], array $plugins = [], array $errors = [])
+	public static function create(array $config = [], array $plugins = [])
 	{
 		if (self::$instance) {
 			die("Admin instance already exists.\n");
 		}
+
+		$admin = new static();
 
 		if (!$config && file_exists("adminneo-config.php")) {
 			$config = include_once("adminneo-config.php");
@@ -28,10 +30,14 @@ abstract class Origin extends Plugin
 				$config = [];
 				$linkParams = "href=https://github.com/adminneo-org/adminneo#configuration " . target_blank();
 
-				$errors[] = lang('%s must return an array.', "<b>adminneo-config.php</b>") .
-					" <a $linkParams>" . lang('More information.') . "</a>";
+				$admin->addError(
+					lang('%s must return an array.', "<b>adminneo-config.php</b>") .
+					" <a $linkParams>" . lang('More information.') . "</a>"
+				);
 			}
 		}
+
+		$config = new Config($config);
 
 		if (!$plugins && file_exists("adminneo-plugins.php")) {
 			$plugins = include_once("adminneo-plugins.php");
@@ -39,13 +45,13 @@ abstract class Origin extends Plugin
 				$plugins = [];
 				$linkParams = "href=https://github.com/adminneo-org/adminneo#plugins " . target_blank();
 
-				$errors[] = lang('%s must return an array.', "<b>adminneo-plugins.php</b>") .
-					" <a $linkParams>" . lang('More information.') . "</a>";
+				$admin->addError(
+					lang('%s must return an array.', "<b>adminneo-plugins.php</b>") .
+					" <a $linkParams>" . lang('More information.') . "</a>"
+				);
 			}
 		}
 
-		$config = new Config($config);
-		$admin = new static($errors);
 		self::$instance = $plugins ? new Pluginer($admin, $plugins) : $admin;
 
 		$admin->inject(self::$instance, $config, Locale::get());
@@ -68,12 +74,9 @@ abstract class Origin extends Plugin
 		return self::$instance;
 	}
 
-	/**
-	 * @param string[] $errors
-	 */
-	protected function __construct(array $errors = [])
+	protected function __construct()
 	{
-		$this->errors = $errors;
+		//
 	}
 
 	/**
@@ -96,6 +99,14 @@ abstract class Origin extends Plugin
 	public function init(): void
 	{
 		//
+	}
+
+	/**
+	 * @param string $error HTML-formatted error message.
+	 */
+	public function addError(string $error): void
+	{
+		$this->errors[] = $error;
 	}
 
 	/**
@@ -142,7 +153,7 @@ abstract class Origin extends Plugin
 	/**
 	 * Authenticate the user.
 	 *
-	 * @return bool|string true for success, HTML formatted error message, false for unknown error.
+	 * @return bool|string true for success, HTML-formatted error message, false for unknown error.
 	 */
 	public function authenticate(string $username, string $password)
 	{

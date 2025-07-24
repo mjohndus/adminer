@@ -3,7 +3,7 @@
 namespace AdminNeo;
 
 if (support("kill")) {
-	if ($_POST && !$error) {
+	if ($_POST && !$post_error) {
 		$killed = 0;
 		foreach ((array) $_POST["kill"] as $val) {
 			if (kill_process($val)) {
@@ -14,7 +14,7 @@ if (support("kill")) {
 	}
 }
 
-page_header(lang('Process list'), $error, [lang('Process list')]);
+page_header(lang('Process list'), [lang('Process list')]);
 ?>
 
 <form action="" method="post">

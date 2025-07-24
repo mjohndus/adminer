@@ -24,7 +24,7 @@ $row = $_POST;
 if ($row) {
 	save_settings(["index_options" => $row["options"]]);
 }
-if ($_POST && !$error && !$_POST["add"] && !$_POST["drop_col"]) {
+if ($_POST && !$post_error && !$_POST["add"] && !$_POST["drop_col"]) {
 	$alter = [];
 	foreach ($row["indexes"] as $index) {
 		$name = $index["name"];
@@ -76,7 +76,7 @@ if ($_POST && !$error && !$_POST["add"] && !$_POST["drop_col"]) {
 	queries_redirect(ME . "table=" . urlencode($TABLE), lang('Indexes have been altered.'), alter_indexes($TABLE, $alter));
 }
 
-page_header(lang('Alter indexes'), $error, ["table" => $TABLE, lang('Alter indexes')], h($TABLE));
+page_header(lang('Alter indexes'), ["table" => $TABLE, lang('Alter indexes')], h($TABLE));
 
 $fields = array_keys(fields($TABLE));
 if ($_POST["add"]) {

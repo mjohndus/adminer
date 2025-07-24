@@ -7,7 +7,7 @@ $routine = (isset($_GET["function"]) ? "FUNCTION" : "PROCEDURE");
 $row = $_POST;
 $row["fields"] = (array) $row["fields"];
 
-if ($_POST && !process_fields($row["fields"]) && !$error) {
+if ($_POST && !$post_error && !process_fields($row["fields"])) {
 	$orig = routine($_GET["procedure"], $routine);
 	$temp_name = "$row[name]_adminneo_" . uniqid();
 	drop_create(
@@ -27,10 +27,10 @@ if ($_POST && !process_fields($row["fields"]) && !$error) {
 
 if ($PROCEDURE != "") {
 	$title = isset($_GET["function"]) ? lang('Alter function') : lang('Alter procedure');
-	page_header($title . ": " . h($PROCEDURE), $error, [$title]);
+	page_header($title . ": " . h($PROCEDURE), [$title]);
 } else {
 	$title = isset($_GET["function"]) ? lang('Create function') : lang('Create procedure');
-	page_header($title, $error, [$title]);
+	page_header($title, [$title]);
 }
 
 if (!$_POST && $PROCEDURE != "") {

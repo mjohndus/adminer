@@ -6,7 +6,7 @@ $TABLE = $_GET["check"];
 $name = $_GET["name"];
 $row = $_POST;
 
-if ($row && !$error) {
+if ($row && !$post_error) {
 	if (DIALECT == "sqlite") {
 		$result = recreate_table($TABLE, $TABLE, [], [], [], 0, [], $name, ($row["drop"] ? "" : $row["clause"]));
 	} else {
@@ -22,7 +22,7 @@ if ($row && !$error) {
 	);
 }
 
-page_header(($name != "" ? lang('Alter check') . ": " . h($name) : lang('Create check')), $error, array("table" => $TABLE));
+page_header(($name != "" ? lang('Alter check') . ": " . h($name) : lang('Create check')), ["table" => $TABLE]);
 
 if (!$row) {
 	$checks = Driver::get()->checkConstraints($TABLE);

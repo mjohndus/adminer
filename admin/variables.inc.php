@@ -5,7 +5,7 @@ namespace AdminNeo;
 $status = isset($_GET["status"]);
 $title = $status ? lang('Status') : lang('Variables');
 
-page_header($title, "", [$title]);
+page_header($title, [$title]);
 
 $variables = ($status ? show_status() : show_variables());
 if (!$variables) {

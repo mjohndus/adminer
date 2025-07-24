@@ -12,7 +12,7 @@ foreach ($fields as $name => $field) {
 	}
 }
 
-if ($_POST && !$error && !isset($_GET["select"])) {
+if ($_POST && !$post_error && !isset($_GET["select"])) {
 	$location = $_POST["referer"];
 	if ($_POST["insert"]) { // continue edit or insert
 		$location = ($update ? null : $_SERVER["REQUEST_URI"]);
@@ -51,7 +51,7 @@ if ($_POST && !$error && !isset($_GET["select"])) {
 			);
 			if (is_ajax()) {
 				page_headers();
-				page_messages($error);
+				page_messages();
 				exit;
 			}
 		} else {
@@ -80,7 +80,7 @@ if ($_POST["save"]) {
 	if ($select) {
 		$result = Driver::get()->select($TABLE, $select, [$where], $select, [], (isset($_GET["select"]) ? 2 : 1));
 		if (!$result) {
-			$error = error();
+			Admin::get()->addError(error());
 		} else {
 			$row = $result->fetchAssoc();
 			if (!$row) { // MySQLi returns null

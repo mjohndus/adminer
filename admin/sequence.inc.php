@@ -5,7 +5,7 @@ namespace AdminNeo;
 $SEQUENCE = $_GET["sequence"];
 $row = $_POST;
 
-if ($_POST && !$error) {
+if ($_POST && !$post_error) {
 	$link = substr(ME, 0, -1);
 	$name = trim($row["name"]);
 	if ($_POST["drop"]) {
@@ -20,9 +20,9 @@ if ($_POST && !$error) {
 }
 
 if ($SEQUENCE != "") {
-	page_header(lang('Alter sequence') . ": " . h($SEQUENCE), $error, [h($SEQUENCE)]);
+	page_header(lang('Alter sequence') . ": " . h($SEQUENCE), [h($SEQUENCE)]);
 } else {
-	page_header(lang('Create sequence'), $error, [lang('Create type')]);
+	page_header(lang('Create sequence'), [lang('Create type')]);
 }
 
 if (!$row) {

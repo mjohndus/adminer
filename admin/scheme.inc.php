@@ -4,7 +4,7 @@ namespace AdminNeo;
 
 $row = $_POST;
 
-if ($_POST && !$error) {
+if ($_POST && !$post_error) {
 	$link = preg_replace('~ns=[^&]*&~', '', ME) . "ns=";
 	if ($_POST["drop"]) {
 		query_redirect("DROP SCHEMA " . idf_escape($_GET["ns"]), $link, lang('Schema has been dropped.'));
@@ -22,9 +22,9 @@ if ($_POST && !$error) {
 }
 
 if ($_GET["ns"] != "") {
-	page_header(lang('Alter schema') . ": " . h($_GET["ns"]), $error, [lang('Alter schema')]);
+	page_header(lang('Alter schema') . ": " . h($_GET["ns"]), [lang('Alter schema')]);
 } else {
-	page_header(lang('Create schema'), $error, [lang('Create schema')]);
+	page_header(lang('Create schema'), [lang('Create schema')]);
 }
 
 if (!$row) {

@@ -77,7 +77,7 @@ if ($oid && !$primary) {
 	$indexes[] = ["type" => "PRIMARY", "columns" => [$oid]];
 }
 
-if ($_POST && !$error) {
+if ($_POST && !$post_error) {
 	$where_check = $where;
 	if (!$_POST["all"] && is_array($_POST["check"])) {
 		$checks = [];
@@ -172,7 +172,7 @@ if ($_POST && !$error) {
 
 	} elseif (!$_POST["import"]) { // modify
 		if (!$_POST["val"]) {
-			$error = lang('Ctrl+click on a value to modify it.');
+			Admin::get()->addError(lang('Ctrl+click on a value to modify it.'));
 		} else {
 			$result = true;
 			$affected = 0;
@@ -198,9 +198,9 @@ if ($_POST && !$error) {
 		}
 
 	} elseif (!is_string($file = get_file("csv_file", true))) {
-		$error = upload_error($file);
+		Admin::get()->addError(upload_error($file));
 	} elseif (!preg_match('~~u', $file)) {
-		$error = lang('File must be in UTF-8 encoding.');
+		Admin::get()->addError(lang('File must be in UTF-8 encoding.'));
 	} else {
 		save_settings(["format" => $_POST["import_format"]], "neo_export");
 
@@ -238,7 +238,7 @@ if (is_ajax()) {
 	page_headers();
 	ob_start();
 } else {
-	page_header(lang('Select') . ": $table_name", $error, [$table_name]);
+	page_header(lang('Select') . ": $table_name", [$table_name]);
 }
 
 $set = null;

@@ -2,7 +2,7 @@
 
 namespace AdminNeo;
 
-page_header(lang('Server'), "", false);
+page_header(lang('Server'), false);
 
 Admin::get()->printDatabaseMenu();
 

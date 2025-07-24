@@ -20,7 +20,7 @@ if ($TABLE != "") {
 	$orig_fields = fields($TABLE);
 	$table_status = table_status($TABLE);
 	if (!$table_status) {
-		$error = lang('No tables.');
+		Admin::get()->addError(lang('No tables.'));
 	}
 }
 
@@ -30,11 +30,11 @@ if ($row["auto_increment_col"]) {
 	$row["fields"][$row["auto_increment_col"]]["auto_increment"] = true;
 }
 
-if ($_POST) {
+if ($_POST && !$post_error) {
 	save_settings(["comments" => $_POST["comments"], "defaults" => $_POST["defaults"]]);
 }
 
-if ($_POST && !process_fields($row["fields"]) && !$error) {
+if ($_POST && !$post_error && !process_fields($row["fields"]) && !Admin::get()->getErrors()) {
 	if ($_POST["drop"]) {
 		queries_redirect(substr(ME, 0, -1), lang('Table has been dropped.'), drop_tables([$TABLE]));
 	} else {
@@ -142,9 +142,9 @@ if ($_POST && !process_fields($row["fields"]) && !$error) {
 }
 
 if ($TABLE != "") {
-	page_header(lang('Alter table') . ": " . h($TABLE), $error, ["table" => $TABLE, lang('Alter table')]);
+	page_header(lang('Alter table') . ": " . h($TABLE), ["table" => $TABLE, lang('Alter table')]);
 } else {
-	page_header(lang('Create table'), $error, [lang('Create table')]);
+	page_header(lang('Create table'), [lang('Create table')]);
 }
 
 if (!$_POST) {

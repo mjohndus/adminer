@@ -48,7 +48,7 @@ if (isset($_GET["host"]) && ($result = Connection::get()->query("SHOW GRANTS FOR
 	}
 }
 
-if ($_POST && !$error) {
+if ($_POST && !$post_error) {
 	$old_user = (isset($_GET["host"]) ? q($USER) . "@" . q($_GET["host"]) : "''");
 	if ($_POST["drop"]) {
 		query_redirect("DROP USER $old_user", ME . "privileges=", lang('User has been dropped.'));
@@ -59,6 +59,8 @@ if ($_POST && !$error) {
 			// compute hash in a separate query so that plain text password is not saved to history
 			$pass = Connection::get()->getValue("SELECT PASSWORD(" . q($pass) . ")");
 			$error = !$pass;
+		} else {
+			$error = false;
 		}
 
 		$created = false;
@@ -120,7 +122,7 @@ if ($_POST && !$error) {
 
 $title = isset($_GET["host"]) ? lang('Username') . ": " . h("$USER@$_GET[host]") : lang('Create user');
 $title2 = isset($_GET["host"]) ? h($USER) : lang('Create user');
-page_header($title, $error, ["privileges" => ['', lang('Privileges')], $title2]);
+page_header($title, ["privileges" => ['', lang('Privileges')], $title2]);
 
 if ($_POST) {
 	$row = $_POST;

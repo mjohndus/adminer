@@ -47,9 +47,6 @@ if ($_GET["script"] == "version") {
 	exit;
 }
 
-// Allows including AdminNeo inside a function.
-global $error;
-
 if (!$_SERVER["REQUEST_URI"]) { // IIS 5 compatibility
 	$_SERVER["REQUEST_URI"] = $_SERVER["ORIG_PATH_INFO"];
 }
@@ -126,7 +123,7 @@ Locale::get()->setTranslations($translations);
 
 $admin = null;
 $custom_instance = false;
-$errors = [];
+$instance_error = null;
 
 if (function_exists('\adminneo_instance')) {
 	$admin = \adminneo_instance();
@@ -140,12 +137,16 @@ if ($custom_instance && !$admin instanceof Admin && !$admin instanceof Pluginer)
 	$admin = null;
 	$linkParams = "href=https://github.com/adminneo-org/adminneo#advanced-customizations " . target_blank();
 
-	$errors[] = lang('%s and %s must return an object created by %s method.', "<b>adminneo-instance.php</b>", "<b>adminneo_instance()</b>", "Admin::create()") .
+	$instance_error = lang('%s and %s must return an object created by %s method.', "<b>adminneo-instance.php</b>", "<b>adminneo_instance()</b>", "Admin::create()") .
 		" <a $linkParams>" . lang('More information.') . "</a>";
 }
 
 if (!$admin) {
-	Admin::create([], [], $errors);
+	$admin = Admin::create();
+}
+
+if ($instance_error) {
+	$admin->addError($instance_error);
 }
 
 if (!defined("AdminNeo\DRIVER")) {

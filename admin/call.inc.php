@@ -3,7 +3,7 @@
 namespace AdminNeo;
 
 $PROCEDURE = $_GET["name"] ?: $_GET["call"];
-page_header(lang('Call') . ": " . h($PROCEDURE), $error, [lang('Call')]);
+page_header(lang('Call') . ": " . h($PROCEDURE), [lang('Call')]);
 
 $routine = routine($_GET["call"], (isset($_GET["callf"]) ? "FUNCTION" : "PROCEDURE"));
 $in = [];
@@ -17,7 +17,7 @@ foreach ($routine["fields"] as $i => $field) {
 	}
 }
 
-if (!$error && $_POST) {
+if ($_POST && !$post_error) {
 	$call = [];
 	foreach ($routine["fields"] as $key => $field) {
 		if (in_array($key, $in)) {

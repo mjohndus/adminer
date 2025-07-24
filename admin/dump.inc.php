@@ -4,7 +4,7 @@ namespace AdminNeo;
 
 $TABLE = $_GET["dump"];
 
-if ($_POST && !$error) {
+if ($_POST && !$post_error) {
 	$dump_settings = array_intersect_key($_POST, array_flip(["output", "format", "db_style", "types", "routines", "events", "table_style", "auto_increment", "triggers", "data_style"]));
 	save_settings($dump_settings, "neo_dump");
 
@@ -151,7 +151,7 @@ SET foreign_key_checks = 0;
 }
 
 $name = DB !== null ? h(DB) : (SERVER != "" ? h(Admin::get()->getServerName(SERVER)) : lang('Server'));
-page_header(lang('Export') . ": $name", $error, ($_GET["export"] != "" ? ["table" => $_GET["export"]] : [lang('Export')]));
+page_header(lang('Export') . ": $name", ($_GET["export"] != "" ? ["table" => $_GET["export"]] : [lang('Export')]));
 ?>
 
 <form action="" method="post">

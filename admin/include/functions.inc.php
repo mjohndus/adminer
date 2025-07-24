@@ -505,23 +505,23 @@ function redirect($location, $message = null) {
 * @return bool
 */
 function query_redirect($query, $location, $message, $redirect = true, $execute = true, $failed = false, $time = "") {
-	global $error;
 	if ($execute) {
 		$start = microtime(true);
 		$failed = !Connection::get()->query($query);
 		$time = format_time($start);
 	}
-	$sql = "";
-	if ($query) {
-		$sql = Admin::get()->formatMessageQuery($query, $time, $failed);
-	}
+
+	$sql = $query ? Admin::get()->formatMessageQuery($query, $time, $failed) : "";
+
 	if ($failed) {
-		$error = error() . $sql . script("initToggles();");
+		Admin::get()->addError(error() . $sql . script("initToggles();"));
 		return false;
 	}
+
 	if ($redirect) {
 		redirect($location, $message . $sql);
 	}
+
 	return true;
 }
 

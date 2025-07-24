@@ -5,7 +5,7 @@ namespace AdminNeo;
 $TABLE = $_GET["table"];
 $fields = fields($TABLE);
 if (!$fields) {
-	$error = error();
+	Admin::get()->addError(error());
 }
 $table_status = table_status1($TABLE, true);
 $name = Admin::get()->getTableName($table_status);
@@ -17,7 +17,7 @@ foreach ($fields as $key => $field) {
 
 $title = $fields && is_view($table_status) ? $table_status['Engine'] == 'materialized view' ? lang('Materialized view') : lang('View') : lang('Table');
 $table_name = $name != "" ? $name : h($TABLE);
-page_header("$title: $table_name", $error, [$table_name]);
+page_header("$title: $table_name", [$table_name]);
 
 $set = null;
 if (isset($rights["insert"]) || !support("table")) {

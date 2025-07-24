@@ -10,7 +10,7 @@ if (DIALECT == "pgsql" && $TABLE != "") {
 	$orig_type = strtoupper($status["Engine"]);
 }
 
-if ($_POST && !$error) {
+if ($_POST && !$post_error) {
 	$name = trim($row["name"]);
 	$as = " AS\n$row[select]";
 	$location = ME . "table=" . urlencode($name);
@@ -42,15 +42,14 @@ if (!$_POST && $TABLE != "") {
 	$row = view($TABLE);
 	$row["name"] = $TABLE;
 	$row["materialized"] = ($orig_type != "VIEW");
-	if (!$error) {
-		$error = error();
-	}
+
+	Admin::get()->addError(error());
 }
 
 if ($TABLE != "") {
-	page_header(lang('Alter view') . ": " . h($TABLE), $error, ["table" => $TABLE, lang('Alter view')]);
+	page_header(lang('Alter view') . ": " . h($TABLE), ["table" => $TABLE, lang('Alter view')]);
 } else {
-	page_header(lang('Create view'), $error, [lang('Create view')]);
+	page_header(lang('Create view'), [lang('Create view')]);
 }
 ?>
 

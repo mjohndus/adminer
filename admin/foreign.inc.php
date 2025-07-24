@@ -6,7 +6,7 @@ $TABLE = $_GET["foreign"];
 $name = $_GET["name"];
 $row = $_POST;
 
-if ($_POST && !$error && !$_POST["add"] && !$_POST["change"] && !$_POST["change-js"]) {
+if ($_POST && !$post_error && !$_POST["add"] && !$_POST["change"] && !$_POST["change-js"]) {
 	if (!$_POST["drop"]) {
 		$row["source"] = array_filter($row["source"], 'strlen');
 		ksort($row["source"]); // enforce input order
@@ -32,11 +32,11 @@ if ($_POST && !$error && !$_POST["add"] && !$_POST["change"] && !$_POST["change-
 		$result
 	);
 	if (!$row["drop"]) {
-		$error = "$error<br>" . lang('Source and target columns must have the same data type, there must be an index on the target columns and referenced data must exist.'); //! no partitioning
+		Admin::get()->addError(lang('Source and target columns must have the same data type, there must be an index on the target columns and referenced data must exist.')); //! no partitioning
 	}
 }
 
-page_header(lang('Foreign key') . ": " . h($TABLE), $error, ["table" => $TABLE, lang('Foreign key')]);
+page_header(lang('Foreign key') . ": " . h($TABLE), ["table" => $TABLE, lang('Foreign key')]);
 
 if ($_POST) {
 	ksort($row["source"]);

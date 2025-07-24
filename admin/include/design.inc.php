@@ -10,14 +10,13 @@ if (!ob_get_level()) {
  * Prints page header.
  *
  * @param string $title Used in title and h2, should be HTML escaped.
- * @param string $error HTML formatted error message.
  * @param mixed $breadcrumb ["key" => "link", "key2" => ["link", "desc"], 0 => "desc"], null for nothing, false for driver only, true for driver and server
  */
-function page_header(string $title, string $error = "", $breadcrumb = []): void
+function page_header(string $title, $breadcrumb = []): void
 {
 	page_headers();
-	if (is_ajax() && $error) {
-		page_messages($error);
+	if (is_ajax() && Admin::get()->getErrors()) {
+		page_messages();
 		exit;
 	}
 
@@ -185,7 +184,7 @@ function page_header(string $title, string $error = "", $breadcrumb = []): void
 	echo "<div id='ajaxstatus' class='jsonly hidden'></div>\n";
 
 	restart_session();
-	page_messages($error);
+	page_messages();
 	$databases = &get_session("dbs");
 	if (DB != "" && $databases && !in_array(DB, $databases, true)) {
 		$databases = null;
@@ -281,7 +280,7 @@ function get_nonce()
 /**
  * Prints flash and error messages.
  */
-function page_messages(string $error): void
+function page_messages(): void
 {
 	$uri = preg_replace('~^[^?]*~', '', $_SERVER["REQUEST_URI"]);
 
@@ -295,15 +294,8 @@ function page_messages(string $error): void
 		unset($_SESSION["messages"][$uri]);
 	}
 
-	if ($error) {
+	foreach (Admin::get()->getErrors() as $error) {
 		echo "<div class='error'>$error</div>\n";
-	}
-
-	$errors = Admin::get()->getErrors();
-	if ($errors) {
-		foreach ($errors as $error) {
-			echo "<div class='error'>$error</div>\n";
-		}
 	}
 }
 

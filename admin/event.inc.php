@@ -7,7 +7,7 @@ $intervals = ["YEAR", "QUARTER", "MONTH", "DAY", "HOUR", "MINUTE", "WEEK", "SECO
 $statuses = ["ENABLED" => "ENABLE", "DISABLED" => "DISABLE", "SLAVESIDE_DISABLED" => "DISABLE ON SLAVE"];
 $row = $_POST;
 
-if ($_POST && !$error) {
+if ($_POST && !$post_error) {
 	if ($_POST["drop"]) {
 		query_redirect("DROP EVENT " . idf_escape($EVENT), substr(ME, 0, -1), lang('Event has been dropped.'));
 	} elseif (in_array($row["INTERVAL_FIELD"], $intervals) && isset($statuses[$row["STATUS"]])) {
@@ -30,9 +30,9 @@ if ($_POST && !$error) {
 }
 
 if ($EVENT != "") {
-	page_header(lang('Alter event') . ": " . h($EVENT), $error, [lang('Alter event')]);
+	page_header(lang('Alter event') . ": " . h($EVENT), [lang('Alter event')]);
 } else {
-	page_header(lang('Create event'), $error, [lang('Create event')]);
+	page_header(lang('Create event'), [lang('Create event')]);
 }
 
 if (!$row && $EVENT != "") {

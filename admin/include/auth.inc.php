@@ -21,17 +21,17 @@ function validate_server_input(array &$permanent): void
 
 	$parts = parse_url(SERVER);
 	if (!$parts) {
-		auth_error(lang('Invalid server or credentials.'), $permanent);
+		auth_error($permanent);
 	}
 
 	// Check proper URL parts.
 	if (isset($parts['user']) || isset($parts['pass']) || isset($parts['query']) || isset($parts['fragment'])) {
-		auth_error(lang('Invalid server or credentials.'), $permanent);
+		auth_error($permanent);
 	}
 
 	// Allow only HTTP/S scheme.
 	if (isset($parts['scheme']) && !preg_match('~^(https?)$~i', $parts['scheme'])) {
-		auth_error(lang('Invalid server or credentials.'), $permanent);
+		auth_error($permanent);
 	}
 
 	// Note that "localhost" and IP address without a scheme is parsed as a path.
@@ -39,12 +39,12 @@ function validate_server_input(array &$permanent): void
 
 	// Validate host.
 	if (!is_server_host_valid($hostPath)) {
-		auth_error(lang('Invalid server or credentials.'), $permanent);
+		auth_error($permanent);
 	}
 
 	// Check privileged ports.
 	if (isset($parts['port']) && ($parts['port'] < 1024 || $parts['port'] > 65535)) {
-		auth_error(lang('Connecting to privileged ports is not allowed.'), $permanent);
+		auth_error($permanent, lang('Connecting to privileged ports is not allowed.'));
 	}
 }
 
@@ -106,6 +106,9 @@ function add_invalid_login() {
 	write_and_unlock_file($file, serialize($invalids));
 }
 
+/**
+ * @throws \Random\RandomException
+ */
 function check_invalid_login(array &$permanent): void
 {
 	$base_name = get_temp_dir() . "/adminneo.invalid";
@@ -124,7 +127,7 @@ function check_invalid_login(array &$permanent): void
 
 	$next_attempt = ($invalid && $invalid[1] > 29 ? $invalid[0] - time() : 0); // allow 30 invalid attempts
 	if ($next_attempt > 0) { //! do the same with permanent login
-		auth_error(lang('Too many unsuccessful logins, try again in %d minute(s).', ceil($next_attempt / 60)), $permanent);
+		auth_error($permanent, lang('Too many unsuccessful logins, try again in %d minute(s).', ceil($next_attempt / 60)));
 	}
 }
 
@@ -134,7 +137,7 @@ function check_invalid_login(array &$permanent): void
 function connect_to_db(array &$permanent): Connection
 {
 	if (Admin::get()->getConfig()->hasServers() && !Admin::get()->getConfig()->getServer(SERVER)) {
-		auth_error(lang('Invalid server or credentials.'), $permanent);
+		auth_error($permanent);
 	}
 
 	$connection = connect(true, $error);
@@ -160,7 +163,7 @@ function authenticate(array &$permanent): void
 }
 
 /**
- * @param string $error HTML formatted error message.
+ * @param string $error HTML-formatted error message.
  *
  * @throws \Random\RandomException
  */
@@ -172,7 +175,7 @@ function connection_error(string $error, array &$permanent): void
 		$error .= "<br>" . lang('There is a space in the input password which might be the cause.');
 	}
 
-	auth_error($error, $permanent);
+	auth_error($permanent, $error);
 }
 
 Admin::get()->init();
@@ -261,20 +264,23 @@ function unset_permanent(array &$permanent): void
 /**
  * Renders an error message and a login form.
  *
- * @param string $error HTML formatted error message.
+ * @param ?string $error HTML-formatted error message, null for the default error.
  *
  * @throws \Random\RandomException
  */
-function auth_error(string $error, array &$permanent): void
+function auth_error(array &$permanent, ?string $error = null): void
 {
 	$session_name = session_name();
+
 	if (isset($_GET["username"])) {
 		header("HTTP/1.1 403 Forbidden"); // 401 requires sending WWW-Authenticate header
+
 		if (($_COOKIE[$session_name] || $_GET[$session_name]) && !$_SESSION["token"]) {
 			$error = lang('Session expired, please login again.');
 		} else {
 			restart_session();
 			add_invalid_login();
+
 			$password = get_password();
 			if ($password !== null) {
 				if ($password === false) {
@@ -282,16 +288,30 @@ function auth_error(string $error, array &$permanent): void
 				}
 				set_password(DRIVER, SERVER, $_GET["username"], null);
 			}
+
 			unset_permanent($permanent);
 		}
 	}
+
 	if (!$_COOKIE[$session_name] && $_GET[$session_name] && ini_bool("session.use_only_cookies")) {
 		$error = lang('Session support must be enabled.');
 	}
+
+	if (!$error) {
+		$error = lang('Invalid server or credentials.');
+	}
+
+	Admin::get()->addError($error);
+
+	print_login_page();
+}
+
+function print_login_page(): void
+{
 	$params = session_get_cookie_params();
 	cookie("neo_key", ($_COOKIE["neo_key"] ?: get_random_string()), $params["lifetime"]);
 
-	page_header(lang('Login'), $error, null);
+	page_header(lang('Login'), null);
 	echo "<form action='' method='post'>\n";
 	echo "<div>";
 	if (hidden_fields($_POST, ["auth"])) { // expired session
@@ -305,21 +325,26 @@ function auth_error(string $error, array &$permanent): void
 }
 
 if (isset($_GET["username"]) && !DRIVER) {
-	page_header(lang('No driver'), lang('Database driver not found.'), false);
+	Admin::get()->addError(lang('Database driver not found.'));
+
+	page_header(lang('No driver'), false);
 	page_footer("auth");
 	exit;
 }
 
 if (isset($_GET["username"]) && !defined('AdminNeo\DRIVER_EXTENSION')) {
+	Admin::get()->addError(lang('None of the supported PHP extensions (%s) are available.', implode(", ", Drivers::getExtensions(DRIVER))));
+
 	unset($_SESSION["pwds"][DRIVER]);
 	unset_permanent($permanent);
-	page_header(lang('No extension'), lang('None of the supported PHP extensions (%s) are available.', implode(", ", Drivers::getExtensions(DRIVER))), false);
+
+	page_header(lang('No extension'), false);
 	page_footer("auth");
 	exit;
 }
 
 if (!isset($_GET["username"]) || get_password() === null) {
-	auth_error("", $permanent);
+	print_login_page();
 }
 
 validate_server_input($permanent);
@@ -332,7 +357,9 @@ authenticate($permanent);
 create_driver($connection);
 
 if ($_POST["logout"] && $_SESSION["token"] && !verify_token()) {
-	page_header(lang('Logout'), lang('Invalid CSRF token. Send the form again.'));
+	Admin::get()->addError(lang('Invalid CSRF token. Send the form again.'));
+
+	page_header(lang('Logout'));
 	page_footer("db");
 	exit;
 }
@@ -348,11 +375,12 @@ if ($auth && $_POST["token"]) {
 	$_POST["token"] = get_token();
 }
 
-$error = ''; ///< @var string
+$post_error = false;
 if ($_POST) {
 	if (!verify_token()) {
 		$ini = "max_input_vars";
 		$max_vars = ini_get($ini);
+
 		if (extension_loaded("suhosin")) {
 			foreach (["suhosin.request.max_vars", "suhosin.post.max_vars"] as $key) {
 				$val = ini_get($key);
@@ -362,16 +390,27 @@ if ($_POST) {
 				}
 			}
 		}
-		$error = (!$_POST["token"] && $max_vars
-			? lang('Maximum number of allowed fields exceeded. Please increase %s.', "'$ini'")
-			: lang('Invalid CSRF token. Send the form again.') . ' ' . lang('If you did not send this request from AdminNeo then close this page.')
-		);
-	}
 
+		if (!$_POST["token"] && $max_vars) {
+			Admin::get()->addError(
+				lang('Maximum number of allowed fields exceeded. Please increase %s.', "'$ini'")
+			);
+		} else {
+			Admin::get()->addError(
+				lang('Invalid CSRF token. Send the form again.') . ' ' .
+				lang('If you did not send this request from AdminNeo then close this page.')
+			);
+		}
+
+		$post_error = true;
+	}
 } elseif ($_SERVER["REQUEST_METHOD"] == "POST") {
-	// posted form with no data means that post_max_size exceeded because AdminNeo always sends token at least
+	// Posted form with no data means that post_max_size exceeded because AdminNeo always sends token at least.
 	$error = lang('Too big POST data. Reduce the data or increase the %s configuration directive.', "'post_max_size'");
 	if (isset($_GET["sql"])) {
 		$error .= ' ' . lang('You can upload a big SQL file via FTP and import it from server.');
 	}
+
+	Admin::get()->addError($error);
+	$post_error = true;
 }

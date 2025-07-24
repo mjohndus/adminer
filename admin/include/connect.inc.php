@@ -15,17 +15,19 @@ if (!(DB != "" ? Connection::get()->selectDatabase(DB) : isset($_GET["sql"]) || 
 		set_session("dbs", null);
 	}
 	if (DB != "") {
+		Admin::get()->addError(lang('Invalid database.'));
+
 		header("HTTP/1.1 404 Not Found");
-		page_header(lang('Database') . ": " . h(DB), lang('Invalid database.'), true);
+		page_header(lang('Database') . ": " . h(DB), true);
 	} else {
-		if ($_POST["db"] && !$error) {
+		if ($_POST["db"] && !$post_error) {
 			queries_redirect(substr(ME, 0, -1), lang('Databases have been dropped.'), drop_databases($_POST["db"]));
 		}
 
 		$server_name = Admin::get()->getServerName(SERVER);
 		$title = h(Drivers::get(DRIVER)) . ": " . ($server_name != "" ? h($server_name) : lang('Server'));
 
-		page_header($title, $error, false);
+		page_header($title, false);
 
 		$links = [
 			'privileges' => [lang('Privileges'), "users"],
@@ -111,9 +113,12 @@ if (support("scheme")) {
 		if (!isset($_GET["ns"])) {
 			redirect(preg_replace('~ns=[^&]*&~', '', ME) . "ns=" . get_schema());
 		}
+
 		if (!set_schema($_GET["ns"])) {
+			Admin::get()->addError(lang('Invalid schema.'));
+
 			header("HTTP/1.1 404 Not Found");
-			page_header(lang('Schema') . ": " . h($_GET["ns"]), lang('Invalid schema.'), true);
+			page_header(lang('Schema') . ": " . h($_GET["ns"]), true);
 			page_footer("ns");
 			exit;
 		}

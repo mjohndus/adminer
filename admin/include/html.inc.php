@@ -529,11 +529,10 @@ function help_script_command($command, $side = false)
 * @return null
 */
 function edit_form($table, $fields, $row, $update) {
-	global $error;
 	$table_name = Admin::get()->getTableName(table_status1($table, true));
 	$title = $update ? lang('Edit') : lang('Insert');
 
-	page_header("$title: $table_name", $error, ["select" => [$table, $table_name], $title]);
+	page_header("$title: $table_name", ["select" => [$table, $table_name], $title]);
 	if ($row === false) {
 		echo "<p class='error'>" . lang('No rows.') . "\n";
 		return;

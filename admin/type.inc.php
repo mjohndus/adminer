@@ -5,7 +5,7 @@ namespace AdminNeo;
 $TYPE = $_GET["type"];
 $row = $_POST;
 
-if ($_POST && !$error) {
+if ($_POST && !$post_error) {
 	$link = substr(ME, 0, -1);
 	if ($_POST["drop"]) {
 		query_redirect("DROP TYPE " . idf_escape($TYPE), $link, lang('Type has been dropped.'));
@@ -15,9 +15,9 @@ if ($_POST && !$error) {
 }
 
 if ($TYPE != "") {
-	page_header(lang('Alter type') . ": " . h($TYPE), $error, [h($TYPE)]);
+	page_header(lang('Alter type') . ": " . h($TYPE), [h($TYPE)]);
 } else {
-	page_header(lang('Create type'), $error, [lang('Create type')]);
+	page_header(lang('Create type'), [lang('Create type')]);
 }
 
 if (!$row) {
