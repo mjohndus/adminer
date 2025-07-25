@@ -6,7 +6,7 @@ $TABLE = $_GET["check"];
 $name = $_GET["name"];
 $row = $_POST;
 
-if ($row && !$post_error) {
+if ($row) {
 	if (DIALECT == "sqlite") {
 		$result = recreate_table($TABLE, $TABLE, [], [], [], 0, [], $name, ($row["drop"] ? "" : $row["clause"]));
 	} else {

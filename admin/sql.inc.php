@@ -1,7 +1,7 @@
 <?php
 namespace AdminNeo;
 
-if ($_POST["export"] && !$post_error) {
+if ($_POST["export"]) {
 	$export_settings = ["output" => $_POST["output"], "format" => $_POST["format"]];
 	save_settings($export_settings, "neo_export");
 
@@ -14,7 +14,7 @@ if ($_POST["export"] && !$post_error) {
 restart_session();
 $history_all = &get_session("queries");
 $history = &$history_all[DB];
-if ($_POST["clear"] && !$post_error) {
+if ($_POST["clear"]) {
 	$history = [];
 	redirect(remove_from_uri("history"));
 }
@@ -22,7 +22,7 @@ if ($_POST["clear"] && !$post_error) {
 $title = isset($_GET["import"]) ? lang('Import') : lang('SQL command');
 page_header($title, [$title]);
 
-if ($_POST && !$post_error) {
+if ($_POST) {
 	$fp = false;
 	if (!isset($_GET["import"])) {
 		$query = $_POST["query"];

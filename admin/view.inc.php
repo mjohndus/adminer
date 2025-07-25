@@ -10,7 +10,7 @@ if (DIALECT == "pgsql" && $TABLE != "") {
 	$orig_type = strtoupper($status["Engine"]);
 }
 
-if ($_POST && !$post_error) {
+if ($_POST) {
 	$name = trim($row["name"]);
 	$as = " AS\n$row[select]";
 	$location = ME . "table=" . urlencode($name);

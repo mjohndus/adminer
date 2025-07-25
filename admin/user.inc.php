@@ -48,7 +48,7 @@ if (isset($_GET["host"]) && ($result = Connection::get()->query("SHOW GRANTS FOR
 	}
 }
 
-if ($_POST && !$post_error) {
+if ($_POST) {
 	$old_user = (isset($_GET["host"]) ? q($USER) . "@" . q($_GET["host"]) : "''");
 	if ($_POST["drop"]) {
 		query_redirect("DROP USER $old_user", ME . "privileges=", lang('User has been dropped.'));

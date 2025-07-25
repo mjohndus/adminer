@@ -5,7 +5,7 @@ namespace AdminNeo;
 $TYPE = $_GET["type"];
 $row = $_POST;
 
-if ($_POST && !$post_error) {
+if ($_POST) {
 	$link = substr(ME, 0, -1);
 	if ($_POST["drop"]) {
 		query_redirect("DROP TYPE " . idf_escape($TYPE), $link, lang('Type has been dropped.'));

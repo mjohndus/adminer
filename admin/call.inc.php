@@ -17,7 +17,7 @@ foreach ($routine["fields"] as $i => $field) {
 	}
 }
 
-if ($_POST && !$post_error) {
+if ($_POST) {
 	$call = [];
 	foreach ($routine["fields"] as $key => $field) {
 		if (in_array($key, $in)) {

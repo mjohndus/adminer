@@ -8,7 +8,7 @@ $trigger_options = trigger_options();
 $row = (array) trigger($name, $TABLE) + ["Trigger" => $TABLE . "_bi"];
 
 if ($_POST) {
-	if (!$post_error && in_array($_POST["Timing"], $trigger_options["Timing"]) && in_array($_POST["Event"], $trigger_options["Event"]) && in_array($_POST["Type"], $trigger_options["Type"])) {
+	if (in_array($_POST["Timing"], $trigger_options["Timing"]) && in_array($_POST["Event"], $trigger_options["Event"]) && in_array($_POST["Type"], $trigger_options["Type"])) {
 		// don't use drop_create() because there may not be more triggers for the same action
 		$on = " ON " . table($TABLE);
 		$drop = "DROP TRIGGER " . idf_escape($name) . (DIALECT == "pgsql" ? $on : "");

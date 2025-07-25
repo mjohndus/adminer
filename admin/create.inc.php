@@ -30,11 +30,11 @@ if ($row["auto_increment_col"]) {
 	$row["fields"][$row["auto_increment_col"]]["auto_increment"] = true;
 }
 
-if ($_POST && !$post_error) {
+if ($_POST) {
 	save_settings(["comments" => $_POST["comments"], "defaults" => $_POST["defaults"]]);
 }
 
-if ($_POST && !$post_error && !process_fields($row["fields"]) && !Admin::get()->getErrors()) {
+if ($_POST && !process_fields($row["fields"]) && !Admin::get()->getErrors()) {
 	if ($_POST["drop"]) {
 		queries_redirect(substr(ME, 0, -1), lang('Table has been dropped.'), drop_tables([$TABLE]));
 	} else {

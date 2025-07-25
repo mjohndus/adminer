@@ -12,7 +12,7 @@ foreach ($fields as $name => $field) {
 	}
 }
 
-if ($_POST && !$post_error && !isset($_GET["select"])) {
+if ($_POST && !isset($_GET["select"])) {
 	$location = $_POST["referer"];
 	if ($_POST["insert"]) { // continue edit or insert
 		$location = ($update ? null : $_SERVER["REQUEST_URI"]);

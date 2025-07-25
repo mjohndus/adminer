@@ -5,7 +5,7 @@ namespace AdminNeo;
 $SEQUENCE = $_GET["sequence"];
 $row = $_POST;
 
-if ($_POST && !$post_error) {
+if ($_POST) {
 	$link = substr(ME, 0, -1);
 	$name = trim($row["name"]);
 	if ($_POST["drop"]) {

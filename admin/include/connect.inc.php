@@ -20,7 +20,7 @@ if (!(DB != "" ? Connection::get()->selectDatabase(DB) : isset($_GET["sql"]) || 
 		header("HTTP/1.1 404 Not Found");
 		page_header(lang('Database') . ": " . h(DB), true);
 	} else {
-		if ($_POST["db"] && !$post_error) {
+		if ($_POST["db"]) {
 			queries_redirect(substr(ME, 0, -1), lang('Databases have been dropped.'), drop_databases($_POST["db"]));
 		}
 

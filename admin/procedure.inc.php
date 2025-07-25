@@ -7,7 +7,7 @@ $routine = (isset($_GET["function"]) ? "FUNCTION" : "PROCEDURE");
 $row = $_POST;
 $row["fields"] = (array) $row["fields"];
 
-if ($_POST && !$post_error && !process_fields($row["fields"])) {
+if ($_POST && !process_fields($row["fields"])) {
 	$orig = routine($_GET["procedure"], $routine);
 	$temp_name = "$row[name]_adminneo_" . uniqid();
 	drop_create(

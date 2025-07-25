@@ -6,7 +6,7 @@ $TABLE = $_GET["foreign"];
 $name = $_GET["name"];
 $row = $_POST;
 
-if ($_POST && !$post_error && !$_POST["add"] && !$_POST["change"] && !$_POST["change-js"]) {
+if ($_POST && !$_POST["add"] && !$_POST["change"] && !$_POST["change-js"]) {
 	if (!$_POST["drop"]) {
 		$row["source"] = array_filter($row["source"], 'strlen');
 		ksort($row["source"]); // enforce input order

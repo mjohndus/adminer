@@ -77,7 +77,7 @@ if ($oid && !$primary) {
 	$indexes[] = ["type" => "PRIMARY", "columns" => [$oid]];
 }
 
-if ($_POST && !$post_error) {
+if ($_POST) {
 	$where_check = $where;
 	if (!$_POST["all"] && is_array($_POST["check"])) {
 		$checks = [];

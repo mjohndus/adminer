@@ -4,7 +4,7 @@ namespace AdminNeo;
 
 $TABLE = $_GET["dump"];
 
-if ($_POST && !$post_error) {
+if ($_POST) {
 	$dump_settings = array_intersect_key($_POST, array_flip(["output", "format", "db_style", "types", "routines", "events", "table_style", "auto_increment", "triggers", "data_style"]));
 	save_settings($dump_settings, "neo_dump");
 

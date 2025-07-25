@@ -4,7 +4,7 @@ namespace AdminNeo;
 
 $tables_views = array_merge((array) $_POST["tables"], (array) $_POST["views"]);
 
-if ($tables_views && !$post_error && !$_POST["search"]) {
+if ($tables_views && !$_POST["search"]) {
 	$result = true;
 	$message = "";
 	if (DIALECT == "sql" && $_POST["tables"] && count($_POST["tables"]) > 1 && ($_POST["drop"] || $_POST["truncate"] || $_POST["copy"])) {

@@ -4,7 +4,7 @@ namespace AdminNeo;
 
 $row = $_POST;
 
-if ($_POST && !$post_error && !isset($_POST["add_x"])) { // add is an image and PHP changes add.x to add_x
+if ($_POST && !isset($_POST["add_x"])) { // add is an image and PHP changes add.x to add_x
 	$name = trim($row["name"]);
 	if ($_POST["drop"]) {
 		$_GET["db"] = ""; // to save in global history

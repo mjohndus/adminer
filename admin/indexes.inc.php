@@ -24,7 +24,7 @@ $row = $_POST;
 if ($row) {
 	save_settings(["index_options" => $row["options"]]);
 }
-if ($_POST && !$post_error && !$_POST["add"] && !$_POST["drop_col"]) {
+if ($_POST && !$_POST["add"] && !$_POST["drop_col"]) {
 	$alter = [];
 	foreach ($row["indexes"] as $index) {
 		$name = $index["name"];

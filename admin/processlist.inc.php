@@ -3,7 +3,7 @@
 namespace AdminNeo;
 
 if (support("kill")) {
-	if ($_POST && !$post_error) {
+	if ($_POST) {
 		$killed = 0;
 		foreach ((array) $_POST["kill"] as $val) {
 			if (kill_process($val)) {

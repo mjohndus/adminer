@@ -375,7 +375,6 @@ if ($auth && $_POST["token"]) {
 	$_POST["token"] = get_token();
 }
 
-$post_error = false;
 if ($_POST) {
 	if (!verify_token()) {
 		$ini = "max_input_vars";
@@ -402,7 +401,7 @@ if ($_POST) {
 			);
 		}
 
-		$post_error = true;
+		$_POST = [];
 	}
 } elseif ($_SERVER["REQUEST_METHOD"] == "POST") {
 	// Posted form with no data means that post_max_size exceeded because AdminNeo always sends token at least.
@@ -412,5 +411,4 @@ if ($_POST) {
 	}
 
 	Admin::get()->addError($error);
-	$post_error = true;
 }
