@@ -2,9 +2,22 @@
 
 namespace AdminNeo;
 
-$translations = [
-	// label for database system selection (MySQL, SQLite, ...)
-	'Home' => null,
+return [
+	// text direction - 'ltr' or 'rtl'
+	'ltr' => 'ltr',
+	// thousands separator - must contain single byte
+	',' => ',',
+	'0123456789' => '0123456789',
+	// Editor - date format: $1 yyyy, $2 yy, $3 mm, $4 m, $5 dd, $6 d
+	'$1-$3-$5' => '$1-$3-$5',
+	// Editor - hint for date format - use language equivalents for day, month and year shortcuts
+	'YYYY-MM-DD' => 'ГГГГ-ММ-ДД',
+	// Editor - hint for time format - use language equivalents for hour, minute and second shortcuts
+	'HH:MM:SS' => 'ЧЧ:ММ:СС',
+
+	// Bootstrap.
+
+	// Login.
 	'System' => 'Система',
 	'Server' => 'Сървър',
 	'Username' => 'Потребител',
@@ -14,55 +27,74 @@ $translations = [
 	'Logout' => 'Изход',
 	'Logged as: %s' => 'Текущ потребител: %s',
 	'Logout successful.' => 'Излизането е успешно.',
-	'Invalid server or credentials.' => null,
-	'Too many unsuccessful logins, try again in %d minute(s).' => ['Прекалено много неуспешни опити за вход, опитайте пак след %d минута.', 'Прекалено много неуспешни опити за вход, опитайте пак след %d минути.'],
-	'Language' => 'Език',
+	'Too many unsuccessful logins, try again in %d minute(s).' => [
+		'Прекалено много неуспешни опити за вход, опитайте пак след %d минута.',
+		'Прекалено много неуспешни опити за вход, опитайте пак след %d минути.',
+	],
 	'Invalid CSRF token. Send the form again.' => 'Невалиден шифроващ ключ. Попълнете и изпратете формуляра отново.',
 	'If you did not send this request from AdminNeo then close this page.' => 'Ако не сте изпратили тази заявка през AdminNeo, затворете тази страница.',
-	'No driver' => null,
-	'Database driver not found.' => null,
+
+	// Connection.
 	'No extension' => 'Няма разширение',
+	// %s contains the list of the extensions, e.g. 'mysqli, PDO_MySQL'
 	'None of the supported PHP extensions (%s) are available.' => 'Никое от поддържаните PHP разширения (%s) не е налично.',
 	'Session support must be enabled.' => 'Поддръжката на сесии трябва да е разрешена.',
 	'Session expired, please login again.' => 'Сесията е изтекла; моля, влезте отново.',
 	'%s version: %s through PHP extension %s' => '%s версия: %s през PHP разширение %s',
+
+	// Settings.
+	'Language' => 'Език',
+
 	'Refresh' => 'Обновяване',
 
-	// text direction - 'ltr' or 'rtl'
-	'ltr' => 'ltr',
-
+	// Privileges.
 	'Privileges' => 'Права',
 	'Create user' => 'Създаване на потребител',
 	'User has been dropped.' => 'Потребителя беше премахнат.',
 	'User has been altered.' => 'Потребителя беше променен.',
 	'User has been created.' => 'Потребителя беше създаден.',
 	'Hashed' => 'Хеширан',
+
+	// Server.
+	'Process list' => 'Списък с процеси',
+	'%d process(es) have been killed.' => [
+		'%d процес беше прекъснат.',
+		'%d процеса бяха прекъснати.',
+	],
+	'Kill' => 'Прекъсване',
+	'Variables' => 'Променливи',
+	'Status' => 'Състояние',
+
+	// Structure.
 	'Column' => 'Колона',
 	'Routine' => 'Процедура',
 	'Grant' => 'Осигуряване',
 	'Revoke' => 'Отнемане',
 
-	'Process list' => 'Списък с процеси',
-	'%d process(es) have been killed.' => ['%d процес беше прекъснат.', '%d процеса бяха прекъснати.'],
-	'Kill' => 'Прекъсване',
-
-	'Variables' => 'Променливи',
-	'Status' => 'Състояние',
-
+	// Queries.
 	'SQL command' => 'SQL команда',
-	'%d query(s) executed OK.' => ['%d заявка е изпълнена.', '%d заявки са изпълнени.'],
-	'Query executed OK, %d row(s) affected.' => ['Заявката е изпълнена, %d ред е засегнат.', 'Заявката е изпълнена, %d редове са засегнати.'],
+	'%d query(s) executed OK.' => [
+		'%d заявка е изпълнена.',
+		'%d заявки са изпълнени.',
+	],
+	'Query executed OK, %d row(s) affected.' => [
+		'Заявката е изпълнена, %d ред е засегнат.',
+		'Заявката е изпълнена, %d редове са засегнати.',
+	],
 	'No commands to execute.' => 'Няма команди за изпълнение.',
 	'Error in query' => 'Грешка в заявката',
 	'Execute' => 'Изпълнение',
 	'Stop on error' => 'Спиране при грешка',
 	'Show only errors' => 'Показване само на грешките',
+	'Time' => 'Време',
 	// sprintf() format for time of the command
 	'%.3f s' => '%.3f s',
 	'History' => 'Хронология',
 	'Clear' => 'Изчистване',
 	'Edit all' => 'Редактиране на всички',
 
+	// Import.
+	'Import' => 'Импорт',
 	'File upload' => 'Прикачване на файл',
 	'From server' => 'От сървър',
 	'Webserver file %s' => 'Сървърен файл %s',
@@ -73,8 +105,14 @@ $translations = [
 	'Maximum allowed file size is %sB.' => 'Максимално разрешената големина на файл е %sB.',
 	'Too big POST data. Reduce the data or increase the %s configuration directive.' => 'Изпратени са прекалено много данни. Намалете обема на данните или увеличете %s управляващата директива.',
 	'You can upload a big SQL file via FTP and import it from server.' => 'Можете да прикачите голям SQL файл чрез FTP и да го импортирате от сървъра.',
+	'File must be in UTF-8 encoding.' => 'Файла трябва да е с UTF-8 кодировка.',
 	'You are offline.' => 'Вие сте офлайн.',
+	'%d row(s) have been imported.' => [
+		'%d ред беше импортиран.',
+		'%d реда бяха импортирани.',
+	],
 
+	// Export.
 	'Export' => 'Експорт',
 	'Output' => 'Резултат',
 	'open' => 'показване',
@@ -82,26 +120,37 @@ $translations = [
 	'Format' => 'Формат',
 	'Data' => 'Данни',
 
+	// Databases.
 	'Database' => 'База данни',
 	'Use' => 'Избор',
 	'Invalid database.' => 'Невалидна база данни.',
+	'Alter database' => 'Промяна на база данни',
+	'Create database' => 'Създаване на база данни',
+	'Database schema' => 'Схема на базата данни',
+	'Permanent link' => 'Постоянна препратка',
 	'Database has been dropped.' => 'Базата данни беше премахната.',
 	'Databases have been dropped.' => 'Базите данни бяха премехнати.',
 	'Database has been created.' => 'Базата данни беше създадена.',
 	'Database has been renamed.' => 'Базата данни беше преименувана.',
 	'Database has been altered.' => 'Базата данни беше променена.',
-	'Alter database' => 'Промяна на база данни',
-	'Create database' => 'Създаване на база данни',
-	'Database schema' => 'Схема на базата данни',
+	// SQLite errors.
+	'File exists.' => 'Файла вече съществува.',
+	'Please use one of the extensions %s.' => 'Моля, използвайте някое от разширенията %s.',
 
-	// link to current database schema layout
-	'Permanent link' => 'Постоянна препратка',
+	// Schemas (PostgreSQL, MS SQL).
+	'Schema' => 'Схема',
+	'Alter schema' => 'Промяна на схемата',
+	'Create schema' => 'Създаване на схема',
+	'Schema has been dropped.' => 'Схемата беше премахната.',
+	'Schema has been created.' => 'Схемата беше създадена.',
+	'Schema has been altered.' => 'Схемата беше променена.',
+	'Invalid schema.' => 'Невалидна схема.',
 
-	// thousands separator - must contain single byte
-	',' => ',',
-	'0123456789' => '0123456789',
+	// Table list.
 	'Engine' => 'Система',
+	'engine' => 'система',
 	'Collation' => 'Кодировка',
+	'collation' => 'кодировка',
 	'Data Length' => 'Големина на данните',
 	'Index Length' => 'Големина на индекса',
 	'Data Free' => 'Свободно място',
@@ -120,32 +169,7 @@ $translations = [
 	'Copy' => 'Копиране',
 	'Tables have been copied.' => 'Таблиците бяха копирани.',
 
-	'Routines' => 'Процедури',
-	'Routine has been called, %d row(s) affected.' => ['Беше приложена процедура, %d ред е засегнат.', 'Беше приложена процедура, %d редове са засегнати.'],
-	'Call' => 'Прилагане',
-	'Parameter name' => 'Име на параметъра',
-	'Create procedure' => 'Създаване на процедура',
-	'Create function' => 'Създаване на функция',
-	'Routine has been dropped.' => 'Процедурата беше премахната.',
-	'Routine has been altered.' => 'Процедурата беше променена.',
-	'Routine has been created.' => 'Процедурата беше създадена.',
-	'Alter function' => 'Промяна на функция',
-	'Alter procedure' => 'Промяна на процедура',
-	'Return type' => 'Резултат',
-
-	'Events' => 'Събития',
-	'Event has been dropped.' => 'Събитието беше премахнато.',
-	'Event has been altered.' => 'Събитието беше променено.',
-	'Event has been created.' => 'Събитието беше създадено.',
-	'Alter event' => 'Промяна на събитие',
-	'Create event' => 'Създаване на събитие',
-	'At given time' => 'В зададено време',
-	'Every' => 'Всеки',
-	'Schedule' => 'Насрочване',
-	'Start' => 'Начало',
-	'End' => 'Край',
-	'On completion preserve' => 'Запазване след завършване',
-
+	// Tables.
 	'Tables' => 'Таблици',
 	'Tables and views' => 'Таблици и изгледи',
 	'Table' => 'Таблица',
@@ -158,9 +182,8 @@ $translations = [
 	'Table has been altered.' => 'Таблицата беше променена.',
 	'Table has been created.' => 'Таблицата беше създадена.',
 	'Table name' => 'Име на таблица',
+	'Name' => 'Име',
 	'Show structure' => 'Структура',
-	'engine' => 'система',
-	'collation' => 'кодировка',
 	'Column name' => 'Име на колоната',
 	'Type' => 'Вид',
 	'Length' => 'Големина',
@@ -177,12 +200,7 @@ $translations = [
 	'Remove' => 'Премахване',
 	'Maximum number of allowed fields exceeded. Please increase %s.' => 'Максималния брой полета е превишен. Моля, увеличете %s.',
 
-	'Partition by' => 'Разделяне на',
-	'Partition' => null,
-	'Partitions' => 'Раздели',
-	'Partition name' => 'Име на раздела',
-	'Values' => 'Стойности',
-
+	// Views.
 	'View' => 'Изглед',
 	'Materialized view' => 'Запаметен изглед',
 	'View has been dropped.' => 'Изгледа беше премахнат.',
@@ -191,6 +209,13 @@ $translations = [
 	'Alter view' => 'Промяна на изглед',
 	'Create view' => 'Създаване на изглед',
 
+	// Partitions.
+	'Partition by' => 'Разделяне на',
+	'Partitions' => 'Раздели',
+	'Partition name' => 'Име на раздела',
+	'Values' => 'Стойности',
+
+	// Indexes.
 	'Indexes' => 'Индекси',
 	'Indexes have been altered.' => 'Индексите бяха променени.',
 	'Alter indexes' => 'Промяна на индекси',
@@ -198,6 +223,7 @@ $translations = [
 	'Index Type' => 'Вид на индекса',
 	'length' => 'дължина',
 
+	// Foreign keys.
 	'Foreign keys' => 'Препратки',
 	'Foreign key' => 'Препратка',
 	'Foreign key has been dropped.' => 'Препратката беше премахната.',
@@ -214,6 +240,54 @@ $translations = [
 	'ON UPDATE' => 'При промяна',
 	'Source and target columns must have the same data type, there must be an index on the target columns and referenced data must exist.' => 'Колоните източник и цел трябва да са от еднакъв вид, трябва да има индекс на колоните приемник и да има въведени данни.',
 
+	// Routines.
+	'Routines' => 'Процедури',
+	'Routine has been called, %d row(s) affected.' => [
+		'Беше приложена процедура, %d ред е засегнат.',
+		'Беше приложена процедура, %d редове са засегнати.',
+	],
+	'Call' => 'Прилагане',
+	'Parameter name' => 'Име на параметъра',
+	'Create procedure' => 'Създаване на процедура',
+	'Create function' => 'Създаване на функция',
+	'Routine has been dropped.' => 'Процедурата беше премахната.',
+	'Routine has been altered.' => 'Процедурата беше променена.',
+	'Routine has been created.' => 'Процедурата беше създадена.',
+	'Alter function' => 'Промяна на функция',
+	'Alter procedure' => 'Промяна на процедура',
+	'Return type' => 'Резултат',
+
+	// Events.
+	'Events' => 'Събития',
+	'Event' => 'Събитие',
+	'Event has been dropped.' => 'Събитието беше премахнато.',
+	'Event has been altered.' => 'Събитието беше променено.',
+	'Event has been created.' => 'Събитието беше създадено.',
+	'Alter event' => 'Промяна на събитие',
+	'Create event' => 'Създаване на събитие',
+	'At given time' => 'В зададено време',
+	'Every' => 'Всеки',
+	'Schedule' => 'Насрочване',
+	'Start' => 'Начало',
+	'End' => 'Край',
+	'On completion preserve' => 'Запазване след завършване',
+
+	// Sequences (PostgreSQL).
+	'Sequences' => 'Последователности',
+	'Create sequence' => 'Създаване на последователност',
+	'Sequence has been dropped.' => 'Последователността беше премахната.',
+	'Sequence has been created.' => 'Последователността беше създадена.',
+	'Sequence has been altered.' => 'Последователността беше променена.',
+	'Alter sequence' => 'Промяна на последователност',
+
+	// User types (PostgreSQL)
+	'User types' => 'Видове потребители',
+	'Create type' => 'Създаване на вид',
+	'Type has been dropped.' => 'Вида беше пермахнат.',
+	'Type has been created.' => 'Вида беше създаден.',
+	'Alter type' => 'Промяна на вид',
+
+	// Triggers.
 	'Triggers' => 'Тригери',
 	'Add trigger' => 'Добавяне на тригер',
 	'Trigger has been dropped.' => 'Тригера беше премахнат.',
@@ -221,17 +295,16 @@ $translations = [
 	'Trigger has been created.' => 'Тригера беше създаден.',
 	'Alter trigger' => 'Промяна на тригер',
 	'Create trigger' => 'Създаване на тригер',
-	'Time' => 'Време',
-	'Event' => 'Събитие',
-	'Name' => 'Име',
-	'Select' => 'Показване',
+
+	// Table check constraints.
+
+	// Selection.
 	'Select data' => 'Показване на данни',
+	'Select' => 'Показване',
 	'Functions' => 'Функции',
 	'Aggregation' => 'Съвкупност',
 	'Search' => 'Търсене',
 	'anywhere' => 'навсякъде',
-	'Search data in tables' => 'Търсене на данни в таблиците',
-	'as a regular expression' => null,
 	'Sort' => 'Сортиране',
 	'descending' => 'низходящо',
 	'Limit' => 'Редове',
@@ -240,46 +313,53 @@ $translations = [
 	'Action' => 'Действие',
 	'Full table scan' => 'Пълно сканиране на таблицата',
 	'Unable to select the table' => 'Неуспешно показване на таблицата',
+	'Search data in tables' => 'Търсене на данни в таблиците',
 	'No rows.' => 'Няма редове.',
 	'%d / ' => '%d / ',
-	'%d row(s)' => ['%d ред', '%d реда'],
+	'%d row(s)' => [
+		'%d ред',
+		'%d реда',
+	],
 	'Page' => 'Страница',
 	'last' => 'последен',
 	'Load more data' => 'Зареждане на повече данни',
 	'Loading' => 'Зареждане',
 	'Whole result' => 'Пълен резултат',
-	'%d byte(s)' => ['%d байт', '%d байта'],
+	'%d byte(s)' => [
+		'%d байт',
+		'%d байта',
+	],
 
-	'Import' => 'Импорт',
-	'%d row(s) have been imported.' => ['%d ред беше импортиран.', '%d реда бяха импортирани.'],
-	'File must be in UTF-8 encoding.' => 'Файла трябва да е с UTF-8 кодировка.',
-
-	// in-place editing in select
+	// In-place editing in selection.
 	'Modify' => 'Промяна',
 	'Ctrl+click on a value to modify it.' => 'Ctrl+щракване в стойността, за да я промените.',
 	'Use edit link to modify this value.' => 'Използвайте "редакция" за промяна на данните.',
 
-	// %s can contain auto-increment value
-	'Item%s has been inserted.' => 'Елементи%s бяха вмъкнати.',
-	'Item has been deleted.' => 'Елемента беше изтрит.',
-	'Item has been updated.' => 'Елемента беше обновен.',
-	'%d item(s) have been affected.' => ['%d елемент беше засегнат.', '%d елемента бяха засегнати.'],
+	// Editing.
 	'New item' => 'Нов елемент',
+	'Edit' => 'Редактиране',
 	'original' => 'оригинал',
 	// label for value '' in enum data type
 	'empty' => 'празно',
-	'Edit' => 'Редактиране',
 	'Insert' => 'Вмъкване',
 	'Save' => 'Запис',
-	'Saving' => 'Записване',
 	'Save and continue edit' => 'Запис и редакция',
 	'Save and insert next' => 'Запис и нов',
+	'Saving' => 'Записване',
 	'Selected' => 'Избран',
 	'Clone' => 'Клониране',
 	'Delete' => 'Изтриване',
+	// %s can contain auto-increment value, e.g. ' 123'
+	'Item%s has been inserted.' => 'Елементи%s бяха вмъкнати.',
+	'Item has been deleted.' => 'Елемента беше изтрит.',
+	'Item has been updated.' => 'Елемента беше обновен.',
+	'%d item(s) have been affected.' => [
+		'%d елемент беше засегнат.',
+		'%d елемента бяха засегнати.',
+	],
 	'You have no privileges to update this table.' => 'Нямате праве за обновяване на таблицата.',
 
-	// data type descriptions
+	// Data type descriptions.
 	'Numbers' => 'Числа',
 	'Date and time' => 'Дата и час',
 	'Strings' => 'Низове',
@@ -288,69 +368,11 @@ $translations = [
 	'Network' => 'Мрежа',
 	'Geometry' => 'Геометрия',
 	'Relations' => 'Зависимости',
-	// date format in Editor: $1 yyyy, $2 yy, $3 mm, $4 m, $5 dd, $6 d
-	'$1-$3-$5' => '$1-$3-$5',
-	// hint for date format - use language equivalents for day, month and year shortcuts
-	'YYYY-MM-DD' => 'ГГГГ-ММ-ДД',
-	// hint for time format - use language equivalents for hour, minute and second shortcuts
-	'HH:MM:SS' => 'ЧЧ:ММ:СС',
+
+	// Editor - data values.
 	'now' => 'сега',
 	'yes' => 'да',
 	'no' => 'не',
 
-	// general SQLite error in create, drop or rename database
-	'File exists.' => 'Файла вече съществува.',
-	'Please use one of the extensions %s.' => 'Моля, използвайте някое от разширенията %s.',
-
-	// PostgreSQL and MS SQL schema support
-	'Schema' => 'Схема',
-	'Schemas' => null,
-	'No schemas.' => null,
-	'Show schema' => null,
-	'Alter schema' => 'Промяна на схемата',
-	'Create schema' => 'Създаване на схема',
-	'Schema has been dropped.' => 'Схемата беше премахната.',
-	'Schema has been created.' => 'Схемата беше създадена.',
-	'Schema has been altered.' => 'Схемата беше променена.',
-	'Invalid schema.' => 'Невалидна схема.',
-
-	// PostgreSQL sequences support
-	'Sequences' => 'Последователности',
-	'Create sequence' => 'Създаване на последователност',
-	'Sequence has been dropped.' => 'Последователността беше премахната.',
-	'Sequence has been created.' => 'Последователността беше създадена.',
-	'Sequence has been altered.' => 'Последователността беше променена.',
-	'Alter sequence' => 'Промяна на последователност',
-
-	// PostgreSQL user types support
-	'User types' => 'Видове потребители',
-	'Create type' => 'Създаване на вид',
-	'Type has been dropped.' => 'Вида беше пермахнат.',
-	'Type has been created.' => 'Вида беше създаден.',
-	'Alter type' => 'Промяна на вид',
-
-	'Drop %s?' => null,
-	'overwrite' => null,
-	'DB' => null,
-	'ATTACH queries are not supported.' => null,
-	'Warnings' => null,
-	'AdminNeo does not support accessing a database without a password, <a href="https://www.adminneo.org/password"%s>more information</a>.' => null,
-	'The action will be performed after successful login with the same credentials.' => null,
-	'Connecting to privileged ports is not allowed.' => null,
-	'There is a space in the input password which might be the cause.' => null,
-	'Unknown error.' => null,
-	'Database does not support password.' => null,
-	'One Time Password' => null,
-	'Invalid OTP code.' => null,
-
-	'Check has been dropped.' => null,
-	'Check has been altered.' => null,
-	'Check has been created.' => null,
-	'Alter check' => null,
-	'Create check' => null,
-	'Checks' => null,
-	'Invalid permanent login, please login again.' => null,
-
-	'Access denied.' => null,
-	'Enter OTP code.' => null,
+	// Plugins.
 ];

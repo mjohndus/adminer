@@ -2,18 +2,13 @@
 
 namespace AdminNeo;
 
-/**
- * @var ?Min_DB $connection
- * @var ?Min_Driver $driver
- */
-
 $TABLE = $_GET["select"];
 $table_status = table_status1($TABLE);
 $indexes = indexes($TABLE);
 $fields = fields($TABLE);
 $foreign_keys = column_foreign_keys($TABLE);
 $oid = $table_status["Oid"];
-parse_str($_COOKIE["neo_import"], $import_settings);
+$export_settings = get_settings("neo_export");
 
 $rights = []; // privilege => 0
 $columns = []; // selectable columns
@@ -22,17 +17,18 @@ $order_columns = []; // searchable columns
 $text_length = null;
 foreach ($fields as $key => $field) {
 	$name = Admin::get()->getFieldName($field);
+	$name_plain = html_entity_decode(strip_tags($name), ENT_QUOTES);
 	if (isset($field["privileges"]["select"]) && $name != "") {
-		$columns[$key] = html_entity_decode(strip_tags($name), ENT_QUOTES);
+		$columns[$key] = $name_plain;
 		if (is_shortable($field)) {
 			$text_length = Admin::get()->processSelectionLength();
 		}
 	}
 	if (isset($field["privileges"]["where"]) && $name != "") {
-		$search_columns[$key] = html_entity_decode(strip_tags($name), ENT_QUOTES);
+		$search_columns[$key] = $name_plain;
 	}
 	if (isset($field["privileges"]["order"]) && $name != "") {
-		$order_columns[$key] = html_entity_decode(strip_tags($name), ENT_QUOTES);
+		$order_columns[$key] = $name_plain;
 	}
 	$rights += $field["privileges"];
 }
@@ -55,9 +51,9 @@ if ($_GET["val"] && is_ajax()) {
 		$as = convert_field($fields[key($row)]);
 		$select = [$as ?: idf_escape(key($row))];
 		$where[] = where_check($unique_idf, $fields);
-		$return = $driver->select($TABLE, $select, $where, $select);
+		$return = Driver::get()->select($TABLE, $select, $where, $select);
 		if ($return) {
-			echo reset($return->fetch_row());
+			echo reset($return->fetchRow());
 		}
 	}
 	exit;
@@ -81,7 +77,7 @@ if ($oid && !$primary) {
 	$indexes[] = ["type" => "PRIMARY", "columns" => [$oid]];
 }
 
-if ($_POST && !$error) {
+if ($_POST) {
 	$where_check = $where;
 	if (!$_POST["all"] && is_array($_POST["check"])) {
 		$checks = [];
@@ -92,7 +88,9 @@ if ($_POST && !$error) {
 	}
 	$where_check = ($where_check ? "\nWHERE " . implode(" AND ", $where_check) : "");
 	if ($_POST["export"]) {
-		cookie("neo_import", "output=" . urlencode($_POST["output"]) . "&format=" . urlencode($_POST["format"]));
+		$export_settings = ["output" => $_POST["output"], "format" => $_POST["format"]];
+		save_settings($export_settings, "neo_export");
+
 		dump_headers($TABLE);
 		Admin::get()->dumpTable($TABLE, "");
 		$from = ($select ? implode(", ", $select) : "*")
@@ -132,28 +130,28 @@ if ($_POST && !$error) {
 			}
 			if ($_POST["all"] || ($primary && is_array($_POST["check"])) || $is_group) {
 				$result = ($_POST["delete"]
-					? $driver->delete($TABLE, $where_check)
+					? Driver::get()->delete($TABLE, $where_check)
 					: ($_POST["clone"]
 						? queries("INSERT $query$where_check")
-						: $driver->update($TABLE, $set, $where_check)
+						: Driver::get()->update($TABLE, $set, $where_check)
 					)
 				);
-				$affected = $connection->affected_rows;
+				$affected = Connection::get()->getAffectedRows();
 			} else {
 				foreach ((array) $_POST["check"] as $val) {
 					// where is not unique so OR can't be used
 					$where2 = "\nWHERE " . ($where ? implode(" AND ", $where) . " AND " : "") . where_check($val, $fields);
 					$result = ($_POST["delete"]
-						? $driver->delete($TABLE, $where2, 1)
+						? Driver::get()->delete($TABLE, $where2, 1)
 						: ($_POST["clone"]
 							? queries("INSERT" . limit1($TABLE, $query, $where2))
-							: $driver->update($TABLE, $set, $where2, 1)
+							: Driver::get()->update($TABLE, $set, $where2, 1)
 						)
 					);
 					if (!$result) {
 						break;
 					}
-					$affected += $connection->affected_rows;
+					$affected += Connection::get()->getAffectedRows();
 				}
 			}
 		}
@@ -174,7 +172,7 @@ if ($_POST && !$error) {
 
 	} elseif (!$_POST["import"]) { // modify
 		if (!$_POST["val"]) {
-			$error = lang('Ctrl+click on a value to modify it.');
+			Admin::get()->addError(lang('Ctrl+click on a value to modify it.'));
 		} else {
 			$result = true;
 			$affected = 0;
@@ -184,7 +182,7 @@ if ($_POST && !$error) {
 					$key = bracket_escape($key, 1); // 1 - back
 					$set[idf_escape($key)] = (preg_match('~char|text~', $fields[$key]["type"]) || $val != "" ? Admin::get()->processFieldInput($fields[$key], $val) : "NULL");
 				}
-				$result = $driver->update(
+				$result = Driver::get()->update(
 					$TABLE,
 					$set,
 					" WHERE " . ($where ? implode(" AND ", $where) . " AND " : "") . where_check($unique_idf, $fields),
@@ -194,23 +192,23 @@ if ($_POST && !$error) {
 				if (!$result) {
 					break;
 				}
-				$affected += $connection->affected_rows;
+				$affected += Connection::get()->getAffectedRows();
 			}
 			queries_redirect(remove_from_uri(), lang('%d item(s) have been affected.', $affected), $result);
 		}
 
 	} elseif (!is_string($file = get_file("csv_file", true))) {
-		$error = upload_error($file);
+		Admin::get()->addError(upload_error($file));
 	} elseif (!preg_match('~~u', $file)) {
-		$error = lang('File must be in UTF-8 encoding.');
+		Admin::get()->addError(lang('File must be in UTF-8 encoding.'));
 	} else {
-		cookie("neo_import", "output=" . urlencode($import_settings["output"]) . "&format=" . urlencode($_POST["separator"]));
-		$result = true;
+		save_settings(["format" => $_POST["import_format"]], "neo_export");
+
 		$cols = array_keys($fields);
 		preg_match_all('~(?>"[^"]*"|[^"\r\n]+)+~', $file, $matches);
 		$affected = count($matches[0]);
-		$driver->begin();
-		$separator = ($_POST["separator"] == "csv" ? "," : ($_POST["separator"] == "tsv" ? "\t" : ";"));
+		Driver::get()->begin();
+		$separator = ($_POST["import_format"] == "csv;" ? ";" : ($_POST["import_format"] == "tsv" ? "\t" : ","));
 		$rows = [];
 		foreach ($matches[0] as $key => $val) {
 			preg_match_all("~((?>\"[^\"]*\")+|[^$separator]*)$separator~", $val . $separator, $matches2);
@@ -226,12 +224,12 @@ if ($_POST && !$error) {
 				$rows[] = $set;
 			}
 		}
-		$result = (!$rows || $driver->insertUpdate($TABLE, $rows, $primary));
+		$result = (!$rows || Driver::get()->insertUpdate($TABLE, $rows, $primary));
 		if ($result) {
-			$driver->commit();
+			Driver::get()->commit();
 		}
 		queries_redirect(remove_from_uri("page"), lang('%d row(s) have been imported.', $affected), $result);
-		$driver->rollback(); // after queries_redirect() to not overwrite error
+		Driver::get()->rollback(); // after queries_redirect() to not overwrite error
 	}
 }
 
@@ -240,7 +238,7 @@ if (is_ajax()) {
 	page_headers();
 	ob_start();
 } else {
-	page_header(lang('Select') . ": $table_name", $error, [$table_name]);
+	page_header(lang('Select') . ": $table_name", [$table_name]);
 }
 
 $set = null;
@@ -279,7 +277,7 @@ if (!$columns && support("table")) {
 
 	$page = $_GET["page"] ?? null;
 	if ($page == "last") {
-		$found_rows = $connection->result(count_rows($TABLE, $where, $is_group, $group));
+		$found_rows = Connection::get()->getValue(count_rows($TABLE, $where, $is_group, $group));
 		$page = (int)floor(max(0, $found_rows - 1) / $limit);
 	} else {
 		$found_rows = false;
@@ -309,27 +307,27 @@ if (!$columns && support("table")) {
 			}
 		}
 	}
-	$result = $driver->select($TABLE, $select2, $where, $group2, $order, $limit, $page, true);
+	$result = Driver::get()->select($TABLE, $select2, $where, $group2, $order, $limit, $page, true);
 
 	if (!$result) {
 		echo "<p class='error'>" . error() . "\n";
 	} else {
-		if ($jush == "mssql" && $page) {
+		if (DIALECT == "mssql" && $page) {
 			$result->seek($limit * $page);
 		}
 		echo "<form action='' method='post' enctype='multipart/form-data'>\n";
 		echo "<div class='table-footer-parent'>\n";
 		$rows = [];
-		while ($row = $result->fetch_assoc()) {
-			if ($page && $jush == "oracle") {
+		while ($row = $result->fetchAssoc()) {
+			if ($page && DIALECT == "oracle") {
 				unset($row["RNUM"]);
 			}
 			$rows[] = $row;
 		}
 
 		// use count($rows) without LIMIT, COUNT(*) without grouping, FOUND_ROWS otherwise (slowest)
-		if ($_GET["page"] != "last" && $limit !== null && $group && $is_group && $jush == "sql") {
-			$found_rows = $connection->result(" SELECT FOUND_ROWS()"); // space to allow mysql.trace_mode
+		if ($_GET["page"] != "last" && $limit !== null && $group && $is_group && DIALECT == "sql") {
+			$found_rows = Connection::get()->getValue(" SELECT FOUND_ROWS()"); // space to allow mysql.trace_mode
 		}
 
 		if (!$rows) {
@@ -366,14 +364,13 @@ if (!$columns && support("table")) {
 						$column = idf_escape($key);
 						$href = remove_from_uri('(order|desc)[^=]*|page') . '&order%5B0%5D=' . urlencode($key);
 						$desc = "&desc%5B0%5D=1";
-						$sortable = isset($field["privileges"]["order"]);
 						echo "<th id='th[" . h(bracket_escape($key)) . "]'>" . script("mixin(qsl('th'), {onmouseover: partial(columnMouse), onmouseout: partial(columnMouse, ' hidden')});", "");
+						$fun = apply_sql_function($val["fun"] ?? null, $name); //! columns looking like functions
+						$sortable = isset($field["privileges"]["order"]) || $fun;
 						if ($sortable) {
-							echo '<a href="' . h($href . ($order[0] == $column || $order[0] == $key || (!$order && $is_group && $group[0] == $column) ? $desc : '')) . '">'; // $order[0] == $key - COUNT(*)
-						}
-						echo apply_sql_function($val["fun"] ?? null, $name); //! columns looking like functions
-						if ($sortable) {
-							echo "</a>";
+							echo '<a href="', h($href . ($order[0] == $column || $order[0] == $key || (!$order && $is_group && $group[0] == $column) ? $desc : '')), '">', "$fun</a>"; // $order[0] == $key - COUNT(*)
+						} else {
+							echo $fun;
 						}
 						echo "<span class='column hidden'>";
 						if ($sortable) {
@@ -417,9 +414,11 @@ if (!$columns && support("table")) {
 				}
 				$unique_idf = "";
 				foreach ($unique_array as $key => $val) {
-					if (($jush == "sql" || $jush == "pgsql") && preg_match('~char|text|enum|set~', $fields[$key]["type"]) && strlen($val) > 64) {
+					$field = $fields[$key] ?? null;
+
+					if ((DIALECT == "sql" || DIALECT == "pgsql") && $field && preg_match('~char|text|enum|set~', $field["type"]) && strlen($val) > 64) {
 						$key = (strpos($key, '(') ? $key : idf_escape($key)); //! columns looking like functions
-						$key = "MD5(" . ($jush != 'sql' || preg_match("~^utf8~", $fields[$key]["collation"] ?? "") ? $key : "CONVERT($key USING " . charset($connection) . ")") . ")";
+						$key = "MD5(" . (DIALECT != 'sql' || preg_match("~^utf8~", $field["collation"] ?? "") ? $key : "CONVERT($key USING " . charset(Connection::get()) . ")") . ")";
 						$val = md5($val);
 					}
 					$unique_idf .= "&" . ($val !== null ? urlencode("where[" . bracket_escape($key) . "]") . "=" . urlencode($val === false ? "f" : $val) : "null%5B%5D=" . urlencode($key));
@@ -436,8 +435,8 @@ if (!$columns && support("table")) {
 
 				foreach ($row as $key => $val) {
 					if (isset($names[$key])) {
-						$field = $fields[$key];
-						$val = $driver->value($val, $field);
+						$field = $fields[$key] ?? null;
+						$val = $field ? Connection::get()->formatValue($val, $field) : $val;
 
 						$link = "";
 						if ($field && preg_match('~blob|bytea|raw|file~', $field["type"]) && $val != "") {
@@ -479,7 +478,8 @@ if (!$columns && support("table")) {
 						$value = $_POST["val"][$unique_idf][$escaped_key] ?? null;
 						$editable = !is_array($row[$key]) && is_utf8($val) && $rows[$n][$key] == $row[$key] && !$functions[$key] && !($field["generated"] ?? false);
 						$text = $field && preg_match('~text|json|lob~', $field["type"]);
-						echo "<td id='$id'";
+						$class = preg_match(number_type(), $field["type"]) && is_numeric(strip_tags($val)) ? "class='number'" : "";
+						echo "<td id='$id' $class";
 						if (($_GET["modify"] && $editable) || $value !== null) {
 							$h_value = h($value !== null ? $value : $row[$key]);
 							echo ">" . ($text ? "<textarea name='$id' cols='30' rows='" . (substr_count($row[$key], "\n") + 1) . "'>$h_value</textarea>" : "<input class='input' name='$id' value='$h_value' size='$lengths[$key]'>");
@@ -516,7 +516,7 @@ if (!$columns && support("table")) {
 				if ($_GET["page"] != "last") {
 					if ($limit == "" || (count($rows) < $limit && ($rows || !$page))) {
 						$found_rows = ($page ? $page * $limit : 0) + count($rows);
-					} elseif ($jush != "sql" || !$is_group) {
+					} elseif (DIALECT != "sql" || !$is_group) {
 						$found_rows = ($is_group ? false : found_rows($table_status, $where));
 						if ($found_rows < max(1e4, 2 * ($page + 1) * $limit)) {
 							// slow with big tables
@@ -550,7 +550,7 @@ if (!$columns && support("table")) {
 
 					echo "<fieldset>";
 
-					if ($jush != "simpledb") {
+					if (DIALECT != "simpledb") {
 						echo "<legend><a href='" . h(remove_from_uri("page")) . "'>" . lang('Page') . "</a></legend>";
 						echo script("qsl('a').onclick = function () { pageClick(this.href, +prompt('" . lang('Page') . "', '" . ($page + 1) . "')); return false; };");
 						echo "<div id='fieldset-pagination' class='fieldset-content'><ul class='pagination'>";
@@ -627,9 +627,9 @@ if (!$columns && support("table")) {
 				}
 				if ($format) {
 					print_fieldset_start("export", lang('Export') . " <span id='selected2'></span>", "export");
-					echo html_select("format", $format, $import_settings["format"]);
+					echo html_select("format", $format, $export_settings["format"] ?? null);
 					$output = Admin::get()->getDumpOutputs();
-					echo ($output ? " " . html_select("output", $output, $import_settings["output"]) : "");
+					echo ($output ? " " . html_select("output", $output, $export_settings["output"] ?? null) : "");
 					echo " <input type='submit' class='button' name='export' value='" . lang('Export') . "'>\n";
 					print_fieldset_end("export");
 				}
@@ -647,12 +647,12 @@ if (!$columns && support("table")) {
 				echo "</p>";
 				echo "<p id='import'" . ($_POST["import"] ? "" : " class='hidden'") . ">";
 				echo "<input type='file' name='csv_file'> ";
-				echo html_select("separator", ["csv" => "CSV,", "csv;" => "CSV;", "tsv" => "TSV"], $import_settings["format"]);
+				echo html_select("import_format", ["csv" => "CSV,", "csv;" => "CSV;", "tsv" => "TSV"], $export_settings["format"]);
 				echo " <input type='submit' class='button default' name='import' value='" . lang('Import') . "'>";
 				echo "</p>";
 			}
 
-			echo "<input type='hidden' name='token' value='$token'>\n";
+			echo "<input type='hidden' name='token' value='", get_token(), "'>\n";
 			echo "</form>\n";
 			echo (!$group && $select ? "" : script("tableCheck();"));
 		} else {

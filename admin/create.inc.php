@@ -2,11 +2,6 @@
 
 namespace AdminNeo;
 
-/**
- * @var ?Min_DB $connection
- * @var ?Min_Driver $driver
- */
-
 $TABLE = $_GET["create"];
 $partition_by = [];
 foreach (['HASH', 'LINEAR HASH', 'KEY', 'LINEAR KEY', 'RANGE', 'LIST'] as $key) {
@@ -25,7 +20,7 @@ if ($TABLE != "") {
 	$orig_fields = fields($TABLE);
 	$table_status = table_status($TABLE);
 	if (!$table_status) {
-		$error = lang('No tables.');
+		Admin::get()->addError(lang('No tables.'));
 	}
 }
 
@@ -39,7 +34,7 @@ if ($_POST) {
 	save_settings(["comments" => $_POST["comments"], "defaults" => $_POST["defaults"]]);
 }
 
-if ($_POST && !process_fields($row["fields"]) && !$error) {
+if ($_POST && !process_fields($row["fields"]) && !Admin::get()->getErrors()) {
 	if ($_POST["drop"]) {
 		queries_redirect(substr(ME, 0, -1), lang('Table has been dropped.'), drop_tables([$TABLE]));
 	} else {
@@ -54,7 +49,7 @@ if ($_POST && !process_fields($row["fields"]) && !$error) {
 			$foreign_key = $foreign_keys[$field["type"]];
 			$type_field = ($foreign_key !== null ? $referencable_primary[$foreign_key] : $field); //! can collide with user defined type
 			if ($field["field"] != "") {
-				if (!$field["has_default"]) {
+				if (!$field["generated"]) {
 					$field["default"] = null;
 				}
 				$process_field = process_field($field, $type_field);
@@ -66,7 +61,7 @@ if ($_POST && !process_fields($row["fields"]) && !$error) {
 					}
 				}
 				if ($foreign_key !== null) {
-					$foreign[idf_escape($field["field"])] = ($TABLE != "" && $jush != "sqlite" ? "ADD" : " ") . format_foreign_key([
+					$foreign[idf_escape($field["field"])] = ($TABLE != "" && DIALECT != "sqlite" ? "ADD" : " ") . format_foreign_key([
 						'table' => $foreign_keys[$field["type"]],
 						'source' => [$field["field"]],
 						'target' => [$type_field["field"]],
@@ -89,9 +84,12 @@ if ($_POST && !process_fields($row["fields"]) && !$error) {
 		$partitioning = "";
 		if (support("partitioning")) {
 			if (isset($partition_by[$row["partition_by"]])) {
-				$params = array_filter($row, function ($key) {
-					return preg_match('~^partition~', $key);
-				}, ARRAY_FILTER_USE_KEY);
+				$params = [];
+				foreach ($row as $key => $val) {
+					if (preg_match('~^partition~', $key)) {
+						$params[$key] = $val;
+					}
+				}
 
 				foreach ($params["partition_names"] as $key => $name) {
 					if ($name === "") {
@@ -124,7 +122,7 @@ if ($_POST && !process_fields($row["fields"]) && !$error) {
 
 		$message = lang('Table has been altered.');
 		if ($TABLE == "") {
-			cookie("neo_engine", $row["Engine"]);
+			cookie("neo_engine", $row["Engine"] ?? "");
 			$message = lang('Table has been created.');
 		}
 		$name = trim($row["name"]);
@@ -132,7 +130,7 @@ if ($_POST && !process_fields($row["fields"]) && !$error) {
 		queries_redirect(ME . (support("table") ? "table=" : "select=") . urlencode($name), $message, alter_table(
 			$TABLE,
 			$name,
-			($jush == "sqlite" && ($use_all_fields || $foreign) ? $all_fields : $fields),
+			(DIALECT == "sqlite" && ($use_all_fields || $foreign) ? $all_fields : $fields),
 			$foreign,
 			($row["Comment"] != $table_status["Comment"] ? $row["Comment"] : null),
 			($row["Engine"] && $row["Engine"] != $table_status["Engine"] ? $row["Engine"] : ""),
@@ -144,12 +142,14 @@ if ($_POST && !process_fields($row["fields"]) && !$error) {
 }
 
 if ($TABLE != "") {
-	page_header(lang('Alter table') . ": " . h($TABLE), $error, ["table" => $TABLE, lang('Alter table')]);
+	page_header(lang('Alter table') . ": " . h($TABLE), ["table" => $TABLE, lang('Alter table')]);
 } else {
-	page_header(lang('Create table'), $error, [lang('Create table')]);
+	page_header(lang('Create table'), [lang('Create table')]);
 }
 
 if (!$_POST) {
+	$types = Driver::get()->getTypes();
+
 	$row = [
 		"Engine" => $_COOKIE["neo_engine"],
 		"fields" => [["field" => "", "type" => (isset($types["int"]) ? "int" : (isset($types["integer"]) ? "integer" : "")), "on_update" => ""]],
@@ -164,7 +164,7 @@ if (!$_POST) {
 			$row["Auto_increment"] = "";
 		}
 		foreach ($orig_fields as $field) {
-			$field["has_default"] = isset($field["default"]);
+			$field["generated"] = $field["generated"] ?: (isset($field["default"]) ? "DEFAULT" : "");
 			$row["fields"][] = $field;
 		}
 
@@ -207,10 +207,11 @@ foreach ($engines as $engine) {
 		echo "<input class='input' name='name' data-maxlength='64' value='", h($row["name"]), "' autocapitalize='off'", (($TABLE == "" && !$_POST) ? " autofocus" : ""), ">";
 
 		if ($engines) {
-			echo " <select name='Engine'>", optionlist(["" => "(" . lang('engine') . ")"] + $engines, $row["Engine"]), "</select>", help_script_command("value", true);
+			echo " ", html_select("Engine", ["" => "(" . lang('engine') . ")"] + $engines, $row["Engine"]);
+			echo help_script_command("value", true);
 		}
 
-		if ($collations && !preg_match("~sqlite|mssql~", $jush)) {
+		if ($collations && !preg_match("~sqlite|mssql~", DIALECT)) {
 			echo " ", html_select("Collation", ["" => "(" . lang('collation') . ")"] + $collations, $row["Collation"]);
 		}
 
@@ -241,7 +242,7 @@ echo (support("comment")
 	? checkbox("comments", 1, $comments, lang('Comment'), "editingCommentsClick(this, true);", "jsonly")
 		. ' ' . (preg_match('~\n~', $row["Comment"])
 			? "<textarea name='Comment' rows='2' cols='20'" . ($comments ? "" : " class='hidden'") . ">" . h($row["Comment"]) . "</textarea>"
-			: '<input name="Comment" value="' . h($row["Comment"]) . '" data-maxlength="' . (min_version(5.5) ? 2048 : 60) . '" class="input ' . ($comments ? "" : "hidden") . '">'
+			: '<input name="Comment" value="' . h($row["Comment"]) . '" data-maxlength="' . (Connection::get()->isMinVersion("5.5") ? 2048 : 60) . '" class="input ' . ($comments ? "" : "hidden") . '">'
 		)
 	: '')
 ;
@@ -258,7 +259,7 @@ if (support("partitioning")) {
 	print_fieldset_start("partition", lang('Partition by'), "split", (bool)$row["partition_by"]);
 	?>
 <p>
-<?php echo "<select name='partition_by'>" . optionlist(["" => ""] + $partition_by, $row["partition_by"]) . "</select>" . help_script_command("value.replace(/./, 'PARTITION BY \$&')", true) . script("qsl('select').onchange = partitionByChange;"); ?>
+<?php echo html_select("partition_by", ["" => ""] + $partition_by, $row["partition_by"]) . help_script_command("value.replace(/./, 'PARTITION BY \$&')", true) . script("qsl('select').onchange = partitionByChange;"); ?>
 (<input class="input" name="partition" value="<?php echo h($row["partition"]); ?>">)
 <?php echo lang('Partitions'); ?>: <input type="number" name="partitions" class="input size <?php echo ($partition_table || !$row["partition_by"] ? "hidden" : ""); ?>" value="<?php echo h($row["partitions"]); ?>">
 <table id="partition-table"<?php echo ($partition_table ? "" : " class='hidden'"); ?>>
@@ -277,5 +278,5 @@ foreach ($row["partition_names"] as $key => $val) {
 	echo "</div>\n";
 }
 ?>
-<input type="hidden" name="token" value="<?php echo $token; ?>">
+<input type="hidden" name="token" value="<?php echo get_token(); ?>">
 </form>

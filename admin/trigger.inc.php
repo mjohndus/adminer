@@ -2,21 +2,16 @@
 
 namespace AdminNeo;
 
-/**
- * @var ?Min_DB $connection
- * @var ?Min_Driver $driver
- */
-
 $TABLE = $_GET["trigger"];
 $name = $_GET["name"];
 $trigger_options = trigger_options();
 $row = (array) trigger($name, $TABLE) + ["Trigger" => $TABLE . "_bi"];
 
 if ($_POST) {
-	if (!$error && in_array($_POST["Timing"], $trigger_options["Timing"]) && in_array($_POST["Event"], $trigger_options["Event"]) && in_array($_POST["Type"], $trigger_options["Type"])) {
+	if (in_array($_POST["Timing"], $trigger_options["Timing"]) && in_array($_POST["Event"], $trigger_options["Event"]) && in_array($_POST["Type"], $trigger_options["Type"])) {
 		// don't use drop_create() because there may not be more triggers for the same action
 		$on = " ON " . table($TABLE);
-		$drop = "DROP TRIGGER " . idf_escape($name) . ($jush == "pgsql" ? $on : "");
+		$drop = "DROP TRIGGER " . idf_escape($name) . (DIALECT == "pgsql" ? $on : "");
 		$location = ME . "table=" . urlencode($TABLE);
 		if ($_POST["drop"]) {
 			query_redirect($drop, $location, lang('Trigger has been dropped.'));
@@ -38,9 +33,9 @@ if ($_POST) {
 }
 
 if ($name != "") {
-	page_header(lang('Alter trigger') . ": " . h($name), $error, ["table" => $TABLE, h($name)]);
+	page_header(lang('Alter trigger') . ": " . h($name), ["table" => $TABLE, h($name)]);
 } else {
-	page_header(lang('Create trigger'), $error, ["table" => $TABLE, lang('Create trigger')]);
+	page_header(lang('Create trigger'), ["table" => $TABLE, lang('Create trigger')]);
 }
 ?>
 
@@ -57,5 +52,5 @@ if ($name != "") {
 <p>
 <input type="submit" class="button default" value="<?php echo lang('Save'); ?>">
 <?php if ($name != "") { ?><input type="submit" class="button" name="drop" value="<?php echo lang('Drop'); ?>"><?php echo confirm(lang('Drop %s?', $name)); ?><?php } ?>
-<input type="hidden" name="token" value="<?php echo $token; ?>">
+<input type="hidden" name="token" value="<?php echo get_token(); ?>">
 </form>

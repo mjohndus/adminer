@@ -2,11 +2,6 @@
 
 namespace AdminNeo;
 
-/**
- * @var ?Min_DB $connection
- * @var ?Min_Driver $driver
- */
-
 if (isset($_GET["status"])) {
 	$_GET["variables"] = $_GET["status"];
 }
@@ -14,23 +9,25 @@ if (isset($_GET["import"])) {
 	$_GET["sql"] = $_GET["import"];
 }
 
-if (!(DB != "" ? $connection->select_db(DB) : isset($_GET["sql"]) || isset($_GET["dump"]) || isset($_GET["database"]) || isset($_GET["processlist"]) || isset($_GET["privileges"]) || isset($_GET["user"]) || isset($_GET["variables"]) || $_GET["script"] == "connect" || $_GET["script"] == "kill")) {
+if (!(DB != "" ? Connection::get()->selectDatabase(DB) : isset($_GET["sql"]) || isset($_GET["dump"]) || isset($_GET["database"]) || isset($_GET["processlist"]) || isset($_GET["privileges"]) || isset($_GET["user"]) || isset($_GET["variables"]) || $_GET["script"] == "connect" || $_GET["script"] == "kill")) {
 	if (DB != "" || $_GET["refresh"]) {
 		restart_session();
 		set_session("dbs", null);
 	}
 	if (DB != "") {
+		Admin::get()->addError(lang('Invalid database.'));
+
 		header("HTTP/1.1 404 Not Found");
-		page_header(lang('Database') . ": " . h(DB), lang('Invalid database.'), true);
+		page_header(lang('Database') . ": " . h(DB), true);
 	} else {
-		if ($_POST["db"] && !$error) {
+		if ($_POST["db"]) {
 			queries_redirect(substr(ME, 0, -1), lang('Databases have been dropped.'), drop_databases($_POST["db"]));
 		}
 
 		$server_name = Admin::get()->getServerName(SERVER);
-		$title = h($drivers[DRIVER]) . ": " . ($server_name != "" ? h($server_name) : lang('Server'));
+		$title = h(Drivers::get(DRIVER)) . ": " . ($server_name != "" ? h($server_name) : lang('Server'));
 
-		page_header($title, $error, false);
+		page_header($title, false);
 
 		$links = [
 			'privileges' => [lang('Privileges'), "users"],
@@ -48,7 +45,7 @@ if (!(DB != "" ? $connection->select_db(DB) : isset($_GET["sql"]) || isset($_GET
 			echo "<p class='links top-links'>$links_html</p>\n";
 		}
 
-		echo "<p>" . lang('%s version: %s through PHP extension %s', $drivers[DRIVER], "<b>" . h($connection->server_info) . "</b>", "<b>$connection->extension</b>") . "\n";
+		echo "<p>" . lang('%s version: %s through PHP extension %s', Drivers::get(DRIVER), "<b>" . h(Connection::get()->getVersion()) . "</b>", "<b>" . DRIVER_EXTENSION . "</b>") . "\n";
 		echo "<p>" . lang('Logged as: %s', "<b>" . h(logged_user()) . "</b>") . "\n";
 		$databases = Admin::get()->getDatabases();
 		if ($databases) {
@@ -99,7 +96,7 @@ if (!(DB != "" ? $connection->select_db(DB) : isset($_GET["sql"]) || isset($_GET
 
 			echo "</div>\n"; // table-footer-parent
 
-			echo "<input type='hidden' name='token' value='$token'>\n";
+			echo "<input type='hidden' name='token' value='", get_token(), "'>\n";
 			echo "</form>\n";
 			echo script("tableCheck();");
 		}
@@ -116,9 +113,12 @@ if (support("scheme")) {
 		if (!isset($_GET["ns"])) {
 			redirect(preg_replace('~ns=[^&]*&~', '', ME) . "ns=" . get_schema());
 		}
+
 		if (!set_schema($_GET["ns"])) {
+			Admin::get()->addError(lang('Invalid schema.'));
+
 			header("HTTP/1.1 404 Not Found");
-			page_header(lang('Schema') . ": " . h($_GET["ns"]), lang('Invalid schema.'), true);
+			page_header(lang('Schema') . ": " . h($_GET["ns"]), true);
 			page_footer("ns");
 			exit;
 		}

@@ -2,9 +2,22 @@
 
 namespace AdminNeo;
 
-$translations = [
-	// label for database system selection (MySQL, SQLite, ...)
-	'Home' => null,
+return [
+	// text direction - 'ltr' or 'rtl'
+	'ltr' => 'rtl',
+	// thousands separator - must contain single byte
+	',' => ' ',
+	'0123456789' => '۰۱۲۳۴۵۶۷۸۹',
+	// Editor - date format: $1 yyyy, $2 yy, $3 mm, $4 m, $5 dd, $6 d
+	'$1-$3-$5' => '$1-$3-$5',
+	// Editor - hint for date format - use language equivalents for day, month and year shortcuts
+	'YYYY-MM-DD' => 'YYYY-MM-DD',
+	// Editor - hint for time format - use language equivalents for hour, minute and second shortcuts
+	'HH:MM:SS' => 'HH:MM:SS',
+
+	// Bootstrap.
+
+	// Login.
 	'System' => 'سیستم',
 	'Server' => 'سرور',
 	'Username' => 'نام کاربری',
@@ -14,38 +27,47 @@ $translations = [
 	'Logout' => 'خروج',
 	'Logged as: %s' => 'ورود به عنوان: %s',
 	'Logout successful.' => 'با موفقیت خارج شدید.',
-	'Invalid server or credentials.' => null,
-	'Too many unsuccessful logins, try again in %d minute(s).' => ['ورودهای ناموفق بیش از حد، %d دقیقه دیگر تلاش نمایید.', 'ورودهای ناموفق بیش از حد، %d دقیقه دیگر تلاش نمایید.'],
-	'Language' => 'زبان',
+	'Too many unsuccessful logins, try again in %d minute(s).' => [
+		'ورودهای ناموفق بیش از حد، %d دقیقه دیگر تلاش نمایید.',
+		'ورودهای ناموفق بیش از حد، %d دقیقه دیگر تلاش نمایید.',
+	],
 	'Invalid CSRF token. Send the form again.' => 'CSRF token نامعتبر است. دوباره سعی کنید.',
+
+	// Connection.
 	'No extension' => 'پسوند نامعتبر',
+	// %s contains the list of the extensions, e.g. 'mysqli, PDO_MySQL'
 	'None of the supported PHP extensions (%s) are available.' => 'هیچ کدام از افزونه های PHP پشتیبانی شده (%s) موجود نمی باشند.',
 	'Session support must be enabled.' => 'پشتیبانی از نشست بایستی فعال گردد.',
 	'Session expired, please login again.' => 'نشست پایان یافته، لطفا دوباره وارد شوید.',
 	'%s version: %s through PHP extension %s' => 'نسخه %s : %s توسعه پی اچ پی %s',
+
+	// Settings.
+	'Language' => 'زبان',
+
 	'Refresh' => 'بازیابی',
 
-	// text direction - 'ltr' or 'rtl'
-	'ltr' => 'rtl',
-
+	// Privileges.
 	'Privileges' => 'امتیازات',
 	'Create user' => 'ایجاد کاربر',
 	'User has been dropped.' => 'کاربر حذف شد.',
 	'User has been altered.' => 'کاربر ویرایش گردید.',
 	'User has been created.' => 'کاربر ایجاد شد.',
 	'Hashed' => 'به هم ریخته',
+
+	// Server.
+	'Process list' => 'لیست فرآیند',
+	'%d process(es) have been killed.' => '%d فرآیند متوقف شد.',
+	'Kill' => 'حذف فرآیند',
+	'Variables' => 'متغیرها',
+	'Status' => 'وضعیت',
+
+	// Structure.
 	'Column' => 'ستون',
 	'Routine' => 'روتین',
 	'Grant' => 'اعطا',
 	'Revoke' => 'لغو کردن',
 
-	'Process list' => 'لیست فرآیند',
-	'%d process(es) have been killed.' => '%d فرآیند متوقف شد.',
-	'Kill' => 'حذف فرآیند',
-
-	'Variables' => 'متغیرها',
-	'Status' => 'وضعیت',
-
+	// Queries.
 	'SQL command' => 'دستور SQL',
 	'%d query(s) executed OK.' => '%d کوئری اجرا شد.',
 	'Query executed OK, %d row(s) affected.' => 'کوئری اجرا شد. %d سطر تغیر کرد.',
@@ -54,12 +76,15 @@ $translations = [
 	'Execute' => 'اجرا',
 	'Stop on error' => 'توقف بر روی خطا',
 	'Show only errors' => 'فقط نمایش خطاها',
+	'Time' => 'زمان',
 	// sprintf() format for time of the command
 	'%.3f s' => '%.3f s',
 	'History' => 'تاریخ',
 	'Clear' => 'پاک کردن',
 	'Edit all' => 'ویرایش همه',
 
+	// Import.
+	'Import' => 'وارد کردن',
 	'File upload' => 'بارگذاری فایل',
 	'From server' => 'از سرور',
 	'Webserver file %s' => '%s فایل وب سرور',
@@ -70,8 +95,14 @@ $translations = [
 	'Maximum allowed file size is %sB.' => ' %sB حداکثر اندازه فایل.',
 	'Too big POST data. Reduce the data or increase the %s configuration directive.' => 'حجم داده ارسالی برزگ است. حجم داده کاهش دهید و یا مقدار %s را در پیکربندی افزایش دهید.',
 	'You can upload a big SQL file via FTP and import it from server.' => 'شما می توانید فایل SQL حجیم را از طریق FTP بارگزاری و از روی سرور وارد نمایید.',
+	'File must be in UTF-8 encoding.' => 'فرمت فایل باید UTF-8 باشید.',
 	'You are offline.' => 'شما آفلاین می باشید.',
+	'%d row(s) have been imported.' => [
+		'%d سطر وارد شد.',
+		'%d سطر وارد شد.',
+	],
 
+	// Export.
 	'Export' => 'استخراج',
 	'Output' => 'خروجی',
 	'open' => 'بازکردن',
@@ -79,26 +110,37 @@ $translations = [
 	'Format' => 'حذف',
 	'Data' => 'داده',
 
+	// Databases.
 	'Database' => 'پایگاه داده',
 	'Use' => 'استفاده',
 	'Invalid database.' => 'پایگاه داده نامعتبر.',
+	'Alter database' => 'ویرایش پایگاه داده',
+	'Create database' => 'ایجاد پایگاه داده',
+	'Database schema' => 'ساختار پایگاه داده',
+	'Permanent link' => 'ارتباط دائم',
 	'Database has been dropped.' => 'پایگاه داده حذف شد.',
 	'Databases have been dropped.' => 'پایگاه های داده حذف شدند.',
 	'Database has been created.' => 'پایگاه داده ایجاد شد.',
 	'Database has been renamed.' => 'نام پایگاه داده تغیر کرد.',
 	'Database has been altered.' => 'پایگاه داده ویرایش شد.',
-	'Alter database' => 'ویرایش پایگاه داده',
-	'Create database' => 'ایجاد پایگاه داده',
-	'Database schema' => 'ساختار پایگاه داده',
+	// SQLite errors.
+	'File exists.' => 'فایل موجود است.',
+	'Please use one of the extensions %s.' => 'لطفا یکی از پسوندها را انتخاب نمائید %s.',
 
-	// link to current database schema layout
-	'Permanent link' => 'ارتباط دائم',
+	// Schemas (PostgreSQL, MS SQL).
+	'Schema' => 'ساختار',
+	'Alter schema' => 'ویرایش ساختار',
+	'Create schema' => 'ایجاد ساختار',
+	'Schema has been dropped.' => 'ساختار حذف شد.',
+	'Schema has been created.' => 'ساختار ایجاد شد.',
+	'Schema has been altered.' => 'ساختار ویرایش شد.',
+	'Invalid schema.' => 'ساختار نامعتبر.',
 
-	// thousands separator - must contain single byte
-	',' => ' ',
-	'0123456789' => '۰۱۲۳۴۵۶۷۸۹',
+	// Table list.
 	'Engine' => 'موتور',
+	'engine' => 'موتور',
 	'Collation' => 'تطبیق',
+	'collation' => 'تطبیق',
 	'Data Length' => 'طول داده',
 	'Index Length' => 'طول ایندکس',
 	'Data Free' => 'داده اختیاری',
@@ -117,36 +159,11 @@ $translations = [
 	'Copy' => 'کپی کردن',
 	'Tables have been copied.' => 'جدولها کپی شدند.',
 
-	'Routines' => 'روالها',
-	'Routine has been called, %d row(s) affected.' => ['روال فراخوانی شد %d سطر متاثر شد.', 'روال فراخوانی شد %d سطر متاثر شد.'],
-	'Call' => 'صدا زدن',
-	'Parameter name' => 'نام پارامتر',
-	'Create procedure' => 'ایجاد زیربرنامه',
-	'Create function' => 'ایجاد تابع',
-	'Routine has been dropped.' => 'روال حذف شد.',
-	'Routine has been altered.' => 'روال ویرایش شد.',
-	'Routine has been created.' => 'روال ایجاد شد.',
-	'Alter function' => 'ویرایش تابع',
-	'Alter procedure' => 'ویرایش زیربرنامه',
-	'Return type' => 'برگرداندن نوع',
-
-	'Events' => 'رویدادها',
-	'Event has been dropped.' => 'رویداد حذف شد.',
-	'Event has been altered.' => 'رویداد ویرایش شد.',
-	'Event has been created.' => 'رویداد ایجاد شد.',
-	'Alter event' => 'ویرایش رویداد',
-	'Create event' => 'ایجاد رویداد',
-	'At given time' => 'زمان معین',
-	'Every' => 'همه',
-	'Schedule' => 'زمانبندی',
-	'Start' => 'آغاز',
-	'End' => 'پایان',
-	'On completion preserve' => 'تکمیل حفاظت فعال است',
-
+	// Tables.
 	'Tables' => 'جدولها',
 	'Tables and views' => 'جدولها و نمایه ها',
 	'Table' => 'جدول',
-	'No tables.' => 'جدولی وجود ندارد',
+	'No tables.' => 'جدولی وجود ندارد.',
 	'Alter table' => 'ویرایش جدول',
 	'Create table' => 'ایجاد جدول',
 	'Table has been dropped.' => 'جدول حذف شد.',
@@ -155,9 +172,8 @@ $translations = [
 	'Table has been altered.' => 'جدول ویرایش شد.',
 	'Table has been created.' => 'جدول ایجاد شد.',
 	'Table name' => 'نام جدول',
+	'Name' => 'نام',
 	'Show structure' => 'نمایش ساختار',
-	'engine' => 'موتور',
-	'collation' => 'تطبیق',
 	'Column name' => 'نام ستون',
 	'Type' => 'نوع',
 	'Length' => 'طول',
@@ -174,12 +190,7 @@ $translations = [
 	'Remove' => 'حذف',
 	'Maximum number of allowed fields exceeded. Please increase %s.' => 'حداکثر تعداد فیلدهای مجاز اشباع شد. لطفا %s را افزایش دهید.',
 
-	'Partition by' => 'بخشبندی توسط',
-	'Partition' => null,
-	'Partitions' => 'بخشبندیها',
-	'Partition name' => 'نام بخش',
-	'Values' => 'مقادیر',
-
+	// Views.
 	'View' => 'نمایش',
 	'Materialized view' => 'نمایه مادی',
 	'View has been dropped.' => 'نمایش حذف شد.',
@@ -188,6 +199,13 @@ $translations = [
 	'Alter view' => 'حذف نمایش',
 	'Create view' => 'ایجاد نمایش',
 
+	// Partitions.
+	'Partition by' => 'بخشبندی توسط',
+	'Partitions' => 'بخشبندیها',
+	'Partition name' => 'نام بخش',
+	'Values' => 'مقادیر',
+
+	// Indexes.
 	'Indexes' => 'ایندکسها',
 	'Indexes have been altered.' => 'ایندکسها ویرایش شدند.',
 	'Alter indexes' => 'ویرایش ایندکسها',
@@ -195,6 +213,7 @@ $translations = [
 	'Index Type' => 'نوع ایندکس',
 	'length' => 'طول',
 
+	// Foreign keys.
 	'Foreign keys' => 'کلیدهای خارجی',
 	'Foreign key' => 'کلید خارجی',
 	'Foreign key has been dropped.' => 'کلید خارجی حذف شد.',
@@ -211,6 +230,54 @@ $translations = [
 	'ON UPDATE' => 'ON UPDATE',
 	'Source and target columns must have the same data type, there must be an index on the target columns and referenced data must exist.' => 'داده مبدا و مقصد ستونها بایستی شبیه هم باشند.',
 
+	// Routines.
+	'Routines' => 'روالها',
+	'Routine has been called, %d row(s) affected.' => [
+		'روال فراخوانی شد %d سطر متاثر شد.',
+		'روال فراخوانی شد %d سطر متاثر شد.',
+	],
+	'Call' => 'صدا زدن',
+	'Parameter name' => 'نام پارامتر',
+	'Create procedure' => 'ایجاد زیربرنامه',
+	'Create function' => 'ایجاد تابع',
+	'Routine has been dropped.' => 'روال حذف شد.',
+	'Routine has been altered.' => 'روال ویرایش شد.',
+	'Routine has been created.' => 'روال ایجاد شد.',
+	'Alter function' => 'ویرایش تابع',
+	'Alter procedure' => 'ویرایش زیربرنامه',
+	'Return type' => 'برگرداندن نوع',
+
+	// Events.
+	'Events' => 'رویدادها',
+	'Event' => 'رویداد',
+	'Event has been dropped.' => 'رویداد حذف شد.',
+	'Event has been altered.' => 'رویداد ویرایش شد.',
+	'Event has been created.' => 'رویداد ایجاد شد.',
+	'Alter event' => 'ویرایش رویداد',
+	'Create event' => 'ایجاد رویداد',
+	'At given time' => 'زمان معین',
+	'Every' => 'همه',
+	'Schedule' => 'زمانبندی',
+	'Start' => 'آغاز',
+	'End' => 'پایان',
+	'On completion preserve' => 'تکمیل حفاظت فعال است',
+
+	// Sequences (PostgreSQL).
+	'Sequences' => 'صف ها',
+	'Create sequence' => 'ایجاد صف',
+	'Sequence has been dropped.' => 'صف حذف شد.',
+	'Sequence has been created.' => 'صف ایجاد شد.',
+	'Sequence has been altered.' => 'صف ویرایش شد.',
+	'Alter sequence' => 'ویرایش صف',
+
+	// User types (PostgreSQL)
+	'User types' => 'انواع کاربر',
+	'Create type' => 'ایجاد نوع',
+	'Type has been dropped.' => 'نوع حذف شد.',
+	'Type has been created.' => 'نوع ایجاد شد.',
+	'Alter type' => 'ویرایش نوع',
+
+	// Triggers.
 	'Triggers' => 'تریگرها',
 	'Add trigger' => 'افزودن تریگر',
 	'Trigger has been dropped.' => 'تریگر حذف شد.',
@@ -218,17 +285,16 @@ $translations = [
 	'Trigger has been created.' => 'تریگر ایجاد شد.',
 	'Alter trigger' => 'ویرایش تریگر',
 	'Create trigger' => 'ایجاد تریگر',
-	'Time' => 'زمان',
-	'Event' => 'رویداد',
-	'Name' => 'نام',
-	'Select' => 'انتخاب',
+
+	// Table check constraints.
+
+	// Selection.
 	'Select data' => 'انتخاب داده',
+	'Select' => 'انتخاب',
 	'Functions' => 'توابع',
 	'Aggregation' => 'تجمع',
 	'Search' => 'جستجو',
 	'anywhere' => 'هرکجا',
-	'Search data in tables' => 'جستجوی داده در جدول',
-	'as a regular expression' => null,
 	'Sort' => 'مرتب کردن',
 	'descending' => 'نزولی',
 	'Limit' => 'محدودیت',
@@ -237,35 +303,34 @@ $translations = [
 	'Action' => 'عملیات',
 	'Full table scan' => 'اسکن کامل جدول',
 	'Unable to select the table' => 'قادر به انتخاب جدول نیستید',
-	'No rows.' => 'سطری وجود ندارد',
+	'Search data in tables' => 'جستجوی داده در جدول',
+	'No rows.' => 'سطری وجود ندارد.',
 	'%d / ' => '%d / ',
-	'%d row(s)' => ['%d سطر', '%d سطر'],
+	'%d row(s)' => [
+		'%d سطر',
+		'%d سطر',
+	],
 	'Page' => 'صفحه',
 	'last' => 'آخری',
 	'Load more data' => 'بارگزاری اطلاعات بیشتر',
 	'Loading' => 'در حال بارگزاری',
 	'Whole result' => 'همه نتایج',
-	'%d byte(s)' => ['%d بایت', '%d بایت'],
+	'%d byte(s)' => [
+		'%d بایت',
+		'%d بایت',
+	],
 
-	'Import' => 'وارد کردن',
-	'%d row(s) have been imported.' => ['%d سطر وارد شد.', '%d سطر وارد شد.'],
-	'File must be in UTF-8 encoding.' => 'فرمت فایل باید UTF-8 باشید.',
-
-	// in-place editing in select
+	// In-place editing in selection.
 	'Modify' => 'ویرایش',
 	'Ctrl+click on a value to modify it.' => 'برای ویرایش بر روی مقدار ctrl+click کنید.',
 	'Use edit link to modify this value.' => 'از لینک ویرایش برای ویرایش این مقدار استفاده کنید.',
 
-	// %s can contain auto-increment value
-	'Item%s has been inserted.' => '%s آیتم درج شد.',
-	'Item has been deleted.' => 'آیتم حذف شد.',
-	'Item has been updated.' => 'آیتم بروز رسانی شد.',
-	'%d item(s) have been affected.' => ['%d آیتم متاثر شد.', '%d آیتم متاثر شد.'],
+	// Editing.
 	'New item' => 'آیتم جدید',
+	'Edit' => 'ویرایش',
 	'original' => 'اصلی',
 	// label for value '' in enum data type
 	'empty' => 'خالی',
-	'Edit' => 'ویرایش',
 	'Insert' => 'درج',
 	'Save' => 'ذخیره',
 	'Save and continue edit' => 'ذخیره و ادامه ویرایش',
@@ -273,9 +338,17 @@ $translations = [
 	'Selected' => 'انتخاب شده',
 	'Clone' => 'تکثیر',
 	'Delete' => 'حذف',
+	// %s can contain auto-increment value, e.g. ' 123'
+	'Item%s has been inserted.' => '%s آیتم درج شد.',
+	'Item has been deleted.' => 'آیتم حذف شد.',
+	'Item has been updated.' => 'آیتم بروز رسانی شد.',
+	'%d item(s) have been affected.' => [
+		'%d آیتم متاثر شد.',
+		'%d آیتم متاثر شد.',
+	],
 	'You have no privileges to update this table.' => 'شما اختیار ویرایش این جدول را ندارید.',
 
-	// data type descriptions
+	// Data type descriptions.
 	'Numbers' => 'اعداد',
 	'Date and time' => 'تاریخ و زمان',
 	'Strings' => 'رشته ها',
@@ -284,74 +357,11 @@ $translations = [
 	'Network' => 'شبکه',
 	'Geometry' => 'هندسه',
 	'Relations' => 'رابطه ها',
-	// date format in Editor: $1 yyyy, $2 yy, $3 mm, $4 m, $5 dd, $6 d
-	'$1-$3-$5' => '$1-$3-$5',
-	// hint for date format - use language equivalents for day, month and year shortcuts
-	'YYYY-MM-DD' => 'YYYY-MM-DD',
-	// hint for time format - use language equivalents for hour, minute and second shortcuts
-	'HH:MM:SS' => 'HH:MM:SS',
+
+	// Editor - data values.
 	'now' => 'اکنون',
 	'yes' => 'بله',
 	'no' => 'خیر',
 
-	// general SQLite error in create, drop or rename database
-	'File exists.' => 'فایل موجود است.',
-	'Please use one of the extensions %s.' => 'لطفا یکی از پسوندها را انتخاب نمائید %s.',
-
-	// PostgreSQL and MS SQL schema support
-	'Alter schema' => 'ویرایش ساختار',
-	'Create schema' => 'ایجاد ساختار',
-	'Schema has been dropped.' => 'ساختار حذف شد.',
-	'Schema has been created.' => 'ساختار ایجاد شد.',
-	'Schema has been altered.' => 'ساختار ویرایش شد.',
-	'Schema' => 'ساختار',
-	'Invalid schema.' => 'ساختار نامعتبر.',
-
-	// PostgreSQL sequences support
-	'Sequences' => 'صف ها',
-	'Create sequence' => 'ایجاد صف',
-	'Sequence has been dropped.' => 'صف حذف شد.',
-	'Sequence has been created.' => 'صف ایجاد شد.',
-	'Sequence has been altered.' => 'صف ویرایش شد.',
-	'Alter sequence' => 'ویرایش صف',
-
-	// PostgreSQL user types support
-	'User types' => 'انواع کاربر',
-	'Create type' => 'ایجاد نوع',
-	'Type has been dropped.' => 'نوع حذف شد.',
-	'Type has been created.' => 'نوع ایجاد شد.',
-	'Alter type' => 'ویرایش نوع',
-
-	'Drop %s?' => null,
-	'overwrite' => null,
-	'DB' => null,
-	'ATTACH queries are not supported.' => null,
-	'Warnings' => null,
-	'AdminNeo does not support accessing a database without a password, <a href="https://www.adminneo.org/password"%s>more information</a>.' => null,
-	'The action will be performed after successful login with the same credentials.' => null,
-	'Connecting to privileged ports is not allowed.' => null,
-	'There is a space in the input password which might be the cause.' => null,
-	'If you did not send this request from AdminNeo then close this page.' => null,
-	'Saving' => null,
-	'Unknown error.' => null,
-	'Database does not support password.' => null,
-	'One Time Password' => null,
-	'Invalid OTP code.' => null,
-
-	'Schemas' => null,
-	'No schemas.' => null,
-	'Show schema' => null,
-	'No driver' => null,
-	'Database driver not found.' => null,
-
-	'Check has been dropped.' => null,
-	'Check has been altered.' => null,
-	'Check has been created.' => null,
-	'Alter check' => null,
-	'Create check' => null,
-	'Checks' => null,
-	'Invalid permanent login, please login again.' => null,
-
-	'Access denied.' => null,
-	'Enter OTP code.' => null,
+	// Plugins.
 ];

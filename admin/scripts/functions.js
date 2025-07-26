@@ -477,6 +477,7 @@ function initToggles(parent) {
 			links[i].classList.toggle("opened");
 
 			event.preventDefault();
+			event.stopPropagation();
 		});
 	}
 }
@@ -970,7 +971,7 @@ function functionChange() {
  * @this HTMLTableCellElement
  */
 function skipOriginal(first) {
-	const fnSelect = this.previousSibling.firstChild;
+	const fnSelect = qs('select', this.previousSibling);
 	if (!fnSelect) {
 		return;
 	}
@@ -1129,9 +1130,13 @@ function selectClick(event, text, warning) {
 	const td = this;
 	const target = event.target;
 
-	if (!isCtrl(event) || td.dataset.editing || isTag(target, 'a')) {
-		return;
+	// Note: Shift key forces the editing when clicking on a link.
+	if (!isCtrl(event) || td.dataset.editing || (!event.shiftKey && parentTag(target, 'a'))) {
+		return false;
 	}
+
+	// Prevent opening a link.
+	event.preventDefault();
 
 	if (warning) {
 		alert(warning);

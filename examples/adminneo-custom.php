@@ -15,22 +15,13 @@ use AdminNeo\ZipOutputPlugin;
 
 function adminneo_instance()
 {
-	$plugins = [
-		//new OtpLoginPlugin(base64_decode('RXiwXQLdoq7jVQ==')),
-		new Bz2OutputPlugin(),
-		new ZipOutputPlugin(),
-		new JsonDumpPlugin(),
-		new XmlDumpPlugin(),
-		// new SqlLogPlugin(),
-		// new TinyMcePlugin("../externals/tinymce/tinymce.min.js"),
-		new FileUploadPlugin("../export/upload"),
-		new JsonPreviewPlugin(),
-		new TranslationPlugin(),
-		new SystemForeignKeysPlugin(),
-		new ForeignEditPlugin(),
-		new SlugifyEditPlugin(),
-		new FrameSupportPlugin(),
-	];
+	class CustomAdmin extends Admin
+	{
+		public function getServiceTitle()
+		{
+			return 'Admin Example';
+		}
+	}
 
 	$servers = [
 		"server1" => ["driver" => "mysql", "name" => "Devel"],
@@ -54,7 +45,24 @@ function adminneo_instance()
 //		"servers" => $servers,
 	];
 
-	return Admin::create($config, $plugins);
+	$plugins = [
+		//new OtpLoginPlugin(base64_decode('RXiwXQLdoq7jVQ==')),
+		new Bz2OutputPlugin(),
+		new ZipOutputPlugin(),
+		new JsonDumpPlugin(),
+		new XmlDumpPlugin(),
+		// new SqlLogPlugin(),
+		// new TinyMcePlugin("../externals/tinymce/tinymce.min.js"),
+		new FileUploadPlugin("../export/upload"),
+		new JsonPreviewPlugin(),
+		new TranslationPlugin(),
+		new SystemForeignKeysPlugin(),
+		new ForeignEditPlugin(),
+		new SlugifyEditPlugin(),
+		new FrameSupportPlugin(),
+	];
+
+	return CustomAdmin::create($config, $plugins);
 }
 
-include "index.php";
+include "../compiled/adminneo.php";

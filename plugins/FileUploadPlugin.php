@@ -19,13 +19,13 @@ use Exception;
 class FileUploadPlugin extends Plugin
 {
 	/** @var string */
-	private $uploadPath;
+	protected $uploadPath;
 
 	/** @var string */
-	private $linkPath;
+	protected $linkPath;
 
 	/** @var string */
-	private $extensions;
+	protected $extensions;
 
 	/**
 	 * @param string $uploadPath Path to a writable directory where uploading data will be stored.
@@ -78,7 +78,7 @@ class FileUploadPlugin extends Plugin
 
 		// Create a directory for the current table.
 		$targetDir = $this->uploadPath . "/" . $this->encodeFs($dbName) . "/" . $this->encodeFs($tableName);
-		if (!file_exists($targetDir) && !mkdir($targetDir, 0777, true)) {
+		if (!is_dir($targetDir) && !@mkdir($targetDir, 0777, true)) {
 			return false;
 		}
 

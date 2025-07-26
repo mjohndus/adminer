@@ -2,20 +2,15 @@
 
 namespace AdminNeo;
 
-/**
- * @var ?Min_DB $connection
- * @var ?Min_Driver $driver
- */
-
 $title2 = DB != "" ? h(": " . DB) : "";
-page_header(lang('Privileges') . $title2, "", [lang('Privileges')]);
+page_header(lang('Privileges') . $title2, [lang('Privileges')]);
 echo '<p class="links top-links"><a href="', h(ME), 'user=">', icon("user-add"), lang('Create user'), "</a>";
 
-$result = $connection->query("SELECT User, Host FROM mysql." . (DB == "" ? "user" : "db WHERE " . q(DB) . " LIKE Db") . " ORDER BY Host, User");
+$result =  Connection::get()->query("SELECT User, Host FROM mysql." . (DB == "" ? "user" : "db WHERE " . q(DB) . " LIKE Db") . " ORDER BY Host, User");
 $grant = $result;
 if (!$result) {
 	// list logged user, information_schema.USER_PRIVILEGES lists just the current user too
-	$result = $connection->query("SELECT SUBSTRING_INDEX(CURRENT_USER, '@', 1) AS User, SUBSTRING_INDEX(CURRENT_USER, '@', -1) AS Host");
+	$result =  Connection::get()->query("SELECT SUBSTRING_INDEX(CURRENT_USER, '@', 1) AS User, SUBSTRING_INDEX(CURRENT_USER, '@', -1) AS Host");
 }
 
 echo "<form action=''><p>\n";
@@ -25,7 +20,7 @@ echo ($grant ? "" : "<input type='hidden' name='grant' value=''>\n");
 echo "<div class='scrollable'><table class='checkable'>\n";
 echo "<thead><tr><th>" . lang('Username') . "<th>" . lang('Server') . "<th></thead>\n";
 
-while ($row = $result->fetch_assoc()) {
+while ($row = $result->fetchAssoc()) {
 	echo '<tr><td>' . h($row["User"]) . "<td>" . h($row["Host"]) . '<td><a href="' . h(ME . 'user=' . urlencode($row["User"]) . '&host=' . urlencode($row["Host"])) . '">' . lang('Edit') . "</a>\n";
 }
 

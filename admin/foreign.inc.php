@@ -2,16 +2,11 @@
 
 namespace AdminNeo;
 
-/**
- * @var ?Min_DB $connection
- * @var ?Min_Driver $driver
- */
-
 $TABLE = $_GET["foreign"];
 $name = $_GET["name"];
 $row = $_POST;
 
-if ($_POST && !$error && !$_POST["add"] && !$_POST["change"] && !$_POST["change-js"]) {
+if ($_POST && !$_POST["add"] && !$_POST["change"] && !$_POST["change-js"]) {
 	if (!$_POST["drop"]) {
 		$row["source"] = array_filter($row["source"], 'strlen');
 		ksort($row["source"]); // enforce input order
@@ -22,11 +17,11 @@ if ($_POST && !$error && !$_POST["add"] && !$_POST["change"] && !$_POST["change-
 		$row["target"] = $target;
 	}
 
-	if ($jush == "sqlite") {
+	if (DIALECT == "sqlite") {
 		$result = recreate_table($TABLE, $TABLE, [], [], [" $name" => ($row["drop"] ? "" : " " . format_foreign_key($row))]);
 	} else {
 		$alter = "ALTER TABLE " . table($TABLE);
-		$result = ($name == "" || queries("$alter DROP " . ($jush == "sql" ? "FOREIGN KEY " : "CONSTRAINT ") . idf_escape($name)));
+		$result = ($name == "" || queries("$alter DROP " . (DIALECT == "sql" ? "FOREIGN KEY " : "CONSTRAINT ") . idf_escape($name)));
 		if (!$row["drop"]) {
 			$result = queries("$alter ADD" . format_foreign_key($row));
 		}
@@ -37,11 +32,11 @@ if ($_POST && !$error && !$_POST["add"] && !$_POST["change"] && !$_POST["change-
 		$result
 	);
 	if (!$row["drop"]) {
-		$error = "$error<br>" . lang('Source and target columns must have the same data type, there must be an index on the target columns and referenced data must exist.'); //! no partitioning
+		Admin::get()->addError(lang('Source and target columns must have the same data type, there must be an index on the target columns and referenced data must exist.')); //! no partitioning
 	}
 }
 
-page_header(lang('Foreign key') . ": " . h($TABLE), $error, ["table" => $TABLE, lang('Foreign key')]);
+page_header(lang('Foreign key') . ": " . h($TABLE), ["table" => $TABLE, lang('Foreign key')]);
 
 if ($_POST) {
 	ksort($row["source"]);
@@ -64,7 +59,7 @@ if ($_POST) {
 <?php
 $source = array_keys(fields($TABLE)); //! no text and blob
 if ($row["db"] != "") {
-	$connection->select_db($row["db"]);
+	Connection::get()->selectDatabase($row["db"]);
 }
 if ($row["ns"] != "") {
 	$orig_schema = get_schema();
@@ -82,7 +77,7 @@ if (support("scheme")) {
 	if ($row["ns"] != "") {
 		set_schema($orig_schema);
 	}
-} elseif ($jush != "sqlite") {
+} elseif (DIALECT != "sqlite") {
 	$dbs = [];
 	foreach (Admin::get()->getDatabases() as $db) {
 		if (!information_schema($db)) {
@@ -100,15 +95,15 @@ if (support("scheme")) {
 $j = 0;
 foreach ($row["source"] as $key => $val) {
 	echo "<tr>";
-	echo "<td>" . html_select("source[" . (+$key) . "]", [-1 => ""] + $source, $val, ($j == count($row["source"]) - 1 ? "foreignAddRow.call(this);" : 1), "label-source");
-	echo "<td>" . html_select("target[" . (+$key) . "]", $target, $row["target"][$key] ?? null, 1, "label-target");
+	echo "<td>" . html_select("source[" . (+$key) . "]", [-1 => ""] + $source, $val, ($j == count($row["source"]) - 1 ? "foreignAddRow.call(this);" : ""), "label-source");
+	echo "<td>" . html_select("target[" . (+$key) . "]", $target, $row["target"][$key] ?? null, "", "label-target");
 	$j++;
 }
 ?>
 </table>
 <p>
-<?php echo lang('ON DELETE'); ?>: <?php echo html_select("on_delete", [-1 => ""] + explode("|", $on_actions), $row["on_delete"]); ?>
- <?php echo lang('ON UPDATE'); ?>: <?php echo html_select("on_update", [-1 => ""] + explode("|", $on_actions), $row["on_update"]); ?>
+<?php echo lang('ON DELETE'); ?>: <?php echo html_select("on_delete", [-1 => ""] + Driver::get()->getOnActions(), $row["on_delete"]); ?>
+<?php echo lang('ON UPDATE'); ?>: <?php echo html_select("on_update", [-1 => ""] + Driver::get()->getOnActions(), $row["on_update"]); ?>
 <?php echo doc_link([
 	'sql' => "innodb-foreign-key-constraints.html",
 	'mariadb' => "foreign-keys/",
@@ -120,5 +115,5 @@ foreach ($row["source"] as $key => $val) {
 <input type="submit" class="button default" value="<?php echo lang('Save'); ?>">
 <noscript><p><input type="submit" class="button" name="add" value="<?php echo lang('Add column'); ?>"></noscript>
 <?php if ($name != "") { ?><input type="submit" class="button" name="drop" value="<?php echo lang('Drop'); ?>"><?php echo confirm(lang('Drop %s?', $name)); ?><?php } ?>
-<input type="hidden" name="token" value="<?php echo $token; ?>">
+<input type="hidden" name="token" value="<?php echo get_token(); ?>">
 </form>

@@ -2,13 +2,8 @@
 
 namespace AdminNeo;
 
-/**
- * @var ?Min_DB $connection
- * @var ?Min_Driver $driver
- */
-
 if (support("kill")) {
-	if ($_POST && !$error) {
+	if ($_POST) {
 		$killed = 0;
 		foreach ((array) $_POST["kill"] as $val) {
 			if (kill_process($val)) {
@@ -19,7 +14,7 @@ if (support("kill")) {
 	}
 }
 
-page_header(lang('Process list'), $error, [lang('Process list')]);
+page_header(lang('Process list'), [lang('Process list')]);
 ?>
 
 <form action="" method="post">
@@ -42,13 +37,13 @@ foreach (process_list() as $i => $row) {
 		}
 		echo "</thead>\n";
 	}
-	echo "<tr>" . (support("kill") ? "<td>" . checkbox("kill[]", $row[$jush == "sql" ? "Id" : "pid"], 0) : "");
+	echo "<tr>" . (support("kill") ? "<td>" . checkbox("kill[]", $row[DIALECT == "sql" ? "Id" : "pid"], 0) : "");
 	foreach ($row as $key => $val) {
 		echo "<td>" . (
-			($jush == "sql" && $key == "Info" && preg_match("~Query|Killed~", $row["Command"]) && $val != "") ||
-			($jush == "pgsql" && $key == "current_query" && $val != "<IDLE>") ||
-			($jush == "oracle" && $key == "sql_text" && $val != "")
-			? "<code class='jush-$jush'>" . truncate_utf8($val, 100) . '</code> <a href="' . h(ME . ($row["db"] != "" ? "db=" . urlencode($row["db"]) . "&" : "") . "sql=" . urlencode($val)) . '">' . icon("edit") . lang('Clone') . '</a>'
+			(DIALECT == "sql" && $key == "Info" && preg_match("~Query|Killed~", $row["Command"]) && $val != "") ||
+			(DIALECT == "pgsql" && $key == "current_query" && $val != "<IDLE>") ||
+			(DIALECT == "oracle" && $key == "sql_text" && $val != "")
+			? "<code class='jush-" . DIALECT . "'>" . truncate_utf8($val, 100) . '</code> <a href="' . h(ME . ($row["db"] != "" ? "db=" . urlencode($row["db"]) . "&" : "") . "sql=" . urlencode($val)) . '">' . icon("edit") . lang('Clone') . '</a>'
 			: h($val)
 		);
 	}
@@ -64,6 +59,6 @@ if (support("kill")) {
 	echo "<p><input type='submit' class='button' value='" . lang('Kill') . "'>\n";
 }
 ?>
-<input type="hidden" name="token" value="<?php echo $token; ?>">
+<input type="hidden" name="token" value="<?php echo get_token(); ?>">
 </form>
 <?php echo script("tableCheck();"); ?>

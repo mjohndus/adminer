@@ -31,13 +31,13 @@ namespace AdminNeo;
 class TableLoginPlugin extends Plugin
 {
 	/** @var string */
-	private $database;
+	protected $database;
 
 	/** @var string */
-	private $table;
+	protected $table;
 
 	/** @var string[] */
-	private $credentials;
+	protected $credentials;
 
 	/**
 	 * @param string $database Database name.
@@ -59,13 +59,13 @@ class TableLoginPlugin extends Plugin
 	public function authenticate(string $username, string $password): ?bool
 	{
 		if (DRIVER == "sqlite") {
-			connection()->select_db($this->database);
+			Connection::get()->selectDatabase($this->database);
 			$dbPrefix = "";
 		} else {
 			$dbPrefix = idf_escape($this->database) . ".";
 		}
 
-		$hash = connection()->result(
+		$hash = Connection::get()->getValue(
 			"SELECT password FROM $dbPrefix" . idf_escape($this->table) . " WHERE username = " . q($username)
 		);
 

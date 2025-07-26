@@ -4,17 +4,11 @@ namespace AdminNeo;
 
 abstract class Origin extends Plugin
 {
-	/** @var array */
-	private $systemDatabases;
-
-	/** @var array */
-	private $systemSchemas;
-
 	/** @var string[] */
-	private $errors;
+	private $errors = [];
 
-	/** @var static|Pluginer */
-	private static $instance;
+	/** @var static|Pluginer|null */
+	private static $instance = null;
 
 	/**
 	 * @param array $config Configuration array.
@@ -22,11 +16,13 @@ abstract class Origin extends Plugin
 	 *
 	 * @return static|Pluginer
 	 */
-	public static function create(array $config = [], array $plugins = [], array $errors = [])
+	public static function create(array $config = [], array $plugins = [])
 	{
-		if (isset(self::$instance)) {
+		if (self::$instance) {
 			die("Admin instance already exists.\n");
 		}
+
+		$admin = new static();
 
 		if (!$config && file_exists("adminneo-config.php")) {
 			$config = include_once("adminneo-config.php");
@@ -34,10 +30,14 @@ abstract class Origin extends Plugin
 				$config = [];
 				$linkParams = "href=https://github.com/adminneo-org/adminneo#configuration " . target_blank();
 
-				$errors[] = lang('%s must return an array.', "<b>adminneo-config.php</b>") .
-					" <a $linkParams>" . lang('More information.') . "</a>";
+				$admin->addError(
+					lang('%s must return an array.', "<b>adminneo-config.php</b>") .
+					" <a $linkParams>" . lang('More information.') . "</a>"
+				);
 			}
 		}
+
+		$config = new Config($config);
 
 		if (!$plugins && file_exists("adminneo-plugins.php")) {
 			$plugins = include_once("adminneo-plugins.php");
@@ -45,18 +45,18 @@ abstract class Origin extends Plugin
 				$plugins = [];
 				$linkParams = "href=https://github.com/adminneo-org/adminneo#plugins " . target_blank();
 
-				$errors[] = lang('%s must return an array.', "<b>adminneo-plugins.php</b>") .
-					" <a $linkParams>" . lang('More information.') . "</a>";
+				$admin->addError(
+					lang('%s must return an array.', "<b>adminneo-plugins.php</b>") .
+					" <a $linkParams>" . lang('More information.') . "</a>"
+				);
 			}
 		}
 
-		$config = new Config($config);
-		$admin = new static($errors);
 		self::$instance = $plugins ? new Pluginer($admin, $plugins) : $admin;
 
-		$admin->inject(self::$instance, $config);
+		$admin->inject(self::$instance, $config, Locale::get());
 		foreach ($plugins as $plugin) {
-			$plugin->inject(self::$instance, $config);
+			$plugin->inject(self::$instance, $config, Locale::get());
 		}
 
 		return self::$instance;
@@ -67,19 +67,16 @@ abstract class Origin extends Plugin
 	 */
 	public static function get()
 	{
-		if (!isset(self::$instance)) {
+		if (!self::$instance) {
 			die("Admin instance not found. Create instance by Admin::create() method at first.\n");
 		}
 
 		return self::$instance;
 	}
 
-	/**
-	 * @param string[] $errors
-	 */
-	protected function __construct(array $errors = [])
+	protected function __construct()
 	{
-		$this->errors = $errors;
+		//
 	}
 
 	/**
@@ -90,19 +87,11 @@ abstract class Origin extends Plugin
 		return $this->config;
 	}
 
-	public abstract function setOperators(?array $operators, ?string $likeOperator, ?string $regexpOperator): void;
-
-	public abstract function getOperators(): ?array;
+	public abstract function getOperators(): array;
 
 	public abstract function getLikeOperator(): ?string;
 
 	public abstract function getRegexpOperator(): ?string;
-
-	public function setSystemObjects(array $databases, array $schemas): void
-	{
-		$this->systemDatabases = $databases;
-		$this->systemSchemas = $schemas;
-	}
 
 	/**
 	 * Initializes the Admin. This method is called right before the authentication process.
@@ -110,6 +99,14 @@ abstract class Origin extends Plugin
 	public function init(): void
 	{
 		//
+	}
+
+	/**
+	 * @param string $error HTML-formatted error message.
+	 */
+	public function addError(string $error): void
+	{
+		$this->errors[] = $error;
 	}
 
 	/**
@@ -156,7 +153,7 @@ abstract class Origin extends Plugin
 	/**
 	 * Authenticate the user.
 	 *
-	 * @return bool|string true for success, string for error message, false for unknown error.
+	 * @return bool|string true for success, HTML-formatted error message, false for unknown error.
 	 */
 	public function authenticate(string $username, string $password)
 	{
@@ -216,7 +213,9 @@ abstract class Origin extends Plugin
 	 */
 	public function getDatabases($flush = true): array
 	{
-		return $this->filterListWithWildcards(get_databases($flush), $this->config->getHiddenDatabases(), false, $this->systemDatabases);
+		return $this->filterListWithWildcards(
+			get_databases($flush), $this->config->getHiddenDatabases(), false, Driver::get()->getSystemDatabases()
+		);
 	}
 
 	/**
@@ -226,7 +225,9 @@ abstract class Origin extends Plugin
 	 */
 	public function getSchemas(): array
 	{
-		return $this->filterListWithWildcards(schemas(), $this->config->getHiddenSchemas(), false, $this->systemSchemas);
+		return $this->filterListWithWildcards(
+			schemas(), $this->config->getHiddenSchemas(), false, Driver::get()->getSystemSchemas()
+		);
 	}
 
 	/**
@@ -383,13 +384,11 @@ abstract class Origin extends Plugin
 	 */
 	public function printLogout(): void
 	{
-		global $token;
-
 		echo "<div class='logout'>";
 		echo "<form action='' method='post'>\n";
 		echo h($_GET["username"]);
 		echo "<input type='submit' class='button' name='logout' value='", lang('Logout'), "' id='logout'>";
-		echo "<input type='hidden' name='token' value='$token'>\n";
+		echo "<input type='hidden' name='token' value='", get_token(), "'>\n";
 		echo "</form>";
 		echo "</div>\n";
 	}
@@ -543,6 +542,7 @@ abstract class Origin extends Plugin
 		if (is_array($value)) {
 			$flags = JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | ($this->config->isJsonValuesAutoFormat() ? JSON_PRETTY_PRINT : 0);
 			$value = json_encode($value, $flags);
+
 			return true;
 		}
 
@@ -600,8 +600,6 @@ abstract class Origin extends Plugin
 
 	public function printNavigation(?string $missing): void
 	{
-		global $VERSION;
-
 		$last_version = $_COOKIE["neo_version"] ?? null;
 
 		echo "<div class='header'>\n";
@@ -609,9 +607,9 @@ abstract class Origin extends Plugin
 
 		if ($missing != "auth") {
 			echo "<span class='version'>";
-			echo h(preg_replace('~\\.0(-|$)~', '$1', $VERSION));
+			echo h(preg_replace('~\\.0(-|$)~', '$1', VERSION));
 			echo "<a id='version' class='version-badge' href='https://www.adminneo.org/download' " . target_blank() . " title='" . h($last_version) . "'>";
-			if ($this->config->isVersionVerificationEnabled() && $last_version && version_compare($VERSION, $last_version) < 0) {
+			if ($this->config->isVersionVerificationEnabled() && $last_version && version_compare(VERSION, $last_version) < 0) {
 				echo icon_solo("asterisk");
 			}
 			echo "</a>";

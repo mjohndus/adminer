@@ -2,14 +2,9 @@
 
 namespace AdminNeo;
 
-/**
- * @var ?Min_DB $connection
- * @var ?Min_Driver $driver
- */
-
 $row = $_POST;
 
-if ($_POST && !$error) {
+if ($_POST) {
 	$link = preg_replace('~ns=[^&]*&~', '', ME) . "ns=";
 	if ($_POST["drop"]) {
 		query_redirect("DROP SCHEMA " . idf_escape($_GET["ns"]), $link, lang('Schema has been dropped.'));
@@ -27,9 +22,9 @@ if ($_POST && !$error) {
 }
 
 if ($_GET["ns"] != "") {
-	page_header(lang('Alter schema') . ": " . h($_GET["ns"]), $error, [lang('Alter schema')]);
+	page_header(lang('Alter schema') . ": " . h($_GET["ns"]), [lang('Alter schema')]);
 } else {
-	page_header(lang('Create schema'), $error, [lang('Create schema')]);
+	page_header(lang('Create schema'), [lang('Create schema')]);
 }
 
 if (!$row) {
@@ -45,5 +40,5 @@ if ($_GET["ns"] != "") {
 	echo "<input type='submit' class='button' name='drop' value='" . lang('Drop') . "'>" . confirm(lang('Drop %s?', $_GET["ns"])) . "\n";
 }
 ?>
-<input type="hidden" name="token" value="<?php echo $token; ?>">
+<input type="hidden" name="token" value="<?php echo get_token(); ?>">
 </form>

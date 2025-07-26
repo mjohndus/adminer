@@ -2,17 +2,12 @@
 
 namespace AdminNeo;
 
-/**
- * @var ?Min_DB $connection
- * @var ?Min_Driver $driver
- */
-
-$PROCEDURE = ($_GET["name"] ? $_GET["name"] : $_GET["procedure"]);
+$PROCEDURE = ($_GET["name"] ?: $_GET["procedure"]);
 $routine = (isset($_GET["function"]) ? "FUNCTION" : "PROCEDURE");
 $row = $_POST;
 $row["fields"] = (array) $row["fields"];
 
-if ($_POST && !process_fields($row["fields"]) && !$error) {
+if ($_POST && !process_fields($row["fields"])) {
 	$orig = routine($_GET["procedure"], $routine);
 	$temp_name = "$row[name]_adminneo_" . uniqid();
 	drop_create(
@@ -32,10 +27,10 @@ if ($_POST && !process_fields($row["fields"]) && !$error) {
 
 if ($PROCEDURE != "") {
 	$title = isset($_GET["function"]) ? lang('Alter function') : lang('Alter procedure');
-	page_header($title . ": " . h($PROCEDURE), $error, [$title]);
+	page_header($title . ": " . h($PROCEDURE), [$title]);
 } else {
 	$title = isset($_GET["function"]) ? lang('Create function') : lang('Create procedure');
-	page_header($title, $error, [$title]);
+	page_header($title, [$title]);
 }
 
 if (!$_POST && $PROCEDURE != "") {
@@ -61,7 +56,7 @@ if (isset($_GET["function"])) {
 		(support("move_col") ? "<th></th>" : ""),
 		"<th>", lang('Return type'), "</th>";
 
-	edit_type("returns", $row["returns"], $charsets, [], ($jush == "pgsql" ? ["void", "trigger"] : []));
+	edit_type("returns", $row["returns"], $charsets, [], (DIALECT == "pgsql" ? ["void", "trigger"] : []));
 
 	echo "<td></td></tr></tbody>\n";
 }
@@ -78,5 +73,5 @@ if (isset($_GET["function"])) {
 <p>
 <input type="submit" class="button default" value="<?php echo lang('Save'); ?>">
 <?php if ($PROCEDURE != "") { ?><input type="submit" class="button" name="drop" value="<?php echo lang('Drop'); ?>"><?php echo confirm(lang('Drop %s?', $PROCEDURE)); ?><?php } ?>
-<input type="hidden" name="token" value="<?php echo $token; ?>">
+<input type="hidden" name="token" value="<?php echo get_token(); ?>">
 </form>

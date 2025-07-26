@@ -1,12 +1,10 @@
 <?php
 namespace AdminNeo;
 
-/**
- * @var ?Min_DB $connection
- * @var ?Min_Driver $driver
- */
+if ($_POST["export"]) {
+	$export_settings = ["output" => $_POST["output"], "format" => $_POST["format"]];
+	save_settings($export_settings, "neo_export");
 
-if (!$error && $_POST["export"]) {
 	dump_headers("sql");
 	Admin::get()->dumpTable("", "");
 	Admin::get()->dumpData("", "table", $_POST["query"]);
@@ -16,15 +14,15 @@ if (!$error && $_POST["export"]) {
 restart_session();
 $history_all = &get_session("queries");
 $history = &$history_all[DB];
-if (!$error && $_POST["clear"]) {
+if ($_POST["clear"]) {
 	$history = [];
 	redirect(remove_from_uri("history"));
 }
 
 $title = isset($_GET["import"]) ? lang('Import') : lang('SQL command');
-page_header($title, $error, [$title]);
+page_header($title, [$title]);
 
-if (!$error && $_POST) {
+if ($_POST) {
 	$fp = false;
 	if (!isset($_GET["import"])) {
 		$query = $_POST["query"];
@@ -63,18 +61,21 @@ if (!$error && $_POST) {
 		$delimiter = ";";
 		$offset = 0;
 		$empty = true;
-		$connection2 = connect(); // connection for exploring indexes and EXPLAIN (to not replace FOUND_ROWS()) //! PDO - silent error
-		if (is_object($connection2) && DB != "") {
-			$connection2->select_db(DB);
+
+		// connection for exploring indexes and EXPLAIN (to not replace FOUND_ROWS()) //! PDO - silent error
+		$connection2 = connect();
+		if ($connection2 && DB != "") {
+			$connection2->selectDatabase(DB);
 			if ($_GET["ns"] != "") {
 				set_schema($_GET["ns"], $connection2);
 			}
 		}
+
 		$commands = 0;
 		$errors = [];
-		$parse = '[\'"' . ($jush == "sql" ? '`#' : ($jush == "sqlite" ? '`[' : ($jush == "mssql" ? '[' : ''))) . ']|/\*|-- |$' . ($jush == "pgsql" ? '|\$[^$]*\$' : '');
+		$parse = '[\'"' . (DIALECT == "sql" ? '`#' : (DIALECT == "sqlite" ? '`[' : (DIALECT == "mssql" ? '[' : ''))) . ']|/\*|-- |$' . (DIALECT == "pgsql" ? '|\$[^$]*\$' : '');
 		$total_start = microtime(true);
-		parse_str($_COOKIE["neo_export"], $admin_export);
+		$export_settings = get_settings("neo_export");
 		$dump_format = Admin::get()->getDumpFormats();
 		unset($dump_format["sql"]);
 
@@ -84,7 +85,7 @@ if (!$error && $_POST) {
 
 				$formatted_query = Admin::get()->formatSqlCommandQuery(trim($match[0]));
 				if ($formatted_query != "") {
-					echo "<pre><code class='jush-$jush'>$formatted_query</code></pre>\n";
+					echo "<pre><code class='jush-" . DIALECT . "'>$formatted_query</code></pre>\n";
 				}
 
 				$query = substr($query, strlen($match[0]));
@@ -101,7 +102,7 @@ if (!$error && $_POST) {
 					$offset = $pos + strlen($found);
 
 					if ($found && rtrim($found) != $delimiter) { // find matching quote or comment end
-						$c_style_escapes = $driver->hasCStyleEscapes() || ($jush == "pgsql" && ($pos > 0 && strtolower($query[$pos - 1]) == "e"));
+						$c_style_escapes = Driver::get()->hasCStyleEscapes() || (DIALECT == "pgsql" && ($pos > 0 && strtolower($query[$pos - 1]) == "e"));
 
 						$pattern = '(';
 						if ($found == '/*') {
@@ -131,8 +132,8 @@ if (!$error && $_POST) {
 						$empty = false;
 						$q = substr($query, 0, $pos + strlen($delimiter));
 						$commands++;
-						$print = "<pre id='sql-$commands'><code class='jush-$jush'>" . Admin::get()->formatSqlCommandQuery(trim($q)) . "</code></pre>\n";
-						if ($jush == "sqlite" && preg_match("~^$space*+ATTACH\\b~i", $q, $match)) {
+						$print = "<pre id='sql-$commands'><code class='jush-" . DIALECT . "'>" . Admin::get()->formatSqlCommandQuery(trim($q)) . "</code></pre>\n";
+						if (DIALECT == "sqlite" && preg_match("~^$space*+ATTACH\\b~i", $q, $match)) {
 							// PHP doesn't support setting SQLITE_LIMIT_ATTACHED
 							echo $print;
 							echo "<p class='error'>" . lang('ATTACH queries are not supported.') . "\n";
@@ -148,16 +149,16 @@ if (!$error && $_POST) {
 							}
 							$start = microtime(true);
 							//! don't allow changing of character_set_results, convert encoding of displayed query
-							if ($connection->multi_query($q) && is_object($connection2) && preg_match("~^$space*+USE\\b~i", $q)) {
+							if (Connection::get()->multiQuery($q) && is_object($connection2) && preg_match("~^$space*+USE\\b~i", $q)) {
 								$connection2->query($q);
 							}
 
 							do {
-								$result = $connection->store_result();
+								$result = Connection::get()->storeResult();
 
-								if ($connection->error) {
+								if (Connection::get()->getError()) {
 									echo ($_POST["only_errors"] ? $print : "");
-									echo "<p class='error'>", lang('Error in query'), (!empty($connection->errno) ? " ($connection->errno)" : ""), ": ", error() . "</p>\n";
+									echo "<p class='error'>", lang('Error in query'), (!empty(Connection::get()->getErrno()) ? " (" . Connection::get()->getErrno() . ")" : ""), ": ", error() . "</p>\n";
 
 									$errors[] = " <a href='#sql-$commands'>$commands</a>";
 									if ($_POST["error_stops"]) {
@@ -166,9 +167,9 @@ if (!$error && $_POST) {
 								} else {
 									$time = " <span class='time'>(" . format_time($start) . ")</span>";
 									$edit_link = (strlen($q) < 1000 ? " <a href='" . h(ME) . "sql=" . urlencode(trim($q)) . "'>" . icon("edit") . lang('Edit') . "</a>" : ""); // 1000 - maximum length of encoded URL in IE is 2083 characters
-									$affected = $connection->affected_rows; // getting warnings overwrites this
+									$affected = Connection::get()->getAffectedRows(); // getting warnings overwrites this
 
-									$warnings = ($_POST["only_errors"] ? "" : $driver->warnings());
+									$warnings = ($_POST["only_errors"] ? null : Driver::get()->warnings());
 									$warnings_id = "warnings-$commands";
 									$warnings_link = $warnings ? "<a href='#$warnings_id' class='toggle'>" . lang('Warnings') . icon_chevron_down() . "</a>" : null;
 
@@ -188,7 +189,7 @@ if (!$error && $_POST) {
 										if (!$_POST["only_errors"]) {
 											echo "<p class='links'>";
 
-											$num_rows = $result->num_rows;
+											$num_rows = $result->getRowsCount();
 											echo ($num_rows ? ($limit && $num_rows > $limit ? lang('%d / ', $limit) : "") . lang('%d row(s)', $num_rows) : "");
 
 											echo $time, $edit_link, $warnings_link;
@@ -210,7 +211,7 @@ if (!$error && $_POST) {
 										}
 
 										if (!$_POST["only_errors"]) {
-											$title = isset($connection->info) ? "title='" . h($connection->info) . "'" : "";
+											$title = isset(Connection::get()->info) ? "title='" . h(Connection::get()->info) . "'" : "";
 											echo "<p class='message' $title>", lang('Query executed OK, %d row(s) affected.', $affected);
 											echo "$time $edit_link";
 											if ($warnings_link) {
@@ -236,10 +237,10 @@ if (!$error && $_POST) {
 
 									if ($export) {
 										echo "<form id='$export_id' action='' method='post' class='hidden'><p>\n";
-										echo html_select("output", Admin::get()->getDumpOutputs(), $admin_export["output"]) . " ";
-										echo html_select("format", $dump_format, $admin_export["format"]);
+										echo html_select("format", $dump_format, $export_settings["format"] ?? null);
+										echo html_select("output", Admin::get()->getDumpOutputs(), $export_settings["output"] ?? null) . " ";
 										echo "<input type='hidden' name='query' value='", h($q), "'>";
-										echo "<input type='hidden' name='token' value='$token'>";
+										echo "<input type='hidden' name='token' value='", get_token(), "'>";
 										echo " <input type='submit' class='button' name='export' value='" . lang('Export') . "'>";
 										echo "</p></form>\n";
 									}
@@ -250,7 +251,7 @@ if (!$error && $_POST) {
 								}
 
 								$start = microtime(true);
-							} while ($connection->next_result());
+							} while (Connection::get()->nextResult());
 						}
 
 						$query = substr($query, $offset);
@@ -322,7 +323,7 @@ if (!isset($_GET["import"])) {
 
 echo checkbox("error_stops", 1, ($_POST ? $_POST["error_stops"] : isset($_GET["import"]) || $_GET["error_stops"]), lang('Stop on error'));
 echo checkbox("only_errors", 1, ($_POST ? $_POST["only_errors"] : isset($_GET["import"]) || $_GET["only_errors"]), lang('Show only errors'));
-echo "<input type='hidden' name='token' value='$token'>";
+echo "<input type='hidden' name='token' value='", get_token(), "'>";
 echo "</p>\n";
 
 if (!isset($_GET["import"]) && $history) {
@@ -334,7 +335,7 @@ if (!isset($_GET["import"]) && $history) {
 		$key = key($history);
 		list($q, $time, $elapsed) = $val;
 
-		echo " <pre><code class='jush-$jush'>", truncate_utf8(ltrim(str_replace("\n", " ", str_replace("\r", "", preg_replace('~^(#|-- ).*~m', '', $q))))), "</code></pre>";
+		echo " <pre><code class='jush-" . DIALECT . "'>", truncate_utf8(ltrim(str_replace("\n", " ", str_replace("\r", "", preg_replace('~^(#|-- ).*~m', '', $q))))), "</code></pre>";
 		echo '<p class="links">';
 		echo "<a href='" . h(ME . "sql=&history=$key") . "'>" . icon("edit") . lang('Edit') . "</a>";
 		echo " <span class='time' title='" . @date('Y-m-d', $time) . "'>" . @date("H:i:s", $time) . // @ - time zone may be not set

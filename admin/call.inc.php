@@ -2,13 +2,8 @@
 
 namespace AdminNeo;
 
-/**
- * @var ?Min_DB $connection
- * @var ?Min_Driver $driver
- */
-
 $PROCEDURE = $_GET["name"] ?: $_GET["call"];
-page_header(lang('Call') . ": " . h($PROCEDURE), $error, [lang('Call')]);
+page_header(lang('Call') . ": " . h($PROCEDURE), [lang('Call')]);
 
 $routine = routine($_GET["call"], (isset($_GET["callf"]) ? "FUNCTION" : "PROCEDURE"));
 $in = [];
@@ -22,7 +17,7 @@ foreach ($routine["fields"] as $i => $field) {
 	}
 }
 
-if (!$error && $_POST) {
+if ($_POST) {
 	$call = [];
 	foreach ($routine["fields"] as $key => $field) {
 		if (in_array($key, $in)) {
@@ -31,7 +26,7 @@ if (!$error && $_POST) {
 				$val = "''";
 			}
 			if (isset($out[$key])) {
-				$connection->query("SET @" . idf_escape($field["field"]) . " = $val");
+				Connection::get()->query("SET @" . idf_escape($field["field"]) . " = $val");
 			}
 		}
 		$call[] = (isset($out[$key]) ? "@" . idf_escape($field["field"]) : $val);
@@ -39,20 +34,20 @@ if (!$error && $_POST) {
 
 	$query = (isset($_GET["callf"]) ? "SELECT" : "CALL") . " " . table($PROCEDURE) . "(" . implode(", ", $call) . ")";
 	$start = microtime(true);
-	$result = $connection->multi_query($query);
-	$affected = $connection->affected_rows; // getting warnings overwrites this
+	$result = Connection::get()->multiQuery($query);
+	$affected = Connection::get()->getAffectedRows(); // getting warnings overwrites this
 	echo Admin::get()->formatSelectQuery($query, $start, !$result);
 
 	if (!$result) {
 		echo "<p class='error'>" . error() . "\n";
 	} else {
 		$connection2 = connect();
-		if (is_object($connection2)) {
-			$connection2->select_db(DB);
+		if ($connection2) {
+			$connection2->selectDatabase(DB);
 		}
 
 		do {
-			$result = $connection->store_result();
+			$result = Connection::get()->storeResult();
 			if (is_object($result)) {
 				select($result, $connection2);
 			} else {
@@ -60,10 +55,10 @@ if (!$error && $_POST) {
 					. " <span class='time'>" . @date("H:i:s") . "</span>\n" // @ - time zone may be not set
 				;
 			}
-		} while ($connection->next_result());
+		} while (Connection::get()->nextResult());
 
 		if ($out) {
-			select($connection->query("SELECT " . implode(", ", $out)));
+			select(Connection::get()->query("SELECT " . implode(", ", $out)));
 		}
 	}
 }
@@ -90,7 +85,7 @@ if ($in) {
 
 echo "<p>",
 	"<input type='submit' class='button' value='", lang('Call'), "'>",
-	"<input type='hidden' name='token' value='$token'>",
+	"<input type='hidden' name='token' value='", get_token(), "'>",
 	"</p>\n",
 	"</form>\n";
 

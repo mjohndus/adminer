@@ -6,12 +6,7 @@ class Admin extends Origin
 {
 	private $values = [];
 
-	public function setOperators(?array $operators, ?string $likeOperator, ?string $regexpOperator): void
-	{
-		//
-	}
-
-	public function getOperators(): ?array
+	public function getOperators(): array
 	{
 		return ["<=", ">="];
 	}
@@ -33,19 +28,22 @@ class Admin extends Origin
 
 	public function getDatabase(): ?string
 	{
-		global $connection;
-
-		if (!$connection) {
+		if (!Connection::get()) {
 			return null;
 		}
 
 		// Returns the first available database.
 		$databases = $this->admin->getDatabases(false);
-		if ($databases) {
-			return $databases[(information_schema($databases[0]) ? 1 : 0)];
-		} else {
-			return $connection->result("SELECT SUBSTRING_INDEX(CURRENT_USER, '@', 1)");
+		$systemDatabases = Driver::get()->getSystemDatabases();
+
+		foreach ($databases as $database) {
+			if (!in_array($database, $systemDatabases)) {
+				return $database;
+			}
 		}
+
+		// Return username if no database is available.
+		return Connection::get()->getValue("SELECT SUBSTRING_INDEX(CURRENT_USER, '@', 1)");
 	}
 
 	public function getQueryTimeout(): int
@@ -60,9 +58,7 @@ class Admin extends Origin
 
 	public function printLoginForm(): void
 	{
-		global $drivers;
-
-		$driver = $this->config->getDefaultDriver($drivers);
+		$driver = $this->config->getDefaultDriver(Drivers::getList());
 		$server = $this->config->getDefaultServer();
 
 		echo "<table class='box'>\n";
@@ -160,6 +156,7 @@ ORDER BY ORDINAL_POSITION", null, "") as $row) { //! requires MySQL 5
 				return idf_escape($field["field"]);
 			}
 		}
+
 		return "";
 	}
 
@@ -181,11 +178,12 @@ ORDER BY ORDINAL_POSITION", null, "") as $row) { //! requires MySQL 5
 				// use the descriptions
 				foreach ($rows as $n => $row) {
 					if (isset($row[$key])) {
-						$return[$n][$key] = (string) $descriptions[$row[$key]];
+						$return[$n][$key] = (string)$descriptions[$row[$key]];
 					}
 				}
 			}
 		}
+
 		return $return;
 	}
 
@@ -195,6 +193,8 @@ ORDER BY ORDINAL_POSITION", null, "") as $row) { //! requires MySQL 5
 
 		if ($val === null) {
 			$text = "";
+		} elseif (!$field) {
+			$text = $val;
 		} elseif (preg_match('~blob|bytea~', $field["type"]) && !is_utf8($val)) {
 			$text = lang('%d byte(s)', strlen($original));
 			if (preg_match("~^(GIF|\xFF\xD8\xFF|\x89PNG\x0D\x0A\x1A\x0A)~", $original)) { // GIF|JPG|PNG, getimagetype() works with filename
@@ -210,9 +210,8 @@ ORDER BY ORDINAL_POSITION", null, "") as $row) { //! requires MySQL 5
 			$text = "<a href='$link'" . (is_web_url($link) ? target_blank() : "") . ">$text</a>";
 		}
 
-		if (!$link && !$this->looksLikeBool($field) && preg_match(number_type(), $field["type"])) {
-			$text = "<div class='number'>$text</div>"; // Firefox doesn't support <colgroup>
-		} elseif (preg_match('~date~', $field["type"])) {
+		// Firefox doesn't support <colgroup>
+		if (preg_match('~date~', $field["type"])) {
 			$text = "<div class='datetime'>$text</div>";
 		}
 
@@ -250,7 +249,7 @@ ORDER BY ORDINAL_POSITION", null, "") as $row) { //! requires MySQL 5
 
 	public function printSelectionSearch(array $where, array $columns, array $indexes): void
 	{
-		$where = (array) $_GET["where"];
+		$where = (array)$_GET["where"];
 		echo '<fieldset id="fieldset-search"><legend>' . lang('Search') . "</legend><div class='fieldset-content'>\n";
 		$keys = [];
 		foreach ($where as $key => $val) {
@@ -328,15 +327,15 @@ ORDER BY ORDINAL_POSITION", null, "") as $row) { //! requires MySQL 5
 			echo "<div style='display: none;'>" . hidden_fields([
 				"order" => [1 => reset($_GET["order"])],
 				"desc" => ($_GET["desc"] ? [1 => 1] : []),
-				]) . "</div>\n";
+			]) . "</div>\n";
 		}
 	}
 
 	public function printSelectionLimit(?int $limit): void
 	{
-		echo "<fieldset><legend>" . lang('Limit') . "</legend><div class='fieldset-content'>",
-			html_select("limit", ["", "50", "100"], (string)$limit),
-			"</div></fieldset>\n";
+		echo "<fieldset><legend>" . lang('Limit') . "</legend><div class='fieldset-content'>";
+		echo html_select("limit", ["", "50", "100"], (string)$limit);
+		echo "</div></fieldset>\n";
 	}
 
 	public function printSelectionLength(?string $textLength): void
@@ -358,11 +357,9 @@ ORDER BY ORDINAL_POSITION", null, "") as $row) { //! requires MySQL 5
 
 	public function processSelectionSearch(array $fields, array $indexes): array
 	{
-		global $driver;
-
 		$return = [];
 
-		foreach ((array) $_GET["where"] as $key => $where) {
+		foreach ((array)$_GET["where"] as $key => $where) {
 			$col = $where["col"];
 			$op = $where["op"];
 			$val = $where["val"];
@@ -380,7 +377,7 @@ ORDER BY ORDINAL_POSITION", null, "") as $row) { //! requires MySQL 5
 							$text_type = preg_match('~char|text|enum|set~', $field["type"]);
 							$value = $this->admin->processFieldInput($field, (!$op && $text_type && preg_match('~^[^%]+$~', $val) ? "%$val%" : $val));
 
-							$conds[] = $driver->convertSearch($name, $where, $field) . ($value == "NULL" ? " IS" . ($op == ">=" ? " NOT" : "") . " $value"
+							$conds[] = Driver::get()->convertSearch($name, $where, $field) . ($value == "NULL" ? " IS" . ($op == ">=" ? " NOT" : "") . " $value"
 								: (in_array($op, $this->admin->getOperators()) || $op == "=" ? " $op $value"
 								: ($text_type ? " LIKE $value"
 								: " IN (" . str_replace(",", "', '", $value) . ")"
@@ -406,9 +403,11 @@ ORDER BY ORDINAL_POSITION", null, "") as $row) { //! requires MySQL 5
 		if ($index_order != "") {
 			unset($_GET["order"][1]);
 		}
+
 		if ($_GET["order"]) {
 			return [idf_escape(reset($_GET["order"])) . ($_GET["desc"] ? " DESC" : "")];
 		}
+
 		foreach (($index_order != "" ? [$indexes[$index_order]] : $indexes) as $index) {
 			if ($index_order != "" || $index["type"] == "INDEX") {
 				$has_desc = array_filter($index["descs"]);
@@ -423,9 +422,11 @@ ORDER BY ORDINAL_POSITION", null, "") as $row) { //! requires MySQL 5
 				foreach ($index["columns"] as $key => $val) {
 					$return[] = idf_escape($val) . (($has_desc ? $index["descs"][$key] : $desc) ? " DESC" : "");
 				}
+
 				return $return;
 			}
 		}
+
 		return [];
 	}
 
@@ -440,7 +441,9 @@ ORDER BY ORDINAL_POSITION", null, "") as $row) { //! requires MySQL 5
 		if ($field["null"] && preg_match('~blob~', $field["type"])) {
 			$return["NULL"] = lang('empty');
 		}
+
 		$return[""] = ($field["null"] || $field["auto_increment"] || $this->looksLikeBool($field) ? "" : "*");
+
 		//! respect driver
 		if (preg_match('~date|time~', $field["type"])) {
 			$return["now"] = lang('now');
@@ -448,6 +451,7 @@ ORDER BY ORDINAL_POSITION", null, "") as $row) { //! requires MySQL 5
 		if (preg_match('~_(md5|sha1)$~i', $field["field"], $match)) {
 			$return[] = strtolower($match[1]);
 		}
+
 		return $return;
 	}
 
@@ -489,7 +493,7 @@ ORDER BY ORDINAL_POSITION", null, "") as $row) { //! requires MySQL 5
 
 	public function getFieldInputHint(?string $table, array $field, ?string $value): string
 	{
-		$hint =  parent::getFieldInputHint($table, $field, $value);
+		$hint = parent::getFieldInputHint($table, $field, $value);
 
 		$format = "";
 		if (preg_match('~time~', $field["type"])) {
@@ -511,14 +515,18 @@ ORDER BY ORDINAL_POSITION", null, "") as $row) { //! requires MySQL 5
 		if (!$field) {
 			return q($value);
 		}
+
 		if ($function == "now") {
 			return "$function()";
 		}
+
 		$return = $value;
 		if (preg_match('~date|timestamp~', $field["type"]) && preg_match('(^' . str_replace('\$1', '(?P<p1>\d*)', preg_replace('~(\\\\\\$([2-6]))~', '(?P<p\2>\d{1,2})', preg_quote(lang('$1-$3-$5')))) . '(.*))', $value, $match)) {
 			$return = ($match["p1"] != "" ? $match["p1"] : ($match["p2"] != "" ? ($match["p2"] < 70 ? 20 : 19) . $match["p2"] : gmdate("Y"))) . "-$match[p3]$match[p4]-$match[p5]$match[p6]" . end($match);
 		}
+
 		$return = ($field["type"] == "bit" && preg_match('~^[0-9]+$~', $value) ? $return : q($return));
+
 		if ($value == "" && $this->looksLikeBool($field)) {
 			$return = "'0'";
 		} elseif ($value == "" && ($field["null"] || !preg_match('~char|text~', $field["type"]))) {
@@ -526,6 +534,7 @@ ORDER BY ORDINAL_POSITION", null, "") as $row) { //! requires MySQL 5
 		} elseif (preg_match('~^(md5|sha1)$~', $function)) {
 			$return = "$function($return)";
 		}
+
 		return unconvert_field($field, $return);
 	}
 
@@ -553,14 +562,12 @@ ORDER BY ORDINAL_POSITION", null, "") as $row) { //! requires MySQL 5
 
 	public function dumpData(string $table, string $style, string $query): void
 	{
-		global $connection;
-
-		$result = $connection->query($query, 1); // 1 - MYSQLI_USE_RESULT
+		$result = Connection::get()->query($query, 1); // 1 - MYSQLI_USE_RESULT
 		if (!$result) {
 			return;
 		}
 
-		while ($row = $result->fetch_assoc()) {
+		while ($row = $result->fetchAssoc()) {
 			if ($style == "table") {
 				dump_csv(array_keys($row));
 				$style = "INSERT";
@@ -586,7 +593,7 @@ ORDER BY ORDINAL_POSITION", null, "") as $row) { //! requires MySQL 5
 
 		if ($missing == "auth") {
 			$first = true;
-			foreach ((array) $_SESSION["pwds"] as $vendor => $servers) {
+			foreach ((array)$_SESSION["pwds"] as $vendor => $servers) {
 				foreach ($servers[""] as $username => $password) {
 					if ($password !== null) {
 						if ($first) {
@@ -597,18 +604,21 @@ ORDER BY ORDINAL_POSITION", null, "") as $row) { //! requires MySQL 5
 					}
 				}
 			}
+
 			if (!$first) {
 				echo "</menu></nav>\n";
 			}
 		} else {
 			$this->admin->printDatabaseSwitcher($missing);
+
 			if ($missing != "db" && $missing != "ns") {
-				$table_status = table_status('', true);
-				if (!$table_status) {
+				$status = table_status('', true);
+
+				if (!$status) {
 					echo "<p class='message'>" . lang('No tables.') . "</p>\n";
 				} else {
 					$this->admin->printTablesFilter();
-					$this->admin->printTableList($table_status);
+					$this->admin->printTableList($status);
 				}
 			}
 		}
@@ -623,17 +633,19 @@ ORDER BY ORDINAL_POSITION", null, "") as $row) { //! requires MySQL 5
 	{
 		echo "<nav id='tables'><menu>";
 
-		foreach ($tables as $row) {
+		foreach ($tables as $status) {
 			// Skip views and tables without a name.
-			if (!isset($row["Engine"]) || ($name = $this->admin->getTableName($row)) == "") {
+			$name = $this->admin->getTableName($status);
+			if ($name == "") {
 				continue;
 			}
 
-			$active = $_GET["select"] == $row["Name"] || $_GET["edit"] == $row["Name"];
-			$selectUrl = h(ME) . 'select=' . urlencode($row["Name"]);
+			$active = $_GET["select"] == $status["Name"] || $_GET["edit"] == $status["Name"];
+			$class = "primary" . (is_view($status) ? " view" : "");
+			$selectUrl = h(ME) . 'select=' . urlencode($status["Name"]);
 
 			echo "<li>";
-			echo "<a href='$selectUrl'", bold($active, "primary"), " data-primary='true' title='$name'>$name</a>";
+			echo "<a href='$selectUrl'", bold($active, $class), " data-primary='true' title='$name'>$name</a>";
 			echo "</li>\n";
 		}
 
@@ -642,11 +654,12 @@ ORDER BY ORDINAL_POSITION", null, "") as $row) { //! requires MySQL 5
 
 	public function getForeignColumnInfo(array $foreignKeys, string $column): ?array
 	{
-		foreach ((array) $foreignKeys[$column] as $foreignKey) {
+		foreach ((array)$foreignKeys[$column] as $foreignKey) {
 			if (count($foreignKey["source"]) == 1) {
 				$name = $this->admin->getTableDescriptionFieldName($foreignKey["table"]);
 				if ($name != "") {
 					$id = idf_escape($foreignKey["target"][0]);
+
 					return [$foreignKey["table"], $id, $name];
 				}
 			}
@@ -655,8 +668,8 @@ ORDER BY ORDINAL_POSITION", null, "") as $row) { //! requires MySQL 5
 		return null;
 	}
 
-	private function foreignKeyOptions($table, $column, $value = null) {
-		global $connection;
+	private function foreignKeyOptions($table, $column, $value = null)
+	{
 		if (list($target, $id, $name) = $this->admin->getForeignColumnInfo(column_foreign_keys($table), $column)) {
 			$return = &$this->values[$target];
 			if ($return === null) {
@@ -664,10 +677,13 @@ ORDER BY ORDINAL_POSITION", null, "") as $row) { //! requires MySQL 5
 				$return = ($table_status["Rows"] > 1000 ? "" : ["" => ""] + get_key_vals("SELECT $id, $name FROM " . table($target) . " ORDER BY 2"));
 			}
 			if (!$return && $value !== null) {
-				return $connection->result("SELECT $name FROM " . table($target) . " WHERE $id = " . q($value));
+				return Connection::get()->getValue("SELECT $name FROM " . table($target) . " WHERE $id = " . q($value));
 			}
+
 			return $return;
 		}
+
+		return null;
 	}
 
 	/**

@@ -2,11 +2,6 @@
 
 namespace AdminNeo;
 
-/**
- * @var ?Min_DB $connection
- * @var ?Min_Driver $driver
- */
-
 $USER = $_GET["user"];
 $privileges = ["" => ["All privileges" => ""]];
 foreach (get_rows("SHOW PRIVILEGES") as $row) {
@@ -35,8 +30,8 @@ if ($_POST) {
 $grants = [];
 $old_pass = "";
 
-if (isset($_GET["host"]) && ($result = $connection->query("SHOW GRANTS FOR " . q($USER) . "@" . q($_GET["host"])))) { //! use information_schema for MySQL 5 - column names in column privileges are not escaped
-	while ($row = $result->fetch_row()) {
+if (isset($_GET["host"]) && ($result = Connection::get()->query("SHOW GRANTS FOR " . q($USER) . "@" . q($_GET["host"])))) { //! use information_schema for MySQL 5 - column names in column privileges are not escaped
+	while ($row = $result->fetchRow()) {
 		if (preg_match('~GRANT (.*) ON (.*) TO ~', $row[0], $match) && preg_match_all('~ *([^(,]*[^ ,(])( *\([^)]+\))?~', $match[1], $matches, PREG_SET_ORDER)) { //! escape the part between ON and TO
 			foreach ($matches as $val) {
 				if ($val[1] != "USAGE") {
@@ -53,23 +48,25 @@ if (isset($_GET["host"]) && ($result = $connection->query("SHOW GRANTS FOR " . q
 	}
 }
 
-if ($_POST && !$error) {
+if ($_POST) {
 	$old_user = (isset($_GET["host"]) ? q($USER) . "@" . q($_GET["host"]) : "''");
 	if ($_POST["drop"]) {
 		query_redirect("DROP USER $old_user", ME . "privileges=", lang('User has been dropped.'));
 	} else {
 		$new_user = q($_POST["user"]) . "@" . q($_POST["host"]); // if $_GET["host"] is not set then $new_user is always different
 		$pass = $_POST["pass"];
-		if ($pass != '' && !$_POST["hashed"] && !min_version(8)) {
+		if ($pass != '' && !$_POST["hashed"] && !Connection::get()->isMinVersion("8")) {
 			// compute hash in a separate query so that plain text password is not saved to history
-			$pass = $connection->result("SELECT PASSWORD(" . q($pass) . ")");
+			$pass = Connection::get()->getValue("SELECT PASSWORD(" . q($pass) . ")");
 			$error = !$pass;
+		} else {
+			$error = false;
 		}
 
 		$created = false;
 		if (!$error) {
 			if ($old_user != $new_user) {
-				$created = queries((min_version(5) ? "CREATE USER" : "GRANT USAGE ON *.* TO") . " $new_user IDENTIFIED BY " . (min_version(8) ? "" : "PASSWORD ") . q($pass));
+				$created = queries((Connection::get()->isMinVersion("5") ? "CREATE USER" : "GRANT USAGE ON *.* TO") . " $new_user IDENTIFIED BY " . (Connection::get()->isMinVersion("8") ? "" : "PASSWORD ") . q($pass));
 				$error = !$created;
 			} elseif ($pass != $old_pass) {
 				queries("SET PASSWORD FOR $new_user = " . q($pass));
@@ -118,20 +115,20 @@ if ($_POST && !$error) {
 
 		if ($created) {
 			// delete new user in case of an error
-			$connection->query("DROP USER $new_user");
+			Connection::get()->query("DROP USER $new_user");
 		}
 	}
 }
 
 $title = isset($_GET["host"]) ? lang('Username') . ": " . h("$USER@$_GET[host]") : lang('Create user');
 $title2 = isset($_GET["host"]) ? h($USER) : lang('Create user');
-page_header($title, $error, ["privileges" => ['', lang('Privileges')], $title2]);
+page_header($title, ["privileges" => ['', lang('Privileges')], $title2]);
 
 if ($_POST) {
 	$row = $_POST;
 	$grants = $new_grants;
 } else {
-	$row = $_GET + ["host" => $connection->result("SELECT SUBSTRING_INDEX(CURRENT_USER, '@', -1)")]; // create user on the same domain by default
+	$row = $_GET + ["host" =>  Connection::get()->getValue("SELECT SUBSTRING_INDEX(CURRENT_USER, '@', -1)")]; // create user on the same domain by default
 	$row["pass"] = $old_pass;
 	if ($old_pass != "") {
 		$row["hashed"] = true;
@@ -153,7 +150,7 @@ if ($_POST) {
 <tr><th><?php echo lang('Username'); ?><td><input class="input" name="user" data-maxlength="80" value="<?php echo h($row["user"]); ?>" autocapitalize="off">
 <tr><th><?php echo lang('Password'); ?><td><input class="input" name="pass" id="pass" value="<?php echo h($row["pass"]); ?>" autocomplete="new-password">
 <?php if (!$row["hashed"]) { echo script("typePassword(gid('pass'));"); } ?>
-<?php echo (min_version(8) ? "" : checkbox("hashed", 1, $row["hashed"], lang('Hashed'), "typePassword(this.form['pass'], this.checked);")); ?>
+<?php echo (Connection::get()->isMinVersion("8") ? "" : checkbox("hashed", 1, $row["hashed"], lang('Hashed'), "typePassword(this.form['pass'], this.checked);")); ?>
 </table>
 
 <?php
@@ -240,5 +237,5 @@ echo "</table></div>\n";
 <p>
 <input type="submit" class="button default" value="<?php echo lang('Save'); ?>">
 <?php if (isset($_GET["host"])) { ?><input type="submit" class="button" name="drop" value="<?php echo lang('Drop'); ?>"><?php echo confirm(lang('Drop %s?', "$USER@$_GET[host]")); ?><?php } ?>
-<input type="hidden" name="token" value="<?php echo $token; ?>">
+<input type="hidden" name="token" value="<?php echo get_token(); ?>">
 </form>

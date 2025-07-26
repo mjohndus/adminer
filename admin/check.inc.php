@@ -2,18 +2,13 @@
 
 namespace AdminNeo;
 
-/**
- * @var ?Min_DB $connection
- * @var ?Min_Driver $driver
- */
-
 $TABLE = $_GET["check"];
 $name = $_GET["name"];
 $row = $_POST;
 
-if ($row && !$error) {
-	if ($jush == "sqlite") {
-		$result = recreate_table($TABLE, $TABLE, array(), array(), array(), 0, array(), $name, ($row["drop"] ? "" : $row["clause"]));
+if ($row) {
+	if (DIALECT == "sqlite") {
+		$result = recreate_table($TABLE, $TABLE, [], [], [], 0, [], $name, ($row["drop"] ? "" : $row["clause"]));
 	} else {
 		$result = ($name == "" || queries("ALTER TABLE " . table($TABLE) . " DROP CONSTRAINT " . idf_escape($name)));
 		if (!$row["drop"]) {
@@ -27,17 +22,17 @@ if ($row && !$error) {
 	);
 }
 
-page_header(($name != "" ? lang('Alter check') . ": " . h($name) : lang('Create check')), $error, array("table" => $TABLE));
+page_header(($name != "" ? lang('Alter check') . ": " . h($name) : lang('Create check')), ["table" => $TABLE]);
 
 if (!$row) {
-	$checks = $driver->checkConstraints($TABLE);
-	$row = array("name" => $name, "clause" => $checks[$name]);
+	$checks = Driver::get()->checkConstraints($TABLE);
+	$row = ["name" => $name, "clause" => $checks[$name]];
 }
 ?>
 
 <form action="" method="post">
 <p><?php
-if ($jush != "sqlite") {
+if (DIALECT != "sqlite") {
 	echo lang('Name') . ': <input name="name" value="' . h($row["name"]) . '" class="input" data-maxlength="64" autocapitalize="off"> ';
 }
 echo doc_link([
@@ -51,5 +46,5 @@ echo doc_link([
 <p><?php textarea("clause", $row["clause"]); ?>
 <p><input type="submit" class='button default' value="<?php echo lang('Save'); ?>">
 <?php if ($name != "") { ?><input type="submit" class='button' name="drop" value="<?php echo lang('Drop'); ?>"><?php echo confirm(lang('Drop %s?', $name)); ?><?php } ?>
-<input type="hidden" name="token" value="<?php echo $token; ?>">
+<input type="hidden" name="token" value="<?php echo get_token(); ?>">
 </form>

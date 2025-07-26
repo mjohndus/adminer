@@ -2,15 +2,10 @@
 
 namespace AdminNeo;
 
-/**
- * @var ?Min_DB $connection
- * @var ?Min_Driver $driver
- */
-
 $TABLE = $_GET["table"];
 $fields = fields($TABLE);
 if (!$fields) {
-	$error = error();
+	Admin::get()->addError(error());
 }
 $table_status = table_status1($TABLE, true);
 $name = Admin::get()->getTableName($table_status);
@@ -22,7 +17,7 @@ foreach ($fields as $key => $field) {
 
 $title = $fields && is_view($table_status) ? $table_status['Engine'] == 'materialized view' ? lang('Materialized view') : lang('View') : lang('Table');
 $table_name = $name != "" ? $name : h($TABLE);
-page_header("$title: $table_name", $error, [$table_name]);
+page_header("$title: $table_name", [$table_name]);
 
 $set = null;
 if (isset($rights["insert"]) || !support("table")) {
@@ -31,7 +26,7 @@ if (isset($rights["insert"]) || !support("table")) {
 Admin::get()->printTableMenu($table_status, $set);
 
 $info = [];
-if (!preg_match("~sqlite|mssql|pgsql~", $jush) && isset($table_status["Engine"])) {
+if (!preg_match("~sqlite|mssql|pgsql~", DIALECT) && isset($table_status["Engine"])) {
 	$info[] = lang('Engine') . ": " . h($table_status["Engine"]);
 }
 if (isset($table_status["Collation"])) {
@@ -69,16 +64,16 @@ if (support("partitioning") && preg_match("~partitioned~", $table_status["Create
 	echo $editLink;
 }
 
-if (!is_view($table_status)) {
-	if (support("indexes")) {
-		echo "<h2 id='indexes'>" . lang('Indexes') . "</h2>\n";
-		$indexes = indexes($TABLE);
-		if ($indexes) {
-			Admin::get()->printTableIndexes($indexes);
-		}
-		echo '<p class="links"><a href="' . h(ME) . 'indexes=' . urlencode($TABLE) . '">' . icon("edit") . lang('Alter indexes') . "</a>\n";
+if (support("indexes") && Driver::get()->supportsIndex($table_status)) {
+	echo "<h2 id='indexes'>" . lang('Indexes') . "</h2>\n";
+	$indexes = indexes($TABLE);
+	if ($indexes) {
+		Admin::get()->printTableIndexes($indexes);
 	}
+	echo '<p class="links"><a href="' . h(ME) . 'indexes=' . urlencode($TABLE) . '">' . icon("edit") . lang('Alter indexes') . "</a>\n";
+}
 
+if (!is_view($table_status)) {
 	if (fk_support($table_status)) {
 		echo "<h2 id='foreign-keys'>" . lang('Foreign keys') . "</h2>\n";
 		$foreign_keys = foreign_keys($TABLE);
@@ -107,12 +102,12 @@ if (!is_view($table_status)) {
 
 	if (support("check")) {
 		echo "<h2 id='checks'>" . lang('Checks') . "</h2>\n";
-		$check_constraints = $driver->checkConstraints($TABLE);
+		$check_constraints = Driver::get()->checkConstraints($TABLE);
 		if ($check_constraints) {
 			echo "<table cellspacing='0'>\n";
 			foreach ($check_constraints as $key => $val) {
 				echo "<tr title='" . h($key) . "'>";
-				echo "<td><code class='jush-$jush'>" . h($val);
+				echo "<td><code class='jush-" . DIALECT . "'>" . h($val);
 				echo "<td><a href='" . h(ME . 'check=' . urlencode($TABLE) . '&name=' . urlencode($key)) . "'>" . lang('Alter') . "</a>";
 				echo "\n";
 			}

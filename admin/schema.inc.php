@@ -2,17 +2,12 @@
 
 namespace AdminNeo;
 
-/**
- * @var ?Min_DB $connection
- * @var ?Min_Driver $driver
- */
-
 $title2 = h(": " . DB . ($_GET["ns"] ? ".$_GET[ns]" : ""));
-page_header(lang('Database schema') . $title2, "", [lang('Database schema')]);
+page_header(lang('Database schema') . $title2, [lang('Database schema')]);
 
 $table_pos = [];
 $table_pos_js = [];
-$SCHEMA = ($_GET["schema"] ? $_GET["schema"] : $_COOKIE["neo_schema-" . str_replace(".", "_", DB)]); // $_COOKIE["neo_schema"] was used before 3.2.0 //! ':' in table name
+$SCHEMA = ($_GET["schema"] ?: $_COOKIE["neo_schema-" . str_replace(".", "_", DB)]); // $_COOKIE["neo_schema"] was used before 3.2.0 //! ':' in table name
 preg_match_all('~([^:]+):([-0-9.]+)x([-0-9.]+)(_|$)~', $SCHEMA, $matches, PREG_SET_ORDER);
 foreach ($matches as $i => $match) {
 	$table_pos[$match[1]] = [$match[2], $match[3]];
@@ -24,16 +19,17 @@ $base_left = -1;
 $schema = []; // table => array("fields" => array(name => field), "pos" => array(top, left), "references" => array(table => array(left => array(source, target))))
 $referenced = []; // target_table => array(table => array(left => target_column))
 $lefts = []; // float => bool
+$all_fields = Driver::get()->getAllFields();
 foreach (table_status('', true) as $table => $table_status) {
 	if (is_view($table_status)) {
 		continue;
 	}
 	$pos = 0;
 	$schema[$table]["fields"] = [];
-	foreach (fields($table) as $name => $field) {
+	foreach ($all_fields[$table] as $field) {
 		$pos += 1.25;
 		$field["pos"] = $pos;
-		$schema[$table]["fields"][$name] = $field;
+		$schema[$table]["fields"][$field["field"]] = $field;
 	}
 	$schema[$table]["pos"] = ($table_pos[$table] ?? [$top, 0]);
 
@@ -73,7 +69,7 @@ foreach ($schema as $name => $table) {
 	echo script("qsl('div').onmousedown = schemaMousedown;");
 
 	foreach ($table["fields"] as $field) {
-		$val = '<span' . type_class($field["type"]) . ' title="' . h($field["full_type"] . ($field["null"] ? " NULL" : '')) . '">' . h($field["field"]) . '</span>';
+		$val = '<span' . type_class($field["type"]) . ' title="' . h($field["type"] . ($field["length"] ? "($field[length])" : "") . ($field["null"] ? " NULL" : '')) . '">' . h($field["field"]) . '</span>';
 		echo "<br>" . ($field["primary"] ? "<i>$val</i>" : $val);
 	}
 

@@ -18,8 +18,8 @@ namespace AdminNeo;
  */
 class IpLoginPlugin extends Plugin
 {
-	private $ips;
-	private $forwardedFor;
+	protected $ips;
+	protected $forwardedFor;
 
 	/**
 	 * @param array $ips Allowed IP address prefixes.

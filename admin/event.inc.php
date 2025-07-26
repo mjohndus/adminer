@@ -2,17 +2,12 @@
 
 namespace AdminNeo;
 
-/**
- * @var ?Min_DB $connection
- * @var ?Min_Driver $driver
- */
-
 $EVENT = $_GET["event"];
 $intervals = ["YEAR", "QUARTER", "MONTH", "DAY", "HOUR", "MINUTE", "WEEK", "SECOND", "YEAR_MONTH", "DAY_HOUR", "DAY_MINUTE", "DAY_SECOND", "HOUR_MINUTE", "HOUR_SECOND", "MINUTE_SECOND"];
 $statuses = ["ENABLED" => "ENABLE", "DISABLED" => "DISABLE", "SLAVESIDE_DISABLED" => "DISABLE ON SLAVE"];
 $row = $_POST;
 
-if ($_POST && !$error) {
+if ($_POST) {
 	if ($_POST["drop"]) {
 		query_redirect("DROP EVENT " . idf_escape($EVENT), substr(ME, 0, -1), lang('Event has been dropped.'));
 	} elseif (in_array($row["INTERVAL_FIELD"], $intervals) && isset($statuses[$row["STATUS"]])) {
@@ -35,9 +30,9 @@ if ($_POST && !$error) {
 }
 
 if ($EVENT != "") {
-	page_header(lang('Alter event') . ": " . h($EVENT), $error, [lang('Alter event')]);
+	page_header(lang('Alter event') . ": " . h($EVENT), [lang('Alter event')]);
 } else {
-	page_header(lang('Create event'), $error, [lang('Create event')]);
+	page_header(lang('Create event'), [lang('Create event')]);
 }
 
 if (!$row && $EVENT != "") {
@@ -60,5 +55,5 @@ if (!$row && $EVENT != "") {
 <p>
 <input type="submit" class="button default" value="<?php echo lang('Save'); ?>">
 <?php if ($EVENT != "") { ?><input type="submit" class="button" name="drop" value="<?php echo lang('Drop'); ?>"><?php echo confirm(lang('Drop %s?', $EVENT)); ?><?php } ?>
-<input type="hidden" name="token" value="<?php echo $token; ?>">
+<input type="hidden" name="token" value="<?php echo get_token(); ?>">
 </form>

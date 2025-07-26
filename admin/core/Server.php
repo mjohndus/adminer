@@ -54,7 +54,6 @@ class Server
 	public function hasCredentials(): bool
 	{
 		return $this->getUsername() != "" || $this->getPassword() != "";
-
 	}
 
 	public function getConfigParams(): array

@@ -2,14 +2,9 @@
 
 namespace AdminNeo;
 
-/**
- * @var ?Min_DB $connection
- * @var ?Min_Driver $driver
- */
-
 $row = $_POST;
 
-if ($_POST && !$error && !isset($_POST["add_x"])) { // add is an image and PHP changes add.x to add_x
+if ($_POST && !isset($_POST["add_x"])) { // add is an image and PHP changes add.x to add_x
 	$name = trim($row["name"]);
 	if ($_POST["drop"]) {
 		$_GET["db"] = ""; // to save in global history
@@ -45,9 +40,9 @@ if ($_POST && !$error && !isset($_POST["add_x"])) { // add is an image and PHP c
 }
 
 if (DB != "") {
-	page_header(lang('Alter database') . ": " . h(DB), $error, [lang('Alter database')]);
+	page_header(lang('Alter database') . ": " . h(DB), [lang('Alter database')]);
 } else {
-	page_header(lang('Create database'), $error, [lang('Create database')]);
+	page_header(lang('Create database'), [lang('Create database')]);
 }
 
 $name = DB;
@@ -55,7 +50,7 @@ if ($_POST) {
 	$name = $row["name"];
 } elseif (DB != "") {
 	$row["collation"] = db_collation(DB, collations());
-} elseif ($jush == "sql") {
+} elseif (DIALECT == "sql") {
 	// propose database name with limited privileges
 	foreach (get_vals("SHOW GRANTS") as $grant) {
 		if (preg_match('~ ON (`(([^\\\\`]|``|\\\\.)*)%`\.\*)?~', $grant, $match) && $match[1]) {
@@ -89,5 +84,5 @@ if (DB != "") {
 	echo "<button name='add_x' value='1' title='", h(lang('Add next')), "' class='button light'>", icon_solo("add"), "</button>\n";
 }
 ?>
-<input type="hidden" name="token" value="<?php echo $token; ?>">
+<input type="hidden" name="token" value="<?php echo get_token(); ?>">
 </form>

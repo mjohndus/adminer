@@ -57,18 +57,23 @@ A complete list of changes can be found in the [Upgrade Guide](https://www.admin
 Docker
 ------
 
-The official Docker image is available at [Docker Hub](https://hub.docker.com/r/peterknut/adminneo). Please follow the
+The official Docker image is available on [Docker Hub](https://hub.docker.com/r/adminneoorg/adminneo). Follow the
 instructions on the Docker page to get started.
 
 Main project files
 ------------------
 
 - admin/index.php - Development version of AdminNeo.
-- admin/plugins.php - Plugins example.
 - editor/index.php - Development version of EditorNeo.
-- editor/plugins.php - Plugins example.
-- editor/example.php - Customizations example.
-- editor/sqlite.php - SQLite example.
 - bin/compile.php - Create a single file version.
 - bin/update-translations.php - Update translation files.
-- tests/katalon.html - Katalon Automation Recorder test suite.
+- examples - Examples of customizations and plugins usage.
+- tests - Katalon Automation Recorder test suites.
+
+Updating translations 
+---------------------
+
+- Download the current source code.
+- Run `php bin/update-translations.php [language]` where `language` is the language code (e.g. `de`).
+- Translate all missing texts with `null` values and/or correct existing translations.
+- Create a pull request or send your updates by another channel (e.g., in new GitHub issue).

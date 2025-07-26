@@ -2,15 +2,10 @@
 
 namespace AdminNeo;
 
-/**
- * @var ?Min_DB $connection
- * @var ?Min_Driver $driver
- */
-
 $SEQUENCE = $_GET["sequence"];
 $row = $_POST;
 
-if ($_POST && !$error) {
+if ($_POST) {
 	$link = substr(ME, 0, -1);
 	$name = trim($row["name"]);
 	if ($_POST["drop"]) {
@@ -25,9 +20,9 @@ if ($_POST && !$error) {
 }
 
 if ($SEQUENCE != "") {
-	page_header(lang('Alter sequence') . ": " . h($SEQUENCE), $error, [h($SEQUENCE)]);
+	page_header(lang('Alter sequence') . ": " . h($SEQUENCE), [h($SEQUENCE)]);
 } else {
-	page_header(lang('Create sequence'), $error, [lang('Create type')]);
+	page_header(lang('Create sequence'), [lang('Create type')]);
 }
 
 if (!$row) {
@@ -43,5 +38,5 @@ if ($SEQUENCE != "") {
 	echo "<input type='submit' class='button' name='drop' value='" . lang('Drop') . "'>" . confirm(lang('Drop %s?', $SEQUENCE)) . "\n";
 }
 ?>
-<input type="hidden" name="token" value="<?php echo $token; ?>">
+<input type="hidden" name="token" value="<?php echo get_token(); ?>">
 </form>

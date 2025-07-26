@@ -3,8 +3,8 @@
 
 namespace AdminNeo;
 
-require __DIR__ . "/../vendor/vrana/phpshrink/phpShrink.php";
-include __DIR__ . "/../admin/include/compile.inc.php";
+require __DIR__ . "/../../vendor/vrana/phpshrink/phpShrink.php";
+require __DIR__ . "/../../admin/include/compile.inc.php";
 
 function check(string $code, string $expected): void
 {
@@ -40,6 +40,7 @@ check('self::f($a[1], $b) ?? 1', '($_result = self::f($a[1], $b)) !== null ? $_r
 // Unsupported.
 check('$a[$b[$c[1]]] ?? 1', '$a[$b[$c[1]]] ?? 1');
 check('$a[f()] ?? 1', '$a[f()] ?? 1');
+check('$a->a[b()] ?? 1', '$a->a[b()] ?? 1');
 check('f(g()) ?? null', 'f(g()) ?? null');
 
 // Constants.

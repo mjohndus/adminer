@@ -1,43 +1,46 @@
 <?php
 
 use AdminNeo\Admin;
+use AdminNeo\JsonPreviewPlugin;
+use AdminNeo\SlugifyEditPlugin;
+use AdminNeo\TranslationPlugin;
 use function AdminNeo\h;
 
 function adminneo_instance()
 {
-	class ExampleEditor extends Admin
+	class CustomEditor extends Admin
 	{
-		public function getServiceTitle(): string
+		public function getServiceTitle()
 		{
 			// Custom name in title and heading.
-			return 'Example';
+			return 'Editor Example';
 		}
 
 		public function getCredentials(): array
 		{
-			// User ODBC with password ODBC on localhost.
+			// User 'test' with password 'test' on localhost.
 			return ['localhost', 'test', 'test'];
 		}
 
-		public function authenticate(string $username, string $password): ?bool
+		public function authenticate($username, $password)
 		{
 			// username: 'admin', password: anything
 			return ($username == 'admin');
 		}
 
-		public function getDatabase(): ?string
+		public function getDatabase()
 		{
 			// Use just one database.
 			return 'adminneo_test';
 		}
 
-		public function getTableName(array $tableStatus): string
+		public function getTableName(array $tableStatus)
 		{
 			// Tables without comments would return empty string and will be ignored by Editor.
 			return $tableStatus["Comment"] ? h($tableStatus["Name"]) : "";
 		}
 
-		public function getFieldName(array $field, int $order = 0): string
+		public function getFieldName(array $field, $order = 0)
 		{
 			// Hide hashes in select.
 			if ($order && preg_match('~_(md5|sha1)$~', $field["field"])) {
@@ -62,9 +65,17 @@ function adminneo_instance()
 
 	$config = [
 		"colorVariant" => "green",
+		"jsonValuesDetection" => true,
+		"jsonValuesAutoFormat" => true,
 	];
 
-	return ExampleEditor::create($config);
+	$plugins = [
+		new JsonPreviewPlugin(),
+		new TranslationPlugin(),
+		new SlugifyEditPlugin(),
+	];
+
+	return CustomEditor::create($config, $plugins);
 }
 
-include "index.php";
+include "../compiled/editorneo.php";

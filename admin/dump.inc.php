@@ -2,19 +2,11 @@
 
 namespace AdminNeo;
 
-/**
- * @var ?Min_DB $connection
- * @var ?Min_Driver $driver
- */
-
 $TABLE = $_GET["dump"];
 
-if ($_POST && !$error) {
-	$cookie = "";
-	foreach (["output", "format", "db_style", "types", "routines", "events", "table_style", "auto_increment", "triggers", "data_style"] as $key) {
-		$cookie .= "&$key=" . urlencode($_POST[$key]);
-	}
-	cookie("neo_export", substr($cookie, 1));
+if ($_POST) {
+	$dump_settings = array_intersect_key($_POST, array_flip(["output", "format", "db_style", "types", "routines", "events", "table_style", "auto_increment", "triggers", "data_style"]));
+	save_settings($dump_settings, "neo_dump");
 
 	$subjects = array_flip($_POST["databases"] ?? []) + array_flip($_POST["tables"] ?? []) + array_flip($_POST["data"] ?? []);
 	if (count($subjects) == 1) {
@@ -29,16 +21,16 @@ if ($_POST && !$error) {
 
 	$is_sql = preg_match('~sql~', $_POST["format"]);
 	if ($is_sql) {
-		echo "-- AdminNeo $VERSION " . $drivers[DRIVER] . " " . str_replace("\n", " ", $connection->server_info) . " dump\n\n";
-		if ($jush == "sql") {
+		echo "-- AdminNeo " . VERSION . " " . Drivers::get(DRIVER) . " " . Connection::get()->getVersion() . " dump\n\n";
+		if (DIALECT == "sql") {
 			echo "SET NAMES utf8;
 SET time_zone = '+00:00';
 SET foreign_key_checks = 0;
 " . ($_POST["data_style"] ? "SET sql_mode = 'NO_AUTO_VALUE_ON_ZERO';
 " : "") . "
 ";
-			$connection->query("SET time_zone = '+00:00'");
-			$connection->query("SET sql_mode = ''");
+			Connection::get()->query("SET time_zone = '+00:00'");
+			Connection::get()->query("SET sql_mode = ''");
 		}
 	}
 
@@ -53,8 +45,8 @@ SET foreign_key_checks = 0;
 
 	foreach ((array) $databases as $db) {
 		Admin::get()->dumpDatabase($db);
-		if ($connection->select_db($db)) {
-			if ($is_sql && preg_match('~CREATE~', $style) && ($create = $connection->result("SHOW CREATE DATABASE " . idf_escape($db), 1))) {
+		if (Connection::get()->selectDatabase($db)) {
+			if ($is_sql && preg_match('~CREATE~', $style) && ($create = Connection::get()->getValue("SHOW CREATE DATABASE " . idf_escape($db), 1))) {
 				set_utf8mb4($create);
 				if ($style == "DROP+CREATE") {
 					echo "DROP DATABASE IF EXISTS " . idf_escape($db) . ";\n";
@@ -83,7 +75,7 @@ SET foreign_key_checks = 0;
 					foreach (routines() as $row) {
 						$name = $row["ROUTINE_NAME"];
 						$routine = $row["ROUTINE_TYPE"];
-						$create = create_routine($routine, array("name" => $name) + routine($row["SPECIFIC_NAME"], $routine));
+						$create = create_routine($routine, ["name" => $name] + routine($row["SPECIFIC_NAME"], $routine));
 						set_utf8mb4($create);
 						$out .= ($style != 'DROP+CREATE' ? "DROP $routine IF EXISTS " . idf_escape($name) . ";;\n" : "") . "$create;\n\n";
 					}
@@ -91,13 +83,13 @@ SET foreign_key_checks = 0;
 
 				if ($_POST["events"]) {
 					foreach (get_rows("SHOW EVENTS", null, "-- ") as $row) {
-						$create = remove_definer($connection->result("SHOW CREATE EVENT " . idf_escape($row["Name"]), 3));
+						$create = remove_definer(Connection::get()->getValue("SHOW CREATE EVENT " . idf_escape($row["Name"]), 3));
 						set_utf8mb4($create);
 						$out .= ($style != 'DROP+CREATE' ? "DROP EVENT IF EXISTS " . idf_escape($row["Name"]) . ";;\n" : "") . "$create;;\n\n";
 					}
 				}
 
-				echo ($out && $jush == 'sql' ? "DELIMITER ;;\n\n$out" . "DELIMITER ;\n\n" : $out);
+				echo ($out && DIALECT == 'sql' ? "DELIMITER ;;\n\n$out" . "DELIMITER ;\n\n" : $out);
 			}
 
 			if ($_POST["table_style"] || $_POST["data_style"]) {
@@ -159,7 +151,7 @@ SET foreign_key_checks = 0;
 }
 
 $name = DB !== null ? h(DB) : (SERVER != "" ? h(Admin::get()->getServerName(SERVER)) : lang('Server'));
-page_header(lang('Export') . ": $name", $error, ($_GET["export"] != "" ? ["table" => $_GET["export"]] : [lang('Export')]));
+page_header(lang('Export') . ": $name", ($_GET["export"] != "" ? ["table" => $_GET["export"]] : [lang('Export')]));
 ?>
 
 <form action="" method="post">
@@ -168,56 +160,61 @@ page_header(lang('Export') . ": $name", $error, ($_GET["export"] != "" ? ["table
 $db_style = ['', 'USE', 'DROP+CREATE', 'CREATE'];
 $table_style = ['', 'DROP+CREATE', 'CREATE'];
 $data_style = ['', 'TRUNCATE+INSERT', 'INSERT'];
-if ($jush == "sql") { //! use insertUpdate() in all drivers
+if (DIALECT == "sql") { //! use insertUpdate() in all drivers
 	$data_style[] = 'INSERT+UPDATE';
 }
-parse_str($_COOKIE["neo_export"], $row);
-if (!$row) {
-	$row = ["output" => "file", "format" => "sql", "db_style" => (DB != "" ? "" : "CREATE"), "table_style" => "DROP+CREATE", "data_style" => "INSERT"];
-}
-if (!isset($row["events"])) { // backwards compatibility
-	$row["routines"] = $row["events"] = ($_GET["dump"] == "");
-	$row["triggers"] = $row["table_style"];
+$dump_settings = get_settings("neo_dump");
+if (!$dump_settings) {
+	$dump_settings = [
+		"format" => "sql",
+		"db_style" => (DB == "" ? "CREATE" : ""),
+		"table_style" => "DROP+CREATE",
+		"data_style" => "INSERT",
+		"routines" => $_GET["dump"] == "",
+		"events" => $_GET["dump"] == "",
+		"triggers" => true,
+		"output" => "file",
+	];
 }
 
-echo "<tr><th>", lang('Format'), "</th><td>", html_select("format", Admin::get()->getDumpFormats(), $row["format"], false), "</td></tr>\n"; // false = radio
+echo "<tr><th>", lang('Format'), "</th><td>", html_radios("format", Admin::get()->getDumpFormats(), $dump_settings["format"]), "</td></tr>\n";
 
-if ($jush != "sqlite") {
+if (DIALECT != "sqlite") {
 	echo "<tr><th>", lang('Database'), "</th>";
-	echo "<td>", html_select('db_style', $db_style, $row["db_style"]);
+	echo "<td>", html_select('db_style', $db_style, $dump_settings["db_style"]);
 
 	echo "<span class='labels'>";
 	if (support("type")) {
-		echo checkbox("types", 1, $row["types"], lang('User types'));
+		echo checkbox("types", 1, $dump_settings["types"], lang('User types'));
 	}
 	if (support("routine")) {
-		echo checkbox("routines", 1, $row["routines"], lang('Routines'));
+		echo checkbox("routines", 1, $dump_settings["routines"], lang('Routines'));
 	}
 	if (support("event")) {
-		echo checkbox("events", 1, $row["events"], lang('Events'));
+		echo checkbox("events", 1, $dump_settings["events"], lang('Events'));
 	}
 	echo "</span></td></tr>";
 }
 
 echo "<tr><th>", lang('Tables'), "</th><td>";
-echo html_select('table_style', $table_style, $row["table_style"]);
+echo html_select('table_style', $table_style, $dump_settings["table_style"]);
 
 echo " <span class='labels'>";
-echo checkbox("auto_increment", 1, $row["auto_increment"], lang('Auto Increment'));
+echo checkbox("auto_increment", 1, $dump_settings["auto_increment"], lang('Auto Increment'));
 if (support("trigger")) {
-	echo checkbox("triggers", 1, $row["triggers"], lang('Triggers'));
+	echo checkbox("triggers", 1, $dump_settings["triggers"], lang('Triggers'));
 }
 echo "</span></td></tr>";
 
-echo "<tr><th>", lang('Data'), "</th><td>", html_select('data_style', $data_style, $row["data_style"]), "</td></tr>";
+echo "<tr><th>", lang('Data'), "</th><td>", html_select('data_style', $data_style, $dump_settings["data_style"]), "</td></tr>";
 
-echo "<tr><th>", lang('Output'), "</th><td>", html_select("output", Admin::get()->getDumpOutputs(), $row["output"], false), "</td></tr>\n"; // false = radio
+echo "<tr><th>", lang('Output'), "</th><td>", html_radios("output", Admin::get()->getDumpOutputs(), $dump_settings["output"]), "</td></tr>\n";
 
 ?>
 </table>
 
 <p><input type="submit" class="button default" value="<?php echo lang('Export'); ?>">
-<input type="hidden" name="token" value="<?php echo $token; ?>">
+<input type="hidden" name="token" value="<?php echo get_token(); ?>">
 
 <table>
 <?php

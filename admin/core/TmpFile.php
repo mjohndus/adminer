@@ -4,22 +4,33 @@ namespace AdminNeo;
 
 class TmpFile
 {
-	var $handler;
-	var $size;
+	/** @var resource|false */
+	private $handler;
 
-	function __construct()
+	/** @var int */
+	private $size;
+
+	public function __construct()
 	{
 		$this->handler = tmpfile();
 	}
 
-	function write($contents)
+	public function write($contents): void
 	{
+		if (!$this->handler) {
+			return;
+		}
+
 		$this->size += strlen($contents);
 		fwrite($this->handler, $contents);
 	}
 
-	function send()
+	public function send(): void
 	{
+		if (!$this->handler) {
+			return;
+		}
+
 		fseek($this->handler, 0);
 		fpassthru($this->handler);
 		fclose($this->handler);

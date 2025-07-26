@@ -8,100 +8,141 @@ use PDO;
 use PDOStatement;
 
 if (extension_loaded('pdo')) {
-	abstract class Min_PDO {
-		var $_result, $server_info, $affected_rows, $errno, $error, $pdo;
+	abstract class PdoConnection extends Connection
+	{
+		/** @var PDO */
+		protected $pdo;
 
-		function dsn($dsn, $username, $password, $options = []) {
+		/** @var PdoResult|false */
+		protected $multiResult;
+
+		protected function dsn(string $dsn, string $username, string $password, array $options = []): bool
+		{
 			$options[PDO::ATTR_ERRMODE] = PDO::ERRMODE_SILENT;
-			$options[PDO::ATTR_STATEMENT_CLASS] = [Min_PDOStatement::class];
+
 			try {
 				$this->pdo = new PDO($dsn, $username, $password, $options);
-			} catch (Exception $ex) {
-				auth_error(h($ex->getMessage()));
+			} catch (Exception $exception) {
+				$this->error = $exception->getMessage();
+				return false;
 			}
-			$this->server_info = @$this->pdo->getAttribute(PDO::ATTR_SERVER_VERSION);
+
+			$this->version = preg_replace('~^\D*([\d.]+).*~', "$1", (string)@$this->pdo->getAttribute(PDO::ATTR_SERVER_VERSION));
+
+			return true;
 		}
 
-		abstract function select_db($database);
-
-		function quote($string) {
+		function quote(string $string): string
+		{
 			return $this->pdo->quote($string);
 		}
 
-		function query($query, $unbuffered = false) {
-			$result = $this->pdo->query($query);
+		function query(string $query, bool $unbuffered = false)
+		{
+			$statement = $this->pdo->query($query);
+
 			$this->error = "";
-			if (!$result) {
+			if (!$statement) {
 				list(, $this->errno, $this->error) = $this->pdo->errorInfo();
 				if (!$this->error) {
 					$this->error = lang('Unknown error.');
 				}
+
 				return false;
 			}
-			$this->store_result($result);
+
+			$result = new PdoResult($statement);
+			$this->storeResult($result);
+
 			return $result;
 		}
 
-		function multi_query($query) {
-			return $this->_result = $this->query($query);
-		}
-
-		function store_result($result = null) {
+		public function storeResult($result = null)
+		{
 			if (!$result) {
-				$result = $this->_result;
+				$result = $this->multiResult;
 				if (!$result) {
 					return false;
 				}
 			}
-			if ($result->columnCount()) {
-				$result->num_rows = $result->rowCount(); // is not guaranteed to work with all drivers
+
+			if ($result->getColumnsCount()) {
 				return $result;
 			}
-			$this->affected_rows = $result->rowCount();
+
+			$this->affectedRows = $result->getRowsCount();
+
 			return true;
 		}
 
-		function next_result() {
-			if (!$this->_result) {
-				return false;
-			}
-			$this->_result->_offset = 0;
-			return @$this->_result->nextRowset(); // @ - PDO_PgSQL doesn't support it
-		}
-
-		function result($query, $field = 0) {
-			$result = $this->query($query);
-			if (!$result) {
-				return false;
-			}
-			$row = $result->fetch();
-			return $row[$field];
+		function nextResult(): bool
+		{
+			return $this->multiResult && $this->multiResult->nextRowset();
 		}
 	}
 
-	class Min_PDOStatement extends PDOStatement {
-		var $_offset = 0, $num_rows;
+	class PdoResult extends Result
+	{
+		/** @var PDOStatement */
+		private $statement;
 
-		function fetch_assoc() {
-			return $this->fetch(PDO::FETCH_ASSOC);
+		/** @var int */
+		private $offset = 0;
+
+		public function __construct(PDOStatement $statement)
+		{
+			// It is not guaranteed to work with all drivers.
+			parent::__construct($statement->columnCount() ? $statement->rowCount() : 0);
+
+			$this->statement = $statement;
 		}
 
-		function fetch_row() {
-			return $this->fetch(PDO::FETCH_NUM);
+		public function getColumnsCount(): int
+		{
+			return $this->statement->columnCount();
 		}
 
-		function fetch_field() {
-			$row = (object) $this->getColumnMeta($this->_offset++);
-			$row->orgtable = $row->table ?? null;
-			$row->orgname = $row->name;
-			$row->charsetnr = (in_array("blob", $row->flags ?? []) ? 63 : 0);
-			return $row;
+		public function fetchAssoc()
+		{
+			return $this->statement->fetch(PDO::FETCH_ASSOC);
 		}
 
-		function seek($offset) {
-			for ($i=0; $i < $offset; $i++) {
-				$this->fetch();
+		public function fetchRow()
+		{
+			return $this->statement->fetch(PDO::FETCH_NUM);
+		}
+
+		public function fetchField()
+		{
+			$row = $this->statement->getColumnMeta($this->offset++);
+			if ($row === false) {
+				return false;
 			}
+
+			$row["orgtable"] = $row["table"] ?? null;
+			$row["orgname"] = $row["name"];
+			$row["charsetnr"] = (in_array("blob", $row["flags"] ?? []) ? 63 : 0);
+
+			return (object) $row;
+		}
+
+		public function seek(int $offset): bool
+		{
+			for ($i = 0; $i < $offset; $i++) {
+				if ($this->statement->fetch() === false) {
+					return false;
+				};
+			}
+
+			return true;
+		}
+
+		public function nextRowset(): bool
+		{
+			$this->offset = 0;
+
+			// @ - PDO_PgSQL doesn't support it
+			return @$this->statement->nextRowset();
 		}
 	}
 }

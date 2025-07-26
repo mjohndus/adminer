@@ -3,8 +3,8 @@
 namespace AdminNeo;
 
 error_reporting(E_ALL & ~E_NOTICE & ~E_DEPRECATED);
-set_error_handler(function ($errno, $errstr) {
-	return (bool)preg_match('~^Undefined array key~', $errstr);
+set_error_handler(function ($errno, $error) {
+	return (bool)preg_match('~^Undefined array key~', $error);
 }, E_WARNING);
 
 include __DIR__ . "/../admin/include/version.inc.php";
@@ -16,9 +16,7 @@ include __DIR__ . "/../vendor/vrana/phpshrink/phpShrink.php";
 
 function is_dev_version(): bool
 {
-	global $VERSION;
-
-	return (bool)preg_match('~-dev$~', $VERSION);
+	return (bool)preg_match('~-dev$~', VERSION);
 }
 
 function add_apo_slashes(string $s): string
@@ -56,14 +54,9 @@ function put_file(array $match, string $current_path = ""): string
 	$filename = basename($match[2]);
 	$file_path = ltrim($match[2], "/");
 
-	// Language is processed later.
-	if ($filename == '$LANG.inc.php') {
-		return $match[0];
-	}
-
 	$content = file_get_contents(__DIR__ . "/../$project/" . ($current_path ? "$current_path/" : "") . $file_path);
 
-	if ($filename == "lang.inc.php") {
+	if ($filename == "Locale.php") {
 		$content = str_replace(
 			'return $key; // !compile: convert translation key',
 			'static $en_translations = null;
@@ -83,13 +76,9 @@ function put_file(array $match, string $current_path = ""): string
 			}
 
 			return $key;',
-			$content, $count
+			$content
 		);
-
-		if (!$count) {
-			echo "function lang() not found\n";
-		}
-
+	} elseif ($filename == "lang.inc.php") {
 		if ($selected_languages) {
 			$available_languages = array_fill_keys($selected_languages, true);
 		} else {
@@ -108,7 +97,7 @@ function put_file(array $match, string $current_path = ""): string
 	return "?>\n$content" . (in_array($tokens[count($tokens) - 1][0], [T_CLOSE_TAG, T_INLINE_HTML], true) ? "<?php" : "");
 }
 
-function put_file_lang(): string
+function put_translations(): string
 {
 	global $lang_ids, $selected_languages;
 
@@ -128,8 +117,7 @@ function put_file_lang(): string
 		}
 
 		// Assign $translations
-		$translations = [];
-		include __DIR__ . "/../admin/translations/$language.inc.php";
+		$translations = include __DIR__ . "/../admin/translations/$language.inc.php";
 
 		$translation_ids = array_flip($lang_ids); // default translation
 		foreach ($translations as $key => $val) {
@@ -161,33 +149,22 @@ function put_file_lang(): string
 		}
 
 		$translations = $_SESSION["translations"];
+		$language = Locale::get()->getLanguage();
 
 		if ($_SESSION["translations_version"] != ' . $translations_version . ') {
 			$translations = [];
 			$_SESSION["translations_version"] = ' . $translations_version . ';
 		}
-		if ($_SESSION["translations_language"] != $LANG) {
+		if ($_SESSION["translations_language"] != $language) {
 			$translations = [];
-			$_SESSION["translations_language"] = $LANG;
+			$_SESSION["translations_language"] = $language;
 		}
 
 		if (!$translations) {
-			$translations = get_translations($LANG);
+			$translations = get_translations($language);
 			$_SESSION["translations"] = $translations;
 		}
 	';
-}
-
-function short_identifier(int $number, string $chars): string
-{
-	$return = '';
-
-	while ($number >= 0) {
-		$return .= $chars[$number % strlen($chars)];
-		$number = floor($number / strlen($chars)) - 1;
-	}
-
-	return $return;
 }
 
 function get_absolute_path($file_path): string
@@ -195,16 +172,6 @@ function get_absolute_path($file_path): string
 	global $current_path;
 
 	return $file_path[0] == "/" ? $file_path : "$current_path/$file_path";
-}
-
-function min_version(): bool
-{
-	return true;
-}
-
-function ini_bool(): bool
-{
-	return true;
 }
 
 function print_usage(): void
@@ -396,11 +363,17 @@ $file = file_get_contents(__DIR__ . "/../$project/index.php");
 
 // Remove including source code for unsupported features in single-driver file.
 if ($single_driver) {
+	include __DIR__ . "/../admin/core/Connection.php";
+	include __DIR__ . "/../admin/core/DummyConnection.php";
+	include __DIR__ . "/../admin/core/Result.php";
 	include __DIR__ . "/../admin/include/pdo.inc.php";
-	include __DIR__ . "/../admin/include/driver.inc.php";
+	include __DIR__ . "/../admin/core/Drivers.php";
+	include __DIR__ . "/../admin/core/Driver.php";
 
 	$_GET[$single_driver] = true; // to load the driver
 	include __DIR__ . "/../admin/drivers/$single_driver.inc.php";
+
+	DummyConnection::create(); // to make support() work
 
 	foreach ($features as $key => $feature) {
 		if (!support($feature)) {
@@ -416,7 +389,7 @@ if ($single_driver) {
 }
 
 // Compile files included into the index.php.
-$file = preg_replace_callback('~\binclude (__DIR__ \. )?"([^"]*)";~', 'AdminNeo\put_file', $file);
+$file = preg_replace_callback('~\binclude (__DIR__ \. )?"([^"]+)";~', 'AdminNeo\put_file', $file);
 
 // Remove including unneeded code.
 $file = str_replace('include __DIR__ . "/debug.inc.php"', '', $file);
@@ -439,7 +412,7 @@ $file = str_replace(
 );
 
 // Compile files included into the /admin/include/bootstrap.inc.php.
-$file = preg_replace_callback('~\binclude (__DIR__ \. )?"([^"]*)";~', function ($match) {
+$file = preg_replace_callback('~\binclude (__DIR__ \. )?"([^"]+)";~', function ($match) {
 	return put_file($match, "../admin/include");
 }, $file);
 
@@ -465,7 +438,7 @@ if ($single_driver) {
 
 // Compile language files.
 $file = preg_replace_callback("~lang\\('((?:[^\\\\']+|\\\\.)*)'([,)])~s", 'AdminNeo\replace_lang', $file);
-$file = preg_replace_callback('~\binclude __DIR__ \. "([^"]*\$LANG.inc.php)";~', 'AdminNeo\put_file_lang', $file);
+$file = preg_replace_callback('~\$translations = .* // !compile: translations~', 'AdminNeo\put_translations', $file);
 
 $file = str_replace("\r", "", $file);
 
@@ -474,8 +447,9 @@ preg_match_all('~^use ([^; ]+);~m', $file, $matches);
 $file = preg_replace('~^use ([^; ]+);~m', "", $file);
 $usages = implode("\n", array_combine($matches[1], $matches[0]));
 
-$pos = strpos($file, "namespace AdminNeo;\n") + strlen("namespace AdminNeo;\n");
-$file = substr($file, 0, $pos) . $usages . str_replace("namespace AdminNeo;\n", "", substr($file, $pos));
+$namespace_string = "namespace AdminNeo;\n";
+$pos = strpos($file, $namespace_string) + strlen($namespace_string);
+$file = substr($file, 0, $pos) . $usages . str_replace($namespace_string, "", substr($file, $pos));
 
 // Integrate static files.
 preg_match_all('~link_files\("([^"]+)", \[([^]]+)]\)~', $file, $matches);
@@ -553,7 +527,7 @@ $file = str_replace(
 );
 
 $file = str_replace(
-	'return find_available_themes(); // !compile available themes',
+	'return find_available_themes(); // !compile: available themes',
 	'return ' . var_export($available_themes, true) . ';',
 	$file
 );
@@ -568,16 +542,25 @@ if ($custom_config) {
 		'$this->params = array_merge(' . var_export($custom_config, true) . ', $params);',
 		$file
 	);
+} else {
+	$file = str_replace('// !compile: custom config', '', $file);
 }
 
 // Print version and compilation parameters.
-$file = str_replace("!compile: version", "v$VERSION", $file);
+$file = str_replace("!compile: version", "v" . VERSION, $file);
 
 $file = str_replace(
 	"!compile: parameters\n",
 	"Compiled with\n * " . implode(" * ", $compilation_info),
 	$file
 );
+
+// Check whether all code replacements have been done.
+if (preg_match_all('~\n\s*(.+!compile:.+)\n~', $file, $matches)) {
+	foreach ($matches[1] as $match) {
+		echo "⚠️ unresolved code replacement: $match\n";
+	}
+}
 
 // Remove superfluous PHP tags.
 $file = preg_replace("~<\\?php\\s*\\?>\n?|\\?>\n?<\\?php~", '', $file);
@@ -608,7 +591,7 @@ if ($output_file_path) {
 
 if (!$output_name) {
 	$output_name = "{$project}neo"
-		. (is_dev_version() ? "" : "-$VERSION")
+		. (is_dev_version() ? "" : "-" . VERSION)
 		. ($single_driver ? "-$single_driver" : "")
 		. ($single_language ? "-$single_language" : "")
 		. ".php";

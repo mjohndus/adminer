@@ -2,7 +2,7 @@
 
 namespace AdminNeo;
 
-page_header(lang('Server'), "", false);
+page_header(lang('Server'), false);
 
 Admin::get()->printDatabaseMenu();
 
@@ -22,13 +22,13 @@ echo '<th>' . lang('Table');
 echo '<td>' . lang('Rows');
 echo "</thead>\n";
 
-foreach (table_status() as $table => $row) {
-	$name = Admin::get()->getTableName($row);
-	if (isset($row["Engine"]) && $name != "") {
+foreach (table_status() as $table => $status) {
+	$name = Admin::get()->getTableName($status);
+	if ($name != "") {
 		echo '<tr><td class="actions">' . checkbox("tables[]", $table, in_array($table, (array) $_POST["tables"], true));
 		echo "<th><a href='" . h(ME) . 'select=' . urlencode($table) . "'>$name</a>";
-		$val = format_number($row["Rows"]);
-		echo "<td align='right'><a href='" . h(ME . "edit=") . urlencode($table) . "'>" . ($row["Engine"] == "InnoDB" && $val ? "~ $val" : $val) . "</a>";
+		$val = format_number($status["Rows"]);
+		echo "<td align='right'><a href='" . h(ME . "edit=") . urlencode($table) . "'>" . ($status["Engine"] == "InnoDB" && $val ? "~ $val" : $val) . "</a>";
 	}
 }
 
