@@ -129,7 +129,7 @@ class Admin extends Origin
 	 * Prints top menu on table selection and structure page.
 	 *
 	 * @param array $tableStatus The result of SHOW TABLE STATUS.
-	 * @param ?string $set New item options, NULL for no new item.
+	 * @param ?string $set New item options, null for no new item.
 	 */
 	public function printTableMenu(array $tableStatus, ?string $set = ""): void
 	{
@@ -323,7 +323,7 @@ class Admin extends Origin
 	}
 
 	/**
-	 * Fill descriptions of the foreign keys for the whole selection data.
+	 * Fills descriptions of the foreign keys for the whole selection data.
 	 *
 	 * @param array $rows All selection data to print.
 	 *
@@ -440,6 +440,9 @@ class Admin extends Origin
 		echo "</div>\n";
 	}
 
+	/**
+	 * Prints the definition of table partitioning.
+	 */
 	public function printTablePartitions(array $partitionInfo): void
 	{
 		$showList = $partitionInfo["partition_by"] == "RANGE" || $partitionInfo["partition_by"] == "LIST";

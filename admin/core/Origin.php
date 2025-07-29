@@ -94,7 +94,9 @@ abstract class Origin extends Plugin
 	public abstract function getRegexpOperator(): ?string;
 
 	/**
-	 * Initializes the Admin. This method is called right before the authentication process.
+	 * Initializes the Admin.
+	 *
+	 * This method is called right before the authentication process.
 	 */
 	public function init(): void
 	{
@@ -102,6 +104,8 @@ abstract class Origin extends Plugin
 	}
 
 	/**
+	 * Appends error message to the list of messages.
+	 *
 	 * @param string $error HTML-formatted error message.
 	 */
 	public function addError(string $error): void
@@ -136,7 +140,7 @@ abstract class Origin extends Plugin
 	/**
 	 * Verifies given password if database itself does not require any password.
 	 *
-	 * @return true|string true for success, string for error message
+	 * @return true|string True for success, string for error message.
 	 */
 	public function verifyDefaultPassword(string $password)
 	{
@@ -151,9 +155,9 @@ abstract class Origin extends Plugin
 	}
 
 	/**
-	 * Authenticate the user.
+	 * Authenticates the user.
 	 *
-	 * @return bool|string true for success, HTML-formatted error message, false for unknown error.
+	 * @return bool|string True for success, HTML-formatted error message or false for unknown error.
 	 */
 	public function authenticate(string $username, string $password)
 	{
@@ -298,15 +302,18 @@ abstract class Origin extends Plugin
 	}
 
 	/**
-	 * Returns lists of directives for Content-Security-Policy HTTP header.
+	 * Updates the list of directives for Content-Security-Policy HTTP header.
 	 *
-	 * @var string[] $csp [directive name => allowed sources].
+	 * @param string[] $csp [directive name => allowed sources].
 	 */
 	public function updateCspHeader(array &$csp): void
 	{
 		//
 	}
 
+	/**
+	 * Prints HTML links to favicons.
+	 */
 	public function printFavicons(): void
 	{
 		$colorVariant = validate_color_variant($this->config->getColorVariant());
@@ -338,11 +345,17 @@ abstract class Origin extends Plugin
 		return $urls;
 	}
 
+	/**
+	 * Returns whether light mode is forced.
+	 */
 	public function isLightModeForced(): bool
 	{
 		return file_exists("adminneo-light.css") && !file_exists("adminneo-dark.css");
 	}
 
+	/**
+	 * Returns whether dark mode is forced.
+	 */
 	public function isDarkModeForced(): bool
 	{
 		return file_exists("adminneo-dark.css") && !file_exists("adminneo-light.css");
@@ -533,7 +546,7 @@ abstract class Origin extends Plugin
 	 *
 	 * @param string $fieldType
 	 * @param string|array $value
-	 * @param bool|null $pretty True to pretty format, false to compact format, null to skip formatting.
+	 * @param ?bool $pretty True to pretty format, false to compact format, null to skip formatting.
 	 *
 	 * @return bool Whether field or value are detected as JSON.
 	 */
@@ -625,6 +638,9 @@ abstract class Origin extends Plugin
 
 	public abstract function printDatabaseSwitcher(?string $missing): void;
 
+	/**
+	 * Prints input field for filtering table list.
+	 */
 	public function printTablesFilter(): void
 	{
 		echo "<div class='tables-filter jsonly'>"
