@@ -31,7 +31,7 @@ function lang($key, $number = null): string
 	return call_user_func_array([Locale::get(), "translate"], func_get_args());
 }
 
-function language_select()
+function language_select(): void
 {
 	$available_languages = get_available_languages();
 	if (count($available_languages) == 1) {
