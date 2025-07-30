@@ -3,6 +3,8 @@
 /**/adminneo-light.css
 /**/adminneo-dark.css
 /**/adminneo.js
+/**/adminneo-config.php
+/**/adminneo-plugins.php
 /export
 /externals
 vendor/**/.svn
