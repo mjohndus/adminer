@@ -179,6 +179,14 @@ menu .secondary {
 	color: var(--body-icon);
 }
 
+menu .secondary .icon {
+	opacity: 0.85;
+}
+
+menu .secondary:hover .icon {
+	opacity: 1;
+}
+
 menu.reversed .primary {
 	/* icon width + icon margin */
 	padding-inline-start: calc(1.25em + 15px);
