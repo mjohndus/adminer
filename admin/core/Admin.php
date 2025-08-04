@@ -82,7 +82,7 @@ class Admin extends Origin
 		$serverPairs = $this->config->getServerPairs($drivers);
 		$server = SERVER ?: $this->config->getDefaultServer();
 
-		echo "<table class='box'>\n";
+		echo "<table class='box box-light'>\n";
 		if ($serverPairs) {
 			echo $this->admin->getLoginFormRow('server', lang('Server'), "<select name='auth[server]'>" . optionlist($serverPairs, $server, true) . "</select>");
 		} else {
