@@ -499,6 +499,10 @@ if (isset($_GET["pgsql"])) {
 
 		function getPartitionsInfo(string $table): array
 		{
+			if (!$this->connection->isMinVersion("10")) {
+				return [];
+			}
+
 			$row = $this->connection->query("SELECT * FROM pg_partitioned_table WHERE partrelid = " . $this->tableOid($table))->fetchAssoc();
 			if (!$row) {
 				return [];
