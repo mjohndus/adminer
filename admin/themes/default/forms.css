@@ -174,7 +174,7 @@ pre.jush {
 
 .button .icon {
 	margin-inline-end: 0.25em;
-	opacity: 0.7;
+	opacity: 0.85;
 }
 
 .button .icon:first-child {
@@ -183,6 +183,7 @@ pre.jush {
 
 .button .icon.solo {
 	margin-inline-end: -2px;
+	opacity: 1;
 }
 
 a.button {

@@ -38,7 +38,7 @@ return [
 		'Příliš mnoho pokusů o přihlášení, zkuste to znovu za %d minuty.',
 		'Příliš mnoho pokusů o přihlášení, zkuste to znovu za %d minut.',
 	],
-	'Invalid permanent login, please login again.' => 'Neplatné trvalé přihlášení, přihlašte se prosím znovu.',
+	'Invalid permanent login, please login again.' => 'Neplatné trvalé přihlášení, přihlaste se prosím znovu.',
 	'Invalid CSRF token. Send the form again.' => 'Neplatný token CSRF. Odešlete formulář znovu.',
 	'If you did not send this request from AdminNeo then close this page.' => 'Pokud jste tento požadavek neposlali z AdminNeo, tak tuto stránku zavřete.',
 	'The action will be performed after successful login with the same credentials.' => 'Akce bude provedena po úspěšném přihlášení se stejnými přihlašovacími údaji.',
@@ -51,7 +51,7 @@ return [
 	'None of the supported PHP extensions (%s) are available.' => 'Není dostupné žádné z podporovaných PHP rozšíření (%s).',
 	'Connecting to privileged ports is not allowed.' => 'Připojování k privilegovaným portům není povoleno.',
 	'Session support must be enabled.' => 'Session proměnné musí být povolené.',
-	'Session expired, please login again.' => 'Session vypršela, přihlašte se prosím znovu.',
+	'Session expired, please login again.' => 'Session vypršela, přihlaste se prosím znovu.',
 	'%s version: %s through PHP extension %s' => 'Verze %s: %s přes PHP rozšíření %s',
 
 	// Settings.

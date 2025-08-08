@@ -2,34 +2,37 @@
 
 namespace AdminNeo;
 
-/** Return <script> element
-* @param string
-* @param string
-* @return string
-*/
-function script($source, $trailing = "\n") {
+/**
+ * Returns <script> element.
+ */
+function script(string $source, string $trailing = "\n"): string
+{
 	return "<script" . nonce() . ">$source</script>$trailing";
 }
 
-/** Return <script src> element
-* @param string
-* @return string
-*/
-function script_src($url) {
+/**
+ * Returns <script src> element.
+ */
+function script_src(string $url): string
+{
 	return "<script src='" . h($url) . "'" . nonce() . "></script>\n";
 }
 
-/** Get a nonce="" attribute with CSP nonce
-* @return string
-*/
-function nonce() {
+/**
+ * Returns a nonce="" attribute with CSP nonce.
+ *
+ * @throws \Random\RandomException
+ */
+function nonce(): string
+{
 	return ' nonce="' . get_nonce() . '"';
 }
 
-/** Get a target="_blank" attribute
-* @return string
-*/
-function target_blank() {
+/**
+ * Returns a target="_blank" attribute with appropriate rel attribute.
+ */
+function target_blank(): string
+{
 	return ' target="_blank" rel="noreferrer noopener"';
 }
 
@@ -41,21 +44,33 @@ function h(?string $string): string
 	return $string !== null && $string !== "" ? str_replace("\0", "&#0;", htmlspecialchars($string, ENT_QUOTES, 'utf-8')) : "";
 }
 
+/**
+ * Returns HTML for solo icon with given ID.
+ */
 function icon_solo(string $id): string
 {
 	return icon($id, "solo");
 }
 
+/**
+ * Returns HTML for chevron icon.
+ */
 function icon_chevron_down(): string
 {
 	return icon("chevron-down", "chevron");
 }
 
+/**
+ * Returns HTML for chevron icon.
+ */
 function icon_chevron_right(): string
 {
 	return icon("chevron-down", "chevron-right");
 }
 
+/**
+ * Returns HTML for an icon.
+ */
 function icon(string $id, ?string $class = null): string
 {
 	$id = h($id);
@@ -152,7 +167,7 @@ function confirm($message = "", $selector = "qsl('input')") {
 }
 
 /**
- * Prints header for hidden fieldset (close by </div></fieldset>).
+ * Prints beginning for a fieldset.
  */
 function print_fieldset_start(string $id, string $legend, string $icon, bool $visible = false, bool $sortable = false): void
 {
@@ -163,6 +178,9 @@ function print_fieldset_start(string $id, string $legend, string $icon, bool $vi
 	echo "<div class='fieldset-content" . ($sortable ? " sortable" : "") . "'>";
 }
 
+/**
+ * Prints ending for a fieldset.
+ */
 function print_fieldset_end(string $id, bool $sortable = false): void
 {
 	echo "</div>"; // fieldset-content
@@ -500,23 +518,23 @@ function search_tables(): void
 }
 
 /**
+ * Returns initializing <script> for help popup with given text.
+ *
  * @param string $text Help text.
  * @param bool $side Side position.
- *
- * @return string
  */
-function help_script($text, $side = false)
+function help_script(string $text, bool $side = false): string
 {
 	return script("initHelpFor(qsl('select, input'), '" . h($text) . "', $side);", "");
 }
 
 /**
+ * Returns initializing <script> for help popup with text resolved by JavaScript expression.
+ *
  * @param string $command JS expression for returning the help text.
  * @param bool $side Side position.
- *
- * @return string
  */
-function help_script_command($command, $side = false)
+function help_script_command(string $command, bool $side = false): string
 {
 	return script("initHelpFor(qsl('select, input'), (value) => { return $command; }, $side);", "");
 }
