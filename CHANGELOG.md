@@ -24,6 +24,7 @@ AdminNeo 5.1.0
 - Force inline editing with the Shift key when clicking on a link.
 - Editor: Display database views
 - SqlLoginPlugin: Auto-create log folder structure (by @jesobreira)
+- Add support for installing by Composer
 
 ### Bugfixes
 
