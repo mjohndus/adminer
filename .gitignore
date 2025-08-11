@@ -7,5 +7,6 @@
 /**/adminneo-plugins.php
 /export
 /externals
-vendor/**/.svn
+vendor/composer
+vendor/autoload.php
 vendor/**/.git_
