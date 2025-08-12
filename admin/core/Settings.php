@@ -26,19 +26,16 @@ class Settings
 	}
 
 	/**
-	 * @return string[]
-	 */
-	public function getParameters(): array
-	{
-		return $this->params;
-	}
-
-	/**
 	 * @return string|array|null
 	 */
 	public function getParameter(string $key)
 	{
 		return $this->params[$key] ?? null;
+	}
+
+	public function updateParameter(string $key, string $value): void
+	{
+		$this->updateParameters([$key => $value]);
 	}
 
 	/**
@@ -57,11 +54,6 @@ class Settings
 	{
 		// Expires in 90 days.
 		cookie("neo_settings", http_build_query($this->params), 7776000);
-	}
-
-	public function updateParameter(string $key, string $value): void
-	{
-		$this->updateParameters([$key => $value]);
 	}
 
 	public function getColorScheme(): ?string
@@ -94,18 +86,18 @@ class Settings
 		return $this->getParameter("preferSelection") ?? $this->config->isSelectionPreferred();
 	}
 
-    public function getRecordsPerPage(): int
-    {
-        return $this->getParameter("recordsPerPage") ?? $this->config->getRecordsPerPage();
-    }
+	public function getRecordsPerPage(): int
+	{
+		return $this->getParameter("recordsPerPage") ?? $this->config->getRecordsPerPage();
+	}
 
-    public function getEnumAsSelectThreshold(): ?int
-    {
-        $value = $this->getParameter("enumAsSelectThreshold");
-        if ($value < 0) {
-            return null;
-        }
+	public function getEnumAsSelectThreshold(): ?int
+	{
+		$value = $this->getParameter("enumAsSelectThreshold");
+		if ($value < 0) {
+			return null;
+		}
 
-        return $value !== null ? (int)$value : $this->config->getEnumAsSelectThreshold();
-    }
+		return $value !== null ? (int)$value : $this->config->getEnumAsSelectThreshold();
+	}
 }
