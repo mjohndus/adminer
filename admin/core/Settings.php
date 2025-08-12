@@ -31,6 +31,17 @@ class Settings
 				"comments" => null,
 			]);
 		}
+
+		if (isset($_COOKIE["neo_export"])) {
+			parse_str($_COOKIE["neo_export"], $params);
+			$this->updateParameters([
+				"exportFormat" => $params["format"],
+				"exportOutput" => $params["output"],
+			]);
+
+			unset($_COOKIE["neo_export"]);
+			cookie("neo_export", "", -3600);
+		}
 	}
 
 	/**
