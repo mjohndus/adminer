@@ -332,7 +332,8 @@ function type_class($type) {
  */
 function edit_fields(array $fields, array $collations, $type = "TABLE", $foreign_keys = []) {
 	$fields = array_values($fields);
-	$comment_class = ($_POST ? $_POST["comments"] : get_setting("comments")) ? "" : "class='hidden'";
+	$comments_opened = $_POST ? $_POST["comments"] : Admin::get()->getSettings()->getParameter("commentsOpened");
+	$comment_class = $comments_opened ? "" : "class='hidden'";
 	?>
 
 <thead><tr>

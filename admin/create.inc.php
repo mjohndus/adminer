@@ -31,7 +31,7 @@ if ($row["auto_increment_col"]) {
 }
 
 if ($_POST) {
-	save_settings(["comments" => $_POST["comments"], "defaults" => $_POST["defaults"]]);
+	Admin::get()->getSettings()->updateParameter("commentsOpened", $_POST["comments"] ?? null);
 }
 
 if ($_POST && !process_fields($row["fields"]) && !Admin::get()->getErrors()) {
@@ -237,12 +237,14 @@ edit_fields($row["fields"], $collations, "TABLE", $foreign_keys);
 <p>
 <?php echo lang('Auto Increment'); ?>: <input type="number" class="input size" name="Auto_increment" size="6" value="<?php echo h($row["Auto_increment"]); ?>">
 <?php
-$comments = ($_POST ? $_POST["comments"] : get_setting("comments"));
+$comments_opened = $_POST ? $_POST["comments"] : Admin::get()->getSettings()->getParameter("commentsOpened");
+$comment_class = $comments_opened ? "" : "hidden";
+
 echo (support("comment")
-	? checkbox("comments", 1, $comments, lang('Comment'), "editingCommentsClick(this, true);", "jsonly")
+	? checkbox("comments", 1, $comments_opened, lang('Comment'), "editingCommentsClick(this, true);", "jsonly")
 		. ' ' . (preg_match('~\n~', $row["Comment"])
-			? "<textarea name='Comment' rows='2' cols='20'" . ($comments ? "" : " class='hidden'") . ">" . h($row["Comment"]) . "</textarea>"
-			: '<input name="Comment" value="' . h($row["Comment"]) . '" data-maxlength="' . (Connection::get()->isMinVersion("5.5") ? 2048 : 60) . '" class="input ' . ($comments ? "" : "hidden") . '">'
+			? "<textarea name='Comment' rows='2' cols='20'" . ($comment_class ? " class='$comment_class'" : "") . ">" . h($row["Comment"]) . "</textarea>"
+			: "<input name='Comment' value='" . h($row["Comment"]) . "' data-maxlength='" . (Connection::get()->isMinVersion("5.5") ? 2048 : 60) . "' class='input $comment_class'>"
 		)
 	: '')
 ;

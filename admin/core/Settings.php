@@ -23,6 +23,14 @@ class Settings
 			// Prolong settings cookie.
 			$this->save();
 		}
+
+		// Migrate old parameters.
+		if (isset($this->params["comments"])) {
+			$this->updateParameters([
+				"commentsOpened" => $this->params["comments"],
+				"comments" => null,
+			]);
+		}
 	}
 
 	/**
@@ -33,7 +41,7 @@ class Settings
 		return $this->params[$key] ?? null;
 	}
 
-	public function updateParameter(string $key, string $value): void
+	public function updateParameter(string $key, ?string $value): void
 	{
 		$this->updateParameters([$key => $value]);
 	}
