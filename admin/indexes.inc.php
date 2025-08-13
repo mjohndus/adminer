@@ -22,7 +22,7 @@ if (DIALECT == "mongo") { // doesn't support primary key
 }
 $row = $_POST;
 if ($row) {
-	save_settings(["index_options" => $row["options"]]);
+	Admin::get()->getSettings()->updateParameter("indexOptions", $row["options"] ?? null);
 }
 if ($_POST && !$_POST["add"] && !$_POST["drop_col"]) {
 	$alter = [];
@@ -99,7 +99,7 @@ if (!$row) {
 	$row["indexes"] = $indexes;
 }
 $lengths = (DIALECT == "sql" || DIALECT == "mssql");
-$show_options = ($_POST ? $_POST["options"] : get_setting("index_options"));
+$show_options = $_POST ? $_POST["options"] : Admin::get()->getSettings()->getParameter("indexOptions");
 ?>
 
 <form action="" method="post">

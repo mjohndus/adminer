@@ -134,10 +134,10 @@ function optionlist($options, $selected = null, $use_keys = false) {
 * @param string
 * @return string
 */
-function html_select($name, $options, $value = "", $onchange = "", $labelled_by = "") {
+function html_select($name, $options, $value = "", $onchange = "", $labelled_by = "", bool $use_keys = false) {
 	return "<select name='" . h($name) . "'"
 		. ($labelled_by ? " aria-labelledby='$labelled_by'" : "")
-		. ">" . optionlist($options, $value) . "</select>"
+		. ">" . optionlist($options, $value, $use_keys) . "</select>"
 		. ($onchange ? script("qsl('select').onchange = function () { $onchange };", "") : "");
 }
 
@@ -262,7 +262,7 @@ function enum_input(string $attrs, array $field, $value, ?string $empty = null, 
 	preg_match_all("~'((?:[^']|'')*)'~", $field["length"], $matches);
 	$values = $matches[1];
 
-	$threshold = Admin::get()->getConfig()->getEnumAsSelectThreshold();
+	$threshold = Admin::get()->getSettings()->getEnumAsSelectThreshold();
 	$select = !$checkboxes && $threshold !== null && count($values) > $threshold;
 	$type = $checkboxes ? "checkbox" : "radio";
 	$active_param = $select ? "selected" : "checked";

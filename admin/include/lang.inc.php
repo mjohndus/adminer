@@ -31,11 +31,11 @@ function lang($key, $number = null): string
 	return call_user_func_array([Locale::get(), "translate"], func_get_args());
 }
 
-function language_select(): void
+function get_language_options(): array
 {
 	$available_languages = get_available_languages();
 	if (count($available_languages) == 1) {
-		return;
+		return [];
 	}
 
 	$options = [];
@@ -45,29 +45,40 @@ function language_select(): void
 		}
 	}
 
-	echo "<div class='language'><form action='' method='post'>\n";
+	return $options;
+}
+
+function language_select(): void
+{
+	$options = get_language_options();
+	if (!$options) {
+		return;
+	}
+
+	echo "<form action='' method='post'>\n";
 	echo html_select("lang", $options, Locale::get()->getLanguage(), "this.form.submit();");
 	echo "<input type='submit' value='" . lang('Use'), "' class='button hidden'>\n";
 	echo "<input type='hidden' name='token' value='", get_token(), "'>\n";
-	echo "</form></div>\n";
-}
-
-if (isset($_POST["lang"]) && verify_token()) { // $error not yet available
-	cookie("neo_lang", $_POST["lang"]);
-
-	$_SESSION["lang"] = $_POST["lang"]; // cookies may be disabled
-	$_SESSION["translations"] = []; // used in compiled version
-
-	redirect(remove_from_uri());
+	echo "</form>\n";
 }
 
 $available_languages = get_available_languages();
 $language = array_keys($available_languages)[0];
 
+if (isset($_POST["lang"]) && isset($available_languages[$_POST["lang"]]) && verify_token()) { // $error not yet available
+	$_SESSION["lang"] = $_COOKIE["neo_lang"] = $_POST["lang"]; // cookies may be disabled
+	$_SESSION["translations"] = []; // used in compiled version
+
+	if (!isset($_GET["settings"])) {
+		cookie("neo_lang", $_POST["lang"], 7776000); // expires in 90 days
+		redirect(remove_from_uri());
+	}
+}
+
 if (isset($_COOKIE["neo_lang"]) && isset($available_languages[$_COOKIE["neo_lang"]])) {
-	cookie("neo_lang", $_COOKIE["neo_lang"]);
+	cookie("neo_lang", $_COOKIE["neo_lang"], 7776000);
 	$language = $_COOKIE["neo_lang"];
-} elseif (isset($available_languages[$_SESSION["lang"]])) {
+} elseif (isset($_SESSION["lang"]) && isset($available_languages[$_SESSION["lang"]])) {
 	$language = $_SESSION["lang"];
 } elseif (isset($_SERVER["HTTP_ACCEPT_LANGUAGE"])) {
 	$accept_language = [];

@@ -383,6 +383,8 @@ function cookie(string $name, string $value, int $lifetime = 2592000): void
 }
 
 /**
+ * @deprecated
+ *
  * Returns settings stored in a cookie.
  */
 function get_settings(string $cookie = "neo_settings"): array
@@ -393,6 +395,8 @@ function get_settings(string $cookie = "neo_settings"): array
 }
 
 /**
+ * @deprecated
+ *
  * Returns setting stored in a cookie.
  */
 function get_setting(string $key, string $cookie = "neo_settings"): ?string
@@ -403,6 +407,8 @@ function get_setting(string $key, string $cookie = "neo_settings"): ?string
 }
 
 /**
+ * @deprecated
+ *
  * Stores settings to a cookie.
  */
 function save_settings(array $settings, string $cookie = "neo_settings"): void

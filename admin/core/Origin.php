@@ -38,6 +38,7 @@ abstract class Origin extends Plugin
 		}
 
 		$config = new Config($config);
+		$settings = new Settings($config);
 
 		if (!$plugins && file_exists("adminneo-plugins.php")) {
 			$plugins = include_once("adminneo-plugins.php");
@@ -54,9 +55,9 @@ abstract class Origin extends Plugin
 
 		self::$instance = $plugins ? new Pluginer($admin, $plugins) : $admin;
 
-		$admin->inject(self::$instance, $config, Locale::get());
+		$admin->inject(self::$instance, $config, $settings, Locale::get());
 		foreach ($plugins as $plugin) {
-			$plugin->inject(self::$instance, $config, Locale::get());
+			$plugin->inject(self::$instance, $config, $settings, Locale::get());
 		}
 
 		return self::$instance;
@@ -85,6 +86,11 @@ abstract class Origin extends Plugin
 	public function getConfig(): Config
 	{
 		return $this->config;
+	}
+
+	public function getSettings(): Settings
+	{
+		return $this->settings;
 	}
 
 	public abstract function getOperators(): array;
@@ -350,7 +356,7 @@ abstract class Origin extends Plugin
 	 */
 	public function isLightModeForced(): bool
 	{
-		return file_exists("adminneo-light.css") && !file_exists("adminneo-dark.css");
+		return $this->isColorSchemeForced(false);
 	}
 
 	/**
@@ -358,7 +364,24 @@ abstract class Origin extends Plugin
 	 */
 	public function isDarkModeForced(): bool
 	{
-		return file_exists("adminneo-dark.css") && !file_exists("adminneo-light.css");
+		return $this->isColorSchemeForced(true);
+	}
+
+	private function isColorSchemeForced(bool $dark): bool
+	{
+		$mode1 = $dark ? Settings::ColorSchemeDark : Settings::ColorSchemeLight;
+		$mode2 = $dark ? Settings::ColorSchemeLight : Settings::ColorSchemeDark;
+
+		$file1Exists = file_exists("adminneo-$mode1.css");
+		$file2Exists = file_exists("adminneo-$mode2.css");
+
+		// If the current theme supports only given color scheme, it will be forced.
+		if ($file1Exists && !$file2Exists) {
+			return true;
+		}
+
+		// Return the user setting but only if the theme supports both modes.
+		return $this->settings->getColorScheme() == $mode1 && !($file1Exists xor $file2Exists);
 	}
 
 	/**
@@ -513,7 +536,7 @@ abstract class Origin extends Plugin
 	public function processSelectionLimit(): ?int
 	{
 		if (!isset($_GET["limit"])) {
-			return $this->config->getRecordsPerPage();
+			return $this->settings->getRecordsPerPage();
 		}
 
 		return $_GET["limit"] != "" ? (int)$_GET["limit"] : null;
@@ -650,6 +673,78 @@ abstract class Origin extends Plugin
 	}
 
 	public abstract function printTableList(array $tables): void;
+
+	/**
+	 * Returns rows for settings table organised in groups.
+	 *
+	 * @param int $groupId: 1 - overall UI settings, 2 - UI elements settings, 3 - other settings.
+	 *
+	 * @return string[]
+	 */
+	public function getSettingsRows(int $groupId): array
+	{
+		$settings = [];
+
+		if ($groupId == 1) {
+			// Language.
+			$options = get_language_options();
+			if ($options) {
+				$settings["lang"] = "<tr><th>" . lang('Language') . "</th>" .
+					"<td>" .
+					html_select("lang", get_language_options(), Locale::get()->getLanguage()) .
+					"</td></tr>\n";
+			}
+
+			// Color scheme.
+			$options = [
+				"" => lang('By system'),
+				Settings::ColorSchemeLight => lang('Light'),
+				Settings::ColorSchemeDark => lang('Dark')
+			];
+
+			$settings["colorScheme"] = "<tr><th>" . lang('Color scheme') . "</th>" .
+				"<td>" .
+				html_radios("colorScheme", $options, $this->settings->getParameter("colorScheme") ?? "") .
+				"</td></tr>\n";
+		} elseif ($groupId == 2) {
+			// Records per page.
+			$default = $this->config->getRecordsPerPage();
+			$options = [
+				"" => lang('Default') . " ($default)",
+				"20",
+				"30",
+				"50",
+				"70",
+				"100",
+			];
+
+			$settings["recordsPerPage"] = "<tr><th>" . lang('Records per page') . "</th>" .
+				"<td>" .
+				html_select("recordsPerPage", $options, $this->settings->getParameter("recordsPerPage") ?? "") .
+				"<span class='input-hint'>" . lang('Default number of records displayed in data table.') . "</span>" .
+				"</td></tr>\n";
+
+			// Threshold for displaying enum values as <select>.
+			$default = $this->config->getEnumAsSelectThreshold() ?? lang('Never');
+			$options = [
+				"" => lang('Default') . " ($default)",
+				-1 => lang('Never'),
+				0 => lang('Always'),
+				3 => lang('More values than %d', 3),
+				5 => lang('More values than %d', 5),
+				10 => lang('More values than %d', 10),
+				20 => lang('More values than %d', 20),
+			];
+
+			$settings["enumAsSelectThreshold"] = "<tr><th>" . lang('Enum as select') . "</th>" .
+				"<td>" .
+				html_select("enumAsSelectThreshold", $options, $this->settings->getParameter("enumAsSelectThreshold") ?? "", "", "", true) .
+				"<span class='input-hint'>" . lang('Threshold for displaying a selection menu for enum fields.') . "</span>" .
+				"</td></tr>\n";
+			}
+
+		return $settings;
+	}
 
 	public abstract function getForeignColumnInfo(array $foreignKeys, string $column): ?array;
 }
