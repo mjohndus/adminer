@@ -6,6 +6,7 @@ AdminNeo 5.1.0
 
 ### Changes
 
+- New Settings page with basic UI options
 - Add defaultServer and defaultDatabase configuration parameters
 - Allow creating generated columns (by @vrana)
 - MySQL: Display converting function for binary, bit or geometry fields (by @vrana)
@@ -20,6 +21,7 @@ AdminNeo 5.1.0
 - Shorten queries saved from SQL command to URL (by @vrana)
 - Remember export setting at SQL command
 - Refine and standardize Japanese translation (by @yama)
+- Update German translation (by @wintstar)
 - Plugins: Use protected visibility of member properties
 - Force inline editing with the Shift key when clicking on a link.
 - Editor: Display database views
