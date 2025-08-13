@@ -443,6 +443,10 @@ AND CHECK_CLAUSE NOT LIKE '% IS NOT NULL'", $this->connection); // ignore defaul
 	 */
 	function getAllFields(): array
 	{
+		if (DB == "") {
+			return [];
+		}
+
 		$allFields = [];
 
 		$rows = get_rows("SELECT TABLE_NAME AS tab, COLUMN_NAME AS field, IS_NULLABLE AS nullable, DATA_TYPE AS type, CHARACTER_MAXIMUM_LENGTH AS length" . (DIALECT == 'sql' ? ", COLUMN_KEY = 'PRI' AS `primary`" : "") . "
