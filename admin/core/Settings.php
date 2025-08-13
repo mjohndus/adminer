@@ -28,7 +28,9 @@ class Settings
 		if (isset($this->params["comments"])) {
 			$this->updateParameters([
 				"commentsOpened" => $this->params["comments"],
+				"indexOptions" => $this->params["index_options"],
 				"comments" => null,
+				"index_options" => null,
 			]);
 		}
 
