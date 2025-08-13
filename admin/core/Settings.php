@@ -42,14 +42,33 @@ class Settings
 			unset($_COOKIE["neo_export"]);
 			cookie("neo_export", "", -3600);
 		}
+
+		if (isset($_COOKIE["neo_dump"])) {
+			parse_str($_COOKIE["neo_dump"], $params);
+			$this->updateParameters([
+				"dumpFormat" => $params["format"],
+				"dumpDbStyle" => $params["db_style"],
+				"dumpTypes" => $params["types"] ?? null,
+				"dumpRoutines" => $params["routines"] ?? null,
+				"dumpEvents" => $params["events"] ?? null,
+				"dumpTableStyle" => $params["table_style"],
+				"dumpAutoIncrement" => $params["auto_increment"] ?? null,
+				"dumpTriggers" => $params["triggers"] ?? null,
+				"dumpDataStyle" => $params["data_style"],
+				"dumpOutput" => $params["output"],
+			]);
+
+			unset($_COOKIE["neo_dump"]);
+			cookie("neo_dump", "", -3600);
+		}
 	}
 
 	/**
 	 * @return string|array|null
 	 */
-	public function getParameter(string $key)
+	public function getParameter(string $key, ?string $default = null)
 	{
-		return $this->params[$key] ?? null;
+		return $this->params[$key] ?? $default;
 	}
 
 	public function updateParameter(string $key, ?string $value): void
