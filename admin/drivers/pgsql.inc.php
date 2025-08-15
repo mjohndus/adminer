@@ -1152,7 +1152,7 @@ ORDER BY s.ordinal_position";
 
 		$info = $info[0] ?? [];
 
-		$fields = get_rows('SELECT parameter_name AS field, data_type AS type, character_maximum_length AS length, parameter_mode AS inout
+		$fields = get_rows('SELECT COALESCE(parameter_name, ordinal_position::text) AS field, data_type AS type, character_maximum_length AS length, parameter_mode AS inout
 			FROM information_schema.parameters
 			WHERE specific_schema = current_schema() AND specific_name = ' . q($name) . '
 			ORDER BY ordinal_position');
