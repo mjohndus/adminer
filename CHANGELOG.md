@@ -6,6 +6,7 @@ AdminNeo 5.1.0
 
 ### Changes
 
+- New Settings page with basic UI options
 - Add defaultServer and defaultDatabase configuration parameters
 - Allow creating generated columns (by @vrana)
 - MySQL: Display converting function for binary, bit or geometry fields (by @vrana)
@@ -20,14 +21,17 @@ AdminNeo 5.1.0
 - Shorten queries saved from SQL command to URL (by @vrana)
 - Remember export setting at SQL command
 - Refine and standardize Japanese translation (by @yama)
+- Update German translation (by @wintstar)
 - Plugins: Use protected visibility of member properties
 - Force inline editing with the Shift key when clicking on a link.
 - Editor: Display database views
 - SqlLoginPlugin: Auto-create log folder structure (by @jesobreira)
+- Add support for installing by Composer
 
 ### Bugfixes
 
 - Fix displaying the last page instead of the first one on PHP 7 and older (regression from 5.0.0)
+- Fix displaying help for field type (regression from 5.0.0)
 - MySQL: Fix using undefined PDO constant on PHP 5
 - MariaDB: Fix parsing type of the generated column in view
 - MS SQL: Add missing support for Encrypt and TrustServerCertificate parameters in PDO_SQLSRV

@@ -137,8 +137,8 @@ class Admin extends Origin
 
 		$links = [];
 
-		$selectionFirst = ($this->config->isSelectionPreferred() && !$this->config->isNavigationReversed()) ||
-			(!$this->config->isSelectionPreferred() && $this->config->isNavigationReversed());
+		$selectionFirst = ($this->settings->isSelectionPreferred() && !$this->settings->isNavigationReversed()) ||
+			(!$this->settings->isSelectionPreferred() && $this->settings->isNavigationReversed());
 
 		if ($selectionFirst) {
 			$links["select"] = [lang('Select data'), "data"];
@@ -1253,7 +1253,7 @@ class Admin extends Origin
 	 */
 	public function printTableList(array $tables): void
 	{
-		$menuClass = ($this->config->isNavigationDual() ? "class='dual'" : ($this->config->isNavigationReversed() ? "class='reversed'" : ""));
+		$menuClass = ($this->settings->isNavigationDual() ? "class='dual'" : ($this->settings->isNavigationReversed() ? "class='reversed'" : ""));
 
 		echo "<nav id='tables'><menu $menuClass>";
 
@@ -1271,18 +1271,18 @@ class Admin extends Origin
 			$selectUrl = h(ME) . "select=" . urlencode($table);
 			$tableUrl = h(ME) . "table=" . urlencode($table);
 
-			if ($this->config->isSelectionPreferred()) {
-				if ($this->config->isNavigationReversed() && $supportStructure) {
+			if ($this->settings->isSelectionPreferred()) {
+				if ($this->settings->isNavigationReversed() && $supportStructure) {
 					echo " <a href='$tableUrl' title='", lang('Show structure'), "' class='secondary'>", icon("structure"), "</a>";
 				}
 
 				echo "<a href='$selectUrl'", bold($active, $class), " data-primary='true' title='$name'>$name</a>";
 
-				if ($this->config->isNavigationDual() && $supportStructure) {
+				if ($this->settings->isNavigationDual() && $supportStructure) {
 					echo " <a href='$tableUrl' title='", lang('Show structure'), "' class='secondary'>", icon_solo("structure"), "</a>";
 				}
 			} else {
-				if ($this->config->isNavigationReversed()) {
+				if ($this->settings->isNavigationReversed()) {
 					echo " <a href='$selectUrl' title='", lang('Select data'), "' class='secondary'>", icon("data"), "</a>";
 				}
 
@@ -1292,7 +1292,7 @@ class Admin extends Origin
 					echo "<span data-primary='true'", bold($active, $class), ">$name</span>";
 				}
 
-				if ($this->config->isNavigationDual()) {
+				if ($this->settings->isNavigationDual()) {
 					echo " <a href='$selectUrl' title='", lang('Select data'), "' class='secondary'>", icon_solo("data"), "</a>";
 				}
 			}
@@ -1301,6 +1301,46 @@ class Admin extends Origin
 		}
 
 		echo "</menu></nav>\n";
+	}
+
+	public function getSettingsRows(int $groupId): array
+	{
+		$settings = parent::getSettingsRows($groupId);
+
+		if ($groupId == 1) {
+			// Navigation mode.
+			$options = [
+				"" => lang('Default'),
+				Config::NavigationSimple => lang('Simple'),
+				Config::NavigationDual => lang('Dual'),
+				Config::NavigationReversed => lang('Reversed')
+			];
+			$default = $options[$this->config->getNavigationMode()];
+			$options[""] .= " ($default)";
+
+			$settings["navigationMode"] = "<tr><th>" . lang('Navigation mode') . "</th>" .
+				"<td>" .
+				html_radios("navigationMode", $options, $this->settings->getParameter("navigationMode") ?? "") .
+				"<span class='input-hint'>" . lang('Layout of main navigation with table links.') . "</span>" .
+				"</td></tr>\n";
+
+			// Preferred action for table links.
+			$options = [
+				"" => lang('Default'),
+				0 => lang('Show structure'),
+				1 => lang('Select data'),
+			];
+			$default = $options[$this->config->isSelectionPreferred() ? 1 : 0];
+			$options[""] .= " ($default)";
+
+			$settings["preferSelection"] = "<tr><th>" . lang('Table links') . "</th>" .
+				"<td>" .
+				html_select("preferSelection", $options, $this->settings->getParameter("preferSelection") ?? "", "", "", true) .
+				"<span class='input-hint'>" . lang('Primary action for all table links.') . "</span>" .
+				"</td></tr>\n";
+		}
+
+		return $settings;
 	}
 
 	public function getForeignColumnInfo(array $foreignKeys, string $column): ?array

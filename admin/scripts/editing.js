@@ -234,6 +234,11 @@ function selectFieldChange() {
 		});
 		field.addEventListener("change", onFieldTypeChange);
 
+		// Help.
+		initHelpFor(field, (value) => {
+			return value;
+		}, true);
+
 		// Length.
 		field = qs('[name$="[length]"]', row);
 		field.addEventListener("focus", onFieldLengthFocus);
@@ -242,11 +247,6 @@ function selectFieldChange() {
 			const input = event.target;
 			input.classList.toggle('required', !input.value.length && /var(char|binary)$/.test(selectValue(input.parentNode.previousSibling.firstChild)));
 		});
-
-		// Help.
-		initHelpFor(field, (value) => {
-			return value;
-		}, true);
 
 		// Autoincrement. Is null in procedure editing.
 		field = qs("[name='auto_increment_col']", row);

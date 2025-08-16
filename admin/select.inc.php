@@ -8,7 +8,6 @@ $indexes = indexes($TABLE);
 $fields = fields($TABLE);
 $foreign_keys = column_foreign_keys($TABLE);
 $oid = $table_status["Oid"];
-$export_settings = get_settings("neo_export");
 
 $rights = []; // privilege => 0
 $columns = []; // selectable columns
@@ -77,6 +76,8 @@ if ($oid && !$primary) {
 	$indexes[] = ["type" => "PRIMARY", "columns" => [$oid]];
 }
 
+$settings = Admin::get()->getSettings();
+
 if ($_POST) {
 	$where_check = $where;
 	if (!$_POST["all"] && is_array($_POST["check"])) {
@@ -88,8 +89,10 @@ if ($_POST) {
 	}
 	$where_check = ($where_check ? "\nWHERE " . implode(" AND ", $where_check) : "");
 	if ($_POST["export"]) {
-		$export_settings = ["output" => $_POST["output"], "format" => $_POST["format"]];
-		save_settings($export_settings, "neo_export");
+		$settings->updateParameters([
+			"exportFormat" => $_POST["format"],
+			"exportOutput" => $_POST["output"],
+		]);
 
 		dump_headers($TABLE);
 		Admin::get()->dumpTable($TABLE, "");
@@ -202,7 +205,7 @@ if ($_POST) {
 	} elseif (!preg_match('~~u', $file)) {
 		Admin::get()->addError(lang('File must be in UTF-8 encoding.'));
 	} else {
-		save_settings(["format" => $_POST["import_format"]], "neo_export");
+		$settings->updateParameter("exportFormat", $_POST["import_format"]);
 
 		$cols = array_keys($fields);
 		preg_match_all('~(?>"[^"]*"|[^"\r\n]+)+~', $file, $matches);
@@ -627,9 +630,9 @@ if (!$columns && support("table")) {
 				}
 				if ($format) {
 					print_fieldset_start("export", lang('Export') . " <span id='selected2'></span>", "export");
-					echo html_select("format", $format, $export_settings["format"] ?? null);
+					echo html_select("format", $format, $settings->getParameter("exportFormat"));
 					$output = Admin::get()->getDumpOutputs();
-					echo ($output ? " " . html_select("output", $output, $export_settings["output"] ?? null) : "");
+					echo ($output ? " " . html_select("output", $output, $settings->getParameter("exportOutput")) : "");
 					echo " <input type='submit' class='button' name='export' value='" . lang('Export') . "'>\n";
 					print_fieldset_end("export");
 				}
@@ -647,7 +650,7 @@ if (!$columns && support("table")) {
 				echo "</p>";
 				echo "<p id='import'" . ($_POST["import"] ? "" : " class='hidden'") . ">";
 				echo "<input type='file' name='csv_file'> ";
-				echo html_select("import_format", ["csv" => "CSV,", "csv;" => "CSV;", "tsv" => "TSV"], $export_settings["format"]);
+				echo html_select("import_format", ["csv" => "CSV,", "csv;" => "CSV;", "tsv" => "TSV"], $settings->getParameter("exportFormat"));
 				echo " <input type='submit' class='button default' name='import' value='" . lang('Import') . "'>";
 				echo "</p>";
 			}

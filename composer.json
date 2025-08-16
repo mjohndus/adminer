@@ -1,5 +1,5 @@
 {
-    "name": "adminneo/adminneo",
+    "name": "adminneo-org/adminneo",
     "description": "Database management in a single PHP file.",
     "homepage": "https://github.com/adminneo-org/adminneo",
     "keywords": [
@@ -25,7 +25,9 @@
     ],
     "require": {
         "php": "7.1 - 8.4",
-        "ext-json": "*",
+        "ext-json": "*"
+    },
+    "require-dev": {
         "vrana/jush": "2.1.*",
         "vrana/jsshrink": "@dev",
         "vrana/phpshrink": "@dev"

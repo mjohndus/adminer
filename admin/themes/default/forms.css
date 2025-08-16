@@ -100,6 +100,12 @@ label {
 	line-height: 1.357;
 }
 
+label.disabled {
+	opacity: 0.3;
+	filter: saturate(0);
+	pointer-events: none;
+}
+
 label input[type="checkbox"], label input[type="radio"] {
 	margin-top: 0;
 	margin-bottom: 0;
@@ -175,6 +181,8 @@ pre.jush {
 .button .icon {
 	margin-inline-end: 0.25em;
 	opacity: 0.85;
+	margin-top: -4px;
+	margin-bottom: -1px;
 }
 
 .button .icon:first-child {
@@ -193,7 +201,7 @@ a.button {
 
 .button.light {
 	border: none;
-	padding: 4px 5px;
+	padding: 5px;
 	background: transparent;
 	color: var(--link-text);
 }

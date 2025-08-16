@@ -4,9 +4,20 @@ namespace AdminNeo;
 
 $TABLE = $_GET["dump"];
 
+$settings = Admin::get()->getSettings();
 if ($_POST) {
-	$dump_settings = array_intersect_key($_POST, array_flip(["output", "format", "db_style", "types", "routines", "events", "table_style", "auto_increment", "triggers", "data_style"]));
-	save_settings($dump_settings, "neo_dump");
+	$settings->updateParameters([
+		"dumpFormat" => $_POST["format"],
+		"dumpDbStyle" => $_POST["db_style"],
+		"dumpTypes" => $_POST["types"] ?? null,
+		"dumpRoutines" => $_POST["routines"] ?? null,
+		"dumpEvents" => $_POST["events"] ?? null,
+		"dumpTableStyle" => $_POST["table_style"],
+		"dumpAutoIncrement" => $_POST["auto_increment"] ?? null,
+		"dumpTriggers" => $_POST["triggers"] ?? null,
+		"dumpDataStyle" => $_POST["data_style"],
+		"dumpOutput" => $_POST["output"],
+	]);
 
 	$subjects = array_flip($_POST["databases"] ?? []) + array_flip($_POST["tables"] ?? []) + array_flip($_POST["data"] ?? []);
 	if (count($subjects) == 1) {
@@ -163,52 +174,39 @@ $data_style = ['', 'TRUNCATE+INSERT', 'INSERT'];
 if (DIALECT == "sql") { //! use insertUpdate() in all drivers
 	$data_style[] = 'INSERT+UPDATE';
 }
-$dump_settings = get_settings("neo_dump");
-if (!$dump_settings) {
-	$dump_settings = [
-		"format" => "sql",
-		"db_style" => (DB == "" ? "CREATE" : ""),
-		"table_style" => "DROP+CREATE",
-		"data_style" => "INSERT",
-		"routines" => $_GET["dump"] == "",
-		"events" => $_GET["dump"] == "",
-		"triggers" => true,
-		"output" => "file",
-	];
-}
 
-echo "<tr><th>", lang('Format'), "</th><td>", html_radios("format", Admin::get()->getDumpFormats(), $dump_settings["format"]), "</td></tr>\n";
+echo "<tr><th>", lang('Format'), "</th><td>", html_radios("format", Admin::get()->getDumpFormats(), $settings->getParameter("dumpFormat", "sql")), "</td></tr>\n";
 
 if (DIALECT != "sqlite") {
 	echo "<tr><th>", lang('Database'), "</th>";
-	echo "<td>", html_select('db_style', $db_style, $dump_settings["db_style"]);
+	echo "<td>", html_select('db_style', $db_style, $settings->getParameter("dumpDbStyle", DB == "" ? "CREATE" : ""));
 
 	echo "<span class='labels'>";
 	if (support("type")) {
-		echo checkbox("types", 1, $dump_settings["types"], lang('User types'));
+		echo checkbox("types", 1, $settings->getParameter("dumpTypes"), lang('User types'));
 	}
 	if (support("routine")) {
-		echo checkbox("routines", 1, $dump_settings["routines"], lang('Routines'));
+		echo checkbox("routines", 1, $settings->getParameter("dumpRoutines", $_GET["dump"] == "" ? "1" : ""), lang('Routines'));
 	}
 	if (support("event")) {
-		echo checkbox("events", 1, $dump_settings["events"], lang('Events'));
+		echo checkbox("events", 1, $settings->getParameter("dumpEvents", $_GET["dump"] == "" ? "1" : ""), lang('Events'));
 	}
 	echo "</span></td></tr>";
 }
 
 echo "<tr><th>", lang('Tables'), "</th><td>";
-echo html_select('table_style', $table_style, $dump_settings["table_style"]);
+echo html_select('table_style', $table_style, $settings->getParameter("dumpTableStyle", "DROP+CREATE"));
 
 echo " <span class='labels'>";
-echo checkbox("auto_increment", 1, $dump_settings["auto_increment"], lang('Auto Increment'));
+echo checkbox("auto_increment", 1, $settings->getParameter("dumpAutoIncrement"), lang('Auto Increment'));
 if (support("trigger")) {
-	echo checkbox("triggers", 1, $dump_settings["triggers"], lang('Triggers'));
+	echo checkbox("triggers", 1, $settings->getParameter("dumpTriggers", "1"), lang('Triggers'));
 }
 echo "</span></td></tr>";
 
-echo "<tr><th>", lang('Data'), "</th><td>", html_select('data_style', $data_style, $dump_settings["data_style"]), "</td></tr>";
+echo "<tr><th>", lang('Data'), "</th><td>", html_select("data_style", $data_style, $settings->getParameter("dumpDataStyle", "INSERT")), "</td></tr>";
 
-echo "<tr><th>", lang('Output'), "</th><td>", html_radios("output", Admin::get()->getDumpOutputs(), $dump_settings["output"]), "</td></tr>\n";
+echo "<tr><th>", lang('Output'), "</th><td>", html_radios("output", Admin::get()->getDumpOutputs(), $settings->getParameter("dumpOutput", "file")), "</td></tr>\n";
 
 ?>
 </table>
