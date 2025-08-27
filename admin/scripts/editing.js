@@ -884,8 +884,24 @@ function schemaMouseup(event, db) {
 		const rect = element.getBoundingClientRect();
 		const root = document.documentElement;
 
-		help.style.top = (root.scrollTop + rect.top - (side ? (help.offsetHeight - element.offsetHeight) / 2 : help.offsetHeight)) + 'px';
-		help.style.left = (root.scrollLeft + rect.left - (side ? help.offsetWidth : (help.offsetWidth - element.offsetWidth) / 2)) + 'px';
+		let top = root.scrollTop + rect.top;
+		let left = root.scrollLeft + rect.left;
+
+		if (side) {
+			left -= help.offsetWidth;
+			if (left < 0) {
+				left = rect.left;
+				top -= help.offsetHeight;
+			} else {
+				top -= (help.offsetHeight - element.offsetHeight) / 2;
+			}
+		} else {
+			top -= help.offsetHeight;
+			left -= (help.offsetWidth - element.offsetWidth) / 2;
+		}
+
+		help.style.top = `${top}px`;
+		help.style.left = `${left}px`;
 
 		if (helpVisible) {
 			return;

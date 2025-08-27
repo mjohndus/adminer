@@ -8,7 +8,6 @@
 	width: var(--menu-width);
 	border-inline-end: 1px solid var(--panel-border);
 	background: var(--panel-bg);
-	z-index: 20;
 }
 
 .navigation-panel .header {
@@ -252,6 +251,7 @@ menu.dual .secondary {
 		box-shadow: 2px 0 10px rgba(0, 0, 0, 5%);
 		padding-top: 2rem;
 		min-width: 13rem;
+		z-index: 20;
 	}
 
 	.navigation-panel.opened {
