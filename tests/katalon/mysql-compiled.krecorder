@@ -13,7 +13,7 @@
 <tbody>
 <tr><td>open</td><td>/adminneo/tests/admin-compiled.php<datalist></datalist></td><td></td></tr>
 <tr><td>select</td><td>name=lang<datalist></datalist></td><td>label=English</td></tr>
-<tr><td>clickAndWait</td><td>css=div.language input[type="submit"]<datalist></datalist></td><td></td></tr>
+<tr><td>clickAndWait</td><td>css=div.toolbox input[type="submit"]<datalist></datalist></td><td></td></tr>
 <tr><td>type</td><td>id=username<datalist></datalist></td><td>test</td></tr>
 <tr><td>type</td><td>name=auth[password]<datalist></datalist></td><td>test</td></tr>
 <tr><td>clickAndWait</td><td>xpath=//input[@value='Login']<datalist></datalist></td><td></td></tr>
@@ -430,7 +430,7 @@
 <tbody>
 <tr><td>open</td><td>/adminneo/tests/editor-compiled.php<datalist></datalist></td><td></td></tr>
 <tr><td>select</td><td>name=lang<datalist></datalist></td><td>label=English</td></tr>
-<tr><td>clickAndWait</td><td>css=div.language input[type="submit"]<datalist></datalist></td><td></td></tr>
+<tr><td>clickAndWait</td><td>css=div.toolbox input[type="submit"]<datalist></datalist></td><td></td></tr>
 <tr><td>type</td><td>id=username<datalist></datalist></td><td>test</td></tr>
 <tr><td>type</td><td>name=auth[password]<datalist></datalist></td><td>test</td></tr>
 <tr><td>click</td><td>xpath=//input[@value='Login']<datalist></datalist></td><td></td></tr>
