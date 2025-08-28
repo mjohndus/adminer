@@ -52,16 +52,22 @@ class Admin extends Origin
 	 */
 	public function printToHead(): void
 	{
-		echo "<link rel='stylesheet' href='", link_files("jush.css", ["../vendor/vrana/jush/jush.css"]), "'>";
+		echo "<link rel='stylesheet' href='", link_files("jush.css", [
+			"../vendor/vrana/jush/jush.css",
+			"themes/default/jush.css",
+		]), "'>";
 
 		if (!$this->admin->isLightModeForced()) {
 			echo "<link rel='stylesheet' " . (!$this->admin->isDarkModeForced() ? "media='(prefers-color-scheme: dark)' " : "") . "href='";
-			echo link_files("jush-dark.css", ["../vendor/vrana/jush/jush-dark.css"]);
+			echo link_files("jush-dark.css", [
+				"themes/default/jush-dark.css",
+			]);
 			echo "'>\n";
 		}
 
 		echo script_src(link_files("jush.js", [
 			"../vendor/vrana/jush/modules/jush.js",
+			"../vendor/vrana/jush/modules/jush-autocomplete-sql.js",
 			"../vendor/vrana/jush/modules/jush-textarea.js",
 			"../vendor/vrana/jush/modules/jush-sql.js",
 			"../vendor/vrana/jush/modules/jush-pgsql.js",
@@ -70,7 +76,7 @@ class Admin extends Origin
 			"../vendor/vrana/jush/modules/jush-oracle.js",
 			"../vendor/vrana/jush/modules/jush-simpledb.js",
 			"../vendor/vrana/jush/modules/jush-js.js",
-		]));
+		]), true);
 	}
 
 	/**
@@ -1181,24 +1187,33 @@ class Admin extends Origin
 
 			// Syntax highlighting.
 			if (support("sql") || DIALECT == "elastic") {
-				?>
-				<script<?php echo nonce(); ?>>
-					<?php
-					if (support("sql") && $tables) {
-						$links = [];
-						foreach ($tables as $table => $type) {
-							$links[] = preg_quote($table, '/');
-						}
-						echo "var jushLinks = { " . DIALECT . ": [ '" . js_escape(ME) . (support("table") ? "table=" : "select=") . "\$&', /\\b(" . implode("|", $links) . ")\\b/g ] };\n";
-						foreach (["bac", "bra", "sqlite_quo", "mssql_bra"] as $val) {
-							echo "jushLinks.$val = jushLinks." . DIALECT . ";\n";
+				echo "<script" . nonce() . ">\n";
+				if (support("sql") && $tables) {
+					$links = [];
+					foreach ($tables as $table => $type) {
+						$links[] = preg_quote($table, '/');
+					}
+					echo "var jushLinks = { " . DIALECT . ": [ '" . js_escape(ME) . (support("table") ? "table=" : "select=") . "\$&', /\\b(" . implode("|", $links) . ")\\b/g ] };\n";
+					foreach (["bac", "bra", "sqlite_quo", "mssql_bra"] as $val) {
+						echo "jushLinks.$val = jushLinks." . DIALECT . ";\n";
+					}
+				}
+
+				if (DIALECT != "elastic" && (isset($_GET["sql"]) || isset($_GET["trigger"]) || isset($_GET["check"]))) {
+					$tablesColumns = array_fill_keys(array_keys($tables), []);
+					foreach (Driver::get()->getAllFields() as $table => $fields) {
+						foreach ($fields as $field) {
+							$tablesColumns[$table][] = $field["field"];
 						}
 					}
-					?>
-					initSyntaxHighlighting('<?php echo Connection::get()->getVersion(); ?>'<?php echo(Connection::get()->isMariaDB() ? ", true" : ""); ?>);
-				</script>
-				<?php
+
+					echo "window.addEventListener('DOMContentLoaded', () => { autocompletion = jush.autocompleteSql('" . idf_escape("") . "', " . json_encode($tablesColumns) . "); });\n";
+				}
+
+				echo "</script>\n";
 			}
+
+			echo script("let autocompletion;\nwindow.addEventListener('DOMContentLoaded', () => { initSyntaxHighlighting('" . Connection::get()->getVersion() . "', " . (Connection::get()->isMariaDB() ? "true" : "false") . ", autocompletion); });");
 		}
 	}
 
