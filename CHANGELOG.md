@@ -7,6 +7,7 @@ AdminNeo 5.1.0
 ### Changes
 
 - New Settings page with basic UI options
+- Add autocompletion to SQL command editor 
 - Add defaultServer and defaultDatabase configuration parameters
 - Allow creating generated columns (by @vrana)
 - MySQL: Display converting function for binary, bit or geometry fields (by @vrana)
@@ -29,6 +30,7 @@ AdminNeo 5.1.0
 - Editor: Display database views
 - SqlLoginPlugin: Auto-create log folder structure (by @jesobreira)
 - Add support for installing by Composer
+- Update Dutch translation (by @wintstar)
 
 ### Bugfixes
 
@@ -41,12 +43,13 @@ AdminNeo 5.1.0
 - Select: Allow ordering by COUNT(*) (regression from 4.9.0) (by @vrana)
 - Fix opening custom links in selection table to a new tab
 - Fix duplicated page headline in custom type editing (regression from 5.0.0)
+- Fix displaying help popup under the left navigation
 - Editor: Fix autoselecting the first available database
 
 (Ported relevant changes from Adminer 5.0.0-5.0.6.)
 
-AdminNeo 5.0.0
---------------
+AdminNeo 5.0.0 (2025-05-29)
+---------------------------
 
 This is the first release of AdminNeo and EditorNeo as standalone products. It mainly brings the brand new responsive
 theme with dark mode support and color variants, easy to use [configuration](https://www.adminneo.org/configuration), 
