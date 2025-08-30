@@ -311,6 +311,11 @@ function print_login_page(): void
 	$params = session_get_cookie_params();
 	cookie("neo_key", ($_COOKIE["neo_key"] ?: get_random_string()), $params["lifetime"]);
 
+	// Set token for the unsuccessful login.
+	if (!$_SESSION["token"]) {
+		$_SESSION["token"] = rand(1, 1e6);
+	}
+
 	page_header(lang('Login'), null);
 	echo "<form action='' method='post'>\n";
 	echo "<div>";
