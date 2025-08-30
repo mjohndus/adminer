@@ -31,6 +31,7 @@ AdminNeo 5.1.0
 - SqlLoginPlugin: Auto-create log folder structure (by @jesobreira)
 - Add support for installing by Composer
 - Update Dutch translation (by @wintstar)
+- Update French translation (by @rrr63)
 
 ### Bugfixes
 
