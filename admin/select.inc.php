@@ -475,13 +475,16 @@ if (!$columns && support("table")) {
 							}
 						}
 
+						$null_val = $val === null;
 						$val = select_value($val, $link, $field, $text_length);
 						$escaped_key = bracket_escape($key);
 						$id = h("val[$unique_idf][$escaped_key]");
 						$value = $_POST["val"][$unique_idf][$escaped_key] ?? null;
 						$editable = !is_array($row[$key]) && is_utf8($val) && $rows[$n][$key] == $row[$key] && !$functions[$key] && !($field["generated"] ?? false);
 						$text = $field && preg_match('~text|json|lob~', $field["type"]);
-						$class = $field && preg_match(number_type(), $field["type"]) && is_numeric(strip_tags($val)) ? "class='number'" : "";
+						$numeric_type = ($field && preg_match(number_type(), $field["type"])) ||
+							(!$field && preg_match('~^ROUND|CHAR_LENGTH|FLOOR|CEIL|UNIX_TIMESTAMP|TIME_TO_SEC|SUM|MIN|MAX|AVG|COUNT\(~', $key));
+						$class = $numeric_type && ($null_val || is_numeric(strip_tags($val))) ? "class='number'" : "";
 						echo "<td id='$id' $class";
 						if (($_GET["modify"] && $editable) || $value !== null) {
 							$h_value = h($value !== null ? $value : $row[$key]);
