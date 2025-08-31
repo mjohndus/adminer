@@ -90,7 +90,7 @@
 }
 
 .version-badge {
-	margin-left: -5px;
+	margin-left: -3px;
 	padding: 5px;
 	color: var(--version-text) !important;
 
