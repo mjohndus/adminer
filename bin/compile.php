@@ -193,6 +193,11 @@ function print_usage(): void
 	echo "More information at: https://github.com/adminneo-org/adminneo?tab=readme-ov-file#usage\n";
 }
 
+function ini_bool(): bool
+{
+	return true;
+}
+
 $current_path = getcwd();
 
 // Parse script arguments.
