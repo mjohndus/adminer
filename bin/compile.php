@@ -425,7 +425,10 @@ if ($single_driver) {
 	}
 
 	// Remove Jush modules for other drivers.
-	$file = preg_replace('~"\.\./vendor/vrana/jush/modules/jush-(?!textarea\.|txt\.|js\.|' . ($single_driver == "mysql" ? "sql" : preg_quote($single_driver)) . '\.)[^.]+.js",\n~', '', $file);
+    $keep_driver = '|' . preg_quote($single_driver == "mysql" ? "sql" : $single_driver) . '\.';
+    $keep_autocompletion = support("sql") ? '|autocomplete-sql\.' : "";
+
+	$file = preg_replace('~"\.\./vendor/vrana/jush/modules/jush-(?!textarea\.|txt\.|js\.' . $keep_driver . $keep_autocompletion . ')[^.]+.js",\n~', '', $file);
 
 	$file = preg_replace_callback('~doc_link\(\[(.*)]\)~sU', function ($match) use ($single_driver) {
 		list(, $links) = $match;
