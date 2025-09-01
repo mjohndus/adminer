@@ -1,6 +1,13 @@
 Changelog
 =========
 
+AdminNeo 5.1.1 (2025-09-01)
+---------------------------
+
+### Bugfixes
+
+Compiler: Fix missing autocompletion script in a single driver file
+
 AdminNeo 5.1.0 (2025-08-31)
 ---------------------------
 
