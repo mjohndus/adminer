@@ -70,7 +70,7 @@ if (extension_loaded('pdo')) {
 				return $result;
 			}
 
-			$this->affectedRows = $result->getRowsCount();
+			$this->affectedRows = $result->getAffectedRowsCount();
 
 			return true;
 		}
@@ -100,6 +100,11 @@ if (extension_loaded('pdo')) {
 		public function getColumnsCount(): int
 		{
 			return $this->statement->columnCount();
+		}
+
+		public function getAffectedRowsCount(): int
+		{
+			return $this->statement->rowCount();
 		}
 
 		public function fetchAssoc()
