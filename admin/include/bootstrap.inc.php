@@ -39,7 +39,7 @@ include __DIR__ . "/../file.inc.php";
 
 if ($_GET["script"] == "version") {
 	$filename = get_temp_dir() . "/adminneo.version";
-	unlink($filename); // It may not be writable by us.
+	@unlink($filename); // It may not be writable by us, @ - it may not exist.
 
 	$file = open_file_with_lock($filename);
 	if ($file) {
