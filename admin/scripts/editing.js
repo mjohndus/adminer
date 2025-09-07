@@ -367,7 +367,7 @@ function selectFieldChange() {
 	function onFieldLengthFocus() {
 		const td = this.parentNode;
 
-		if (/(enum|set)$/.test(selectValue(td.previousSibling.firstChild))) {
+		if (/^(enum|set)$/.test(selectValue(td.previousSibling.firstChild))) {
 			const edit = gid('enum-edit');
 			edit.value = parseEnumValues(this.value);
 
