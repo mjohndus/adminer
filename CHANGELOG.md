@@ -10,14 +10,15 @@ AdminNeo 5.2.0
 
 ### Bugfixes
 
-PDO: Fix displaying the number of affected rows (regression from 5.1.0)
+- PDO: Fix displaying the number of affected rows (regression from 5.1.0) (issue #151)
+- Silent warning if adminneo.version file does not exist (issue #152)
 
 AdminNeo 5.1.1 (2025-09-01)
 ---------------------------
 
 ### Bugfixes
 
-Compiler: Fix missing autocompletion script in a single driver file
+Compiler: Fix missing autocompletion script in a single driver file (issue #146)
 
 AdminNeo 5.1.0 (2025-08-31)
 ---------------------------
@@ -25,7 +26,7 @@ AdminNeo 5.1.0 (2025-08-31)
 ### Changes
 
 - New Settings page with basic UI options
-- Add autocompletion to SQL command editor 
+- Add autocompletion to SQL command editor
 - Add defaultServer and defaultDatabase configuration parameters
 - Allow creating generated columns (by @vrana)
 - MySQL: Display converting function for binary, bit or geometry fields (by @vrana)
@@ -56,14 +57,14 @@ AdminNeo 5.1.0 (2025-08-31)
 - Fix displaying the last page instead of the first one on PHP 7 and older (regression from 5.0.0)
 - Fix displaying help for field type (regression from 5.0.0)
 - MySQL: Fix using undefined PDO constant on PHP 5
-- MariaDB: Fix parsing type of the generated column in view
+- MariaDB: Fix parsing type of the generated column in view (issue #130)
 - MS SQL: Add missing support for Encrypt and TrustServerCertificate parameters in PDO_SQLSRV
 - MongoDB: Fix broken driver
 - Select: Allow ordering by COUNT(*) (regression from 4.9.0) (by @vrana)
-- Fix opening custom links in selection table to a new tab
+- Fix opening custom links in selection table to a new tab (issue #133)
 - Fix duplicated page headline in custom type editing (regression from 5.0.0)
 - Fix displaying help popup under the left navigation
-- Editor: Fix autoselecting the first available database
+- Editor: Fix autoselecting the first available database (issue #125)
 
 (Ported relevant changes from Adminer 5.0.0-5.0.6.)
 
