@@ -4,6 +4,10 @@ Changelog
 AdminNeo 5.2.0
 --------------
 
+### Changes
+
+- Update Spanish translation (by @rexwithluv)
+
 ### Bugfixes
 
 PDO: Fix displaying the number of affected rows (regression from 5.1.0)
