@@ -526,7 +526,7 @@ if (isset($_GET["pgsql"])) {
 			static $methods = [];
 
 			if (!$methods) {
-				$methods = get_vals("SELECT amname FROM pg_am" . ($this->connection->isMinVersion("9.6") ? " WHERE amtype = 'i'" : "") . " ORDER BY amname = 'btree' DESC, amname");
+				$methods = get_vals("SELECT amname FROM pg_am" . ($this->connection->isMinVersion("9.6") ? " WHERE amtype = 'i'" : "") . " ORDER BY amname = '" . ($this->connection->isCockroachDB() ? "prefix" : "btree") . "' DESC, amname");
 			}
 
 			return $methods;
