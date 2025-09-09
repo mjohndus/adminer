@@ -264,17 +264,18 @@ function page_headers(): void
 }
 
 /**
- * Gets a CSP nonce.
+ * Returns a CSP nonce.
  *
- * @return string Base64 value.
+ * @return string Random string with 256 bits of entropy.
+ *
  * @throws \Random\RandomException
  */
-function get_nonce()
+function get_nonce(): string
 {
 	static $nonce;
 
 	if (!$nonce) {
-		$nonce = base64_encode(get_random_string(true));
+		$nonce = get_random_string();
 	}
 
 	return $nonce;

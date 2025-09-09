@@ -929,17 +929,15 @@ function get_private_key($create)
 }
 
 /**
- * Returns a random 32 characters long string.
+ * Returns a random string with 256 bits of entropy.
  *
- * @param $binary bool
- * @return string
+ * The result is safe to use in URL parameters or file names.
+ *
  * @throws \Random\RandomException
  */
-function get_random_string($binary = false)
+function get_random_string(): string
 {
-	$bytes = function_exists('random_bytes') ? random_bytes(32) : uniqid(mt_rand(), true);
-
-	return $binary ? $bytes : md5($bytes);
+	return strtr(rtrim(base64_encode(Random::bytes(32)), "="), "+/", "-_");
 }
 
 /** Format value to use in select
