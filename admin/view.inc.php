@@ -43,7 +43,9 @@ if (!$_POST && $TABLE != "") {
 	$row["name"] = $TABLE;
 	$row["materialized"] = ($orig_type != "VIEW");
 
-	Admin::get()->addError(error());
+	if ($error = error()) {
+		Admin::get()->addError($error);
+	}
 }
 
 if ($TABLE != "") {
