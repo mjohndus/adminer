@@ -10,6 +10,7 @@ AdminNeo 5.2.0
 
 ### Bugfixes
 
+- MariaDB: Fix changing user password (issue #155)
 - PDO: Fix displaying the number of affected rows (regression from 5.1.0) (issue #151)
 - Silent warning if adminneo.version file does not exist (issue #152)
 
