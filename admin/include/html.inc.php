@@ -408,7 +408,7 @@ function input($field, $value, $function, $autofocus = false) {
 			. ((!$has_function || $function === "") && preg_match('~(?<!o)int(?!er)~', $field["type"]) && !preg_match('~\[\]~', $field["full_type"]) ? " type='number'" : "")
 			. ($function != "now" ? " value='" . h($value) . "'" : " data-last-value='" . h($value) . "'")
 			. ($maxlength ? " data-maxlength='$maxlength'" : "")
-			. (preg_match('~char|binary~', $field["type"]) && $maxlength > 20 ? " size='40'" : "")
+			. (preg_match('~char|binary~', $field["type"]) && $maxlength > 20 ? " size='44'" : "")
 			. "$attrs>"
 		;
 	}
