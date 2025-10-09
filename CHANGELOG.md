@@ -14,6 +14,7 @@ AdminNeo 5.2.0
 - PDO: Fix displaying the number of affected rows (regression from 5.1.0) (issue #151)
 - Silent warning if adminneo.version file does not exist (issue #152)
 - Update Makefile for the current project state (issue #161, by @Necoro)
+- Fix escaping \t in JSON values (issue #159)
 
 AdminNeo 5.1.1 (2025-09-01)
 ---------------------------
