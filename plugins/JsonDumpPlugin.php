@@ -65,17 +65,15 @@ class JsonDumpPlugin extends Plugin
 
 			$first = true;
 			while ($row = $result->fetchAssoc()) {
-				echo($first ? "" : ", ");
-
-				foreach ($row as $key => $val) {
-					json_row($key, $val);
+				if (!$first) {
+					echo ",\n";
+					$first = false;
 				}
-				json_row("");
 
-				$first = false;
+				echo preg_replace('~\n\s+~', "\n\t", json_encode($row, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
 			}
 
-			echo "]";
+			echo "\n]";
 		}
 
 		return true;

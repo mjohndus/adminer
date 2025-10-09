@@ -163,6 +163,7 @@ function select_input($attrs, $options, $value = "", $onchange = "", $placeholde
 * @param string or "" to close the object
 * @param string
 * @return null
+* @deprecated
 */
 function json_row($key, $val = null) {
 	static $first = true;

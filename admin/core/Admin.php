@@ -2,6 +2,8 @@
 
 namespace AdminNeo;
 
+use stdClass;
+
 class Admin extends Origin
 {
 	public function getOperators(): array
@@ -649,22 +651,16 @@ class Admin extends Origin
 		echo "<input type='submit' class='button' value='" . lang('Select') . "'>";
 		echo " <span id='noindex' title='" . lang('Full table scan') . "'></span>";
 		echo "<script" . nonce() . ">\n";
-		echo "var indexColumns = ";
 
-		$columns = [];
+		$columns = new stdClass(); // To ensure it is an object even if empty.
 		foreach ($indexes as $index) {
 			$current_key = reset($index["columns"]);
 			if ($index["type"] != "FULLTEXT" && $current_key) {
-				$columns[$current_key] = 1;
+				$columns->$current_key = null;
 			}
 		}
 
-		$columns[""] = 1;
-		foreach ($columns as $key => $val) {
-			json_row($key);
-		}
-
-		echo ";\n";
+		echo "var indexColumns = " . json_encode($columns, JSON_UNESCAPED_UNICODE) . ";\n";
 		echo "selectFieldChange.call(gid('form')['select']);\n";
 		echo "</script>\n";
 		echo "</div></fieldset>\n";
