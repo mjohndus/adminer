@@ -6,6 +6,8 @@ namespace AdminNeo;
  * Allows using AdminNeo or EditorNeo inside a frame by modifying `X-Frame-Options` and `Content-Security-Policy`
  * HTTP headers.
  *
+ * Last changed in release: !compile: version
+ *
  * @link https://www.adminneo.org/plugins/#usage
  *
  * @author Peter Knut

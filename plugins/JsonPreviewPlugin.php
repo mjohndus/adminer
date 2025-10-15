@@ -9,6 +9,8 @@ namespace AdminNeo;
  * native JSON data type and for values that are automatically detected as JSON objects or arrays if
  * `jsonValuesDetection` configuration option is enabled.
  *
+ * Last changed in release: !compile: version
+ *
  * @author Peter Knut
  *
  * @license https://www.apache.org/licenses/LICENSE-2.0 Apache License, Version 2.0

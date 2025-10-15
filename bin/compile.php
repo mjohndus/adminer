@@ -621,6 +621,17 @@ foreach (glob(__DIR__ . "/../plugins/*") as $file_path) {
 
 	$file = downgrade_php($file);
 
+	// Print version.
+	$commit_hash = exec("git rev-list HEAD -1 -- $file_path 2> /dev/null");
+	if ($commit_hash) {
+		$version = exec("git describe --contains $commit_hash 2> /dev/null");
+		$version = $version ? preg_replace('/~.*/', "", $version) : false;
+	} else {
+		$version = false;
+	}
+
+	$file = str_replace("!compile: version", $version ?: "v" . VERSION, $file);
+
 	$filename = "$output_dir/" . basename($file_path);
 	file_put_contents($filename, $file);
 }

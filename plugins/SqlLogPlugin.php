@@ -5,6 +5,8 @@ namespace AdminNeo;
 /**
  * Logs all queries to SQL file.
  *
+ * Last changed in release: !compile: version
+ * 
  * @link https://www.adminneo.org/plugins/#usage
  *
  * @author Jakub Vrana, https://www.vrana.cz/

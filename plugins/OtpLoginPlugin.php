@@ -7,6 +7,8 @@ namespace AdminNeo;
  *
  * The implementation uses standard SHA1 algorithm, 30s time interval and 6-digits code.
  *
+ * Last changed in release: !compile: version
+ *
  * @link https://www.adminneo.org/plugins/otp-login
  *
  * @author Jakub Vrana, https://www.vrana.cz/
