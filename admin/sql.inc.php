@@ -169,6 +169,7 @@ if ($_POST) {
 								} else {
 									$time = " <span class='time'>(" . format_time($start) . ")</span>";
 									$edit_link = (strlen($q) < 1000 ? " <a href='" . h(ME) . "sql=" . urlencode(trim($q)) . "'>" . icon("edit") . lang('Edit') . "</a>" : ""); // 1000 - maximum length of encoded URL in IE is 2083 characters
+									$query_info = Connection::get()->getQueryInfo();
 									$affected = Connection::get()->getAffectedRows(); // getting warnings overwrites this
 
 									$warnings = ($_POST["only_errors"] ? null : Driver::get()->warnings());
@@ -213,8 +214,7 @@ if ($_POST) {
 										}
 
 										if (!$_POST["only_errors"]) {
-											$title = isset(Connection::get()->info) ? "title='" . h(Connection::get()->info) . "'" : "";
-											echo "<p class='message' $title>", lang('Query executed OK, %d row(s) affected.', $affected);
+											echo "<p class='message' title='" . h($query_info) . "'>", lang('Query executed OK, %d row(s) affected.', $affected);
 											echo "$time $edit_link";
 											if ($warnings_link) {
 												echo ", $warnings_link";

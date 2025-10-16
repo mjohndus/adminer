@@ -116,6 +116,11 @@ if (isset($_GET["mysql"])) {
 				return is_object($result) ? new MySqlResult($result) : $result;
 			}
 
+			public function getQueryInfo(): ?string
+			{
+				return $this->mysqli->info;
+			}
+
 			public function multiQuery(string $query): bool
 			{
 				return $this->mysqli->multi_query($query);
