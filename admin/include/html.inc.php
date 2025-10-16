@@ -454,7 +454,9 @@ function input($field, $value, $function, $autofocus = false) {
 		$first_function++;
 	}
 
-	echo script("mixin(qsl('td'), {onchange: partial(skipOriginal, $first_function), oninput: function () { this.onchange(); }});");
+	if (count($functions) > 1) {
+		echo script("qsl('td').oninput = partial(skipOriginal, $first_function);");
+	}
 }
 
 /** Process edit input field

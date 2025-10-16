@@ -975,10 +975,6 @@ function functionChange() {
  */
 function skipOriginal(first) {
 	const fnSelect = qs('select', this.previousSibling);
-	if (!fnSelect) {
-		return;
-	}
-
 	const value = selectValue(fnSelect);
 
 	if (fnSelect.selectedIndex < first || value === "NULL" || value === "now") {
