@@ -184,8 +184,8 @@ if (isset($_GET["clickhouse"])) {
 
 				return (object) [
 					'name' => $column['name'],
-					'orgname' => $column['name'],
-					'type' => $column['type'],
+					'type' => $column['type'], //! map to MySQL numbers
+					'charsetnr' => 0,
 				];
 			}
 		}

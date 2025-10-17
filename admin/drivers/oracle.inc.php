@@ -167,14 +167,13 @@ if (isset($_GET["oracle"])) {
 					return false;
 				}
 
-				$type = oci_field_type($this->resource, $column);
+				$type = oci_field_type($this->resource, $column); //! map to MySQL numbers
 				if ($type === false) {
 					return false;
 				}
 
 				return (object) [
 					'name' => $name,
-					'orgname' => $name,
 					'type' => $type,
 					'charsetnr' => (preg_match("~raw|blob|bfile~", $type) ? 63 : 0), // 63 - binary
 				];

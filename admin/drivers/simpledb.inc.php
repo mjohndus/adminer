@@ -169,7 +169,9 @@ if (isset($_GET["simpledb"])) {
 				$keys = array_keys($this->rows[0]);
 
 				return (object) [
-					'name' => $keys[$this->offset++]
+					'name' => $keys[$this->offset++],
+					'type' => 0,
+					'charsetnr' => 0,
 				];
 			}
 

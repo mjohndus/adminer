@@ -124,8 +124,7 @@ if (extension_loaded('pdo')) {
 				return false;
 			}
 
-			$row["orgtable"] = $row["table"] ?? null;
-			$row["orgname"] = $row["name"];
+			$row["type"] = $row["pdo_type"]; //! map to MySQL numbers
 			$row["charsetnr"] = (in_array("blob", $row["flags"] ?? []) ? 63 : 0);
 
 			return (object) $row;

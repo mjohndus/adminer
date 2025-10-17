@@ -191,6 +191,7 @@ if (isset($_GET["mongo"])) {
 
 				return (object) [
 					'name' => $name,
+					'type' => 0,
 					'charsetnr' => $this->charset[$name],
 				];
 			}

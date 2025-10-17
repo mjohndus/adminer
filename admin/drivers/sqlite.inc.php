@@ -92,7 +92,7 @@ if (isset($_GET["sqlite"])) {
 			{
 				$column = $this->offset++;
 
-				$type = $this->resource->columnType($column);
+				$type = $this->resource->columnType($column); //! map to MySQL numbers
 				if ($type === false) {
 					return false;
 				}
