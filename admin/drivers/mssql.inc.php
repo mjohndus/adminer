@@ -219,60 +219,54 @@ if (isset($_GET["mssql"])) {
 			}
 		}
 
-	} elseif (extension_loaded("pdo_sqlsrv")) {
-		define("AdminNeo\DRIVER_EXTENSION", "PDO_SQLSRV");
-
-		class MsSqlConnection extends PdoConnection
+	} else {
+		abstract class MsSqlPdoConnection extends PdoConnection
 		{
-			public function open(string $server, string $username, string $password): bool
-			{
-				$options = [];
-
-				$encrypt = Admin::get()->getConfig()->getSslEncrypt();
-				if ($encrypt !== null) {
-					$options[] = "Encrypt=$encrypt";
-				}
-
-				$trust = Admin::get()->getConfig()->getSslTrustServerCertificate();
-				if ($trust !== null) {
-					$options[] = "TrustServerCertificate=$trust";
-				}
-
-				$optionsString = $options ? (";" . implode(";", $options)) : "";
-
-				return $this->dsn("sqlsrv:Server=" . str_replace(":", ",", $server) . $optionsString, $username, $password);
-			}
-
 			public function selectDatabase(string $name): bool
 			{
 				// database selection is separated from the connection so dbname in DSN can't be used
-				return $this->query(use_sql($name));
+				return (bool)$this->query(use_sql($name));
 			}
 
-			function quote(string $string): string
+			public function quote(string $string): string
 			{
 				return (contains_unicode($string) ? "N" : "") . parent::quote($string);
 			}
 		}
 
-	} elseif (extension_loaded("pdo_dblib")) {
-		define("AdminNeo\DRIVER_EXTENSION", "PDO_DBLIB");
+		if (extension_loaded("pdo_sqlsrv")) {
+			define("AdminNeo\DRIVER_EXTENSION", "PDO_SQLSRV");
 
-		class MsSqlConnection extends PdoConnection
-		{
-			public function open(string $server, string $username, string $password): bool
+			class MsSqlConnection extends MsSqlPdoConnection
 			{
-				return $this->dsn("dblib:charset=utf8;host=" . str_replace(":", ";unix_socket=", preg_replace('~:(\d)~', ';port=\1', $server)), $username, $password);
+				public function open(string $server, string $username, string $password): bool
+				{
+					$options = [];
+
+					$encrypt = Admin::get()->getConfig()->getSslEncrypt();
+					if ($encrypt !== null) {
+						$options[] = "Encrypt=$encrypt";
+					}
+
+					$trust = Admin::get()->getConfig()->getSslTrustServerCertificate();
+					if ($trust !== null) {
+						$options[] = "TrustServerCertificate=$trust";
+					}
+
+					$optionsString = $options ? (";" . implode(";", $options)) : "";
+
+					return $this->dsn("sqlsrv:Server=" . str_replace(":", ",", $server) . $optionsString, $username, $password);
+				}
 			}
+		} elseif (extension_loaded("pdo_dblib")) {
+			define("AdminNeo\DRIVER_EXTENSION", "PDO_DBLIB");
 
-			public function selectDatabase(string $name): bool
+			class MsSqlConnection extends MsSqlPdoConnection
 			{
-				return $this->query(use_sql($name));
-			}
-
-			function quote(string $string): string
-			{
-				return (contains_unicode($string) ? "N" : "") . parent::quote($string);
+				public function open(string $server, string $username, string $password): bool
+				{
+					return $this->dsn("dblib:charset=utf8;host=" . str_replace(":", ";unix_socket=", preg_replace('~:(\d)~', ';port=\1', $server)), $username, $password);
+				}
 			}
 		}
 	}
