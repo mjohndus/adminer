@@ -18,6 +18,7 @@ AdminNeo 5.2.0
 - MySQL: Fix retrieving additional info about the last query
 - MariaDB: Fix changing user password (issue #155)
 - MS SQL: Fix collation issues when retrieving default values (by @vrana)
+- MS SQL PDO: Fix invalid number of rows in SQL command
 - MS SQL PDO: Display last insert ID (by @vrana)
 - PDO: Fix displaying the number of affected rows (regression from 5.1.0) (issue #151)
 - Silent warning if adminneo.version file does not exist (issue #152)

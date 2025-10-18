@@ -92,7 +92,8 @@ if (extension_loaded('pdo')) {
 		public function __construct(PDOStatement $statement)
 		{
 			// It is not guaranteed to work with all drivers.
-			parent::__construct($statement->columnCount() ? $statement->rowCount() : 0);
+			// MSSQL PDO driver returns -1 for SELECT queries.
+			parent::__construct(max($statement->columnCount() ? $statement->rowCount() : 0, 0));
 
 			$this->statement = $statement;
 		}
