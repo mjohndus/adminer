@@ -2,6 +2,8 @@
 
 namespace AdminNeo;
 
+use stdClass;
+
 abstract class Result
 {
 	/** @var int */
@@ -28,7 +30,7 @@ abstract class Result
 	public abstract function fetchRow();
 
 	/**
-	 * @return object|false
+	 * @return stdClass|false
 	 */
 	public abstract function fetchField();
 

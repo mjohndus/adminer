@@ -13,7 +13,7 @@ if (isset($_GET["mysql"])) {
 	define("AdminNeo\DIALECT", "sql");
 
 	// MySQLi supports everything, PDO_MySQL doesn't support orgtable
-	if (extension_loaded("mysqli")) {
+	if (extension_loaded("mysqli") && $_GET["ext"] != "pdo") {
 		define("AdminNeo\DRIVER_EXTENSION", "MySQLi");
 
 		class MySqlConnection extends Connection
@@ -29,6 +29,7 @@ if (isset($_GET["mysql"])) {
 				$this->mysqli->init();
 			}
 
+			/** @see https://php.net/mysqli.construct */
 			public function open(string $server, string $username, string $password, $database = null, $port = null, $socket = null): bool
 			{
 				mysqli_report(MYSQLI_REPORT_OFF);
@@ -113,6 +114,11 @@ if (isset($_GET["mysql"])) {
 				$result = $this->mysqli->query($query);
 
 				return is_object($result) ? new MySqlResult($result) : $result;
+			}
+
+			public function getQueryInfo(): ?string
+			{
+				return $this->mysqli->info;
 			}
 
 			public function multiQuery(string $query): bool
@@ -431,6 +437,18 @@ if (isset($_GET["mysql"])) {
 			return $c_style;
 		}
 
+		public function engines(): array
+		{
+			$engines = [];
+
+			foreach (get_rows("SHOW ENGINES") as $row) {
+				if (preg_match("~YES|DEFAULT~", $row["Support"])) {
+					$engines[] = $row["Engine"];
+				}
+			}
+
+			return $engines;
+		}
 	}
 
 
@@ -540,19 +558,6 @@ if (isset($_GET["mysql"])) {
 		} elseif (preg_match('~ CHARACTER SET ([^ ]+)~', $create, $match)) {
 			// default collation
 			$return = $collations[$match[1]][-1];
-		}
-		return $return;
-	}
-
-	/** Get supported engines
-	* @return array
-	*/
-	function engines() {
-		$return = [];
-		foreach (get_rows("SHOW ENGINES") as $row) {
-			if (preg_match("~YES|DEFAULT~", $row["Support"])) {
-				$return[] = $row["Engine"];
-			}
 		}
 		return $return;
 	}
@@ -1119,10 +1124,15 @@ if (isset($_GET["mysql"])) {
 		return idf_escape($name);
 	}
 
-	/** Get last auto increment ID
-	* @return string
-	*/
-	function last_id() {
+	/**
+	 * Returns last auto-increment ID.
+	 *
+	 * @param $result Result|bool
+	 *
+	 * @return string|int|false
+	 */
+	function last_id($result)
+	{
 		return Connection::get()->getValue("SELECT LAST_INSERT_ID()"); // mysql_insert_id() truncates bigint
 	}
 
@@ -1188,10 +1198,17 @@ if (isset($_GET["mysql"])) {
 	}
 
 	/** Get server variables
-	* @return array [$name => $value]
+	* @return array [[$name, $value]]
 	*/
 	function show_variables() {
-		return get_key_vals("SHOW VARIABLES");
+		return get_rows("SHOW VARIABLES");
+	}
+
+	/** Get status variables
+	* @return array [[$name, $value]]
+	*/
+	function show_status() {
+		return get_rows("SHOW STATUS");
 	}
 
 	/** Get process list
@@ -1199,13 +1216,6 @@ if (isset($_GET["mysql"])) {
 	*/
 	function process_list() {
 		return get_rows("SHOW FULL PROCESSLIST");
-	}
-
-	/** Get status variables
-	* @return array [$name => $value]
-	*/
-	function show_status() {
-		return get_key_vals("SHOW STATUS");
 	}
 
 	/** Convert field in select and edit

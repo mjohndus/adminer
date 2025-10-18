@@ -52,8 +52,7 @@ if ($_POST) {
 
 		if ($query != "" && strlen($query) < 1e6) { // don't add big queries
 			$q = $query . (preg_match("~;[ \t\r\n]*\$~", $query) ? "" : ";"); //! doesn't work with DELIMITER |
-			$last_record = $history ? end($history) : false;
-			if (!$history || ($last_record && reset($last_record) != $q)) { // no repeated queries
+			if (!$history || first(end($history)) != $q) { // no repeated queries
 				restart_session();
 				$history[] = [$q, time()]; //! add elapsed time
 				set_session("queries", $history_all); // required because reference is unlinked by stop_session()
@@ -170,6 +169,7 @@ if ($_POST) {
 								} else {
 									$time = " <span class='time'>(" . format_time($start) . ")</span>";
 									$edit_link = (strlen($q) < 1000 ? " <a href='" . h(ME) . "sql=" . urlencode(trim($q)) . "'>" . icon("edit") . lang('Edit') . "</a>" : ""); // 1000 - maximum length of encoded URL in IE is 2083 characters
+									$query_info = Connection::get()->getQueryInfo();
 									$affected = Connection::get()->getAffectedRows(); // getting warnings overwrites this
 
 									$warnings = ($_POST["only_errors"] ? null : Driver::get()->warnings());
@@ -214,8 +214,7 @@ if ($_POST) {
 										}
 
 										if (!$_POST["only_errors"]) {
-											$title = isset(Connection::get()->info) ? "title='" . h(Connection::get()->info) . "'" : "";
-											echo "<p class='message' $title>", lang('Query executed OK, %d row(s) affected.', $affected);
+											echo "<p class='message' title='" . h($query_info) . "'>", lang('Query executed OK, %d row(s) affected.', $affected);
 											echo "$time $edit_link";
 											if ($warnings_link) {
 												echo ", $warnings_link";
@@ -242,8 +241,8 @@ if ($_POST) {
 										echo "<form id='$export_id' action='' method='post' class='hidden'><p>\n";
 										echo html_select("format", $dump_format, $settings->getParameter("exportFormat"));
 										echo html_select("output", Admin::get()->getDumpOutputs(), $settings->getParameter("exportOutput")) . " ";
-										echo "<input type='hidden' name='query' value='", h($q), "'>";
-										echo "<input type='hidden' name='token' value='", get_token(), "'>";
+										echo input_hidden("query", $q);
+										echo input_token();
 										echo " <input type='submit' class='button' name='export' value='" . lang('Export') . "'>";
 										echo "</p></form>\n";
 									}
@@ -279,10 +278,9 @@ if ($_POST) {
 		echo "<p class='error'>" . upload_error($query) . "\n";
 	}
 }
-?>
 
-<form action="" method="post" enctype="multipart/form-data" id="form">
-<?php
+echo "<form action='' method='post' enctype='multipart/form-data' id='form'>\n";
+
 if (!isset($_GET["import"])) {
 	$q = $_GET["sql"]; // overwrite $q from if ($_POST) to save memory
 	if ($_POST) {
@@ -296,9 +294,9 @@ if (!isset($_GET["import"])) {
 	textarea("query", $q, 20);
 	echo script(($_POST ? "" : "qs('textarea').focus();\n") . "gid('form').onsubmit = partial(sqlSubmit, gid('form'), '" . js_escape(remove_from_uri("sql|limit|error_stops|only_errors|history")) . "');");
 	echo "</p>";
+
 	echo "<p><input type='submit' class='button default' value='" . lang('Execute') . "' title='Ctrl+Enter'>";
 	echo lang('Limit rows') . ": <input type='number' name='limit' class='input size' value='" . h($_POST ? $_POST["limit"] : $_GET["limit"]) . "'>\n";
-
 } else {
 	echo "<div class='field-sets'>\n";
 	echo "<fieldset><legend>" . lang('File upload') . "</legend><div class='fieldset-content'>";
@@ -326,8 +324,12 @@ if (!isset($_GET["import"])) {
 
 echo checkbox("error_stops", 1, ($_POST ? $_POST["error_stops"] : isset($_GET["import"]) || $_GET["error_stops"]), lang('Stop on error'));
 echo checkbox("only_errors", 1, ($_POST ? $_POST["only_errors"] : isset($_GET["import"]) || $_GET["only_errors"]), lang('Show only errors'));
-echo "<input type='hidden' name='token' value='", get_token(), "'>";
+echo input_token();
 echo "</p>\n";
+
+if (!isset($_GET["import"])) {
+	Admin::get()->printAfterSqlCommand();
+}
 
 if (!isset($_GET["import"]) && $history) {
 	echo "<div class='field-sets'>\n";
@@ -353,5 +355,5 @@ if (!isset($_GET["import"]) && $history) {
 
 	echo "</div>\n";
 }
-?>
-</form>
+
+echo "</form>\n";

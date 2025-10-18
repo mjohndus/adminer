@@ -7,14 +7,26 @@ AdminNeo 5.2.0
 ### Changes
 
 - Update Spanish translation (by @rexwithluv)
+- PostgreSQL: Display auto_increment of inserted rows (by @vrana)
+- PostgreSQL: Display description of system variables (by @vrana)
+- PostgreSQL 11: Add support for PROCEDURE (by @vrana)
+- URL parameter ?ext=pdo to force using PDO (by @vrana)
+- Add SqlGeminiPlugin - AI prompt in SQL command generating the queries with Google Gemini (by @vrana)
 
 ### Bugfixes
 
+- MySQL: Fix retrieving additional info about the last query
 - MariaDB: Fix changing user password (issue #155)
+- MS SQL: Fix collation issues when retrieving default values (by @vrana)
+- MS SQL PDO: Fix invalid number of rows in SQL command
+- MS SQL PDO: Display last insert ID (by @vrana)
 - PDO: Fix displaying the number of affected rows (regression from 5.1.0) (issue #151)
 - Silent warning if adminneo.version file does not exist (issue #152)
+- Fix initial caret position while inline editing a table value. (by @vrana)
 - Update Makefile for the current project state (issue #161, by @Necoro)
 - Fix escaping \t in JSON values (issue #159)
+
+(Ported relevant changes from Adminer 5.1.0.)
 
 AdminNeo 5.1.1 (2025-09-01)
 ---------------------------

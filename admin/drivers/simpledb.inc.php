@@ -169,7 +169,9 @@ if (isset($_GET["simpledb"])) {
 				$keys = array_keys($this->rows[0]);
 
 				return (object) [
-					'name' => $keys[$this->offset++]
+					'name' => $keys[$this->offset++],
+					'type' => 15,
+					'charsetnr' => 0,
 				];
 			}
 
@@ -474,10 +476,6 @@ if (isset($_GET["simpledb"])) {
 	function fk_support($table_status) {
 	}
 
-	function engines() {
-		return [];
-	}
-
 	function alter_table($table, $name, $fields, $foreign, $comment, $engine, $collation, $auto_increment, $partitioning) {
 		return ($table == "" && sdb_request('CreateDomain', ['DomainName' => $name]));
 	}
@@ -501,7 +499,9 @@ if (isset($_GET["simpledb"])) {
 		return ($where ? null : $table_status["Rows"]);
 	}
 
-	function last_id() {
+	function last_id($result)
+	{
+		return 0;
 	}
 
 	function sdb_request($action, $params = [], ?Connection $connection = null) {

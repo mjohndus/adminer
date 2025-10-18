@@ -298,10 +298,21 @@ abstract class Driver
 	 */
 	public function insert(string $table, array $record)
 	{
-		return queries("INSERT INTO " . table($table) . ($record
-			? " (" . implode(", ", array_keys($record)) . ")\nVALUES (" . implode(", ", $record) . ")"
-			: " DEFAULT VALUES"
-		));
+		return queries("INSERT INTO " . table($table) . (
+			$record ?
+				" (" . implode(", ", array_keys($record)) . ")\nVALUES (" . implode(", ", $record) . ")" :
+				" DEFAULT VALUES"
+			) . $this->getInsertReturningSql($table));
+	}
+
+	/**
+	 * Returns RETURNING clause for INSERT queries (PostgreSQL specific).
+	 *
+	 * @param string $table Table name.
+	 */
+	public function getInsertReturningSql(string $table): string
+	{
+		return "";
 	}
 
 	/**
@@ -416,6 +427,16 @@ abstract class Driver
 	public function hasCStyleEscapes(): bool
 	{
 		return false;
+	}
+
+	/**
+	 * Returns supported engines.
+	 *
+	 * @return string[]
+	 */
+	public function engines(): array
+	{
+		return [];
 	}
 
 	/**

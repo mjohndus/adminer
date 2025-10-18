@@ -365,7 +365,7 @@ return [
 	// In-place editing in selection.
 	'Modify' => 'Aanpassen',
 	'Ctrl+click on a value to modify it.' => 'Ctrl+klik op een waarde om deze te bewerken.',
-	'Use edit link to modify this value.' => 'Gebruik de link "bewerk" om deze waarde te wijzigen.',
+	'Use edit link to modify this value.' => 'Gebruik de link \'bewerk\' om deze waarde te wijzigen.',
 
 	// Editing.
 	'New item' => 'Nieuw item',

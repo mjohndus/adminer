@@ -446,10 +446,6 @@ if (isset($_GET["elastic"])) {
 		//
 	}
 
-	function engines() {
-		return [];
-	}
-
 	function count_tables($databases) {
 		$return = Connection::get()->rootQuery('_aliases');
 		if (empty($return)) {
@@ -697,7 +693,8 @@ if (isset($_GET["elastic"])) {
 		return $return;
 	}
 
-	function last_id() {
+	function last_id($result)
+	{
 		return Connection::get()->last_id;
 	}
 }

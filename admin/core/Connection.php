@@ -126,6 +126,16 @@ abstract class Connection
 	public abstract function query(string $query, bool $unbuffered = false);
 
 	/**
+	 * Returns information about the most recently executed query.
+	 *
+	 * @see https://www.php.net/mysqli_info
+	 */
+	public function getQueryInfo(): ?string
+	{
+		return null;
+	}
+
+	/**
 	 * @deprecated
 	 */
 	public function getResult(string $query, int $field = 0)

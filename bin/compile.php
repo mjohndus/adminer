@@ -2,10 +2,12 @@
 
 namespace AdminNeo;
 
-error_reporting(E_ALL & ~E_NOTICE & ~E_DEPRECATED);
+error_reporting(E_ALL & ~E_DEPRECATED);
 set_error_handler(function ($errno, $error) {
-	return (bool)preg_match('~^Undefined array key~', $error);
-}, E_WARNING);
+	// "Undefined array key" mutes $_GET["q"] if there's no ?q=
+	// "Undefined offset" and "Undefined index" are older messages for the same thing.
+	return (bool)preg_match('~^Undefined (array key|offset|index)~', $error);
+}, E_WARNING | E_NOTICE); // warning since PHP 8.0
 
 include __DIR__ . "/../admin/include/version.inc.php";
 include __DIR__ . "/../admin/include/debug.inc.php";

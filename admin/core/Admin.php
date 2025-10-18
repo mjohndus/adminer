@@ -99,7 +99,7 @@ class Admin extends Origin
 			if (count($drivers) > 1) {
 				echo $this->admin->getLoginFormRow('driver', lang('System'), html_select("auth[driver]", $drivers, $driver) . script("initLoginDriver(qsl('select'));", ""));
 			} else {
-				echo $this->admin->getLoginFormRow('driver', '', '<input type="hidden" name="auth[driver]" value="' . h($driver) . '">');
+				echo $this->admin->getLoginFormRow('driver', '', input_hidden("auth[driver]", $driver));
 			}
 
 			echo $this->admin->getLoginFormRow('server', lang('Server'), '<input class="input" name="auth[server]" value="' . h($server) . '" title="hostname[:port]" placeholder="localhost" autocapitalize="off">');
@@ -130,7 +130,11 @@ class Admin extends Origin
 	 */
 	public function getFieldName(array $field, int $order = 0): string
 	{
-		return '<span title="' . h($field["full_type"] . ($field["comment"] != "" ? " : $field[comment]" : '')) . '">' . h($field["field"]) . '</span>';
+		$type = $field["full_type"];
+		$comment = $field["comment"];
+		$separator = $type && $comment != "" ? ": " : "";
+
+		return '<span title="' . h($type . $separator . $comment) . '">' . h($field["field"]) . '</span>';
 	}
 
 	/**
@@ -660,7 +664,7 @@ class Admin extends Origin
 			}
 		}
 
-		echo "var indexColumns = " . json_encode($columns, JSON_UNESCAPED_UNICODE) . ";\n";
+		echo "const indexColumns = " . json_encode($columns, JSON_UNESCAPED_UNICODE) . ";\n";
 		echo "selectFieldChange.call(gid('form')['select']);\n";
 		echo "</script>\n";
 		echo "</div></fieldset>\n";
@@ -1189,7 +1193,7 @@ class Admin extends Origin
 					foreach ($tables as $table => $type) {
 						$links[] = preg_quote($table, '/');
 					}
-					echo "var jushLinks = { " . DIALECT . ": [ '" . js_escape(ME) . (support("table") ? "table=" : "select=") . "\$&', /\\b(" . implode("|", $links) . ")\\b/g ] };\n";
+					echo "const jushLinks = { " . DIALECT . ": [ '" . js_escape(ME) . (support("table") ? "table=" : "select=") . "\$&', /\\b(" . implode("|", $links) . ")\\b/g ] };\n";
 					foreach (["bac", "bra", "sqlite_quo", "mssql_bra"] as $val) {
 						echo "jushLinks.$val = jushLinks." . DIALECT . ";\n";
 					}
@@ -1209,7 +1213,8 @@ class Admin extends Origin
 				echo "</script>\n";
 			}
 
-			echo script("let autocompletion;\nwindow.addEventListener('DOMContentLoaded', () => { initSyntaxHighlighting('" . Connection::get()->getVersion() . "', " . (Connection::get()->isMariaDB() ? "true" : "false") . ", autocompletion); });");
+			echo script("let autocompletion;\nwindow.addEventListener('DOMContentLoaded', () => { initSyntaxHighlighting('" .
+				Connection::get()->getVersion() . "', '" . Connection::get()->getFlavor() . "', autocompletion); });");
 		}
 	}
 
@@ -1249,7 +1254,7 @@ class Admin extends Origin
 
 		foreach (["import", "sql", "schema", "dump", "privileges"] as $val) {
 			if (isset($_GET[$val])) {
-				echo "<input type='hidden' name='$val' value=''>";
+				echo input_hidden($val);
 				break;
 			}
 		}

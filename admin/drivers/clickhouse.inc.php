@@ -184,8 +184,8 @@ if (isset($_GET["clickhouse"])) {
 
 				return (object) [
 					'name' => $column['name'],
-					'orgname' => $column['name'],
-					'type' => $column['type'],
+					'type' => $column['type'], //! map to MySQL numbers
+					'charsetnr' => 0,
 				];
 			}
 		}
@@ -252,6 +252,11 @@ if (isset($_GET["clickhouse"])) {
 			}
 			$query = $separator . implode(",$separator", $values);
 			return queries("ALTER TABLE " . table($table) . " UPDATE $query$queryWhere");
+		}
+
+		public function engines(): array
+		{
+			return ['MergeTree'];
 		}
 	}
 
@@ -377,10 +382,6 @@ if (isset($_GET["clickhouse"])) {
 	function db_collation($db, $collations) {
 	}
 
-	function engines() {
-		return ['MergeTree'];
-	}
-
 	function logged_user() {
 		$credentials = Admin::get()->getCredentials();
 
@@ -483,7 +484,8 @@ if (isset($_GET["clickhouse"])) {
 		return '';
 	}
 
-	function last_id() {
+	function last_id($result)
+	{
 		return 0; // ClickHouse doesn't have it
 	}
 

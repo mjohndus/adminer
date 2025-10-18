@@ -12,7 +12,7 @@ if (isset($_GET["sqlite"])) {
 	define("AdminNeo\DRIVER", "sqlite");
 	define("AdminNeo\DIALECT", "sqlite");
 
-	if (class_exists("SQLite3")) {
+	if (class_exists("SQLite3") && $_GET["ext"] != "pdo") {
 		define("AdminNeo\DRIVER_EXTENSION", "SQLite3");
 
 		abstract class SqLiteConnectionBase extends Connection
@@ -53,9 +53,7 @@ if (isset($_GET["sqlite"])) {
 				if (is_utf8($string)) {
 					return "'" . $this->sqlite->escapeString($string) . "'";
 				} else {
-					$data = unpack('H*', $string);
-
-					return "x'" . reset($data) . "'";
+					return "x'" . first(unpack('H*', $string)) . "'";
 				}
 			}
 		}
@@ -101,7 +99,7 @@ if (isset($_GET["sqlite"])) {
 
 				return (object) [
 					"name" => $this->resource->columnName($column),
-					"type" => $type,
+					"type" => ($type == SQLITE3_TEXT ? 15 : 0),
 					"charsetnr" => ($type == SQLITE3_BLOB ? 63 : 0), // 63 - binary
 				];
 			}
@@ -304,10 +302,6 @@ if (isset($_GET["sqlite"])) {
 
 	function db_collation($db, $collations) {
 		return Connection::get()->getValue("PRAGMA encoding"); // there is no database list so $db == DB
-	}
-
-	function engines() {
-		return [];
 	}
 
 	function logged_user() {
@@ -792,7 +786,8 @@ if (isset($_GET["sqlite"])) {
 		return queries("BEGIN");
 	}
 
-	function last_id() {
+	function last_id($result)
+	{
 		return Connection::get()->getValue("SELECT LAST_INSERT_ROWID()");
 	}
 
@@ -838,8 +833,9 @@ if (isset($_GET["sqlite"])) {
 		foreach (get_rows("PRAGMA pragma_list") as $row) {
 			$name = $row["name"];
 			if ($name != "pragma_list" && $name != "compile_options") {
-				foreach (get_rows("PRAGMA $name") as $row) {
-					$return[$name] .= implode(", ", $row) . "\n";
+				$return[$name] = [$name, ''];
+				foreach (get_rows("PRAGMA $name") as $row2) {
+					$return[$name][1] .= implode(", ", $row2) . "\n";
 				}
 			}
 		}
@@ -849,8 +845,7 @@ if (isset($_GET["sqlite"])) {
 	function show_status() {
 		$return = [];
 		foreach (get_vals("PRAGMA compile_options") as $option) {
-			list($key, $val) = explode("=", $option, 2);
-			$return[$key] = $val;
+			$return[] = explode("=", $option, 2);
 		}
 		return $return;
 	}

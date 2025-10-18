@@ -2,10 +2,12 @@
 
 namespace AdminNeo;
 
-error_reporting(E_ALL & ~E_NOTICE & ~E_DEPRECATED);
-set_error_handler(function($errno, $error) {
-	return (bool)preg_match('~^Undefined array key~', $error);
-}, E_WARNING);
+error_reporting(E_ALL & ~E_DEPRECATED);
+set_error_handler(function ($errno, $error) {
+	// "Undefined array key" mutes $_GET["q"] if there's no ?q=
+	// "Undefined offset" and "Undefined index" are older messages for the same thing.
+	return (bool)preg_match('~^Undefined (array key|offset|index)~', $error);
+}, E_WARNING | E_NOTICE); // warning since PHP 8.0
 
 include __DIR__ . "/debug.inc.php";
 include __DIR__ . "/coverage.inc.php";
@@ -161,6 +163,7 @@ define("AdminNeo\BASE_URL", preg_replace('~\?.*~', '', relative_uri()));
 define("AdminNeo\ME", BASE_URL . '?'
 	. (sid() ? session_name() . "=" . urlencode(session_id()) . '&' : '')
 	. (SERVER !== null ? DRIVER . "=" . urlencode(SERVER) . '&' : '')
+	. ($_GET["ext"] ? "ext=" . urlencode($_GET["ext"]) . '&' : '')
 	. (isset($_GET["username"]) ? "username=" . urlencode($_GET["username"]) . '&' : '')
 	. (DB != "" ? 'db=' . urlencode(DB) . '&' . (isset($_GET["ns"]) ? "ns=" . urlencode($_GET["ns"]) . "&" : "") : '')
 );
