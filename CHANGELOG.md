@@ -26,6 +26,8 @@ AdminNeo 5.2.0
 - Update Makefile for the current project state (issue #161, by @Necoro)
 - Fix escaping \t in JSON values (issue #159)
 
+(Ported relevant changes from Adminer 5.1.0.)
+
 AdminNeo 5.1.1 (2025-09-01)
 ---------------------------
 
