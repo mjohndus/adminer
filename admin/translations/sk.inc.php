@@ -441,4 +441,7 @@ return [
 	'JSON previews' => 'Náhľad JSON v',
 	'Data table' => 'Dátová tabuľka',
 	'Edit form' => 'Editační formulář',
+	// Use the phrases from https://gemini.google.com/
+	'Ask Gemini' => 'Opýtajte sa Gemini',
+	'Just a sec...' => 'Moment...',
 ];

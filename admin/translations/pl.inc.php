@@ -420,4 +420,7 @@ return [
 	'Enter OTP code.' => 'Wprowadź kod OTP.',
 	'Invalid OTP code.' => 'Nieprawidłowy kod OTP.',
 	'Access denied.' => 'Odmowa dostępu.',
+	// Use the phrases from https://gemini.google.com/
+	'Ask Gemini' => 'Zapytaj Gemini',
+	'Just a sec...' => 'Chwileczkę...',
 ];

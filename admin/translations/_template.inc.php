@@ -409,4 +409,7 @@ return [
 	'JSON previews' => 'Xx',
 	'Data table' => 'Xx',
 	'Edit form' => 'Xx',
+	// Use the phrases from https://gemini.google.com/
+	'Ask Gemini' => 'Xx',
+	'Just a sec...' => 'Xx...',
 ];
