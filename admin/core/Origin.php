@@ -470,6 +470,10 @@ abstract class Origin extends Plugin
 	 */
 	public function getBackwardKeys(string $table, string $tableName): array
 	{
+		if (!$this->settings->isRelationLinks()) {
+			return [];
+		}
+
 		$keys = [];
 
 		foreach (get_rows("SELECT TABLE_NAME, CONSTRAINT_NAME, COLUMN_NAME, REFERENCED_COLUMN_NAME
@@ -769,6 +773,21 @@ ORDER BY ORDINAL_POSITION", null, "") as $row) { //! requires MySQL 5
 				html_radios("colorScheme", $options, $this->settings->getParameter("colorScheme") ?? "") .
 				"</td></tr>\n";
 		} elseif ($groupId == 2) {
+			// Relation links.
+			$options = [
+				"" => lang('Default'),
+				true => lang('Display'),
+				false => lang('Hide'),
+			];
+			$default = $options[$this->config->isRelationLinks()];
+			$options[""] .= " ($default)";
+
+			$settings["relationLinks"] = "<tr><th>" . lang('Relations') . "</th>" .
+				"<td>" .
+				html_radios("relationLinks", $options, $this->settings->getParameter("relationLinks") ?? "") .
+				"<span class='input-hint'>" . lang('Links to tables referencing the current row.') . "</span>" .
+				"</td></tr>\n";
+
 			// Records per page.
 			$default = $this->config->getRecordsPerPage();
 			$options = [

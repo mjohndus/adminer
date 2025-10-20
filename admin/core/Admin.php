@@ -188,18 +188,6 @@ class Admin extends Origin
 		echo "\n";
 	}
 
-	public function getBackwardKeys(string $table, string $tableName): array
-	{
-		return $this->config->isRelationLinks() ? parent::getBackwardKeys($table, $tableName) : [];
-	}
-
-	public function printBackwardKeys(array $backwardKeys, array $row): void
-	{
-		if ($this->config->isRelationLinks()) {
-			parent::printBackwardKeys($backwardKeys, $row);
-		}
-	}
-
 	/**
 	 * Returns formatted query that will be printed in "Select data" page before its execution.
 	 * Query printed in select before execution.

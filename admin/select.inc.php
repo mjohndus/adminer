@@ -409,7 +409,10 @@ if (!$columns && support("table")) {
 				}
 			}
 
-			echo ($backward_keys ? "<th>" . lang('Relations') : "") . "</thead>\n";
+			if ($backward_keys) {
+				echo "<th>" . lang('Relations') . "</th>";
+			}
+			echo "</thead>\n";
 
 			if (is_ajax()) {
 				ob_end_clean();
@@ -511,8 +514,9 @@ if (!$columns && support("table")) {
 
 				if ($backward_keys) {
 					echo "<td>";
+					Admin::get()->printBackwardKeys($backward_keys, $rows[$n]);
+					echo "</td>";
 				}
-				Admin::get()->printBackwardKeys($backward_keys, $rows[$n]);
 				echo "</tr>\n"; // close to allow white-space: pre
 			}
 

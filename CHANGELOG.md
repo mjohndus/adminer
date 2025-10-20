@@ -13,6 +13,8 @@ AdminNeo 5.2.0
 - URL parameter ?ext=pdo to force using PDO (by @vrana)
 - Add SqlGeminiPlugin - AI prompt in SQL command generating the queries with Google Gemini (by @vrana)
 - Add sqlAutocompletion configuration parameter
+- Add relationLinks configuration parameter
+- Add setting for displaying links to referencing tables
 
 ### Bugfixes
 

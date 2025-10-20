@@ -87,18 +87,6 @@ class Admin extends Origin
 		}
 	}
 
-	public function getBackwardKeys(string $table, string $tableName): array
-	{
-		return $this->config->isRelationLinks(true) ? parent::getBackwardKeys($table, $tableName) : [];
-	}
-
-	public function printBackwardKeys(array $backwardKeys, array $row): void
-	{
-		if ($this->config->isRelationLinks(true)) {
-			parent::printBackwardKeys($backwardKeys, $row);
-		}
-	}
-
 	public function formatSelectQuery(string $query, float $start, bool $failed = false): string
 	{
 		return "<!--\n" . str_replace("--", "--><!-- ", $query) . "\n(" . format_time($start) . ")\n-->\n";
