@@ -1199,7 +1199,11 @@ class Admin extends Origin
 					}
 				}
 
-				if (DIALECT != "elastic" && (isset($_GET["sql"]) || isset($_GET["trigger"]) || isset($_GET["check"]))) {
+				if (
+					DIALECT != "elastic" &&
+					$this->getConfig()->isSqlAutocompletionEnabled() &&
+					(isset($_GET["sql"]) || isset($_GET["trigger"]) || isset($_GET["check"]))
+				) {
 					$tablesColumns = array_fill_keys(array_keys($tables), []);
 					foreach (Driver::get()->getAllFields() as $table => $fields) {
 						foreach ($fields as $field) {

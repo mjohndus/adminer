@@ -117,6 +117,11 @@ class Config
 		return $this->params["versionVerification"] ?? true;
 	}
 
+	public function isSqlAutocompletionEnabled(): bool
+	{
+		return $this->params["sqlAutocompletion"] ?? true;
+	}
+
 	public function getHiddenDatabases(): array
 	{
 		return $this->parseList($this->params["hiddenDatabases"] ?? []);

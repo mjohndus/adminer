@@ -12,6 +12,7 @@ AdminNeo 5.2.0
 - PostgreSQL 11: Add support for PROCEDURE (by @vrana)
 - URL parameter ?ext=pdo to force using PDO (by @vrana)
 - Add SqlGeminiPlugin - AI prompt in SQL command generating the queries with Google Gemini (by @vrana)
+- Add sqlAutocompletion configuration parameter
 
 ### Bugfixes
 
