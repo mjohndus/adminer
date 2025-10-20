@@ -98,6 +98,11 @@ class Config
 		return $this->params["jsonValuesAutoFormat"] ?? false;
 	}
 
+	public function isRelationLinks(bool $default = false): bool
+	{
+		return $this->params["relationLinks"] ?? $default;
+	}
+
 	public function getRecordsPerPage(): int
 	{
 		return (int)($this->params["recordsPerPage"] ?? 50);

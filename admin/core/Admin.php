@@ -188,24 +188,16 @@ class Admin extends Origin
 		echo "\n";
 	}
 
-	/**
-	 * Returns backward keys for given table.
-	 *
-	 * @return array $return[$target_table]["keys"][$key_name][$target_column] = $source_column; $return[$target_table]["name"] = $this->admin->getTableName($target_table);
-	 */
 	public function getBackwardKeys(string $table, string $tableName): array
 	{
-		return [];
+		return $this->config->isRelationLinks() ? parent::getBackwardKeys($table, $tableName) : [];
 	}
 
-	/**
-	 * Prints backward keys for given row.
-	 *
-	 * @param array $backwardKeys The result of getBackwardKeys().
-	 */
 	public function printBackwardKeys(array $backwardKeys, array $row): void
 	{
-		//
+		if ($this->config->isRelationLinks()) {
+			parent::printBackwardKeys($backwardKeys, $row);
+		}
 	}
 
 	/**

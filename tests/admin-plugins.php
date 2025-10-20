@@ -36,6 +36,7 @@ function adminneo_instance()
 		"preferSelection" => true,
 		"jsonValuesDetection" => true,
 		"jsonValuesAutoFormat" => true,
+		"relationLinks" => true,
 		"recordsPerPage" => 30,
 		"hiddenDatabases" => ["__system"],
 		"hiddenSchemas" => ["__system"],

@@ -463,9 +463,63 @@ abstract class Origin extends Plugin
 		return foreign_keys($table);
 	}
 
-	public abstract function getBackwardKeys(string $table, string $tableName): array;
+	/**
+	 * Returns backward keys for given table.
+	 *
+	 * @return array $return[$target_table]["keys"][$key_name][$target_column] = $source_column; $return[$target_table]["name"] = $this->admin->getTableName($target_table);
+	 */
+	public function getBackwardKeys(string $table, string $tableName): array
+	{
+		$keys = [];
 
-	public abstract function printBackwardKeys(array $backwardKeys, array $row): void;
+		foreach (get_rows("SELECT TABLE_NAME, CONSTRAINT_NAME, COLUMN_NAME, REFERENCED_COLUMN_NAME
+FROM information_schema.KEY_COLUMN_USAGE
+WHERE TABLE_SCHEMA = " . q($this->admin->getDatabase()) . "
+AND REFERENCED_TABLE_SCHEMA = " . q($this->admin->getDatabase()) . "
+AND REFERENCED_TABLE_NAME = " . q($table) . "
+ORDER BY ORDINAL_POSITION", null, "") as $row) { //! requires MySQL 5
+			$keys[$row["TABLE_NAME"]]["keys"][$row["CONSTRAINT_NAME"]][$row["COLUMN_NAME"]] = $row["REFERENCED_COLUMN_NAME"];
+		}
+
+		foreach ($keys as $key => $val) {
+			$name = $this->admin->getTableName(table_status($key, true));
+			if ($name != "") {
+				$search = preg_quote($tableName);
+				$separator = "(:|\\s*-)?\\s+";
+				$keys[$key]["name"] = (preg_match("(^$search$separator(.+)|^(.+?)$separator$search\$)iu", $name, $match) ? $match[2] . $match[3] : $name);
+			} else {
+				unset($keys[$key]);
+			}
+		}
+
+		return $keys;
+	}
+
+	/**
+	 * Prints backward keys for given row.
+	 *
+	 * @param array $backwardKeys The result of getBackwardKeys().
+	 */
+	public function printBackwardKeys(array $backwardKeys, array $row): void
+	{
+		foreach ($backwardKeys as $table => $backwardKey) {
+			foreach ($backwardKey["keys"] as $cols) {
+				$link = ME . 'select=' . urlencode($table);
+				$i = 0;
+				foreach ($cols as $column => $val) {
+					$link .= where_link($i++, $column, $row[$val]);
+				}
+				$title = implode(", ", array_keys($cols));
+				echo "<a href='" . h($link) . "' title='" . h($title) . "'>" . h($backwardKey["name"]) . "</a>";
+
+				$link = ME . 'edit=' . urlencode($table);
+				foreach ($cols as $column => $val) {
+					$link .= "&set" . urlencode("[" . bracket_escape($column) . "]") . "=" . urlencode($row[$val]);
+				}
+				echo "<a href='" . h($link) . "' title='" . lang('New item') . "'>", icon_solo("add"), "</a> ";
+			}
+		}
+	}
 
 	public abstract function formatSelectQuery(string $query, float $start, bool $failed = false): string;
 
