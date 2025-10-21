@@ -535,8 +535,10 @@ ORDER BY s.ordinal_position", null, "") as $row
 					$link .= where_link($i++, $column, $row[$val]);
 				}
 
+				// Strip table prefix that is the same as the current table name.
+				$name = preg_replace('(^' . preg_quote($_GET["select"]) . (substr($_GET["select"], -1) == "s" ? "?" : "") . '_)', "_", $key["name"]);
 				$title = implode(", ", array_keys($constraint));
-				echo "<a href='" . h($link) . "' title='" . h($title) . "'>" . h($key["name"]) . "</a>";
+				echo "<a href='" . h($link) . "' title='" . h($title) . "'>" . h($name) . "</a>";
 
 				$link = $me . 'edit=' . urlencode($key["table"]);
 				foreach ($constraint as $column => $val) {
