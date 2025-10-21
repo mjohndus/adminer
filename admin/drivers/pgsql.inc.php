@@ -558,7 +558,12 @@ WHERE relkind IN ('r', 'm', 'v', 'f', 'p')
 		) as $row) { //! Index_length, Auto_increment
 			$return[$row["Name"]] = $row;
 		}
-		return ($name != "" ? $return[$name] : $return);
+
+		if ($name != "") {
+			return $return[$name] ?? ["Name" => $name];
+		} else {
+			return $return;
+		}
 	}
 
 	function is_view($table_status) {

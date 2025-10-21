@@ -15,6 +15,7 @@ AdminNeo 5.2.0
 - Add sqlAutocompletion configuration parameter
 - Add relationLinks configuration parameter
 - Add setting for displaying links to referencing tables
+- Add PostgreSQL support to relation links (by @vrana)
 
 ### Bugfixes
 

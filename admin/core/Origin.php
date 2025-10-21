@@ -466,7 +466,7 @@ abstract class Origin extends Plugin
 	/**
 	 * Returns backward keys for given table.
 	 *
-	 * @return array $return[$target_table]["keys"][$key_name][$target_column] = $source_column; $return[$target_table]["name"] = $this->admin->getTableName($target_table);
+	 * @return array $return[$id]["table"] = $target_table; $return[$id]["constraints"][$key_name][$target_column] = $source_column; $return[$target_table]["name"] = $this->admin->getTableName($target_table);
 	 */
 	public function getBackwardKeys(string $table, string $tableName): array
 	{
@@ -476,23 +476,38 @@ abstract class Origin extends Plugin
 
 		$keys = [];
 
-		foreach (get_rows("SELECT TABLE_NAME, CONSTRAINT_NAME, COLUMN_NAME, REFERENCED_COLUMN_NAME
-FROM information_schema.KEY_COLUMN_USAGE
-WHERE TABLE_SCHEMA = " . q($this->admin->getDatabase()) . "
-AND REFERENCED_TABLE_SCHEMA = " . q($this->admin->getDatabase()) . "
-AND REFERENCED_TABLE_NAME = " . q($table) . "
-ORDER BY ORDINAL_POSITION", null, "") as $row) { //! requires MySQL 5
-			$keys[$row["TABLE_NAME"]]["keys"][$row["CONSTRAINT_NAME"]][$row["COLUMN_NAME"]] = $row["REFERENCED_COLUMN_NAME"];
+		// unique_constraint_name is not table-specific in MySQL
+		// referenced_table_name is not available in PostgreSQL
+		foreach (
+			get_rows("SELECT s.table_schema, s.table_name table_name, s.constraint_name constraint_name, s.column_name column_name, " . (DIALECT == "sql" ? "referenced_column_name" : "t.column_name") . " referenced_column_name
+FROM information_schema.key_column_usage s" . (DIALECT == "sql" ? "
+WHERE table_schema = " . q(DB) . "
+AND referenced_table_schema = " . q(DB) . "
+AND referenced_table_name" : "
+JOIN information_schema.referential_constraints r USING (constraint_catalog, constraint_schema, constraint_name)
+JOIN information_schema.key_column_usage t ON r.unique_constraint_catalog = t.constraint_catalog
+	AND r.unique_constraint_schema = t.constraint_schema
+	AND r.unique_constraint_name = t.constraint_name
+	AND s.position_in_unique_constraint = t.ordinal_position
+WHERE t.table_catalog = " . q(DB) . " AND t.table_schema = " . q($_GET["ns"] ?? "") . "
+AND t.table_name") . " = " . q($table) . "
+ORDER BY s.ordinal_position", null, "") as $row
+		) {
+			$id = $row["table_schema"] . "." . $row["table_name"];
+
+			$keys[$id]["schema"] = $row["table_schema"];
+			$keys[$id]["table"] = $row["table_name"];
+			$keys[$id]["constraints"][$row["constraint_name"]][$row["column_name"]] = $row["referenced_column_name"];
 		}
 
-		foreach ($keys as $key => $val) {
-			$name = $this->admin->getTableName(table_status($key, true));
+		foreach ($keys as $id => $key) {
+			$name = $this->admin->getTableName(table_status($key["table"], true));
 			if ($name != "") {
 				$search = preg_quote($tableName);
 				$separator = "(:|\\s*-)?\\s+";
-				$keys[$key]["name"] = (preg_match("(^$search$separator(.+)|^(.+?)$separator$search\$)iu", $name, $match) ? $match[2] . $match[3] : $name);
+				$keys[$id]["name"] = (preg_match("(^$search$separator(.+)|^(.+?)$separator$search\$)iu", $name, $match) ? $match[2] . $match[3] : $name);
 			} else {
-				unset($keys[$key]);
+				unset($keys[$id]);
 			}
 		}
 
@@ -506,20 +521,28 @@ ORDER BY ORDINAL_POSITION", null, "") as $row) { //! requires MySQL 5
 	 */
 	public function printBackwardKeys(array $backwardKeys, array $row): void
 	{
-		foreach ($backwardKeys as $table => $backwardKey) {
-			foreach ($backwardKey["keys"] as $cols) {
-				$link = ME . 'select=' . urlencode($table);
+		foreach ($backwardKeys as $key) {
+			foreach ($key["constraints"] as $constraint) {
+				$me = preg_replace('~&ns=[^&]+&~', "&ns=" . urldecode($key["schema"]) . "&" ,ME);
+
+				$link = $me . 'select=' . urlencode($key["table"]);
 				$i = 0;
-				foreach ($cols as $column => $val) {
+				foreach ($constraint as $column => $val) {
+					if (!isset($row[$val])) {
+						continue 2;
+					}
+
 					$link .= where_link($i++, $column, $row[$val]);
 				}
-				$title = implode(", ", array_keys($cols));
-				echo "<a href='" . h($link) . "' title='" . h($title) . "'>" . h($backwardKey["name"]) . "</a>";
 
-				$link = ME . 'edit=' . urlencode($table);
-				foreach ($cols as $column => $val) {
+				$title = implode(", ", array_keys($constraint));
+				echo "<a href='" . h($link) . "' title='" . h($title) . "'>" . h($key["name"]) . "</a>";
+
+				$link = $me . 'edit=' . urlencode($key["table"]);
+				foreach ($constraint as $column => $val) {
 					$link .= "&set" . urlencode("[" . bracket_escape($column) . "]") . "=" . urlencode($row[$val]);
 				}
+
 				echo "<a href='" . h($link) . "' title='" . lang('New item') . "'>", icon_solo("add"), "</a> ";
 			}
 		}
