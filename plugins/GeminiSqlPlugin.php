@@ -29,10 +29,10 @@ class GeminiSqlPlugin extends Plugin
 	/**
 	 * @note: The default key is shared with all users and may run out of quota.
 	 *
-	 * @param string $apiKey API key (get your own at https://aistudio.google.com/apikey)$prompt .= "Prefer returning relevant columns including primary key.\n\n";
+	 * @param string $apiKey API key (get your own at https://aistudio.google.com/apikey)
 	 * @param string $model Model (https://ai.google.dev/gemini-api/docs/models#available-models)
 	 */
-	public function __construct(string $apiKey = "AIzaSyA6Mnq1zSBhRvdgFJgPztn6tw5KorlMtG8", string $model = "gemini-2.0-flash")
+	public function __construct(string $apiKey, string $model = "gemini-2.0-flash")
 	{
 		$this->apiKey = $apiKey;
 		$this->model = $model;
