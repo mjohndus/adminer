@@ -718,6 +718,11 @@ WHERE OBJECT_NAME(i.object_id) = " . q($table)
 		return $return;
 	}
 
+	function backward_keys(string $table): array
+	{
+		return [];
+	}
+
 	function truncate_tables($tables) {
 		return apply_queries("TRUNCATE TABLE", $tables);
 	}

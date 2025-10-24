@@ -614,6 +614,11 @@ if (isset($_GET["elastic"])) {
 		return [];
 	}
 
+	function backward_keys(string $table): array
+	{
+		return [];
+	}
+
 	function table($idf) {
 		return $idf;
 	}

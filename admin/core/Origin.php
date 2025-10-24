@@ -474,25 +474,10 @@ abstract class Origin extends Plugin
 			return [];
 		}
 
-		$keys = [];
+		$rows = backward_keys($table);
 
-		// unique_constraint_name is not table-specific in MySQL
-		// referenced_table_name is not available in PostgreSQL
-		foreach (
-			get_rows("SELECT s.table_schema, s.table_name table_name, s.constraint_name constraint_name, s.column_name column_name, " . (DIALECT == "sql" ? "referenced_column_name" : "t.column_name") . " referenced_column_name
-FROM information_schema.key_column_usage s" . (DIALECT == "sql" ? "
-WHERE table_schema = " . q(DB) . "
-AND referenced_table_schema = " . q(DB) . "
-AND referenced_table_name" : "
-JOIN information_schema.referential_constraints r USING (constraint_catalog, constraint_schema, constraint_name)
-JOIN information_schema.key_column_usage t ON r.unique_constraint_catalog = t.constraint_catalog
-	AND r.unique_constraint_schema = t.constraint_schema
-	AND r.unique_constraint_name = t.constraint_name
-	AND s.position_in_unique_constraint = t.ordinal_position
-WHERE t.table_catalog = " . q(DB) . " AND t.table_schema = " . q($_GET["ns"] ?? "") . "
-AND t.table_name") . " = " . q($table) . "
-ORDER BY s.ordinal_position", null, "") as $row
-		) {
+		$keys = [];
+		foreach ($rows as $row) {
 			$id = $row["table_schema"] . "." . $row["table_name"];
 
 			$keys[$id]["schema"] = $row["table_schema"];

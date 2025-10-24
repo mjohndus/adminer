@@ -464,6 +464,11 @@ if (isset($_GET["clickhouse"])) {
 		return [];
 	}
 
+	function backward_keys(string $table): array
+	{
+		return [];
+	}
+
 	function collations() {
 		return [];
 	}

@@ -439,6 +439,11 @@ if (isset($_GET["sqlite"])) {
 		return $return;
 	}
 
+	function backward_keys(string $table): array
+	{
+		return [];
+	}
+
 	function view($name) {
 		return ["select" => preg_replace('~^(?:[^`"[]+|`[^`]*`|"[^"]*")* AS\s+~iU', '', Connection::get()->getValue("SELECT sql FROM sqlite_master WHERE type = 'view' AND name = " . q($name)))]; //! identifiers may be inside []
 	}

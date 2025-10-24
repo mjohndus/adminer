@@ -669,6 +669,23 @@ ORDER BY conkey, conname") as $row) {
 		return $return;
 	}
 
+	function backward_keys(string $table): array
+	{
+		$query = "SELECT s.constraint_name, s.table_schema, s.table_name, s.column_name, t.column_name AS referenced_column_name
+FROM information_schema.key_column_usage s
+JOIN information_schema.referential_constraints r USING (constraint_catalog, constraint_schema, constraint_name)
+JOIN information_schema.key_column_usage t ON r.unique_constraint_catalog = t.constraint_catalog
+	AND r.unique_constraint_schema = t.constraint_schema
+	AND r.unique_constraint_name = t.constraint_name
+	AND s.position_in_unique_constraint = t.ordinal_position
+WHERE t.table_catalog = " . q(DB) . "
+AND t.table_schema = " . q($_GET["ns"]) . "
+AND t.table_name = " . q($table) . "
+ORDER BY s.ordinal_position";
+
+		return get_rows($query, null, "");
+	}
+
 	function view($name) {
 		return ["select" => trim(Connection::get()->getValue("SELECT pg_get_viewdef(" . Connection::get()->getValue("SELECT oid FROM pg_class WHERE relnamespace = (SELECT oid FROM pg_namespace WHERE nspname = current_schema()) AND relname = " . q($name)) . ")"))];
 	}

@@ -754,6 +754,18 @@ if (isset($_GET["mysql"])) {
 		return $return;
 	}
 
+	function backward_keys(string $table): array
+	{
+		$query = "SELECT constraint_name, table_schema, table_name, column_name, referenced_column_name
+FROM information_schema.key_column_usage
+WHERE table_schema = " . q(DB) . "
+AND referenced_table_schema = " . q(DB) . "
+AND referenced_table_name = " . q($table) . "
+ORDER BY ordinal_position";
+
+		return get_rows($query, null, "");
+	}
+
 	/** Get view SELECT
 	* @param string
 	* @return array ["select" => ]
