@@ -10,12 +10,13 @@ AdminNeo 5.2.0
 - PostgreSQL: Display auto_increment of inserted rows (by @vrana)
 - PostgreSQL: Display description of system variables (by @vrana)
 - PostgreSQL 11: Add support for PROCEDURE (by @vrana)
+- PostgreSQL: Add support for relation links (by @vrana)
+- MS SQL: Add support for relation links
 - URL parameter ?ext=pdo to force using PDO (by @vrana)
 - Add SqlGeminiPlugin - AI prompt in SQL command generating the queries with Google Gemini (by @vrana)
 - Add sqlAutocompletion configuration parameter
 - Add relationLinks configuration parameter
 - Add setting for displaying links to referencing tables
-- Add PostgreSQL support to relation links (by @vrana)
 
 ### Bugfixes
 
