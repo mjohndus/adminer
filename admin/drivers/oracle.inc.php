@@ -8,7 +8,7 @@ if (isset($_GET["oracle"])) {
 	define("AdminNeo\DRIVER", "oracle");
 	define("AdminNeo\DIALECT", "oracle");
 
-	if (extension_loaded("oci8")) {
+	if (extension_loaded("oci8") && $_GET["ext"] != "pdo") {
 		define("AdminNeo\DRIVER_EXTENSION", "oci8");
 
 		class OracleConnection extends Connection
@@ -167,14 +167,13 @@ if (isset($_GET["oracle"])) {
 					return false;
 				}
 
-				$type = oci_field_type($this->resource, $column);
+				$type = oci_field_type($this->resource, $column); //! map to MySQL numbers
 				if ($type === false) {
 					return false;
 				}
 
 				return (object) [
 					'name' => $name,
-					'orgname' => $name,
 					'type' => $type,
 					'charsetnr' => (preg_match("~raw|blob|bfile~", $type) ? 63 : 0), // 63 - binary
 				];
@@ -363,10 +362,6 @@ ORDER BY 1"
 
 	function db_collation($db, $collations) {
 		return Connection::get()->getValue("SELECT value FROM nls_database_parameters WHERE parameter = 'NLS_CHARACTERSET'"); //! respect $db
-	}
-
-	function engines() {
-		return [];
 	}
 
 	function logged_user() {
@@ -604,7 +599,8 @@ AND c_src.TABLE_NAME = " . q($table);
 		return apply_queries("DROP TABLE", $tables);
 	}
 
-	function last_id() {
+	function last_id($result)
+	{
 		return 0; //!
 	}
 
@@ -630,7 +626,16 @@ AND c_src.TABLE_NAME = " . q($table);
 	}
 
 	function show_variables() {
-		return get_key_vals('SELECT name, display_value FROM v$parameter');
+		return get_rows('SELECT name, display_value FROM v$parameter');
+	}
+
+	function show_status() {
+		$return = [];
+		$rows = get_rows('SELECT * FROM v$instance');
+		foreach (reset($rows) as $key => $val) {
+			$return[] = [$key, $val];
+		}
+		return $return;
 	}
 
 	function process_list() {
@@ -640,11 +645,6 @@ ON sql.sql_id = sess.sql_id
 WHERE sess.type = \'USER\'
 ORDER BY PROCESS
 ');
-	}
-
-	function show_status() {
-		$rows = get_rows('SELECT * FROM v$instance');
-		return reset($rows);
 	}
 
 	function convert_field($field) {

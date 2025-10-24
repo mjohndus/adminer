@@ -352,7 +352,7 @@ return [
 	// In-place editing in selection.
 	'Modify' => 'Izmainīt',
 	'Ctrl+click on a value to modify it.' => 'Lai izmainītu vērtību, izmanto Ctrl + peles klikšķi.',
-	'Use edit link to modify this value.' => 'Izmainīt vērtību var tikai ar saiti "Izmainīt".',
+	'Use edit link to modify this value.' => 'Izmainīt vērtību var tikai ar saiti \'Izmainīt\'.',
 
 	// Editing.
 	'New item' => 'Jauns ieraksts',

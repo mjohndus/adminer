@@ -39,7 +39,6 @@ a:focus-visible {
 
 a[href]:hover, a[href]:active {
 	color: var(--link-text-hover);
-	/* text-decoration: underline; */
 }
 
 /* We can not use a:hover because of jush formatting. */
@@ -219,12 +218,16 @@ ol, ul {
 	font-family: var(--font-family-mono);
 	font-size: calc(var(--font-size-mono) * 100% / 14);
 	font-variant-ligatures: none;
-	z-index: 5;
+	z-index: 25; /* Over the navigation panel (but also over the header). */
 }
 
 @media screen and (max-width: 1023px) {
 	#content {
 		margin-inline-start: 0;
+	}
+
+	#help {
+		z-index: 5; /* Under the header. */
 	}
 }
 

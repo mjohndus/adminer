@@ -1,12 +1,51 @@
 Changelog
 =========
 
-AdminNeo 5.1.0
+AdminNeo 5.2.0
 --------------
 
 ### Changes
 
+- Update Spanish translation (by @rexwithluv)
+- PostgreSQL: Display auto_increment of inserted rows (by @vrana)
+- PostgreSQL: Display description of system variables (by @vrana)
+- PostgreSQL 11: Add support for PROCEDURE (by @vrana)
+- URL parameter ?ext=pdo to force using PDO (by @vrana)
+- Add SqlGeminiPlugin - AI prompt in SQL command generating the queries with Google Gemini (by @vrana)
+- Add sqlAutocompletion configuration parameter
+- Add relationLinks configuration parameter
+- Add setting for displaying links to referencing tables
+- Add PostgreSQL support to relation links (by @vrana)
+
+### Bugfixes
+
+- MySQL: Fix retrieving additional info about the last query
+- MariaDB: Fix changing user password (issue #155)
+- MS SQL: Fix collation issues when retrieving default values (by @vrana)
+- MS SQL PDO: Fix invalid number of rows in SQL command
+- MS SQL PDO: Display last insert ID (by @vrana)
+- PDO: Fix displaying the number of affected rows (regression from 5.1.0) (issue #151)
+- Silent warning if adminneo.version file does not exist (issue #152)
+- Fix initial caret position while inline editing a table value. (by @vrana)
+- Update Makefile for the current project state (issue #161, by @Necoro)
+- Fix escaping \t in JSON values (issue #159)
+
+(Ported relevant changes from Adminer 5.1.0.)
+
+AdminNeo 5.1.1 (2025-09-01)
+---------------------------
+
+### Bugfixes
+
+Compiler: Fix missing autocompletion script in a single driver file (issue #146)
+
+AdminNeo 5.1.0 (2025-08-31)
+---------------------------
+
+### Changes
+
 - New Settings page with basic UI options
+- Add autocompletion to SQL command editor
 - Add defaultServer and defaultDatabase configuration parameters
 - Allow creating generated columns (by @vrana)
 - MySQL: Display converting function for binary, bit or geometry fields (by @vrana)
@@ -20,6 +59,8 @@ AdminNeo 5.1.0
 - Optimize retrieving columns for schema (by @vrana)
 - Shorten queries saved from SQL command to URL (by @vrana)
 - Remember export setting at SQL command
+- Autocomplete SQL commands (by @vrana)
+- SQL textarea: Open help and links to tables on Ctrl+click
 - Refine and standardize Japanese translation (by @yama)
 - Update German translation (by @wintstar)
 - Plugins: Use protected visibility of member properties
@@ -27,24 +68,27 @@ AdminNeo 5.1.0
 - Editor: Display database views
 - SqlLoginPlugin: Auto-create log folder structure (by @jesobreira)
 - Add support for installing by Composer
+- Update Dutch translation (by @wintstar)
+- Update French translation (by @rrr63)
 
 ### Bugfixes
 
 - Fix displaying the last page instead of the first one on PHP 7 and older (regression from 5.0.0)
 - Fix displaying help for field type (regression from 5.0.0)
 - MySQL: Fix using undefined PDO constant on PHP 5
-- MariaDB: Fix parsing type of the generated column in view
+- MariaDB: Fix parsing type of the generated column in view (issue #130)
 - MS SQL: Add missing support for Encrypt and TrustServerCertificate parameters in PDO_SQLSRV
 - MongoDB: Fix broken driver
 - Select: Allow ordering by COUNT(*) (regression from 4.9.0) (by @vrana)
-- Fix opening custom links in selection table to a new tab
+- Fix opening custom links in selection table to a new tab (issue #133)
 - Fix duplicated page headline in custom type editing (regression from 5.0.0)
-- Editor: Fix autoselecting the first available database
+- Fix displaying help popup under the left navigation
+- Editor: Fix autoselecting the first available database (issue #125)
 
 (Ported relevant changes from Adminer 5.0.0-5.0.6.)
 
-AdminNeo 5.0.0
---------------
+AdminNeo 5.0.0 (2025-05-29)
+---------------------------
 
 This is the first release of AdminNeo and EditorNeo as standalone products. It mainly brings the brand new responsive
 theme with dark mode support and color variants, easy to use [configuration](https://www.adminneo.org/configuration), 

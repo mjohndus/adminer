@@ -2,6 +2,8 @@
 
 namespace AdminNeo;
 
+use stdClass;
+
 class Admin extends Origin
 {
 	public function getOperators(): array
@@ -52,16 +54,22 @@ class Admin extends Origin
 	 */
 	public function printToHead(): void
 	{
-		echo "<link rel='stylesheet' href='", link_files("jush.css", ["../vendor/vrana/jush/jush.css"]), "'>";
+		echo "<link rel='stylesheet' href='", link_files("jush.css", [
+			"../vendor/vrana/jush/jush.css",
+			"themes/default/jush.css",
+		]), "'>";
 
 		if (!$this->admin->isLightModeForced()) {
 			echo "<link rel='stylesheet' " . (!$this->admin->isDarkModeForced() ? "media='(prefers-color-scheme: dark)' " : "") . "href='";
-			echo link_files("jush-dark.css", ["../vendor/vrana/jush/jush-dark.css"]);
+			echo link_files("jush-dark.css", [
+				"themes/default/jush-dark.css",
+			]);
 			echo "'>\n";
 		}
 
 		echo script_src(link_files("jush.js", [
 			"../vendor/vrana/jush/modules/jush.js",
+			"../vendor/vrana/jush/modules/jush-autocomplete-sql.js",
 			"../vendor/vrana/jush/modules/jush-textarea.js",
 			"../vendor/vrana/jush/modules/jush-sql.js",
 			"../vendor/vrana/jush/modules/jush-pgsql.js",
@@ -70,7 +78,7 @@ class Admin extends Origin
 			"../vendor/vrana/jush/modules/jush-oracle.js",
 			"../vendor/vrana/jush/modules/jush-simpledb.js",
 			"../vendor/vrana/jush/modules/jush-js.js",
-		]));
+		]), true);
 	}
 
 	/**
@@ -91,7 +99,7 @@ class Admin extends Origin
 			if (count($drivers) > 1) {
 				echo $this->admin->getLoginFormRow('driver', lang('System'), html_select("auth[driver]", $drivers, $driver) . script("initLoginDriver(qsl('select'));", ""));
 			} else {
-				echo $this->admin->getLoginFormRow('driver', '', '<input type="hidden" name="auth[driver]" value="' . h($driver) . '">');
+				echo $this->admin->getLoginFormRow('driver', '', input_hidden("auth[driver]", $driver));
 			}
 
 			echo $this->admin->getLoginFormRow('server', lang('Server'), '<input class="input" name="auth[server]" value="' . h($server) . '" title="hostname[:port]" placeholder="localhost" autocapitalize="off">');
@@ -122,7 +130,11 @@ class Admin extends Origin
 	 */
 	public function getFieldName(array $field, int $order = 0): string
 	{
-		return '<span title="' . h($field["full_type"] . ($field["comment"] != "" ? " : $field[comment]" : '')) . '">' . h($field["field"]) . '</span>';
+		$type = $field["full_type"];
+		$comment = $field["comment"];
+		$separator = $type && $comment != "" ? ": " : "";
+
+		return '<span title="' . h($type . $separator . $comment) . '">' . h($field["field"]) . '</span>';
 	}
 
 	/**
@@ -174,26 +186,6 @@ class Admin extends Origin
 		echo doc_link([DIALECT => Driver::get()->tableHelp($table, $is_view)], icon("help") . lang('Info'));
 
 		echo "\n";
-	}
-
-	/**
-	 * Returns backward keys for given table.
-	 *
-	 * @return array $return[$target_table]["keys"][$key_name][$target_column] = $source_column; $return[$target_table]["name"] = $this->admin->getTableName($target_table);
-	 */
-	public function getBackwardKeys(string $table, string $tableName): array
-	{
-		return [];
-	}
-
-	/**
-	 * Prints backward keys for given row.
-	 *
-	 * @param array $backwardKeys The result of getBackwardKeys().
-	 */
-	public function printBackwardKeys(array $backwardKeys, array $row): void
-	{
-		//
 	}
 
 	/**
@@ -643,22 +635,16 @@ class Admin extends Origin
 		echo "<input type='submit' class='button' value='" . lang('Select') . "'>";
 		echo " <span id='noindex' title='" . lang('Full table scan') . "'></span>";
 		echo "<script" . nonce() . ">\n";
-		echo "var indexColumns = ";
 
-		$columns = [];
+		$columns = new stdClass(); // To ensure it is an object even if empty.
 		foreach ($indexes as $index) {
 			$current_key = reset($index["columns"]);
 			if ($index["type"] != "FULLTEXT" && $current_key) {
-				$columns[$current_key] = 1;
+				$columns->$current_key = null;
 			}
 		}
 
-		$columns[""] = 1;
-		foreach ($columns as $key => $val) {
-			json_row($key);
-		}
-
-		echo ";\n";
+		echo "const indexColumns = " . json_encode($columns, JSON_UNESCAPED_UNICODE) . ";\n";
 		echo "selectFieldChange.call(gid('form')['select']);\n";
 		echo "</script>\n";
 		echo "</div></fieldset>\n";
@@ -1181,24 +1167,38 @@ class Admin extends Origin
 
 			// Syntax highlighting.
 			if (support("sql") || DIALECT == "elastic") {
-				?>
-				<script<?php echo nonce(); ?>>
-					<?php
-					if (support("sql") && $tables) {
-						$links = [];
-						foreach ($tables as $table => $type) {
-							$links[] = preg_quote($table, '/');
-						}
-						echo "var jushLinks = { " . DIALECT . ": [ '" . js_escape(ME) . (support("table") ? "table=" : "select=") . "\$&', /\\b(" . implode("|", $links) . ")\\b/g ] };\n";
-						foreach (["bac", "bra", "sqlite_quo", "mssql_bra"] as $val) {
-							echo "jushLinks.$val = jushLinks." . DIALECT . ";\n";
+				echo "<script" . nonce() . ">\n";
+				if (support("sql") && $tables) {
+					$links = [];
+					foreach ($tables as $table => $type) {
+						$links[] = preg_quote($table, '/');
+					}
+					echo "const jushLinks = { " . DIALECT . ": [ '" . js_escape(ME) . (support("table") ? "table=" : "select=") . "\$&', /\\b(" . implode("|", $links) . ")\\b/g ] };\n";
+					foreach (["bac", "bra", "sqlite_quo", "mssql_bra"] as $val) {
+						echo "jushLinks.$val = jushLinks." . DIALECT . ";\n";
+					}
+				}
+
+				if (
+					DIALECT != "elastic" &&
+					$this->getConfig()->isSqlAutocompletionEnabled() &&
+					(isset($_GET["sql"]) || isset($_GET["trigger"]) || isset($_GET["check"]))
+				) {
+					$tablesColumns = array_fill_keys(array_keys($tables), []);
+					foreach (Driver::get()->getAllFields() as $table => $fields) {
+						foreach ($fields as $field) {
+							$tablesColumns[$table][] = $field["field"];
 						}
 					}
-					?>
-					initSyntaxHighlighting('<?php echo Connection::get()->getVersion(); ?>'<?php echo(Connection::get()->isMariaDB() ? ", true" : ""); ?>);
-				</script>
-				<?php
+
+					echo "window.addEventListener('DOMContentLoaded', () => { autocompletion = jush.autocompleteSql('" . idf_escape("") . "', " . json_encode($tablesColumns) . "); });\n";
+				}
+
+				echo "</script>\n";
 			}
+
+			echo script("let autocompletion;\nwindow.addEventListener('DOMContentLoaded', () => { initSyntaxHighlighting('" .
+				Connection::get()->getVersion() . "', '" . Connection::get()->getFlavor() . "', autocompletion); });");
 		}
 	}
 
@@ -1238,7 +1238,7 @@ class Admin extends Origin
 
 		foreach (["import", "sql", "schema", "dump", "privileges"] as $val) {
 			if (isset($_GET[$val])) {
-				echo "<input type='hidden' name='$val' value=''>";
+				echo input_hidden($val);
 				break;
 			}
 		}

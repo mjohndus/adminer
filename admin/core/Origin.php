@@ -424,7 +424,7 @@ abstract class Origin extends Plugin
 		echo "<form action='' method='post'>\n";
 		echo h($_GET["username"]);
 		echo "<input type='submit' class='button' name='logout' value='", lang('Logout'), "' id='logout'>";
-		echo "<input type='hidden' name='token' value='", get_token(), "'>\n";
+		echo input_token();
 		echo "</form>";
 		echo "</div>\n";
 	}
@@ -463,15 +463,106 @@ abstract class Origin extends Plugin
 		return foreign_keys($table);
 	}
 
-	public abstract function getBackwardKeys(string $table, string $tableName): array;
+	/**
+	 * Returns backward keys for given table.
+	 *
+	 * @return array $return[$id]["table"] = $target_table; $return[$id]["constraints"][$key_name][$target_column] = $source_column; $return[$target_table]["name"] = $this->admin->getTableName($target_table);
+	 */
+	public function getBackwardKeys(string $table, string $tableName): array
+	{
+		if (!$this->settings->isRelationLinks()) {
+			return [];
+		}
 
-	public abstract function printBackwardKeys(array $backwardKeys, array $row): void;
+		$keys = [];
+
+		// unique_constraint_name is not table-specific in MySQL
+		// referenced_table_name is not available in PostgreSQL
+		foreach (
+			get_rows("SELECT s.table_schema, s.table_name table_name, s.constraint_name constraint_name, s.column_name column_name, " . (DIALECT == "sql" ? "referenced_column_name" : "t.column_name") . " referenced_column_name
+FROM information_schema.key_column_usage s" . (DIALECT == "sql" ? "
+WHERE table_schema = " . q(DB) . "
+AND referenced_table_schema = " . q(DB) . "
+AND referenced_table_name" : "
+JOIN information_schema.referential_constraints r USING (constraint_catalog, constraint_schema, constraint_name)
+JOIN information_schema.key_column_usage t ON r.unique_constraint_catalog = t.constraint_catalog
+	AND r.unique_constraint_schema = t.constraint_schema
+	AND r.unique_constraint_name = t.constraint_name
+	AND s.position_in_unique_constraint = t.ordinal_position
+WHERE t.table_catalog = " . q(DB) . " AND t.table_schema = " . q($_GET["ns"] ?? "") . "
+AND t.table_name") . " = " . q($table) . "
+ORDER BY s.ordinal_position", null, "") as $row
+		) {
+			$id = $row["table_schema"] . "." . $row["table_name"];
+
+			$keys[$id]["schema"] = $row["table_schema"];
+			$keys[$id]["table"] = $row["table_name"];
+			$keys[$id]["constraints"][$row["constraint_name"]][$row["column_name"]] = $row["referenced_column_name"];
+		}
+
+		foreach ($keys as $id => $key) {
+			$name = $this->admin->getTableName(table_status($key["table"], true));
+			if ($name != "") {
+				$search = preg_quote($tableName);
+				$separator = "(:|\\s*-)?\\s+";
+				$keys[$id]["name"] = (preg_match("(^$search$separator(.+)|^(.+?)$separator$search\$)iu", $name, $match) ? $match[2] . $match[3] : $name);
+			} else {
+				unset($keys[$id]);
+			}
+		}
+
+		return $keys;
+	}
+
+	/**
+	 * Prints backward keys for given row.
+	 *
+	 * @param array $backwardKeys The result of getBackwardKeys().
+	 */
+	public function printBackwardKeys(array $backwardKeys, array $row): void
+	{
+		foreach ($backwardKeys as $key) {
+			foreach ($key["constraints"] as $constraint) {
+				$me = preg_replace('~&ns=[^&]+&~', "&ns=" . urldecode($key["schema"]) . "&" ,ME);
+
+				$link = $me . 'select=' . urlencode($key["table"]);
+				$i = 0;
+				foreach ($constraint as $column => $val) {
+					if (!isset($row[$val])) {
+						continue 2;
+					}
+
+					$link .= where_link($i++, $column, $row[$val]);
+				}
+
+				// Strip table prefix that is the same as the current table name.
+				$name = preg_replace('(^' . preg_quote($_GET["select"]) . (substr($_GET["select"], -1) == "s" ? "?" : "") . '_)', "_", $key["name"]);
+				$title = implode(", ", array_keys($constraint));
+				echo "<a href='" . h($link) . "' title='" . h($title) . "'>" . h($name) . "</a>";
+
+				$link = $me . 'edit=' . urlencode($key["table"]);
+				foreach ($constraint as $column => $val) {
+					$link .= "&set" . urlencode("[" . bracket_escape($column) . "]") . "=" . urlencode($row[$val]);
+				}
+
+				echo "<a href='" . h($link) . "' title='" . lang('New item') . "'>", icon_solo("add"), "</a> ";
+			}
+		}
+	}
 
 	public abstract function formatSelectQuery(string $query, float $start, bool $failed = false): string;
 
 	public abstract function formatMessageQuery(string $query, string $time, bool $failed = false): string;
 
 	public abstract function formatSqlCommandQuery(string $query): string;
+
+	/**
+	 * Prints HTML code just before the Execute button in SQL command.
+	 */
+	public function printAfterSqlCommand(): void
+	{
+		//
+	}
 
 	public abstract function getTableDescriptionFieldName(string $table): string;
 
@@ -707,6 +798,21 @@ abstract class Origin extends Plugin
 				html_radios("colorScheme", $options, $this->settings->getParameter("colorScheme") ?? "") .
 				"</td></tr>\n";
 		} elseif ($groupId == 2) {
+			// Relation links.
+			$options = [
+				"" => lang('Default'),
+				true => lang('Display'),
+				false => lang('Hide'),
+			];
+			$default = $options[$this->config->isRelationLinks()];
+			$options[""] .= " ($default)";
+
+			$settings["relationLinks"] = "<tr><th>" . lang('Relations') . "</th>" .
+				"<td>" .
+				html_radios("relationLinks", $options, $this->settings->getParameter("relationLinks") ?? "") .
+				"<span class='input-hint'>" . lang('Links to tables referencing the current row.') . "</span>" .
+				"</td></tr>\n";
+
 			// Records per page.
 			$default = $this->config->getRecordsPerPage();
 			$options = [

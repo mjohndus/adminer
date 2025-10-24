@@ -20,6 +20,10 @@ function page_header(string $title, $breadcrumb = []): void
 		exit;
 	}
 
+	if (!ob_get_level()) {
+		ob_start(null, 4096);
+	}
+
 	$title = strip_tags($title);
 	$server_part = $breadcrumb !== false && $breadcrumb !== null && SERVER != "" ? " - " . h(Admin::get()->getServerName(SERVER)) : "";
 	$service_title = strip_tags(Admin::get()->getServiceTitle());
@@ -117,11 +121,10 @@ function page_header(string $title, $breadcrumb = []): void
 
 	body.onkeydown = bodyKeydown;
 	body.onclick = bodyClick;
-	body.classList.remove("nojs");
-	body.classList.add("js");
+	body.classList.replace("nojs", "js");
 
-	var offlineMessage = '<?php echo js_escape(lang('You are offline.')); ?>';
-	var thousandsSeparator = '<?php echo js_escape(lang(',')); ?>';
+	const offlineMessage = '<?php echo js_escape(lang('You are offline.')); ?>';
+	const thousandsSeparator = '<?php echo js_escape(lang(',')); ?>';
 </script>
 
 

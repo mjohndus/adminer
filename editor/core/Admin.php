@@ -62,8 +62,8 @@ class Admin extends Origin
 		$server = $this->config->getDefaultServer();
 
 		echo "<table class='box box-light'>\n";
-		echo $this->admin->getLoginFormRow('driver', '', '<input type="hidden" name="auth[driver]" value="' . h($driver) . '">');
-		echo $this->admin->getLoginFormRow('server', '', '<input type="hidden" name="auth[server]" value="' . h($server) . '">');
+		echo $this->admin->getLoginFormRow('driver', '', input_hidden("auth[driver]", $driver));
+		echo $this->admin->getLoginFormRow('server', '', input_hidden("auth[server]", $server));
 		echo $this->admin->getLoginFormRow('username', lang('Username'), '<input class="input" name="auth[username]" id="username" value="' . h($_GET["username"]) . '" autocomplete="username" autocapitalize="off">');
 		echo $this->admin->getLoginFormRow('password', lang('Password'), '<input type="password" class="input" name="auth[password]" autocomplete="current-password">');
 		echo "</table>\n";
@@ -84,52 +84,6 @@ class Admin extends Origin
 		if ($set !== null) {
 			$table = $tableStatus["Name"];
 			echo '<p class="links top-links"><a href="', h(ME . 'edit=' . urlencode($table) . $set), '">', icon("item-add"), lang('New item'), "</a>\n";
-		}
-	}
-
-	public function getBackwardKeys(string $table, string $tableName): array
-	{
-		$keys = [];
-
-		foreach (get_rows("SELECT TABLE_NAME, CONSTRAINT_NAME, COLUMN_NAME, REFERENCED_COLUMN_NAME
-FROM information_schema.KEY_COLUMN_USAGE
-WHERE TABLE_SCHEMA = " . q($this->admin->getDatabase()) . "
-AND REFERENCED_TABLE_SCHEMA = " . q($this->admin->getDatabase()) . "
-AND REFERENCED_TABLE_NAME = " . q($table) . "
-ORDER BY ORDINAL_POSITION", null, "") as $row) { //! requires MySQL 5
-			$keys[$row["TABLE_NAME"]]["keys"][$row["CONSTRAINT_NAME"]][$row["COLUMN_NAME"]] = $row["REFERENCED_COLUMN_NAME"];
-		}
-
-		foreach ($keys as $key => $val) {
-			$name = $this->admin->getTableName(table_status($key, true));
-			if ($name != "") {
-				$search = preg_quote($tableName);
-				$separator = "(:|\\s*-)?\\s+";
-				$keys[$key]["name"] = (preg_match("(^$search$separator(.+)|^(.+?)$separator$search\$)iu", $name, $match) ? $match[2] . $match[3] : $name);
-			} else {
-				unset($keys[$key]);
-			}
-		}
-
-		return $keys;
-	}
-
-	public function printBackwardKeys(array $backwardKeys, array $row): void
-	{
-		foreach ($backwardKeys as $table => $backwardKey) {
-			foreach ($backwardKey["keys"] as $cols) {
-				$link = ME . 'select=' . urlencode($table);
-				$i = 0;
-				foreach ($cols as $column => $val) {
-					$link .= where_link($i++, $column, $row[$val]);
-				}
-				echo "<a href='" . h($link) . "'>" . h($backwardKey["name"]) . "</a>";
-				$link = ME . 'edit=' . urlencode($table);
-				foreach ($cols as $column => $val) {
-					$link .= "&set" . urlencode("[" . bracket_escape($column) . "]") . "=" . urlencode($row[$val]);
-				}
-				echo "<a href='" . h($link) . "' title='" . lang('New item') . "'>", icon_solo("add"), "</a> ";
-			}
 		}
 	}
 
@@ -262,7 +216,7 @@ ORDER BY ORDINAL_POSITION", null, "") as $row) { //! requires MySQL 5
 			if (preg_match("~enum~", $field["type"]) || $this->looksLikeBool($field)) { //! set - uses 1 << $i and FIND_IN_SET()
 				$key = $keys[$name];
 				$i--;
-				echo "<div>" . h($desc) . "<input type='hidden' name='where[$i][col]' value='" . h($name) . "'>:";
+				echo "<div>" . h($desc) . input_hidden("where[$i][col]", $name) . ":";
 
 				if ($this->looksLikeBool($field)) {
 					echo " <select name='where[$i][val]'>" . optionlist(["" => "", lang('no'), lang('yes')], $where[$key]["val"] ?? null, true) . "</select>";
@@ -278,7 +232,7 @@ ORDER BY ORDINAL_POSITION", null, "") as $row) { //! requires MySQL 5
 				}
 				$key = $keys[$name];
 				$i--;
-				echo "<div>" . h($desc) . "<input type='hidden' name='where[$i][col]' value='" . h($name) . "'><input type='hidden' name='where[$i][op]' value='='>: <select name='where[$i][val]'>" . optionlist($options, $where[$key]["val"] ?? null, true) . "</select></div>\n";
+				echo "<div>" . h($desc) . input_hidden("where[$i][col]", $name) . input_hidden("where[$i][op]", "=") . ": <select name='where[$i][val]'>" . optionlist($options, $where[$key]["val"] ?? null, true) . "</select></div>\n";
 				unset($columns[$name]);
 			}
 		}
@@ -324,7 +278,7 @@ ORDER BY ORDINAL_POSITION", null, "") as $row) { //! requires MySQL 5
 			echo "</div></fieldset>\n";
 		}
 		if ($_GET["order"]) {
-			echo "<div style='display: none;'>" . hidden_fields([
+			echo "<div style='display: none;'>" . print_hidden_fields([
 				"order" => [1 => reset($_GET["order"])],
 				"desc" => ($_GET["desc"] ? [1 => 1] : []),
 			]) . "</div>\n";

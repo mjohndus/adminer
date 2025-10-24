@@ -393,6 +393,9 @@ return [
 	'Layout of main navigation with table links.' => 'Xx.',
 	'Table links' => 'Xx',
 	'Primary action for all table links.' => 'Xx.',
+	'Links to tables referencing the current row.' => 'Xx.',
+	'Display' => 'Xx',
+	'Hide' => 'Xx',
 	'Records per page' => 'Xx',
 	'Default number of records displayed in data table.' => 'Xx.',
 	'Enum as select' => 'Xx',
@@ -409,4 +412,7 @@ return [
 	'JSON previews' => 'Xx',
 	'Data table' => 'Xx',
 	'Edit form' => 'Xx',
+	// Use the phrases from https://gemini.google.com/
+	'Ask Gemini' => 'Xx',
+	'Just a sec...' => 'Xx...',
 ];

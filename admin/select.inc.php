@@ -135,11 +135,15 @@ if ($_POST) {
 				$result = ($_POST["delete"]
 					? Driver::get()->delete($TABLE, $where_check)
 					: ($_POST["clone"]
-						? queries("INSERT $query$where_check")
+						? queries("INSERT $query$where_check" . Driver::get()->getInsertReturningSql($TABLE))
 						: Driver::get()->update($TABLE, $set, $where_check)
 					)
 				);
 				$affected = Connection::get()->getAffectedRows();
+				if (is_object($result)) {
+					// PostgreSQL with RETURNING fills rowsCount.
+					$affected += $result->getRowsCount();
+				}
 			} else {
 				foreach ((array) $_POST["check"] as $val) {
 					// where is not unique so OR can't be used
@@ -160,7 +164,7 @@ if ($_POST) {
 		}
 		$message = lang('%d item(s) have been affected.', $affected);
 		if ($_POST["clone"] && $result && $affected == 1) {
-			$last_id = last_id();
+			$last_id = last_id($result);
 			if ($last_id) {
 				$message = lang('Item%s has been inserted.', " $last_id");
 			}
@@ -265,8 +269,14 @@ if (!$columns && support("table")) {
 	echo "<form action='' id='form'>\n";
 	echo "<div style='display: none;'>";
 	hidden_fields_get();
-	echo (DB != "" ? '<input type="hidden" name="db" value="' . h(DB) . '">' . (isset($_GET["ns"]) ? '<input type="hidden" name="ns" value="' . h($_GET["ns"]) . '">' : "") : ""); // not used in Editor
-	echo '<input type="hidden" name="select" value="' . h($TABLE) . '">';
+	// Not used in Editor.
+	if (DB != "") {
+		echo input_hidden("db", DB);
+		if (isset($_GET["ns"])) {
+			echo input_hidden("ns", $_GET["ns"]);
+		}
+	}
+	echo input_hidden("select", $TABLE);
 	echo '<input type="submit" class="button" value="' . h(lang('Select')) . '">'; # hidden default submit so filter remove buttons aren't "clicked" on submission from enter key
 	echo "</div>\n";
 	echo "<div class='field-sets'>\n";
@@ -399,7 +409,10 @@ if (!$columns && support("table")) {
 				}
 			}
 
-			echo ($backward_keys ? "<th>" . lang('Relations') : "") . "</thead>\n";
+			if ($backward_keys) {
+				echo "<th>" . lang('Relations') . "</th>";
+			}
+			echo "</thead>\n";
 
 			if (is_ajax()) {
 				ob_end_clean();
@@ -475,13 +488,16 @@ if (!$columns && support("table")) {
 							}
 						}
 
+						$null_val = $val === null;
 						$val = select_value($val, $link, $field, $text_length);
 						$escaped_key = bracket_escape($key);
 						$id = h("val[$unique_idf][$escaped_key]");
 						$value = $_POST["val"][$unique_idf][$escaped_key] ?? null;
 						$editable = !is_array($row[$key]) && is_utf8($val) && $rows[$n][$key] == $row[$key] && !$functions[$key] && !($field["generated"] ?? false);
 						$text = $field && preg_match('~text|json|lob~', $field["type"]);
-						$class = preg_match(number_type(), $field["type"]) && is_numeric(strip_tags($val)) ? "class='number'" : "";
+						$numeric_type = ($field && preg_match(number_type(), $field["type"])) ||
+							(!$field && preg_match('~^ROUND|CHAR_LENGTH|FLOOR|CEIL|UNIX_TIMESTAMP|TIME_TO_SEC|SUM|MIN|MAX|AVG|COUNT\(~', $key));
+						$class = $numeric_type && ($null_val || is_numeric(strip_tags($val))) ? "class='number'" : "";
 						echo "<td id='$id' $class";
 						if (($_GET["modify"] && $editable) || $value !== null) {
 							$h_value = h($value !== null ? $value : $row[$key]);
@@ -498,8 +514,9 @@ if (!$columns && support("table")) {
 
 				if ($backward_keys) {
 					echo "<td>";
+					Admin::get()->printBackwardKeys($backward_keys, $rows[$n]);
+					echo "</td>";
 				}
-				Admin::get()->printBackwardKeys($backward_keys, $rows[$n]);
 				echo "</tr>\n"; // close to allow white-space: pre
 			}
 
@@ -523,8 +540,7 @@ if (!$columns && support("table")) {
 						$found_rows = ($is_group ? false : found_rows($table_status, $where));
 						if ($found_rows < max(1e4, 2 * ($page + 1) * $limit)) {
 							// slow with big tables
-							$result = slow_query(count_rows($TABLE, $where, $is_group, $group));
-							$found_rows = reset($result);
+							$found_rows = first(slow_query(count_rows($TABLE, $where, $is_group, $group)));
 						} else {
 							$exact_count = false;
 						}
@@ -605,20 +621,25 @@ if (!$columns && support("table")) {
 				echo "<fieldset>";
 				echo "<legend>" . lang('Whole result') . "</legend><div class='fieldset-content'>";
 				$display_rows = ($exact_count ? "" : "~ ") . $found_rows;
-				echo checkbox("all", 1, 0, ($found_rows !== false ? ($exact_count ? "" : "~ ") . lang('%d row(s)', $found_rows) : ""), "var checked = formChecked(this, /check/); selectCount('selected', this.checked ? '$display_rows' : checked); selectCount('selected2', this.checked || !checked ? '$display_rows' : checked);") . "\n";
+				echo checkbox("all", 1, 0, ($found_rows !== false ? ($exact_count ? "" : "~ ") . lang('%d row(s)', $found_rows) : ""), "const checked = formChecked(this, /check/); selectCount('selected', this.checked ? '$display_rows' : checked); selectCount('selected2', this.checked || !checked ? '$display_rows' : checked);") . "\n";
 				echo "</div></fieldset>\n";
 
 				if (Admin::get()->isDataEditAllowed()) {
-					?>
-<fieldset<?php echo ($_GET["modify"] ? '' : ' class="jsonly"'); ?>><legend><?php echo lang('Modify'); ?></legend><div class='fieldset-content'>
-<input type="submit" class="button" value="<?php echo lang('Save'); ?>"<?php echo ($_GET["modify"] ? '' : ' title="' . lang('Ctrl+click on a value to modify it.') . '"'); ?>>
-</div></fieldset>
-<fieldset><legend><?php echo lang('Selected'); ?> <span id="selected"></span></legend><div class='fieldset-content'>
-<input type="submit" class="button" name="edit" value="<?php echo lang('Edit'); ?>">
-<input type="submit" class="button" name="clone" value="<?php echo lang('Clone'); ?>">
-<input type="submit" class="button" name="delete" value="<?php echo lang('Delete'); ?>"><?php echo confirm(); ?>
-</div></fieldset>
-<?php
+					echo "<fieldset", ($_GET["modify"] ? '' : ' class="jsonly"'), ">";
+					echo "<legend>", lang('Modify'), "</legend>";
+					echo "<div class='fieldset-content'>";
+					echo "<input type='submit' class='button' value='", lang('Save'), "'", ($_GET["modify"] ? "" : " title='" . lang('Ctrl+click on a value to modify it.') . "'"), ">";
+					echo "</div>";
+					echo "</fieldset>\n";
+
+					echo "<fieldset>";
+					echo "<legend>", lang('Selected'), " <span id='selected'></span></legend>";
+					echo "<div class='fieldset-content'>";
+					echo "<input type='submit' class='button' name='edit' value='", lang('Edit'), "'> ";
+					echo "<input type='submit' class='button' name='clone' value='", lang('Clone'), "'> ";
+					echo "<input type='submit' class='button' name='delete' value='", lang('Delete'), "'>", confirm();
+					echo "</div>";
+					echo "</fieldset>\n";
 				}
 
 				$format = Admin::get()->getDumpFormats();
@@ -655,7 +676,7 @@ if (!$columns && support("table")) {
 				echo "</p>";
 			}
 
-			echo "<input type='hidden' name='token' value='", get_token(), "'>\n";
+			echo input_token();
 			echo "</form>\n";
 			echo (!$group && $select ? "" : script("tableCheck();"));
 		} else {

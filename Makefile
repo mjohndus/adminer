@@ -11,7 +11,7 @@ default: compile
 
 .PHONY: compile
 compile:
-	$(PHP) $(ROOT_DIRECTORY)/compile.php
+	$(PHP) $(ROOT_DIRECTORY)/bin/compile.php
 
 .PHONY: server
 server:
@@ -19,21 +19,9 @@ server:
 	  --server 127.0.0.1:$(PORT) \
 	  --docroot $(ROOT_DIRECTORY)
 
-.PHONY: initialize
-initialize:
-	git \
-	  -C $(ROOT_DIRECTORY) \
-	  submodule \
-	  update \
-	  --init \
-	  --recursive
-
 .PHONY: clean
 clean:
-	rm \
-	  --recursive \
-	  --force \
-	  $(ROOT_DIRECTORY)/adminneo.php
+	rm -rf $(ROOT_DIRECTORY)/compiled/
 
 .PHONY: clean.all
 clean.all: clean

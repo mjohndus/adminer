@@ -26,11 +26,18 @@ function select(Result $result, ?Connection $connection = null, $orgtables = [],
 			echo "<table class='nowrap'>\n";
 			echo "<thead><tr>";
 			for ($j=0; $j < count($row); $j++) {
-				$field = (array)$result->fetchField();
-				$name = $field["name"];
-				$orgtable = $field["orgtable"];
-				$orgname = $field["orgname"];
-				$return[$field["table"]] = $orgtable;
+				$field = $result->fetchField();
+				if (!$field) {
+					echo "<th></th>";
+					continue;
+				}
+
+				$name = $field->name;
+				$orgtable = $field->orgtable ?? "";
+				$orgname = $field->orgname ?? $name;
+				if (isset($field->table)) {
+					$return[$field->table] = $orgtable;
+				}
 				if ($orgtables && DIALECT == "sql") { // MySQL EXPLAIN
 					$links[$j] = ($name == "table" ? "table=" : ($name == "possible_keys" ? "indexes=" : null));
 				} elseif ($orgtable != "") {
@@ -51,11 +58,11 @@ function select(Result $result, ?Connection $connection = null, $orgtables = [],
 						$links[$j] = $orgtable;
 					}
 				}
-				if ($field["charsetnr"] == 63) { // 63 - binary
+				if ($field->charsetnr == 63) { // 63 - binary
 					$blobs[$j] = true;
 				}
-				$types[$j] = $field["type"];
-				echo "<th" . ($orgtable != "" || $field["name"] != $orgname ? " title='" . h(($orgtable != "" ? "$orgtable." : "") . $orgname) . "'" : "") . ">" . h($name)
+				$types[$j] = $field->type;
+				echo "<th" . ($orgtable != "" || $field->name != $orgname ? " title='" . h(($orgtable != "" ? "$orgtable." : "") . $orgname) . "'" : "") . ">" . h($name)
 					. ($orgtables ? doc_link([
 						'sql' => "explain-output.html#explain_" . strtolower($name),
 						'mariadb' => "explain/#the-columns-in-explain-select",
@@ -163,6 +170,7 @@ function select_input($attrs, $options, $value = "", $onchange = "", $placeholde
 * @param string or "" to close the object
 * @param string
 * @return null
+* @deprecated
 */
 function json_row($key, $val = null) {
 	static $first = true;
@@ -170,7 +178,7 @@ function json_row($key, $val = null) {
 		echo "{";
 	}
 	if ($key != "") {
-		echo ($first ? "" : ",") . "\n\t\"" . addcslashes($key, "\r\n\t\"\\/") . '": ' . ($val !== null ? '"' . addcslashes($val, "\r\n\"\\/") . '"' : 'null');
+		echo ($first ? "" : ",") . "\n\t\"" . addcslashes($key, "\r\n\t\"\\/") . '": ' . ($val !== null ? '"' . addcslashes($val, "\r\n\t\"\\/") . '"' : 'null');
 		$first = false;
 	} else {
 		echo "\n}\n";
@@ -190,7 +198,8 @@ function edit_type($key, $field, $collations, $foreign_keys = [], $extra_types =
 	$type = $field["type"] ?? null;
 	?>
 <td><select name="<?php echo h($key); ?>[type]" class="type" aria-labelledby="label-type"><?php
-if ($type && !isset(Driver::get()->getTypes()[$type]) && !isset($foreign_keys[$type]) && !in_array($type, $extra_types)) {
+$driverTypes = Driver::get()->getTypes();
+if ($type && !isset($driverTypes[$type]) && !isset($foreign_keys[$type]) && !in_array($type, $extra_types)) {
 	$extra_types[] = $type;
 }
 $structured_types = Driver::get()->getStructuredTypes();
@@ -334,40 +343,43 @@ function edit_fields(array $fields, array $collations, $type = "TABLE", $foreign
 	$fields = array_values($fields);
 	$comments_opened = $_POST ? $_POST["comments"] : Admin::get()->getSettings()->getParameter("commentsOpened");
 	$comment_class = $comments_opened ? "" : "class='hidden'";
-	?>
 
-<thead><tr>
-	<?php
-		if (support("move_col")) {
-			echo "<td class='jsonly'></td>";
-		}
-		if ($type == "PROCEDURE") {
-			echo "<td></td>";
-		}
-	?>
-	<th id="label-name"><?php echo ($type == "TABLE" ? lang('Column name') : lang('Parameter name')); ?></th>
-	<td id="label-type"><?php echo lang('Type'); ?><textarea id="enum-edit" rows="4" cols="12" wrap="off" style="display: none;"></textarea><?php echo script("gid('enum-edit').onblur = onFieldLengthBlur;"); ?></td>
-	<td id="label-length"><?php echo lang('Length'); ?></td>
-	<td><?php echo lang('Options'); /* no label required, options have their own label */ ?></td>
-	<?php if ($type == "TABLE") { ?>
-		<td id="label-null">NULL</td>
-		<td><input type="radio" name="auto_increment_col" value=""><abbr id="label-ai" title="<?php echo lang('Auto Increment'); ?>">AI</abbr><?php echo doc_link([
+	echo "<thead><tr>\n";
+	if (support("move_col")) {
+		echo "<td class='jsonly'></td>";
+	}
+	if ($type == "PROCEDURE") {
+		echo "<td></td>";
+	}
+
+	echo "<th id='label-name'>", ($type == "TABLE" ? lang('Column name') : lang('Parameter name')), "</th>\n";
+	echo "<td id='label-type'>", lang('Type'), "<textarea id='enum-edit' rows='4' cols='12' wrap='off' style='display: none;'></textarea>", script("gid('enum-edit').onblur = onFieldLengthBlur;"), "</td>\n";
+	echo "<td id='label-length'>", lang("Length"), "</td>\n";
+	echo "<td>", lang('Options'), "</td>\n"; // No label required, options have their own label.
+
+	if ($type == "TABLE") {
+		echo "<td id='label-null'>NULL</td>\n";
+		echo "<td><input type='radio' name='auto_increment_col' value=''><abbr id='label-ai' title='", lang('Auto Increment'), "'>AI</abbr>";
+		echo doc_link([
 			'sql' => "example-auto-increment.html",
 			'mariadb' => "auto_increment/",
 			'sqlite' => "autoinc.html",
 			'pgsql' => "datatype-numeric.html#DATATYPE-SERIAL",
 			'mssql' => "t-sql/statements/create-table-transact-sql-identity-property",
-		]); ?>
-		</td>
-		<td id="label-default"><?php echo lang('Default value'); ?></td>
-		<?php echo (support("comment") ? "<td id='label-comment' $comment_class>" . lang('Comment') . "</td>" : ""); ?>
-	<?php } ?>
-	<td><?php
-		echo "<button name='add[" . (support("move_col") ? 0 : count($fields)) . "]' value='1' title='" . h(lang('Add next')) . "' class='button light'>", icon_solo("add"), "</button>",
-			script("row_count = " . count($fields) . ";");
-	?></td>
-</tr></thead>
-<?php
+		]);
+		echo "</td>\n";
+
+		echo "<td id='label-default'>", lang('Default value'), "</td>\n";
+		echo support("comment") ? "<td id='label-comment' $comment_class>" . lang('Comment') . "</td>\n" : "";
+	}
+
+	echo "<td>";
+	echo "<button name='add[", (support("move_col") ? 0 : count($fields)), "]' value='1' title='", h(lang('Add next')), "' class='button light'>", icon_solo("add"), "</button>";
+	echo script("row_count = " . count($fields) . ";");
+	echo "</td>\n";
+
+	echo "</tr></thead>\n";
+
 	$class = support("move_col") ? "class='sortable'" : "";
 	echo "<tbody $class>\n";
 
@@ -390,7 +402,7 @@ function edit_fields(array $fields, array $collations, $type = "TABLE", $foreign
 		if ($display) {
 			echo "<input class='input' name='fields[$i][field]' value='", h($field["field"]), "' data-maxlength='64' autocapitalize='off' aria-labelledby='label-name'>";
 		}
-		echo "<input type='hidden' name='fields[$i][orig]' value='",  h($orig), "'>";
+		echo input_hidden("fields[$i][orig]", $orig);
 		edit_type("fields[$i]", $field, $collations, $foreign_keys);
 		echo "</th>\n";
 
@@ -672,7 +684,7 @@ function doc_link(array $paths, string $text = "<sup>?</sup>"): string
 	$urls = [
 		'sql' => "https://dev.mysql.com/doc/refman/$version/en/",
 		'sqlite' => "https://www.sqlite.org/",
-		'pgsql' => "https://www.postgresql.org/docs/$version/",
+		'pgsql' => "https://www.postgresql.org/docs/" . (Connection::get()->isCockroachDB() ? "current" : $version) . "/",
 		'mssql' => "https://learn.microsoft.com/en-us/sql/",
 		'oracle' => "https://www.oracle.com/pls/topic/lookup?ctx=db" . str_replace(".", "", $version) . "&id=",
 		'elastic' => "https://www.elastic.co/guide/en/elasticsearch/reference/$version/",

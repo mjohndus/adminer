@@ -5,6 +5,8 @@ namespace AdminNeo;
 /**
  * Adds bzip2 compression of data export.
  *
+ * Last changed in release: !compile: version
+ *
  * @link https://www.adminneo.org/plugins/#usage
  *
  * @author Jakub Vrana, https://www.vrana.cz/

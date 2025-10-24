@@ -4,58 +4,67 @@
  * Loads syntax highlighting.
  *
  * @param {string} version First three characters of database system version.
- * @param {boolean} maria
+ * @param {string|null} vendor
+ * @param {object} autocompletion
  */
-function initSyntaxHighlighting(version, maria) {
+function initSyntaxHighlighting(version, vendor, autocompletion) {
 	if (!window.jush) {
 		return;
 	}
 
-	document.addEventListener("DOMContentLoaded", () => {
-		jush.create_links = ' target="_blank" rel="noreferrer noopener"';
+	jush.create_links = ' target="_blank" rel="noreferrer noopener"';
 
-		if (version) {
-			for (let key in jush.urls) {
-				let obj = jush.urls;
-				if (typeof obj[key] != 'string') {
-					obj = obj[key];
-					key = 0;
-					if (maria) {
-						for (let i = 1; i < obj.length; i++) {
-							obj[i] = obj[i]
-								.replace('.html', '/')
-								.replace('-type-syntax', '-data-types')
-								.replace(/numeric-(data-types)/, '$1-$&')
-								.replace(/replication-options-(master|binary-log)\//, 'replication-and-binary-log-system-variables/')
-								.replace('server-options/', 'server-system-variables/')
-								.replace('innodb-parameters/', 'innodb-system-variables/')
-								.replace(/#(statvar|sysvar|option_mysqld)_(.*)/, '#$2')
-								.replace(/#sysvar_(.*)/, '#$1')
-							;
-						}
+	if (version) {
+		for (let key in jush.urls) {
+			let obj = jush.urls;
+			if (typeof obj[key] != 'string') {
+				obj = obj[key];
+				key = 0;
+				if (vendor === 'mariadb') {
+					for (let i = 1; i < obj.length; i++) {
+						obj[i] = obj[i]
+							.replace('.html', '/')
+							.replace('-type-syntax', '-data-types')
+							.replace(/numeric-(data-types)/, '$1-$&')
+							.replace(/replication-options-(master|binary-log)\//, 'replication-and-binary-log-system-variables/')
+							.replace('server-options/', 'server-system-variables/')
+							.replace('innodb-parameters/', 'innodb-system-variables/')
+							.replace(/#(statvar|sysvar|option_mysqld)_(.*)/, '#$2')
+							.replace(/#sysvar_(.*)/, '#$1')
+						;
 					}
 				}
+			}
 
-				obj[key] = (maria ? obj[key].replace('dev.mysql.com/doc/mysql', 'mariadb.com/kb') : obj[key]) // MariaDB
-					.replace('/doc/mysql', '/doc/refman/' + version) // MySQL
-					.replace('/docs/current', '/docs/' + version) // PostgreSQL
-				;
+			obj[key] = (vendor === "mariadb" ? obj[key].replace('dev.mysql.com/doc/mysql', 'mariadb.com/kb') : obj[key]) // MariaDB
+				.replace('/doc/mysql', '/doc/refman/' + version) // MySQL
+			;
+			if (vendor !== 'cockroach') {
+				obj[key] = obj[key].replace('/docs/current', '/docs/' + version); // PostgreSQL
 			}
 		}
+	}
 
-		if (window.jushLinks) {
-			jush.custom_links = jushLinks;
-		}
+	if (window.jushLinks) {
+		jush.custom_links = jushLinks;
+	}
 
-		jush.highlight_tag('code', 0);
+	jush.highlight_tag('code', 0);
 
-		const tags = qsa('textarea');
-		for (let i = 0; i < tags.length; i++) {
-			if (tags[i].className.match(/(^|\s)jush-/)) {
-				jush.textarea(tags[i]);
+	for (const textarea of qsa('textarea')) {
+		if (textarea.className.match(/(^|\s)jush-/)) {
+			const pre = jush.textarea(textarea, autocompletion, {
+				silentStart: true
+			});
+
+			if (pre) {
+				textarea.onchange = () => {
+					pre.textContent = textarea.value;
+					pre.oninput();
+				};
 			}
 		}
-	});
+	}
 }
 
 /** Try to change input type to password or to text
@@ -66,6 +75,7 @@ function typePassword(el, disable) {
 	try {
 		el.type = (disable ? 'text' : 'password');
 	} catch (e) {
+		//
 	}
 }
 
@@ -75,7 +85,7 @@ function typePassword(el, disable) {
  * @param {HTMLSelectElement} driverSelect
  */
 function initLoginDriver(driverSelect) {
-	driverSelect.onchange = function () {
+	driverSelect.onchange = () => {
 		const trs = parentTag(driverSelect, 'table').rows;
 		const disabled = /sqlite/.test(selectValue(driverSelect));
 
@@ -84,14 +94,14 @@ function initLoginDriver(driverSelect) {
 		trs[1].getElementsByTagName('input')[0].disabled = disabled;
 	};
 
-	document.addEventListener('DOMContentLoaded', function () {
+	document.addEventListener('DOMContentLoaded', () => {
 		driverSelect.onchange();
 	});
 }
 
 
-var dbCtrl;
-var dbPrevious = {};
+let dbCtrl;
+const dbPrevious = {};
 
 /** Check if database should be opened to a new window
 * @param MouseEvent
@@ -130,25 +140,22 @@ function dbChange() {
 * @this HTMLElement
 */
 function selectFieldChange() {
-	var form = this.form;
-	var ok = (function () {
-		var inputs = qsa('input', form);
-		for (var i=0; i < inputs.length; i++) {
-			if (inputs[i].value && /^fulltext/.test(inputs[i].name)) {
+	const form = this.form;
+	const ok = (() => {
+		for (const input of qsa('input', form)) {
+			if (input.value && /^fulltext/.test(input.name)) {
 				return true;
 			}
 		}
-		var ok = form.limit.value;
-		var selects = qsa('select', form);
-		var group = false;
-		var columns = {};
-		for (var i=0; i < selects.length; i++) {
-			var select = selects[i];
-			var col = selectValue(select);
-			var match = /^(where.+)col]/.exec(select.name);
+		let ok = form.limit.value;
+		let group = false;
+		const columns = {};
+		for (const select of qsa('select', form)) {
+			const col = selectValue(select);
+			let match = /^(where.+)col]/.exec(select.name);
 			if (match) {
-				var op = selectValue(form[match[1] + 'op]']);
-				var val = form[match[1] + 'val]'].value;
+				const op = selectValue(form[match[1] + 'op]']);
+				const val = form[match[1] + 'val]'].value;
 				if (col in indexColumns && (!/LIKE|REGEXP/.test(op) || (op === 'LIKE' && val.charAt(0) !== '%'))) {
 					return true;
 				} else if (col || val) {
@@ -159,7 +166,7 @@ function selectFieldChange() {
 				if (/^(avg|count|count distinct|group_concat|max|min|sum)$/.test(col)) {
 					group = true;
 				}
-				var val = selectValue(form[match[1] + 'col]']);
+				const val = selectValue(form[match[1] + 'col]']);
 				if (val) {
 					columns[col && col !== 'count' ? '' : val] = 1;
 				}
@@ -172,8 +179,8 @@ function selectFieldChange() {
 			}
 		}
 		if (group) {
-			for (var col in columns) {
-				if (!(col in indexColumns)) {
+			for (const column in columns) {
+				if (!(column in indexColumns)) {
 					ok = false;
 				}
 			}
@@ -186,7 +193,7 @@ function selectFieldChange() {
 
 
 // Table/Procedure fields editing.
-(function() {
+(() => {
 	let added = '.';
 	let lastType = '';
 
@@ -216,7 +223,7 @@ function selectFieldChange() {
 		// Field name. Is null if some row is removed and then new row is added to the beginning (form is posted).
 		let field = qs('[name$="[field]"]', row);
 		if (field) {
-			field.addEventListener("input", (event) => {
+			field.addEventListener("input", event => {
 				const input = event.target;
 				detectForeignKey(input);
 
@@ -229,7 +236,7 @@ function selectFieldChange() {
 
 		// Type.
 		field = qs('[name$="[type]"]', row);
-		field.addEventListener("focus", (event) => {
+		field.addEventListener("focus", event => {
 			lastType = selectValue(event.target);
 		});
 		field.addEventListener("change", onFieldTypeChange);
@@ -242,7 +249,7 @@ function selectFieldChange() {
 		// Length.
 		field = qs('[name$="[length]"]', row);
 		field.addEventListener("focus", onFieldLengthFocus);
-		field.addEventListener("input", (event) => {
+		field.addEventListener("input", event => {
 			// Mark length as required.
 			const input = event.target;
 			input.classList.toggle('required', !input.value.length && /var(char|binary)$/.test(selectValue(input.parentNode.previousSibling.firstChild)));
@@ -251,7 +258,7 @@ function selectFieldChange() {
 		// Autoincrement. Is null in procedure editing.
 		field = qs("[name='auto_increment_col']", row);
 		if (field) {
-			field.addEventListener("click", (event) => {
+			field.addEventListener("click", event => {
 				const input = event.target;
 				const field = input.form['fields[' + input.value + '][field]'];
 				if (!field.value) {
@@ -264,7 +271,7 @@ function selectFieldChange() {
 		// Default value. Is null in procedure editing.
 		field = qs('[name$="[default]"]', row);
 		if (field) {
-			field.addEventListener("input", (event) => {
+			field.addEventListener("input", event => {
 				// Set usage of the default value Previous element can be checkbox or select.
 				const element = event.target.previousElementSibling;
 
@@ -278,7 +285,7 @@ function selectFieldChange() {
 		// Actions.
 		let button = qs("button[name^='add']", row);
 		if (button) {
-			button.addEventListener("click", (event) => {
+			button.addEventListener("click", event => {
 				addRow(event.currentTarget, true);
 				event.preventDefault();
 			});
@@ -286,7 +293,7 @@ function selectFieldChange() {
 
 		button = qs("button[name^='drop_col']", row);
 		if (button) {
-			button.addEventListener("click", (event) => {
+			button.addEventListener("click", event => {
 				removeTableRow(event.currentTarget, "field");
 				event.preventDefault();
 			});
@@ -400,7 +407,7 @@ function selectFieldChange() {
 		let offset = 0;
 		let match;
 
-		while (match = re.exec(string)) {
+		while ((match = re.exec(string))) {
 			if (offset !== match.index) {
 				break;
 			}
@@ -548,9 +555,8 @@ function removeTableRow(button, columnName) {
 * @param number
 */
 function columnShow(checked, column) {
-	var trs = qsa('tr', gid('edit-fields'));
-	for (var i=0; i < trs.length; i++) {
-		qsa('td', trs[i])[column].classList.toggle('hidden', !checked);
+	for (const tr of qsa('tr', gid('edit-fields'))) {
+		qsa('td', tr)[column].classList.toggle('hidden', !checked);
 	}
 }
 
@@ -558,9 +564,8 @@ function columnShow(checked, column) {
 * @param boolean
 */
 function indexOptionsShow(checked) {
-	var options = qsa(".idxopts");
-	for (var i=0; i < options.length; i++) {
-		options[i].classList.toggle("hidden", !checked);
+	for (const option of qsa(".idxopts")) {
+		option.classList.toggle("hidden", !checked);
 	}
 }
 
@@ -568,7 +573,7 @@ function indexOptionsShow(checked) {
 * @this HTMLSelectElement
 */
 function partitionByChange() {
-	var partitionTable = /RANGE|LIST/.test(selectValue(this));
+	const partitionTable = /RANGE|LIST/.test(selectValue(this));
 
 	this.form['partitions'].classList.toggle('hidden', partitionTable || !this.selectedIndex);
 	gid('partition-table').classList.toggle('hidden', !partitionTable);
@@ -578,10 +583,10 @@ function partitionByChange() {
 * @this HTMLInputElement
 */
 function partitionNameChange() {
-	var row = cloneNode(parentTag(this, 'tr'));
+	const row = cloneNode(parentTag(this, 'tr'));
 	row.firstChild.firstChild.value = '';
 	parentTag(this, 'table').appendChild(row);
-	this.oninput = function () {};
+	this.oninput = () => {};
 }
 
 /** Show or hide comment fields
@@ -589,7 +594,7 @@ function partitionNameChange() {
 * @param [boolean] whether to focus Comment if checked
 */
 function editingCommentsClick(el, focus) {
-	var comment = el.form['Comment'];
+	const comment = el.form['Comment'];
 	columnShow(el.checked, 7);
 	comment.classList.toggle('hidden', !el.checked);
 	if (focus && el.checked) {
@@ -604,14 +609,14 @@ function editingCommentsClick(el, focus) {
 * @this HTMLTableElement
 */
 function dumpClick(event) {
-	var el = parentTag(event.target, 'label');
-	if (el) {
-		el = qs('input', el);
-		var match = /(.+)\[]$/.exec(el.name);
-		if (match) {
-			checkboxClick.call(el, event);
-			formUncheck('check-' + match[1]);
-		}
+	let el = parentTag(event.target, 'label');
+	if (!el) return;
+
+	el = qs('input', el);
+	const match = /(.+)\[]$/.exec(el.name);
+	if (match) {
+		checkboxClick.call(el, event);
+		formUncheck('check-' + match[1]);
 	}
 }
 
@@ -621,12 +626,11 @@ function dumpClick(event) {
 * @this HTMLSelectElement
 */
 function foreignAddRow() {
-	var row = cloneNode(parentTag(this, 'tr'));
-	this.onchange = function () { };
-	var selects = qsa('select', row);
-	for (var i=0; i < selects.length; i++) {
-		selects[i].name = selects[i].name.replace(/\d+]/, '1$&');
-		selects[i].selectedIndex = 0;
+	const row = cloneNode(parentTag(this, 'tr'));
+	this.onchange = () => { };
+	for (const select of qsa('select', row)) {
+		select.name = select.name.replace(/\d+]/, '1$&');
+		select.selectedIndex = 0;
 	}
 	parentTag(this, 'table').appendChild(row);
 }
@@ -637,17 +641,15 @@ function foreignAddRow() {
 * @this HTMLSelectElement
 */
 function indexesAddRow() {
-	var row = cloneNode(parentTag(this, 'tr'));
-	this.onchange = function () { };
-	var selects = qsa('select', row);
-	for (var i=0; i < selects.length; i++) {
-		selects[i].name = selects[i].name.replace(/indexes\[\d+/, '$&1');
-		selects[i].selectedIndex = 0;
+	const row = cloneNode(parentTag(this, 'tr'));
+	this.onchange = () => { };
+	for (const select of qsa('select', row)) {
+		select.name = select.name.replace(/indexes\[\d+/, '$&1');
+		select.selectedIndex = 0;
 	}
-	var inputs = qsa('input', row);
-	for (var i=0; i < inputs.length; i++) {
-		inputs[i].name = inputs[i].name.replace(/indexes\[\d+/, '$&1');
-		inputs[i].value = '';
+	for (const input of qsa('input', row)) {
+		input.name = input.name.replace(/indexes\[\d+/, '$&1');
+		input.value = '';
 	}
 	parentTag(this, 'table').appendChild(row);
 }
@@ -657,12 +659,11 @@ function indexesAddRow() {
 * @this HTMLSelectElement
 */
 function indexesChangeColumn(prefix) {
-	var names = [];
-	for (var tag in { 'select': 1, 'input': 1 }) {
-		var columns = qsa(tag, parentTag(this, 'td'));
-		for (var i=0; i < columns.length; i++) {
-			if (/\[columns]/.test(columns[i].name)) {
-				var value = selectValue(columns[i]);
+	const names = [];
+	for (const tag in { 'select': 1, 'input': 1 }) {
+		for (const column of qsa(tag, parentTag(this, 'td'))) {
+			if (/\[columns]/.test(column.name)) {
+				const value = selectValue(column);
 				if (value) {
 					names.push(value);
 				}
@@ -677,25 +678,21 @@ function indexesChangeColumn(prefix) {
 * @this HTMLSelectElement
 */
 function indexesAddColumn(prefix) {
-	var field = this;
-	var select = field.form[field.name.replace(/].*/, '][type]')];
+	const field = this;
+	const select = field.form[field.name.replace(/].*/, '][type]')];
 	if (!select.selectedIndex) {
 		while (selectValue(select) !== "INDEX" && select.selectedIndex < select.options.length) {
 			select.selectedIndex++;
 		}
 		select.onchange();
 	}
-	var column = cloneNode(field.parentNode);
-	var selects = qsa('select', column);
-	for (var i = 0; i < selects.length; i++) {
-		select = selects[i];
+	const column = cloneNode(field.parentNode);
+	for (const select of qsa('select', column)) {
 		select.name = select.name.replace(/]\[\d+/, '$&1');
 		select.selectedIndex = 0;
 	}
 	field.onchange = partial(indexesChangeColumn, prefix);
-	var inputs = qsa('input', column);
-	for (var i = 0; i < inputs.length; i++) {
-		var input = inputs[i];
+	for (const input of qsa('input', column)) {
 		input.name = input.name.replace(/]\[\d+/, '$&1');
 		if (input.type !== 'checkbox') {
 			input.value = '';
@@ -730,7 +727,7 @@ function sqlSubmit(form, root) {
 * @param HTMLFormElement
 */
 function triggerChange(tableRe, table, form) {
-	var formEvent = selectValue(form['Event']);
+	const formEvent = selectValue(form['Event']);
 	if (tableRe.test(form['Trigger'].value)) {
 		form['Trigger'].value = table + '_' + (selectValue(form['Timing']).charAt(0) + formEvent.charAt(0)).toLowerCase();
 	}
@@ -738,8 +735,7 @@ function triggerChange(tableRe, table, form) {
 }
 
 
-
-var that, x, y; // em and tablePos defined in schema.inc.php
+let that, x, y; // em and tablePos defined in schema.inc.php
 
 /** Get mouse position
 * @param MouseEvent
@@ -758,29 +754,28 @@ function schemaMousedown(event) {
 */
 function schemaMousemove(event) {
 	if (that !== undefined) {
-		var left = (event.clientX - x) / em;
-		var top = (event.clientY - y) / em;
-		var divs = qsa('div', that);
-		var lineSet = { };
-		for (var i=0; i < divs.length; i++) {
-			if (divs[i].className === 'references') {
-				var div2 = qs('[id="' + (/^refs/.test(divs[i].id) ? 'refd' : 'refs') + divs[i].id.substr(4) + '"]');
-				var ref = (tablePos[divs[i].title] ? tablePos[divs[i].title] : [ div2.parentNode.offsetTop / em, 0 ]);
-				var left1 = -1;
-				var id = divs[i].id.replace(/^ref.(.+)-.+/, '$1');
-				if (divs[i].parentNode !== div2.parentNode) {
+		const left = (event.clientX - x) / em;
+		const top = (event.clientY - y) / em;
+		const lineSet = {};
+		for (const div of qsa('div', that)) {
+			if (div.classList.contains('references')) {
+				const div2 = qs('[id="' + (/^refs/.test(div.id) ? 'refd' : 'refs') + div.id.substr(4) + '"]');
+				const ref = (tablePos[div.title] ? tablePos[div.title] : [div2.parentNode.offsetTop / em, 0]);
+				let left1 = -1;
+				const id = div.id.replace(/^ref.(.+)-.+/, '$1');
+				if (div.parentNode !== div2.parentNode) {
 					left1 = Math.min(0, ref[1] - left) - 1;
-					divs[i].style.left = left1 + 'em';
-					divs[i].querySelector('div').style.width = -left1 + 'em';
-					var left2 = Math.min(0, left - ref[1]) - 1;
+					div.style.left = left1 + 'em';
+					div.querySelector('div').style.width = -left1 + 'em';
+					const left2 = Math.min(0, left - ref[1]) - 1;
 					div2.style.left = left2 + 'em';
 					div2.querySelector('div').style.width = -left2 + 'em';
 				}
 				if (!lineSet[id]) {
-					var line = qs('[id="' + divs[i].id.replace(/^....(.+)-.+$/, 'refl$1') + '"]');
-					var top1 = top + divs[i].offsetTop / em;
-					var top2 = top + div2.offsetTop / em;
-					if (divs[i].parentNode !== div2.parentNode) {
+					const line = qs('[id="' + div.id.replace(/^....(.+)-.+$/, 'refl$1') + '"]');
+					const top1 = top + div.offsetTop / em;
+					let top2 = top + div2.offsetTop / em;
+					if (div.parentNode !== div2.parentNode) {
 						top2 += ref[0] - top;
 						line.querySelector('div').style.height = Math.abs(top1 - top2) + 'em';
 					}
@@ -803,12 +798,12 @@ function schemaMouseup(event, db) {
 	if (that !== undefined) {
 		tablePos[that.firstChild.firstChild.firstChild.data] = [ (event.clientY - y) / em, (event.clientX - x) / em ];
 		that = undefined;
-		var s = '';
-		for (var key in tablePos) {
+		let s = '';
+		for (const key in tablePos) {
 			s += '_' + key + ':' + Math.round(tablePos[key][0] * 10000) / 10000 + 'x' + Math.round(tablePos[key][1] * 10000) / 10000;
 		}
 		s = encodeURIComponent(s.substr(1));
-		var link = gid('schema-link');
+		const link = gid('schema-link');
 		link.href = link.href.replace(/[^=]+$/, '') + s;
 		cookie('neo_schema-' + db + '=' + s, 30); //! special chars in db
 	}
@@ -816,12 +811,12 @@ function schemaMouseup(event, db) {
 
 
 // Help.
-(function() {
+(() => {
 	let openTimeout = null;
 	let closeTimeout = null;
 	let helpVisible = false;
 
-	window.initHelpPopup = function () {
+	window.initHelpPopup = function() {
 		const help = gid("help");
 
 		help.addEventListener("mouseenter", () => {
@@ -840,7 +835,7 @@ function schemaMouseup(event, db) {
 	window.initHelpFor = function(element, content, side = false) {
 		const withCallback = typeof content === "function";
 
-		element.addEventListener("mouseenter", (event) => {
+		element.addEventListener("mouseenter", event => {
 			showHelp(event.target, withCallback ? content(event.target.value) : content, side)
 		});
 
@@ -884,8 +879,24 @@ function schemaMouseup(event, db) {
 		const rect = element.getBoundingClientRect();
 		const root = document.documentElement;
 
-		help.style.top = (root.scrollTop + rect.top - (side ? (help.offsetHeight - element.offsetHeight) / 2 : help.offsetHeight)) + 'px';
-		help.style.left = (root.scrollLeft + rect.left - (side ? help.offsetWidth : (help.offsetWidth - element.offsetWidth) / 2)) + 'px';
+		let top = root.scrollTop + rect.top;
+		let left = root.scrollLeft + rect.left;
+
+		if (side) {
+			left -= help.offsetWidth;
+			if (left < 0) {
+				left = rect.left;
+				top -= help.offsetHeight;
+			} else {
+				top -= (help.offsetHeight - element.offsetHeight) / 2;
+			}
+		} else {
+			top -= help.offsetHeight;
+			left -= (help.offsetWidth - element.offsetWidth) / 2;
+		}
+
+		help.style.top = `${top}px`;
+		help.style.left = `${left}px`;
 
 		if (helpVisible) {
 			return;

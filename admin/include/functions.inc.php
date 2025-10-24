@@ -420,7 +420,7 @@ function save_settings(array $settings, string $cookie = "neo_settings"): void
 * @return null
 */
 function restart_session() {
-	if (!ini_bool("session.use_cookies")) {
+	if (!ini_bool("session.use_cookies") && session_status() == PHP_SESSION_NONE) {
 		session_start();
 	}
 }
@@ -464,10 +464,17 @@ function set_session($key, $val) {
 * @return string
 */
 function auth_url($vendor, $server, $username, $db = null) {
-	preg_match('~([^?]*)\??(.*)~', remove_from_uri(implode("|", array_keys(Drivers::getList())) . "|username|" . ($db !== null ? "db|" : "") . session_name()), $match);
+	$uri = remove_from_uri(implode("|", array_keys(Drivers::getList()))
+		. "|username|ext|"
+		. ($db !== null ? "db|" : "")
+		. ($vendor == 'mssql' || $vendor == 'pgsql' ? "" : "ns|") // we don't have access to support() here
+		. session_name())
+	;
+	preg_match('~([^?]*)\??(.*)~', $uri, $match);
 	return "$match[1]?"
 		. (sid() ? session_name() . "=" . urlencode(session_id()) . "&" : "")
 		. urlencode($vendor) . "=" . urlencode($server) . "&"
+		. ($_GET["ext"] ? "ext=" . urlencode($_GET["ext"]) . "&" : "")
 		. "username=" . urlencode($username)
 		. ($db != "" ? "&db=" . urlencode($db) : "")
 		. ($match[2] ? "&$match[2]" : "")
@@ -782,6 +789,9 @@ function dump_headers(string $identifier, bool $multi_table = false): string
 	}
 
 	session_write_close();
+	if (!ob_get_level()) {
+		ob_start(null, 4096);
+	}
 	ob_flush();
 	flush();
 
@@ -875,6 +885,16 @@ function unlock_file($file)
 {
 	flock($file, LOCK_UN);
 	fclose($file);
+}
+
+/**
+ * Returns the first element of an array.
+ *
+ * @return mixed|false The value of the first array element, or false if the array is empty.
+ */
+function first(array $array) {
+	// reset(f()) triggers a notice
+	return reset($array);
 }
 
 /**
@@ -1023,10 +1043,10 @@ function slow_query($query) {
 		$kill = $connection->getValue(connection_id()); // MySQL and MySQLi can use thread_id but it's not in PDO_MySQL
 		?>
 <script<?php echo nonce(); ?>>
-var timeout = setTimeout(function () {
-	ajax('<?php echo js_escape(ME); ?>script=kill', function () {
-	}, 'kill=<?php echo $kill; ?>&token=<?php echo get_token(); ?>');
-}, <?php echo 1000 * $timeout; ?>);
+	const timeout = setTimeout(() => {
+		ajax('<?php echo js_escape(ME); ?>script=kill', function() {
+		}, 'kill=<?php echo $kill; ?>&token=<?php echo get_token(); ?>');
+	}, <?php echo 1000 * $timeout; ?>);
 </script>
 <?php
 	} else {

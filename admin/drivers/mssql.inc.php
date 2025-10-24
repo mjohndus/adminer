@@ -14,7 +14,7 @@ if (isset($_GET["mssql"])) {
 	define("AdminNeo\DRIVER", "mssql");
 	define("AdminNeo\DIALECT", "mssql");
 
-	if (extension_loaded("sqlsrv")) {
+	if (extension_loaded("sqlsrv") && $_GET["ext"] != "pdo") {
 		define("AdminNeo\DRIVER_EXTENSION", "sqlsrv");
 
 		class MsSqlConnection extends Connection
@@ -201,8 +201,8 @@ if (isset($_GET["mssql"])) {
 
 				return (object) [
 					'name' => $field["Name"],
-					'orgname' => $field["Name"],
-					'type' => ($field["Type"] == 1 ? 254 : 0),
+					'type' => ($field["Type"] == 1 ? 254 : 15),
+					'charsetnr' => 0,
 				];
 			}
 
@@ -219,61 +219,85 @@ if (isset($_GET["mssql"])) {
 			}
 		}
 
-	} elseif (extension_loaded("pdo_sqlsrv")) {
-		define("AdminNeo\DRIVER_EXTENSION", "PDO_SQLSRV");
+		function last_id($result) {
+			return Connection::get()->getValue("SELECT SCOPE_IDENTITY()"); // @@IDENTITY can return trigger INSERT
+		}
 
-		class MsSqlConnection extends PdoConnection
+		function explain(Connection $connection, string $query)
 		{
-			public function open(string $server, string $username, string $password): bool
-			{
-				$options = [];
+			$connection->query("SET SHOWPLAN_ALL ON");
+			$return = $connection->query($query);
+			$connection->query("SET SHOWPLAN_ALL OFF"); // connection is used also for indexes
 
-				$encrypt = Admin::get()->getConfig()->getSslEncrypt();
-				if ($encrypt !== null) {
-					$options[] = "Encrypt=$encrypt";
-				}
+			return $return;
+		}
 
-				$trust = Admin::get()->getConfig()->getSslTrustServerCertificate();
-				if ($trust !== null) {
-					$options[] = "TrustServerCertificate=$trust";
-				}
-
-				$optionsString = $options ? (";" . implode(";", $options)) : "";
-
-				return $this->dsn("sqlsrv:Server=" . str_replace(":", ",", $server) . $optionsString, $username, $password);
-			}
-
+	} else {
+		abstract class MsSqlPdoConnection extends PdoConnection
+		{
 			public function selectDatabase(string $name): bool
 			{
 				// database selection is separated from the connection so dbname in DSN can't be used
-				return $this->query(use_sql($name));
+				return (bool)$this->query(use_sql($name));
 			}
 
-			function quote(string $string): string
+			public function quote(string $string): string
 			{
 				return (contains_unicode($string) ? "N" : "") . parent::quote($string);
+			}
+
+			public function lastInsertId()
+			{
+				return $this->pdo->lastInsertId();
 			}
 		}
 
-	} elseif (extension_loaded("pdo_dblib")) {
-		define("AdminNeo\DRIVER_EXTENSION", "PDO_DBLIB");
+		if (extension_loaded("pdo_sqlsrv")) {
+			define("AdminNeo\DRIVER_EXTENSION", "PDO_SQLSRV");
 
-		class MsSqlConnection extends PdoConnection
+			class MsSqlConnection extends MsSqlPdoConnection
+			{
+				public function open(string $server, string $username, string $password): bool
+				{
+					$options = [];
+
+					$encrypt = Admin::get()->getConfig()->getSslEncrypt();
+					if ($encrypt !== null) {
+						$options[] = "Encrypt=$encrypt";
+					}
+
+					$trust = Admin::get()->getConfig()->getSslTrustServerCertificate();
+					if ($trust !== null) {
+						$options[] = "TrustServerCertificate=$trust";
+					}
+
+					$optionsString = $options ? (";" . implode(";", $options)) : "";
+
+					return $this->dsn("sqlsrv:Server=" . str_replace(":", ",", $server) . $optionsString, $username, $password);
+				}
+			}
+		} elseif (extension_loaded("pdo_dblib")) {
+			define("AdminNeo\DRIVER_EXTENSION", "PDO_DBLIB");
+
+			class MsSqlConnection extends MsSqlPdoConnection
+			{
+				public function open(string $server, string $username, string $password): bool
+				{
+					return $this->dsn("dblib:charset=utf8;host=" . str_replace(":", ";unix_socket=", preg_replace('~:(\d)~', ';port=\1', $server)), $username, $password);
+				}
+			}
+		}
+
+		function last_id($result) {
+			/** @var MsSqlPdoConnection $connection */
+			$connection = Connection::get();
+
+			return $connection->lastInsertId();
+		}
+
+		function explain(Connection $connection, string $query)
 		{
-			public function open(string $server, string $username, string $password): bool
-			{
-				return $this->dsn("dblib:charset=utf8;host=" . str_replace(":", ";unix_socket=", preg_replace('~:(\d)~', ';port=\1', $server)), $username, $password);
-			}
-
-			public function selectDatabase(string $name): bool
-			{
-				return $this->query(use_sql($name));
-			}
-
-			function quote(string $string): string
-			{
-				return (contains_unicode($string) ? "N" : "") . parent::quote($string);
-			}
+			//
 		}
 	}
 
@@ -457,10 +481,6 @@ if (isset($_GET["mssql"])) {
 		return Connection::get()->getValue("SELECT collation_name FROM sys.databases WHERE name = " . q($db));
 	}
 
-	function engines() {
-		return [];
-	}
-
 	function logged_user() {
 		return Connection::get()->getValue("SELECT SUSER_NAME()");
 	}
@@ -502,7 +522,7 @@ if (isset($_GET["mssql"])) {
 		$return = [];
 		$table_id = Connection::get()->getValue("SELECT object_id FROM sys.all_objects WHERE schema_id = SCHEMA_ID(" . q(get_schema()) . ") AND type IN ('S', 'U', 'V') AND name = " . q($table));
 		foreach (
-			get_rows("SELECT c.max_length, c.precision, c.scale, c.name, c.is_nullable, c.is_identity, c.collation_name, t.name type, CAST(d.definition as text) [default], d.name default_constraint, i.is_primary_key
+			get_rows("SELECT c.max_length, c.precision, c.scale, c.name, c.is_nullable, c.is_identity, c.collation_name, t.name type, d.definition [default], d.name default_constraint, i.is_primary_key
 FROM sys.all_columns c
 JOIN sys.types t ON c.user_type_id = t.user_type_id
 LEFT JOIN sys.default_constraints d ON c.default_object_id = d.object_id
@@ -676,19 +696,6 @@ WHERE OBJECT_NAME(i.object_id) = " . q($table)
 		return (!$index || queries("DROP INDEX " . implode(", ", $index)))
 			&& (!$drop || queries("ALTER TABLE " . table($table) . " DROP " . implode(", ", $drop)))
 		;
-	}
-
-	function last_id() {
-		return Connection::get()->getValue("SELECT SCOPE_IDENTITY()"); // @@IDENTITY can return trigger INSERT
-	}
-
-	function explain(Connection $connection, string $query)
-	{
-		$connection->query("SET SHOWPLAN_ALL ON");
-		$return = $connection->query($query);
-		$connection->query("SET SHOWPLAN_ALL OFF"); // connection is used also for indexes
-
-		return $return;
 	}
 
 	function found_rows($table_status, $where) {

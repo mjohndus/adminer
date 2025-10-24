@@ -42,7 +42,7 @@ function hash_key(string $key): string
 }
 
 /**
- * Encrypts a string using AES-256-CBC.
+ * Encrypts a string using AES-256-GCM.
  *
  * @param string $plaintext Plain text to encrypt.
  * @param string $key Encryption key.
@@ -51,13 +51,12 @@ function hash_key(string $key): string
  */
 function aes_encrypt_string(string $plaintext, string $key)
 {
-	$php71 = version_compare(PHP_VERSION, "7.1.0") >= 0;
-	$method = $php71 ? ENCRYPTION_GCM : ENCRYPTION_CBC;
+	$method = PHP_VERSION_ID >= 70100 && in_array(ENCRYPTION_GCM, openssl_get_cipher_methods()) ? ENCRYPTION_GCM : ENCRYPTION_CBC;
 	$key = hash_key($key);
 	$iv = generate_iv(openssl_cipher_iv_length($method) ?: 16);
 
 	// Encrypts the text.
-	if ($php71) {
+	if ($method == ENCRYPTION_GCM) {
 		$ciphertext = openssl_encrypt($plaintext, $method, $key, OPENSSL_RAW_DATA, $iv, $tag, "", ENCRYPTION_TAG_LENGTH);
 	} else {
 		$ciphertext = openssl_encrypt($plaintext, $method, $key, OPENSSL_RAW_DATA, $iv);
@@ -72,7 +71,7 @@ function aes_encrypt_string(string $plaintext, string $key)
 }
 
 /**
- * Decrypts an AES-256-CBC encrypted string.
+ * Decrypts an AES-256-GCM encrypted string.
  *
  * @param string $data Encrypted binary data.
  * @param string $key Decryption key.
@@ -81,10 +80,9 @@ function aes_encrypt_string(string $plaintext, string $key)
  */
 function aes_decrypt_string(string $data, string $key)
 {
-	$php71 = version_compare(PHP_VERSION, "7.1.0") >= 0;
-	$method = $php71 ? ENCRYPTION_GCM : ENCRYPTION_CBC;
+	$method = PHP_VERSION_ID >= 70100 && in_array(ENCRYPTION_GCM, openssl_get_cipher_methods()) ? ENCRYPTION_GCM : ENCRYPTION_CBC;
 	$iv_length = openssl_cipher_iv_length($method) ?: 16;
-	$tag_length = $php71 ? ENCRYPTION_TAG_LENGTH : ENCRYPTION_HMAC_LENGTH;
+	$tag_length = $method == ENCRYPTION_GCM ? ENCRYPTION_TAG_LENGTH : ENCRYPTION_HMAC_LENGTH;
 
 	// IV (16) + TAG (16) minimum
 	if (strlen($data) < $iv_length + $tag_length) {
@@ -102,7 +100,7 @@ function aes_decrypt_string(string $data, string $key)
 		return false;
 	}
 
-	if ($php71) {
+	if ($method == ENCRYPTION_GCM) {
 		// Decrypts the text.
 		return openssl_decrypt($ciphertext, $method, $key, OPENSSL_RAW_DATA, $iv, $tag);
 	} else {

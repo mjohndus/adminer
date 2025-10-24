@@ -429,6 +429,9 @@ return [
 	'Layout of main navigation with table links.' => 'Rozvržení hlavní navigace s odkazy na tabulky.',
 	'Table links' => 'Odkazy na tabulky',
 	'Primary action for all table links.' => 'Primární akce pro všechny odkazy na tabulky.',
+	'Links to tables referencing the current row.' => 'Odkazy na tabulky odkazující na aktuální řádek.',
+	'Display' => 'Zobrazit',
+	'Hide' => 'Skrýt',
 	'Records per page' => 'Záznamů na stránku',
 	'Default number of records displayed in data table.' => 'Výchozí počet záznamů zobrazených v datové tabulce.',
 	'Enum as select' => 'Enum jako nabídka',
@@ -445,4 +448,7 @@ return [
 	'JSON previews' => 'Náhled JSON',
 	'Data table' => 'Datová tabulka',
 	'Edit form' => 'Editační formulář',
+	// Use the phrases from https://gemini.google.com/
+	'Ask Gemini' => 'Zeptat se Gemini',
+	'Just a sec...' => 'Chviličku...',
 ];

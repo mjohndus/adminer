@@ -70,7 +70,7 @@ if (extension_loaded('pdo')) {
 				return $result;
 			}
 
-			$this->affectedRows = $result->getRowsCount();
+			$this->affectedRows = $result->getAffectedRowsCount();
 
 			return true;
 		}
@@ -92,7 +92,8 @@ if (extension_loaded('pdo')) {
 		public function __construct(PDOStatement $statement)
 		{
 			// It is not guaranteed to work with all drivers.
-			parent::__construct($statement->columnCount() ? $statement->rowCount() : 0);
+			// MSSQL PDO driver returns -1 for SELECT queries.
+			parent::__construct(max($statement->columnCount() ? $statement->rowCount() : 0, 0));
 
 			$this->statement = $statement;
 		}
@@ -100,6 +101,11 @@ if (extension_loaded('pdo')) {
 		public function getColumnsCount(): int
 		{
 			return $this->statement->columnCount();
+		}
+
+		public function getAffectedRowsCount(): int
+		{
+			return $this->statement->rowCount();
 		}
 
 		public function fetchAssoc()
@@ -119,9 +125,9 @@ if (extension_loaded('pdo')) {
 				return false;
 			}
 
-			$row["orgtable"] = $row["table"] ?? null;
-			$row["orgname"] = $row["name"];
-			$row["charsetnr"] = (in_array("blob", $row["flags"] ?? []) ? 63 : 0);
+			$type = $row["pdo_type"];
+			$row["type"] = ($type == PDO::PARAM_INT ? 0 : 15);
+			$row["charsetnr"] = ($type == \PDO::PARAM_LOB || (isset($row["flags"]) && in_array("blob", (array) $row["flags"])) ? 63 : 0);
 
 			return (object) $row;
 		}

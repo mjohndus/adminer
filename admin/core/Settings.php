@@ -126,6 +126,11 @@ class Settings
 		return $this->getParameter("preferSelection") ?? $this->config->isSelectionPreferred();
 	}
 
+	public function isRelationLinks(): bool
+	{
+		return $this->params["relationLinks"] ?? $this->config->isRelationLinks();
+	}
+
 	public function getRecordsPerPage(): int
 	{
 		return $this->getParameter("recordsPerPage") ?? $this->config->getRecordsPerPage();

@@ -384,4 +384,7 @@ return [
 	'Enter OTP code.' => 'OTPコードを入力してください。',
 	'Invalid OTP code.' => '無効なOTPコードです。',
 	'Access denied.' => 'アクセスが拒否されました。',
+	// Use the phrases from https://gemini.google.com/
+	'Ask Gemini' => 'Gemini に聞く',
+	'Just a sec...' => 'しばらくお待ち下さい...',
 ];

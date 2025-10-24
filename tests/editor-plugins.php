@@ -25,6 +25,7 @@ function adminneo_instance()
 		"colorVariant" => "green",
 		"jsonValuesDetection" => true,
 		"jsonValuesAutoFormat" => true,
+		"relationLinks" => true,
 	];
 
 	$plugins = [

@@ -2,10 +2,12 @@
 
 namespace AdminNeo;
 
-error_reporting(E_ALL & ~E_NOTICE & ~E_DEPRECATED);
+error_reporting(E_ALL & ~E_DEPRECATED);
 set_error_handler(function ($errno, $error) {
-	return (bool)preg_match('~^Undefined array key~', $error);
-}, E_WARNING);
+	// "Undefined array key" mutes $_GET["q"] if there's no ?q=
+	// "Undefined offset" and "Undefined index" are older messages for the same thing.
+	return (bool)preg_match('~^Undefined (array key|offset|index)~', $error);
+}, E_WARNING | E_NOTICE); // warning since PHP 8.0
 
 include __DIR__ . "/../admin/include/version.inc.php";
 include __DIR__ . "/../admin/include/debug.inc.php";
@@ -191,6 +193,11 @@ function print_usage(): void
 	echo "  output-file - path where to save the compiled file\n";
 	echo "\n";
 	echo "More information at: https://github.com/adminneo-org/adminneo?tab=readme-ov-file#usage\n";
+}
+
+function ini_bool(): bool
+{
+	return true;
 }
 
 $current_path = getcwd();
@@ -425,7 +432,10 @@ if ($single_driver) {
 	}
 
 	// Remove Jush modules for other drivers.
-	$file = preg_replace('~"\.\./vendor/vrana/jush/modules/jush-(?!textarea\.|txt\.|js\.|' . ($single_driver == "mysql" ? "sql" : preg_quote($single_driver)) . '\.)[^.]+.js",\n~', '', $file);
+    $keep_driver = '|' . preg_quote($single_driver == "mysql" ? "sql" : $single_driver) . '\.';
+    $keep_autocompletion = support("sql") ? '|autocomplete-sql\.' : "";
+
+	$file = preg_replace('~"\.\./vendor/vrana/jush/modules/jush-(?!textarea\.|txt\.|js\.' . $keep_driver . $keep_autocompletion . ')[^.]+.js",\n~', '', $file);
 
 	$file = preg_replace_callback('~doc_link\(\[(.*)]\)~sU', function ($match) use ($single_driver) {
 		list(, $links) = $match;
@@ -612,6 +622,17 @@ foreach (glob(__DIR__ . "/../plugins/*") as $file_path) {
 	$file = file_get_contents($file_path);
 
 	$file = downgrade_php($file);
+
+	// Print version.
+	$commit_hash = exec("git rev-list HEAD -1 -- $file_path 2> /dev/null");
+	if ($commit_hash) {
+		$version = exec("git describe --contains $commit_hash 2> /dev/null");
+		$version = $version ? preg_replace('/~.*/', "", $version) : false;
+	} else {
+		$version = false;
+	}
+
+	$file = str_replace("!compile: version", $version ?: "v" . VERSION, $file);
 
 	$filename = "$output_dir/" . basename($file_path);
 	file_put_contents($filename, $file);

@@ -191,6 +191,7 @@ if (isset($_GET["mongo"])) {
 
 				return (object) [
 					'name' => $name,
+					'type' => 15,
 					'charsetnr' => $this->charset[$name],
 				];
 			}
@@ -511,7 +512,8 @@ if (isset($_GET["mongo"])) {
 		return true;
 	}
 
-	function last_id() {
+	function last_id($result)
+	{
 		return 0;
 	}
 
@@ -607,10 +609,6 @@ if (isset($_GET["mongo"])) {
 	}
 
 	function fk_support($table_status) {
-	}
-
-	function engines() {
-		return [];
 	}
 
 	function alter_table($table, $name, $fields, $foreign, $comment, $engine, $collation, $auto_increment, $partitioning) {

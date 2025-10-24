@@ -98,6 +98,11 @@ class Config
 		return $this->params["jsonValuesAutoFormat"] ?? false;
 	}
 
+	public function isRelationLinks(): bool
+	{
+		return $this->params["relationLinks"] ?? false;
+	}
+
 	public function getRecordsPerPage(): int
 	{
 		return (int)($this->params["recordsPerPage"] ?? 50);
@@ -115,6 +120,11 @@ class Config
 	public function isVersionVerificationEnabled(): bool
 	{
 		return $this->params["versionVerification"] ?? true;
+	}
+
+	public function isSqlAutocompletionEnabled(): bool
+	{
+		return $this->params["sqlAutocompletion"] ?? true;
 	}
 
 	public function getHiddenDatabases(): array

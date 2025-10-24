@@ -16,6 +16,8 @@ return [
 	'HH:MM:SS' => 'HH:MM:SS',
 
 	// Bootstrap.
+	'%s must return an array.' => '%s moet een array retourneren.',
+	'%s and %s must return an object created by %s method.' => '%s en %s moeten een object retourneren dat met de methode %s is gemaakt.',
 
 	// Login.
 	'System' => 'Databasesysteem',
@@ -27,6 +29,7 @@ return [
 	'Logout' => 'Afmelden',
 	'Logged as: %s' => 'Aangemeld als: %s',
 	'Logout successful.' => 'Successvol afgemeld.',
+	'Invalid server or credentials.' => 'Ongeldige server- of aanmeldingsgegevens..',
 	'There is a space in the input password which might be the cause.' => 'Er staat een spatie in het wachtwoord, wat misschien de oorzaak is.',
 	'AdminNeo does not support accessing a database without a password, <a href="https://www.adminneo.org/password"%s>more information</a>.' => 'AdminNeo ondersteunt geen toegang tot databases zonder wachtwoord, <a href="https://www.adminneo.org/password"%s>meer informatie</a>.',
 	'Database does not support password.' => 'Database ondersteunt het wachtwoord niet.',
@@ -34,11 +37,14 @@ return [
 		'Teveel foutieve aanmeldpogingen, probeer opnieuw binnen %d minuut.',
 		'Teveel foutieve aanmeldpogingen, probeer opnieuw binnen %d minuten.',
 	],
+	'Invalid permanent login, please login again.' => 'Ongeldige permanente aanmelding, meld u opnieuw aan.',
 	'Invalid CSRF token. Send the form again.' => 'Ongeldig CSRF token. Verstuur het formulier opnieuw.',
 	'If you did not send this request from AdminNeo then close this page.' => 'Als u deze actie niet via AdminNeo hebt gedaan, gelieve deze pagina dan te sluiten.',
 	'The action will be performed after successful login with the same credentials.' => 'Deze actie zal uitgevoerd worden na het succesvol aanmelden met dezelfde gebruikersgegevens.',
 
 	// Connection.
+	'No driver' => 'Geen stuurprogramma',
+	'Database driver not found.' => 'Databankdriver niet gevonden.',
 	'No extension' => 'Geen extensie',
 	// %s contains the list of the extensions, e.g. 'mysqli, PDO_MySQL'
 	'None of the supported PHP extensions (%s) are available.' => 'Geen geldige PHP extensies beschikbaar (%s).',
@@ -50,7 +56,10 @@ return [
 	// Settings.
 	'Language' => 'Taal',
 
+	'Home' => 'Startpagina',
 	'Refresh' => 'Vernieuwen',
+	'Info' => 'Informatie',
+	'More information.' => 'Meer informatie.',
 
 	// Privileges.
 	'Privileges' => 'Rechten',
@@ -78,6 +87,7 @@ return [
 
 	// Queries.
 	'SQL command' => 'SQL opdracht',
+	'HTTP request' => 'HTTP-verzoek',
 	'%d query(s) executed OK.' => [
 		'%d query succesvol uitgevoerd.',
 		'%d querys succesvol uitgevoerd.',
@@ -148,6 +158,9 @@ return [
 
 	// Schemas (PostgreSQL, MS SQL).
 	'Schema' => 'Schema',
+	'Schemas' => 'Schema\'s',
+	'No schemas.' => 'Geen schema\'s.',
+	'Show schema' => 'Schema weergeven',
 	'Alter schema' => 'Schema wijzigen',
 	'Create schema' => 'Schema maken',
 	'Schema has been dropped.' => 'Schema verwijderd.',
@@ -222,6 +235,7 @@ return [
 
 	// Partitions.
 	'Partition by' => 'Partitioneren op',
+	'Partition' => 'Partitie',
 	'Partitions' => 'Partities',
 	'Partition name' => 'Partitie naam',
 	'Values' => 'Waarden',
@@ -308,8 +322,14 @@ return [
 	'Create trigger' => 'Trigger aanmaken',
 
 	// Table check constraints.
+	'Checks' => 'Checks',
+	'Create check' => 'Check aanmaken',
+	'Alter check' => 'Check wijzigen',
+	'Check has been created.' => 'Check is aangemaakt',
+	'Check has been altered.' => 'Check is gewijzigd.',
+	'Check has been dropped.' => 'Check is afgebroken.',
 
-	// Selection.
+	// Selection.Check
 	'Select data' => 'Gegevens selecteren',
 	'Select' => 'Kies',
 	'Functions' => 'Functies',
@@ -345,7 +365,7 @@ return [
 	// In-place editing in selection.
 	'Modify' => 'Aanpassen',
 	'Ctrl+click on a value to modify it.' => 'Ctrl+klik op een waarde om deze te bewerken.',
-	'Use edit link to modify this value.' => 'Gebruik de link "bewerk" om deze waarde te wijzigen.',
+	'Use edit link to modify this value.' => 'Gebruik de link \'bewerk\' om deze waarde te wijzigen.',
 
 	// Editing.
 	'New item' => 'Nieuw item',
@@ -386,5 +406,34 @@ return [
 	'yes' => 'ja',
 	'no' => 'neen',
 
+	// Settings.
+	'Settings' => 'Instellingen',
+	'Default' => 'Standaard',
+	'Color scheme' => 'Kleurenschema',
+	'By system' => 'Systeembased',
+	'Light' => 'Licht',
+	'Dark' => 'Donker',
+	'Navigation mode' => 'Navigatiemodus',
+	'Simple' => 'Eenvoudig',
+	'Dual' => 'Dubbel',
+	'Reversed' => 'Omgekeerd',
+	'Layout of main navigation with table links.' => 'Indeling van hoofdnavigatie met tabelkoppelingen',
+	'Table links' => 'Tabelkoppelingen',
+	'Primary action for all table links.' => 'Primaire actie voor alle tabelkoppelingen.',
+	'Records per page' => 'Aantal datasets per pagina',
+	'Default number of records displayed in data table.' => 'Standaard aantal records dat in de gegevenstabel wordt weergegeven.',
+	'Enum as select' => 'Enum als keuzemenu',
+	'Never' => 'Nooit',
+	'Always' => 'Altijd',
+	'More values than %d' => 'Meer dan %d waarden',
+	'Threshold for displaying a selection menu for enum fields.' => 'Drempelwaarde voor het weergeven van een keuzemenu voor Enum-velden.',
+
 	// Plugins.
+	'One Time Password' => 'Eenmalig wachtwoord',
+	'Enter OTP code.' => 'OTP-code in voer.',
+	'Invalid OTP code.' => 'Ongeldige OTP-code.',
+	'Access denied.' => 'Toegang geweigerd.',
+	'JSON previews' => 'JSON voorvertoning',
+	'Data table' => 'Gegevenstabel',
+	'Edit form' => 'Formulier bewerken',
 ];

@@ -333,7 +333,7 @@ return [
 	// In-place editing in selection.
 	'Modify' => 'Промяна',
 	'Ctrl+click on a value to modify it.' => 'Ctrl+щракване в стойността, за да я промените.',
-	'Use edit link to modify this value.' => 'Използвайте "редакция" за промяна на данните.',
+	'Use edit link to modify this value.' => 'Използвайте \'редакция\' за промяна на данните.',
 
 	// Editing.
 	'New item' => 'Нов елемент',

@@ -8,7 +8,7 @@ if (isset($_GET["pgsql"])) {
 	define("AdminNeo\DRIVER", "pgsql");
 	define("AdminNeo\DIALECT", "pgsql");
 
-	if (extension_loaded("pgsql")) {
+	if (extension_loaded("pgsql") && $_GET["ext"] != "pdo") {
 		define("AdminNeo\DRIVER_EXTENSION", "PgSQL");
 
 		class PgSqlConnection extends Connection
@@ -57,7 +57,7 @@ if (isset($_GET["pgsql"])) {
 					$versionInfo = $this->getValue("SELECT version()");
 
 					$this->flavor = str_contains($versionInfo, "CockroachDB") ? "cockroach" : null;
-					$this->version = preg_replace('~^\D*([\d.]+).*~', "$1", $versionInfo);
+					$this->version = preg_replace('~^\D*([\d.]+[-\w]*).*~', "$1", $versionInfo);
 
 					pg_set_client_encoding($this->connection, "UTF8");
 				}
@@ -199,7 +199,7 @@ if (isset($_GET["pgsql"])) {
 					return false;
 				}
 
-				$type = pg_field_type($this->resource, $column);
+				$type = pg_field_type($this->resource, $column);  //! map to MySQL numbers
 				if ($type === false) {
 					return false;
 				}
@@ -207,7 +207,6 @@ if (isset($_GET["pgsql"])) {
 				return (object) [
 					'orgtable' => $orgtable,
 					'name' => $name,
-					'orgname' => $name,
 					'type' => $type,
 					'charsetnr' => ($type == "bytea" ? 63 : 0), // 63 - binary
 				];
@@ -361,6 +360,15 @@ if (isset($_GET["pgsql"])) {
 			$this->systemSchemas = ["information_schema", "pg_catalog", "pg_toast", "pg_temp_*", "pg_toast_temp_*"];
 		}
 
+		public function getInsertReturningSql(string $table): string
+		{
+			$autoIncrement = array_filter(fields($table), function ($field) {
+				return $field['auto_increment'];
+			});
+
+			return count($autoIncrement) == 1 ? " RETURNING " . idf_escape(key($autoIncrement)) : "";
+		}
+
 		public function insertUpdate(string $table, array $records, array $primary): bool
 		{
 			foreach ($records as $record) {
@@ -498,10 +506,6 @@ ORDER BY datname");
 		return Connection::get()->getValue("SELECT datcollate FROM pg_database WHERE datname = " . q($db));
 	}
 
-	function engines() {
-		return [];
-	}
-
 	function logged_user() {
 		return Connection::get()->getValue("SELECT user");
 	}
@@ -554,7 +558,12 @@ WHERE relkind IN ('r', 'm', 'v', 'f', 'p')
 		) as $row) { //! Index_length, Auto_increment
 			$return[$row["Name"]] = $row;
 		}
-		return ($name != "" ? $return[$name] : $return);
+
+		if ($name != "") {
+			return $return[$name] ?? ["Name" => $name];
+		} else {
+			return $return;
+		}
 	}
 
 	function is_view($table_status) {
@@ -899,13 +908,17 @@ ORDER BY conkey, conname") as $row) {
 	function routine_id($name, $row) {
 		$return = [];
 		foreach ($row["fields"] as $field) {
-			$return[] = $field["type"];
+			$length = $field["length"];
+			$return[] = $field["type"] . ($length ? "($length)" : "");
 		}
 		return idf_escape($name) . "(" . implode(", ", $return) . ")";
 	}
 
-	function last_id() {
-		return 0; // there can be several sequences
+	function last_id($result)
+	{
+		$row = $result instanceof Result ? $result->fetchRow() : [];
+
+		return $row ? $row[0] : 0;
 	}
 
 	function explain(Connection $connection, string $query)
@@ -1007,11 +1020,10 @@ AND typelem = 0"
 			// sequences for fields
 			if (preg_match('~nextval\(\'([^\']+)\'\)~', $field['default'], $matches)) {
 				$sequence_name = $matches[1];
-				$rows = get_rows((Connection::get()->isMinVersion("10")
+				$sq = first(get_rows((Connection::get()->isMinVersion("10")
 					? "SELECT *, cache_size AS cache_value FROM pg_sequences WHERE schemaname = current_schema() AND sequencename = " . q(idf_unescape($sequence_name))
 					: "SELECT * FROM $sequence_name"
-				), null, "-- ");
-				$sq = reset($rows);
+				), null, "-- "));
 
 				$sequences[] = ($style == "DROP+CREATE" ? "DROP SEQUENCE IF EXISTS $sequence_name;\n" : "") .
 					"CREATE SEQUENCE $sequence_name INCREMENT $sq[increment_by] MINVALUE $sq[min_value] MAXVALUE $sq[max_value]" .
@@ -1077,7 +1089,7 @@ AND typelem = 0"
 	}
 
 	function show_variables() {
-		return get_key_vals("SHOW ALL");
+		return get_rows("SHOW ALL");
 	}
 
 	function process_list() {
@@ -1097,6 +1109,8 @@ AND typelem = 0"
 			return !Connection::get()->isCockroachDB();
 		} elseif ($feature == "materializedview") {
 			return Connection::get()->isMinVersion("9.3");
+		} elseif ($feature == "procedure") {
+			return Connection::get()->isMinVersion("11");
 		}
 
 		return preg_match('~^(check|database|table|columns|sql|indexes|descidx|comment|view|scheme|routine|sequence|trigger|type|variables|drop_col|kill|dump)$~', $feature);

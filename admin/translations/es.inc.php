@@ -16,6 +16,8 @@ return [
 	'HH:MM:SS' => 'HH:MM:SS',
 
 	// Bootstrap.
+	'%s must return an array.' => '%s debe ser un array.',
+	'%s and %s must return an object created by %s method.' => '%s y %s deben devolver un objeto creado mediante el método %s.',
 
 	// Login.
 	'System' => 'Motor de base de datos',
@@ -35,11 +37,14 @@ return [
 		'Demasiados intentos erroneos, pruebe de nuevo en %d minuto.',
 		'Demasiados intentos erroneos, pruebe de nuevo en %d minutos.',
 	],
+	'Invalid permanent login, please login again.' => 'La sesión permanente no es válida, por favor inicia sesión de nuevo.',
 	'Invalid CSRF token. Send the form again.' => 'Token CSRF inválido. Vuelva a enviar los datos del formulario.',
 	'If you did not send this request from AdminNeo then close this page.' => 'Si no mandó ésta solicitud desde AdminNeo entonces cierre esta página.',
 	'The action will be performed after successful login with the same credentials.' => 'La acción se realizará tras iniciar sesión de nuevo con las mismas credenciales.',
 
 	// Connection.
+	'No driver' => 'Sin driver',
+	'Database driver not found.' => 'No se ha encontrado un driver para la base de datos.',
 	'No extension' => 'No hay extensión',
 	// %s contains the list of the extensions, e.g. 'mysqli, PDO_MySQL'
 	'None of the supported PHP extensions (%s) are available.' => 'Ninguna de las extensiones PHP soportadas (%s) está disponible.',
@@ -51,7 +56,10 @@ return [
 	// Settings.
 	'Language' => 'Idioma',
 
+	'Home' => 'Inicio',
 	'Refresh' => 'Actualizar',
+	'Info' => 'Info',
+	'More information.' => 'Más información.',
 
 	// Privileges.
 	'Privileges' => 'Privilegios',
@@ -79,6 +87,7 @@ return [
 
 	// Queries.
 	'SQL command' => 'Comando SQL',
+	'HTTP request' => 'Petición HTTP',
 	'%d query(s) executed OK.' => [
 		'%d sentencia SQL ejecutada correctamente.',
 		'%d sentencias SQL ejecutadas correctamente.',
@@ -93,13 +102,13 @@ return [
 	'Warnings' => 'Advertencias',
 	'ATTACH queries are not supported.' => 'Consultas tipo ATTACH no soportadas.',
 	'Execute' => 'Ejecutar',
-	'Stop on error' => 'Parar en caso de error',
+	'Stop on error' => 'Detener en caso de error',
 	'Show only errors' => 'Mostrar solamente errores',
 	'Time' => 'Tiempo',
 	// sprintf() format for time of the command
 	'%.3f s' => '%.3f s',
-	'History' => 'Histórico',
-	'Clear' => 'Vaciar',
+	'History' => 'Historial',
+	'Clear' => 'Limpiar',
 	'Edit all' => 'Editar todos',
 
 	// Import.
@@ -149,6 +158,9 @@ return [
 
 	// Schemas (PostgreSQL, MS SQL).
 	'Schema' => 'Esquema',
+	'Schemas' => 'Esquemas',
+	'No schemas.' => 'Sin esquemas.',
+	'Show schema' => 'Mostrar esquema',
 	'Alter schema' => 'Modificar esquema',
 	'Create schema' => 'Crear esquema',
 	'Schema has been dropped.' => 'Esquema eliminado.',
@@ -159,8 +171,8 @@ return [
 	// Table list.
 	'Engine' => 'Motor',
 	'engine' => 'motor',
-	'Collation' => 'Colación',
-	'collation' => 'colación',
+	'Collation' => 'Codificación',
+	'collation' => 'codificación',
 	'Data Length' => 'Longitud de datos',
 	'Index Length' => 'Longitud de índice',
 	'Data Free' => 'Espacio libre',
@@ -223,6 +235,7 @@ return [
 
 	// Partitions.
 	'Partition by' => 'Particionar por',
+	'Partition' => 'Partición',
 	'Partitions' => 'Particiones',
 	'Partition name' => 'Nombre de partición',
 	'Values' => 'Valores',
@@ -236,18 +249,18 @@ return [
 	'length' => 'longitud',
 
 	// Foreign keys.
-	'Foreign keys' => 'Claves externas',
-	'Foreign key' => 'Clave externa',
-	'Foreign key has been dropped.' => 'Clave foranea eliminada.',
-	'Foreign key has been altered.' => 'Clave foranea modificada.',
-	'Foreign key has been created.' => 'Clave foranea creada.',
-	'Target table' => 'Tabla de destino',
+	'Foreign keys' => 'Claves foráneas',
+	'Foreign key' => 'Clave foránea',
+	'Foreign key has been dropped.' => 'Clave foránea eliminada.',
+	'Foreign key has been altered.' => 'Clave foránea modificada.',
+	'Foreign key has been created.' => 'Clave foránea creada.',
+	'Target table' => 'Tabla destino',
 	'Change' => 'Modificar',
 	'Source' => 'Origen',
 	'Target' => 'Destino',
 	'Add column' => 'Agregar columna',
 	'Alter' => 'Modificar',
-	'Add foreign key' => 'Agregar clave externa',
+	'Add foreign key' => 'Agregar clave foránea',
 	'ON DELETE' => 'AL BORRAR',
 	'ON UPDATE' => 'AL ACTUALIZAR',
 	'Source and target columns must have the same data type, there must be an index on the target columns and referenced data must exist.' => 'Las columnas de origen y destino deben ser del mismo tipo, debe existir un índice entre las columnas del destino y el registro referenciado debe existir también.',
@@ -329,8 +342,10 @@ return [
 	'Limit rows' => 'Limitar filas',
 	'Text length' => 'Longitud de texto',
 	'Action' => 'Acción',
+	'Full table scan' => 'Escaneo total de la tabla',
 	'Unable to select the table' => 'No es posible seleccionar la tabla',
 	'Search data in tables' => 'Buscar datos en tablas',
+	'as a regular expression' => 'como una expresión regular',
 	'No rows.' => 'No existen registros.',
 	'%d / ' => '%d / ',
 	'%d row(s)' => [
@@ -339,7 +354,7 @@ return [
 	],
 	'Page' => 'Página',
 	'last' => 'último',
-	'Load more data' => 'Cargar mas datos',
+	'Load more data' => 'Cargar más datos',
 	'Loading' => 'Cargando',
 	'Whole result' => 'Resultado completo',
 	'%d byte(s)' => [
@@ -358,7 +373,7 @@ return [
 	'original' => 'original',
 	// label for value '' in enum data type
 	'empty' => 'ninguno',
-	'Insert' => 'Agregar',
+	'Insert' => 'Insertar',
 	'Save' => 'Guardar',
 	'Save and continue edit' => 'Guardar y continuar editando',
 	'Save and insert next' => 'Guardar e insertar siguiente',
@@ -388,8 +403,37 @@ return [
 
 	// Editor - data values.
 	'now' => 'ahora',
-	'yes' => 'si',
+	'yes' => 'sí',
 	'no' => 'no',
 
+	// Settings.
+	'Settings' => 'Ajustes',
+	'Default' => 'Por defecto',
+	'Color scheme' => 'Esquema de colores',
+	'By system' => 'Desde el sistema',
+	'Light' => 'Claro',
+	'Dark' => 'Oscuro',
+	'Navigation mode' => 'Modo de navegación',
+	'Simple' => 'Simple',
+	'Dual' => 'Dual',
+	'Reversed' => 'Invertido',
+	'Layout of main navigation with table links.' => 'Diseño de la navegación principal con table links.',
+	'Table links' => 'Table links',
+	'Primary action for all table links.' => 'Acción principal para todos los table links.',
+	'Records per page' => 'Registros por página',
+	'Default number of records displayed in data table.' => 'Número predeterminado de registros mostrados en la tabla.',
+	'Enum as select' => 'Enumerado como select',
+	'Never' => 'Nunca',
+	'Always' => 'Siempre',
+	'More values than %d' => 'Valores mayores que %d',
+	'Threshold for displaying a selection menu for enum fields.' => 'Límite para mostrar un menú de selección en campos de tipo \'enum\'.',
+
 	// Plugins.
+	'One Time Password' => 'Contraseña de un solo uso',
+	'Enter OTP code.' => 'Introduce el código OTP.',
+	'Invalid OTP code.' => 'Código OTP inválido.',
+	'Access denied.' => 'Acceso denegado.',
+	'JSON previews' => 'Previsualización de JSON',
+	'Data table' => 'Tabla',
+	'Edit form' => 'Editar formulario',
 ];

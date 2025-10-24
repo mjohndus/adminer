@@ -8,6 +8,8 @@ use Exception;
  * Replaces fields ending with "_path" by `<input type="file">` in edit form and displays links to the uploaded files in
  * table select.
  *
+ * Last changed in release: !compile: version
+ *
  * @link https://www.adminneo.org/plugins/#usage
  *
  * @author Jakub Vrana, https://www.vrana.cz/
