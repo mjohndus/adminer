@@ -153,7 +153,7 @@ abstract class Origin extends Plugin
 		$hash = $this->config->getDefaultPasswordHash();
 		if ($hash === null || $hash === "") {
 			return lang('Database does not support password.');
-		} elseif (!function_exists("password_verify") || !password_verify($password, $hash)) {
+		} elseif (!password_verify($password, $hash)) {
 			return lang('Invalid server or credentials.');
 		}
 
