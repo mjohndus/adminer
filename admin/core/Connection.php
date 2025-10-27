@@ -53,6 +53,34 @@ abstract class Connection
 		//
 	}
 
+	/**
+	 * Tries to open a connection without a password at first.
+	 * If the database does not require a password, the configured default password is verified instead.
+	 *
+	 * @param string $server Host name or an IP address.
+	 * @param string $username Database username.
+	 * @param string $password User's password.
+	 * @param bool $strict Prevents using any password if the default password is not defined or empty.
+	 *
+	 * @return bool true if successful, false if skipped or an error occurred.
+	 */
+	public function openPasswordless(string $server, string $username, string $password, bool $strict = true): bool
+	{
+		$hasDefault = Admin::get()->getConfig()->getDefaultPasswordHash() != "";
+
+		if ($password != "" && ($strict || $hasDefault) && $this->open($server, $username, "")) {
+			$result = Admin::get()->verifyDefaultPassword($password);
+			if ($result !== true) {
+				$this->error = $result;
+				return false;
+			}
+
+			return true;
+		}
+
+		return $this->open($server, $username, $password);
+	}
+
 	public abstract function open(string $server, string $username, string $password): bool;
 
 	public function getFlavor(): ?string

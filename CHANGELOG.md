@@ -7,6 +7,7 @@ AdminNeo 5.2.0
 ### Changes
 
 - Update Spanish translation (by @rexwithluv)
+- MySQL, PostgreSQL: Validate the default password if the user is authenticated via unix socket (fix #162)
 - PostgreSQL: Display auto_increment of inserted rows (by @vrana)
 - PostgreSQL: Display description of system variables (by @vrana)
 - PostgreSQL 11: Add support for PROCEDURE (by @vrana)

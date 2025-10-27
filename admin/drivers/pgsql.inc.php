@@ -466,9 +466,9 @@ if (isset($_GET["pgsql"])) {
 	function connect(bool $primary = false, ?string &$error = null): ?Connection
 	{
 		$connection = $primary ? PgSqlConnection::create() : PgSqlConnection::createSecondary();
+		[$server, $username, $password] = Admin::get()->getCredentials();
 
-		$credentials = Admin::get()->getCredentials();
-		if (!$connection->open($credentials[0], $credentials[1], $credentials[2])) {
+		if (!$connection->openPasswordless($server, $username, $password, false)) {
 			$error = $connection->getError();
 			return null;
 		}
@@ -479,7 +479,7 @@ if (isset($_GET["pgsql"])) {
 
 		if ($primary && $connection->isCockroachDB()) {
 			Drivers::setName(DRIVER, "CockroachDB");
-			save_driver_name(DRIVER, $credentials[0], "CockroachDB");
+			save_driver_name(DRIVER, $server, "CockroachDB");
 		}
 
 		return $connection;

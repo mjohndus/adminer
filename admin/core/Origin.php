@@ -146,7 +146,7 @@ abstract class Origin extends Plugin
 	/**
 	 * Verifies given password if database itself does not require any password.
 	 *
-	 * @return true|string True for success, string for error message.
+	 * @return true|string True for success, plain text string for error message.
 	 */
 	public function verifyDefaultPassword(string $password)
 	{
