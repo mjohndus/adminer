@@ -718,6 +718,22 @@ WHERE OBJECT_NAME(i.object_id) = " . q($table)
 		return $return;
 	}
 
+	function backward_keys(string $table): array
+	{
+		$query = "SELECT fk.name AS constraint_name,
+OBJECT_SCHEMA_NAME(fkc.parent_object_id) AS table_schema,
+OBJECT_NAME(fkc.parent_object_id) AS table_name,
+COL_NAME(fkc.parent_object_id, fkc.parent_column_id) AS column_name,
+COL_NAME(fkc.referenced_object_id, fkc.referenced_column_id) AS referenced_column_name
+FROM sys.foreign_key_columns fkc
+JOIN sys.foreign_keys fk ON fkc.constraint_object_id = fk.object_id
+WHERE OBJECT_SCHEMA_NAME(fkc.referenced_object_id) = " . q($_GET["ns"]) . "
+AND OBJECT_NAME(fkc.referenced_object_id) = " . q($table) . "
+ORDER BY table_schema, table_name";
+
+		return get_rows($query, null, "");
+	}
+
 	function truncate_tables($tables) {
 		return apply_queries("TRUNCATE TABLE", $tables);
 	}

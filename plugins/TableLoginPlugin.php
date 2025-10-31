@@ -71,6 +71,6 @@ class TableLoginPlugin extends Plugin
 			"SELECT password FROM $dbPrefix" . idf_escape($this->table) . " WHERE username = " . q($username)
 		);
 
-		return $hash && function_exists("password_verify") && password_verify($password, $hash);
+		return $hash && password_verify($password, $hash);
 	}
 }

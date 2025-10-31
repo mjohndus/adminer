@@ -52,7 +52,7 @@ if ($_GET["val"] && is_ajax()) {
 		$where[] = where_check($unique_idf, $fields);
 		$return = Driver::get()->select($TABLE, $select, $where, $select);
 		if ($return) {
-			echo reset($return->fetchRow());
+			echo first($return->fetchRow());
 		}
 	}
 	exit;

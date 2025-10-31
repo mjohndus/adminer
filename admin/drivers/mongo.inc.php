@@ -608,6 +608,11 @@ if (isset($_GET["mongo"])) {
 		return [];
 	}
 
+	function backward_keys(string $table): array
+	{
+		return [];
+	}
+
 	function fk_support($table_status) {
 	}
 

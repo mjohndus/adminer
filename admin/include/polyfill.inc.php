@@ -13,3 +13,10 @@ if (!function_exists("str_contains")) {
 		return strpos($haystack, $needle) !== false;
 	}
 }
+
+if (!function_exists("password_verify")) {
+	function password_verify(string $password, string $hash): bool
+	{
+		return false;
+	}
+}
