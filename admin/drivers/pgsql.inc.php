@@ -467,6 +467,9 @@ if (isset($_GET["pgsql"])) {
 	{
 		$connection = $primary ? PgSqlConnection::create() : PgSqlConnection::createSecondary();
 		[$server, $username, $password] = Admin::get()->getCredentials();
+		if ($server == "") {
+			$server = "localhost:5432";
+		}
 
 		if (!$connection->openPasswordless($server, $username, $password, false)) {
 			$error = $connection->getError();
