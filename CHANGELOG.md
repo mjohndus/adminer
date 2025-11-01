@@ -6,7 +6,6 @@ AdminNeo 5.2.0
 
 ### Changes
 
-- Update Spanish translation (by @rexwithluv)
 - MySQL, PostgreSQL: Validate the default password if the user is authenticated via unix socket (fix #162)
 - PostgreSQL: Connect to localhost with default port if server is not specified
 - PostgreSQL: Display auto_increment of inserted rows (by @vrana)
@@ -19,6 +18,7 @@ AdminNeo 5.2.0
 - Add sqlAutocompletion configuration parameter
 - Add relationLinks configuration parameter
 - Add setting for displaying links to referencing tables
+- Update Spanish translation (by @rexwithluv)
 
 ### Bugfixes
 
@@ -27,6 +27,7 @@ AdminNeo 5.2.0
 - MS SQL: Fix collation issues when retrieving default values (by @vrana)
 - MS SQL PDO: Fix invalid number of rows in SQL command
 - MS SQL PDO: Display last insert ID (by @vrana)
+- Fix escaping user credentials in web based drivers
 - PDO: Fix displaying the number of affected rows (regression from 5.1.0) (issue #151)
 - Silent warning if adminneo.version file does not exist (issue #152)
 - Fix initial caret position while inline editing a table value. (by @vrana)
