@@ -1,6 +1,13 @@
 Changelog
 =========
 
+AdminNeo 5.3.0
+--------------
+
+### Bugfixes
+
+- ForeignEditPlugin: Fix displaying foreign values from different schema
+
 AdminNeo 5.2.0 (2025-11-02)
 ---------------------------
 
