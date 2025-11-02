@@ -18,6 +18,7 @@ AdminNeo 5.2.0
 - Add sqlAutocompletion configuration parameter
 - Add relationLinks configuration parameter
 - Add setting for displaying links to referencing tables
+- Update German and Dutch translations (by @wintstar)
 - Update Spanish translation (by @rexwithluv)
 
 ### Bugfixes
