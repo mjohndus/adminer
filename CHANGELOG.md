@@ -6,14 +6,14 @@ AdminNeo 5.2.0
 
 ### Changes
 
-- MySQL, PostgreSQL: Validate the default password if the user is authenticated via unix socket (fix #162)
+- MySQL, PostgreSQL: Validate the default password if the user is authenticated via unix socket (issue #162)
 - PostgreSQL: Connect to localhost with default port if server is not specified
 - PostgreSQL: Display auto_increment of inserted rows (by @vrana)
 - PostgreSQL: Display description of system variables (by @vrana)
 - PostgreSQL 11: Add support for PROCEDURE (by @vrana)
 - PostgreSQL: Add support for relation links (by @vrana)
 - MS SQL: Add support for relation links
-- URL parameter ?ext=pdo to force using PDO (by @vrana)
+- Add URL parameter ?ext=pdo to force using PDO (by @vrana)
 - Add SqlGeminiPlugin - AI prompt in SQL command generating the queries with Google Gemini (by @vrana)
 - Add sqlAutocompletion configuration parameter
 - Add relationLinks configuration parameter
