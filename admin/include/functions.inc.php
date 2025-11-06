@@ -374,7 +374,7 @@ function convert_fields($columns, $fields, $select = []) {
  */
 function cookie(string $name, string $value, int $lifetime = 2592000): void
 {
-	header("Set-Cookie: $name=" . urlencode($value)
+	header("Set-Cookie: $name=" . rawurlencode($value)
 		. ($lifetime ? "; expires=" . gmdate("D, d M Y H:i:s", time() + $lifetime) . " GMT" : "")
 		. "; path=" . preg_replace('~\?.*~', '', $_SERVER["REQUEST_URI"])
 		. (HTTPS ? "; secure" : "")
