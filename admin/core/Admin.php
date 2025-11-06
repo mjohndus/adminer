@@ -541,7 +541,7 @@ class Admin extends Origin
 		foreach ($indexes as $i => $index) {
 			if ($index["type"] == "FULLTEXT") {
 				echo "<div>(<i>" . implode("</i>, <i>", array_map('AdminNeo\h', $index["columns"])) . "</i>) AGAINST";
-				echo "<input type='search' class='input' name='fulltext[$i]' value='" . h($_GET["fulltext"][$i] ?? null) . "'>";
+				echo "<input type='text' class='input' name='fulltext[$i]' value='" . h($_GET["fulltext"][$i] ?? null) . "'>";
 				echo script("qsl('input').oninput = selectFieldChange;", "");
 				echo checkbox("boolean[$i]", 1, isset($_GET["boolean"][$i]), "BOOL");
 				echo "</div>\n";
@@ -560,8 +560,8 @@ class Admin extends Origin
 					"(" . lang('anywhere') . ")"
 				);
 				echo html_select("where[$i][op]", $this->getOperators(), $val["op"], $change_next);
-				echo "<input type='search' class='input' name='where[$i][val]' value='" . h($val["val"]) . "'>";
-				echo script("mixin(qsl('input'), {oninput: function () { $change_next }, onkeydown: selectSearchKeydown, onsearch: selectSearchSearch});", "");
+				echo "<input type='text' class='input' name='where[$i][val]' value='" . h($val["val"]) . "'>";
+				echo script("mixin(qsl('input'), {oninput: function () { $change_next }, onkeydown: selectSearchKeydown});", "");
 				echo " <button class='button light remove jsonly' title='" . h(lang('Remove')) . "'>", icon_solo("remove"), "</button>";
 				echo script('qsl("#fieldset-search .remove").onclick = selectRemoveRow;', "");
 				echo "</div>\n";
