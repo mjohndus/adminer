@@ -54,7 +54,7 @@ class ForeignEditPlugin extends Plugin
 
 			$ns = $foreignKey["ns"];
 			$target = $foreignKey["table"];
-			$key = "$ns.$table";
+			$key = "$ns.$target";
 			$id = $foreignKey["target"][0];
 
 			if (!isset($this->foreignOptions[$key][$id])) {
