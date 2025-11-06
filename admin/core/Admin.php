@@ -905,7 +905,7 @@ class Admin extends Origin
 			}, 1e6);
 		} elseif ($extension == "tar") {
 			header("Content-Type: application/x-tar");
-		} elseif ($extension == "sql") {
+		} elseif ($extension == "sql" || $output == "text") {
 			header("Content-Type: text/plain; charset=utf-8");
 		} else {
 			header("Content-Type: text/csv; charset=utf-8");
