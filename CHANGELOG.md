@@ -7,6 +7,7 @@ AdminNeo 5.3.0
 ### Bugfixes
 
 - ForeignEditPlugin: Fix displaying foreign values from different schema
+- JsonDumpPlugin: Fix invalid JSON format (regression from 5.2.0)
 
 AdminNeo 5.2.0 (2025-11-02)
 ---------------------------
