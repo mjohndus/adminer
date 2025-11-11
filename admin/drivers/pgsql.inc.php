@@ -467,11 +467,16 @@ if (isset($_GET["pgsql"])) {
 	{
 		$connection = $primary ? PgSqlConnection::create() : PgSqlConnection::createSecondary();
 		[$server, $username, $password] = Admin::get()->getCredentials();
-		if ($server == "") {
-			$server = "localhost:5432";
+
+		$result = $connection->openPasswordless($server, $username, $password, false);
+
+		if (!$result && $server == "" && preg_match('~connection to server on socket .+ failed: No such file or directory~U', $connection->getError())) {
+			// If login via socket is not available, try to connect via TCP/IP.
+			$server = "localhost";
+			$result = $connection->openPasswordless($server, $username, $password, false);
 		}
 
-		if (!$connection->openPasswordless($server, $username, $password, false)) {
+		if (!$result) {
 			$error = $connection->getError();
 			return null;
 		}
