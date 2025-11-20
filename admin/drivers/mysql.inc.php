@@ -482,9 +482,9 @@ if (isset($_GET["mysql"])) {
 	function connect(bool $primary = false, ?string &$error = null): ?Connection
 	{
 		$connection = $primary ? MySqlConnection::create() : MySqlConnection::createSecondary();
-		$credentials = Admin::get()->getCredentials();
+		[$server, $username, $password] = Admin::get()->getCredentials();
 
-		if (!$connection->open($credentials[0], $credentials[1], $credentials[2])) {
+		if (!$connection->openPasswordless($server, $username, $password, false)) {
 			$error = $connection->getError();
 
 			if (function_exists('iconv') && !is_utf8($error) && strlen($s = iconv("windows-1250", "utf-8", $error)) > strlen($error)) { // windows-1250 - most common Windows encoding
@@ -499,7 +499,7 @@ if (isset($_GET["mysql"])) {
 
 		if ($primary && $connection->isMariaDB()) {
 			Drivers::setName(DRIVER, "MariaDB");
-			save_driver_name(DRIVER, $credentials[0], "MariaDB");
+			save_driver_name(DRIVER, $server, "MariaDB");
 		}
 
 		return $connection;

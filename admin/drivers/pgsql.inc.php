@@ -466,9 +466,17 @@ if (isset($_GET["pgsql"])) {
 	function connect(bool $primary = false, ?string &$error = null): ?Connection
 	{
 		$connection = $primary ? PgSqlConnection::create() : PgSqlConnection::createSecondary();
+		[$server, $username, $password] = Admin::get()->getCredentials();
 
-		$credentials = Admin::get()->getCredentials();
-		if (!$connection->open($credentials[0], $credentials[1], $credentials[2])) {
+		$result = $connection->openPasswordless($server, $username, $password, false);
+
+		if (!$result && $server == "" && preg_match('~connection to server on socket .+ failed: No such file or directory~U', $connection->getError())) {
+			// If login via socket is not available, try to connect via TCP/IP.
+			$server = "localhost";
+			$result = $connection->openPasswordless($server, $username, $password, false);
+		}
+
+		if (!$result) {
 			$error = $connection->getError();
 			return null;
 		}
@@ -479,7 +487,7 @@ if (isset($_GET["pgsql"])) {
 
 		if ($primary && $connection->isCockroachDB()) {
 			Drivers::setName(DRIVER, "CockroachDB");
-			save_driver_name(DRIVER, $credentials[0], "CockroachDB");
+			save_driver_name(DRIVER, $server, "CockroachDB");
 		}
 
 		return $connection;

@@ -357,16 +357,9 @@ if (isset($_GET["simpledb"])) {
 	{
 		$connection = $primary ? SimpleDbConnection::create() : SimpleDbConnection::createSecondary();
 
-		list($server, , $password) = Admin::get()->getCredentials();
-		if ($password != "") {
-			$result = Admin::get()->verifyDefaultPassword($password);
-			if ($result !== true) {
-				$error = $result;
-				return null;
-			}
-		}
+		[$server, , $password] = Admin::get()->getCredentials();
 
-		if (!$connection->open($server, "", "")) {
+		if (!$connection->openPasswordless($server, "", $password)) {
 			$error = $connection->getError();
 			return null;
 		}

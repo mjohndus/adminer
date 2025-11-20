@@ -548,15 +548,6 @@ function selectSearchKeydown(event) {
 	}
 }
 
-/** Clear column name after resetting search
-* @this HTMLInputElement
-*/
-function selectSearchSearch() {
-	if (!this.value) {
-		this.parentNode.firstChild.selectedIndex = 0;
-	}
-}
-
 // Sorting.
 (() => {
 	let placeholderRow = null, nextRow = null, dragHelper = null;

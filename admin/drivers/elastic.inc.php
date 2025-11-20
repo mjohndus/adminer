@@ -400,19 +400,9 @@ if (isset($_GET["elastic"])) {
 	{
 		$connection = $primary ? ElasticConnection::create() : ElasticConnection::createSecondary();
 
-		list($server, $username, $password) = Admin::get()->getCredentials();
+		[$server, $username, $password] = Admin::get()->getCredentials();
 
-		if ($password != "" && $connection->open($server, $username, "")) {
-			$result = Admin::get()->verifyDefaultPassword($password);
-			if ($result !== true) {
-				$error = $result;
-				return null;
-			}
-
-			return $connection;
-		}
-
-		if (!$connection->open($server, $username, $password)) {
+		if (!$connection->openPasswordless($server, $username, $password)) {
 			$error = $connection->getError();
 			return null;
 		}

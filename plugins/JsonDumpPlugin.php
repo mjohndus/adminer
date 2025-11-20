@@ -69,10 +69,11 @@ class JsonDumpPlugin extends Plugin
 			while ($row = $result->fetchAssoc()) {
 				if (!$first) {
 					echo ",\n";
-					$first = false;
 				}
 
 				echo preg_replace('~\n\s+~', "\n\t", json_encode($row, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
+
+				$first = false;
 			}
 
 			echo "\n]";

@@ -66,7 +66,7 @@ function build_http_url(string $server, string $username, string $password, stri
 	}
 
 	return ($matches[1] ?: "http://") .
-		($username !== "" || $password !== "" ? "$username:$password@" : "") .
+		($username !== "" || $password !== "" ? urlencode($username) . ":" . urlencode($password) . "@" : "") .
 		($matches[2] !== "" ? $matches[2] : $defaultServer) .
 		($matches[3] ?? ($defaultPort ? ":$defaultPort" : ""));
 }

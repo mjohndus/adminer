@@ -1,22 +1,36 @@
 Changelog
 =========
 
-AdminNeo 5.2.0
+AdminNeo 5.3.0
 --------------
+
+### Bugfixes
+
+- PostgreSQL: Fix connecting via default socket if server is not specified (regression from 5.2.0)
+- ForeignEditPlugin: Fix displaying foreign values from different schema
+- JsonDumpPlugin: Fix invalid JSON format (regression from 5.2.0)
+- Fix opening exported CSV file to browser window (issue #171, regression from 5.0.0)
+- Fix escaping spaces in cookie value (by @shunf4)
+
+AdminNeo 5.2.0 (2025-11-02)
+---------------------------
 
 ### Changes
 
-- Update Spanish translation (by @rexwithluv)
+- MySQL, PostgreSQL: Validate the default password if the user is authenticated via unix socket (issue #162)
+- PostgreSQL: Connect to localhost with default port if server is not specified
 - PostgreSQL: Display auto_increment of inserted rows (by @vrana)
 - PostgreSQL: Display description of system variables (by @vrana)
 - PostgreSQL 11: Add support for PROCEDURE (by @vrana)
 - PostgreSQL: Add support for relation links (by @vrana)
 - MS SQL: Add support for relation links
-- URL parameter ?ext=pdo to force using PDO (by @vrana)
+- Add URL parameter ?ext=pdo to force using PDO (by @vrana)
 - Add SqlGeminiPlugin - AI prompt in SQL command generating the queries with Google Gemini (by @vrana)
 - Add sqlAutocompletion configuration parameter
 - Add relationLinks configuration parameter
 - Add setting for displaying links to referencing tables
+- Update German and Dutch translations (by @wintstar)
+- Update Spanish translation (by @rexwithluv)
 
 ### Bugfixes
 
@@ -25,6 +39,7 @@ AdminNeo 5.2.0
 - MS SQL: Fix collation issues when retrieving default values (by @vrana)
 - MS SQL PDO: Fix invalid number of rows in SQL command
 - MS SQL PDO: Display last insert ID (by @vrana)
+- Fix escaping user credentials in web based drivers
 - PDO: Fix displaying the number of affected rows (regression from 5.1.0) (issue #151)
 - Silent warning if adminneo.version file does not exist (issue #152)
 - Fix initial caret position while inline editing a table value. (by @vrana)

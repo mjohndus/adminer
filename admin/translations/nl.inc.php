@@ -325,11 +325,11 @@ return [
 	'Checks' => 'Checks',
 	'Create check' => 'Check aanmaken',
 	'Alter check' => 'Check wijzigen',
-	'Check has been created.' => 'Check is aangemaakt',
+	'Check has been created.' => 'Check is aangemaakt.',
 	'Check has been altered.' => 'Check is gewijzigd.',
 	'Check has been dropped.' => 'Check is afgebroken.',
 
-	// Selection.Check
+	// Selection.
 	'Select data' => 'Gegevens selecteren',
 	'Select' => 'Kies',
 	'Functions' => 'Functies',
@@ -417,9 +417,12 @@ return [
 	'Simple' => 'Eenvoudig',
 	'Dual' => 'Dubbel',
 	'Reversed' => 'Omgekeerd',
-	'Layout of main navigation with table links.' => 'Indeling van hoofdnavigatie met tabelkoppelingen',
+	'Layout of main navigation with table links.' => 'Indeling van hoofdnavigatie met tabelkoppelingen.',
 	'Table links' => 'Tabelkoppelingen',
 	'Primary action for all table links.' => 'Primaire actie voor alle tabelkoppelingen.',
+	'Links to tables referencing the current row.' => 'Links naar tabellen die verwijzen naar de huidige rij.',
+	'Display' => 'Geef weer',
+	'Hide' => 'Te verbergen',
 	'Records per page' => 'Aantal datasets per pagina',
 	'Default number of records displayed in data table.' => 'Standaard aantal records dat in de gegevenstabel wordt weergegeven.',
 	'Enum as select' => 'Enum als keuzemenu',
@@ -436,4 +439,7 @@ return [
 	'JSON previews' => 'JSON voorvertoning',
 	'Data table' => 'Gegevenstabel',
 	'Edit form' => 'Formulier bewerken',
+	// Use the phrases from https://gemini.google.com/
+	'Ask Gemini' => 'Vraag het aan Gemini',
+	'Just a sec...' => 'Een momentje.',
 ];
