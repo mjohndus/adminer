@@ -1,6 +1,13 @@
 Changelog
 =========
 
+AdminNeo 5.3.0
+--------------
+
+### Bugfixes
+
+- PostgreSQL: Fix connecting via TCP/IP if server is not specified (regression from 5.2.1)
+
 AdminNeo 5.2.1 (2025-12-07)
 ---------------------------
 
