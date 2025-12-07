@@ -470,14 +470,19 @@ if (isset($_GET["pgsql"])) {
 
 		$result = $connection->openPasswordless($server, $username, $password, false);
 
+		$errors = [];
 		if (!$result && $server == "" && preg_match('~connection to server on socket .+ failed: No such file or directory~U', $connection->getError())) {
+			$errors[] = $connection->getError();
+
 			// If login via socket is not available, try to connect via TCP/IP.
 			$server = "localhost";
 			$result = $connection->openPasswordless($server, $username, $password, false);
 		}
 
 		if (!$result) {
-			$error = $connection->getError();
+			$errors[] = $connection->getError();
+			$error = implode("\n", $errors);
+
 			return null;
 		}
 
