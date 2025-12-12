@@ -142,7 +142,7 @@ function connect_to_db(array &$permanent): Connection
 
 	$connection = connect(true, $error);
 	if (!$connection) {
-		connection_error(h($error), $permanent);
+		connection_error(nl2br(h($error)), $permanent);
 	}
 
 	return $connection;

@@ -23,7 +23,7 @@ if (isset($_GET["pgsql"])) {
 			private $connectionString;
 
 			/** @var bool */
-			private $hasDefaultDatabase = true;
+			private $hasDefaultDatabase;
 
 			public function open(string $server, string $username, string $password): bool
 			{
@@ -49,6 +49,8 @@ if (isset($_GET["pgsql"])) {
 					// try to connect directly with database for performance
 					$this->hasDefaultDatabase = false;
 					$this->connection = @pg_connect("$this->connectionString dbname='postgres'", PGSQL_CONNECT_FORCE_NEW);
+				} else {
+					$this->hasDefaultDatabase = true;
 				}
 
 				restore_error_handler();
@@ -470,14 +472,19 @@ if (isset($_GET["pgsql"])) {
 
 		$result = $connection->openPasswordless($server, $username, $password, false);
 
+		$errors = [];
 		if (!$result && $server == "" && preg_match('~connection to server on socket .+ failed: No such file or directory~U', $connection->getError())) {
+			$errors[] = $connection->getError();
+
 			// If login via socket is not available, try to connect via TCP/IP.
 			$server = "localhost";
 			$result = $connection->openPasswordless($server, $username, $password, false);
 		}
 
 		if (!$result) {
-			$error = $connection->getError();
+			$errors[] = $connection->getError();
+			$error = implode("\n", $errors);
+
 			return null;
 		}
 
