@@ -4,6 +4,11 @@ Changelog
 AdminNeo 5.3.0
 --------------
 
+### Changes
+
+- More secure randomness on PHP5 (by @pavetheway91)
+- 256 bits of entropy in all random strings
+
 ### Bugfixes
 
 - PostgreSQL: Fix connecting via TCP/IP if server is not specified (regression from 5.2.1)
