@@ -2,6 +2,8 @@
 
 namespace AdminNeo;
 
+use Exception;
+
 /**
  * Replaces fields ending with "_path" by `<input type="file">` in edit form and displays links to the uploaded files in
  * table select.
@@ -61,7 +63,7 @@ class FileUploadPlugin extends Plugin
 	}
 
 	/**
-	 * @throws \Random\RandomException
+	 * @throws Exception
 	 */
 	public function processFieldInput(?array $field, string $value, string $function = ""): ?string
 	{
@@ -87,7 +89,7 @@ class FileUploadPlugin extends Plugin
 
 		// Generate random unique file name.
 		do {
-			$filename = get_random_string() . $matches[0];
+			$filename = Random::strongKey() . $matches[0];
 
 			$targetPath = "$targetDir/" . $this->encodeFs($shortFieldName) . "-$filename";
 		} while (file_exists($targetPath));

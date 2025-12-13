@@ -2,6 +2,8 @@
 
 namespace AdminNeo;
 
+use Exception;
+
 $permanent = [];
 if ($_COOKIE["neo_permanent"]) {
 	foreach (explode(" ", $_COOKIE["neo_permanent"]) as $val) {
@@ -11,7 +13,7 @@ if ($_COOKIE["neo_permanent"]) {
 }
 
 /**
- * @throws \Random\RandomException
+ * @throws Exception
  */
 function validate_server_input(array &$permanent): void
 {
@@ -83,7 +85,7 @@ function add_invalid_login() {
 	}
 
 	if (!$file) {
-		$file = open_file_with_lock("$base_name-" . get_random_string());
+		$file = open_file_with_lock("$base_name-" . Random::strongKey());
 		if (!$file) {
 			return;
 		}
@@ -107,7 +109,7 @@ function add_invalid_login() {
 }
 
 /**
- * @throws \Random\RandomException
+ * @throws Exception
  */
 function check_invalid_login(array &$permanent): void
 {
@@ -132,7 +134,7 @@ function check_invalid_login(array &$permanent): void
 }
 
 /**
- * @throws \Random\RandomException
+ * @throws Exception
  */
 function connect_to_db(array &$permanent): Connection
 {
@@ -149,7 +151,7 @@ function connect_to_db(array &$permanent): Connection
 }
 
 /**
- * @throws \Random\RandomException
+ * @throws Exception
  */
 function authenticate(array &$permanent): void
 {
@@ -165,7 +167,7 @@ function authenticate(array &$permanent): void
 /**
  * @param string $error HTML-formatted error message.
  *
- * @throws \Random\RandomException
+ * @throws Exception
  */
 function connection_error(string $error, array &$permanent): void
 {
@@ -266,7 +268,7 @@ function unset_permanent(array &$permanent): void
  *
  * @param ?string $error HTML-formatted error message, null for the default error.
  *
- * @throws \Random\RandomException
+ * @throws Exception
  */
 function auth_error(array &$permanent, ?string $error = null): void
 {
@@ -309,7 +311,7 @@ function auth_error(array &$permanent, ?string $error = null): void
 function print_login_page(): void
 {
 	$params = session_get_cookie_params();
-	cookie("neo_key", ($_COOKIE["neo_key"] ?: get_random_string()), $params["lifetime"]);
+	cookie("neo_key", ($_COOKIE["neo_key"] ?: Random::strongKey()), $params["lifetime"]);
 
 	// Set token for the unsuccessful login.
 	if (!$_SESSION["token"]) {

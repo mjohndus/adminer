@@ -7,6 +7,18 @@ use Exception;
 class Random
 {
 	/**
+	 * Returns a random string with 256 bits of entropy.
+	 *
+	 * The result is safe to use in URL parameters and file names.
+	 *
+	 * @throws Exception
+	 */
+	public static function strongKey(): string
+	{
+		return strtr(rtrim(base64_encode(Random::bytes(32)), "="), "+/", "-_");
+	}
+
+	/**
 	 * Returns requested amount of random bytes.
 	 *
 	 * @return string A binary string.

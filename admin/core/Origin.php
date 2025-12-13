@@ -2,6 +2,8 @@
 
 namespace AdminNeo;
 
+use Exception;
+
 abstract class Origin extends Plugin
 {
 	/** @var string[] */
@@ -184,7 +186,8 @@ abstract class Origin extends Plugin
 	 * Returns a private key used for permanent login.
 	 *
 	 * @return string|false Cryptic string which gets combined with password or false in case of an error.
-	 * @throws \Random\RandomException
+	 *
+	 * @throws Exception
 	 */
 	public function getPrivateKey(bool $create = false)
 	{

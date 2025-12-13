@@ -2,6 +2,8 @@
 
 namespace AdminNeo;
 
+use Exception;
+
 if (!ob_get_level()) {
 	ob_start(null, 4096);
 }
@@ -268,14 +270,14 @@ function page_headers(): void
  *
  * @return string Random string with 256 bits of entropy.
  *
- * @throws \Random\RandomException
+ * @throws Exception
  */
 function get_nonce(): string
 {
 	static $nonce;
 
 	if (!$nonce) {
-		$nonce = get_random_string();
+		$nonce = Random::strongKey();
 	}
 
 	return $nonce;

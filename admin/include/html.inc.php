@@ -2,6 +2,8 @@
 
 namespace AdminNeo;
 
+use Exception;
+
 /**
  * Returns <script> element.
  */
@@ -21,7 +23,7 @@ function script_src(string $url, bool $defer = false): string
 /**
  * Returns a nonce="" attribute with CSP nonce.
  *
- * @throws \Random\RandomException
+ * @throws Exception
  */
 function nonce(): string
 {

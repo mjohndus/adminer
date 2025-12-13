@@ -2,6 +2,8 @@
 
 namespace AdminNeo;
 
+use Exception;
+
 /**
  * @deprecated
  */
@@ -902,7 +904,7 @@ function first(array $array) {
  *
  * @param $create bool
  * @return string|false Returns false if the file can not be created.
- * @throws \Random\RandomException
+ * @throws Exception
  */
 function get_private_key($create)
 {
@@ -919,7 +921,7 @@ function get_private_key($create)
 
 	$key = stream_get_contents($file);
 	if (!$key) {
-		$key = get_random_string();
+		$key = Random::strongKey();
 		write_and_unlock_file($file, $key);
 	} else {
 		unlock_file($file);
@@ -929,15 +931,15 @@ function get_private_key($create)
 }
 
 /**
+ * @deprecated
+ *
  * Returns a random string with 256 bits of entropy.
- *
- * The result is safe to use in URL parameters or file names.
- *
- * @throws \Random\RandomException
+
+ * @throws Exception
  */
 function get_random_string(): string
 {
-	return strtr(rtrim(base64_encode(Random::bytes(32)), "="), "+/", "-_");
+	return Random::strongKey();
 }
 
 /** Format value to use in select
