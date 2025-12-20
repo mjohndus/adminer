@@ -15,6 +15,11 @@ class TmpFile
 		$this->handler = tmpfile();
 	}
 
+	public function getSize(): int
+	{
+		return $this->size;
+	}
+
 	public function write($contents): void
 	{
 		if (!$this->handler) {
@@ -22,6 +27,7 @@ class TmpFile
 		}
 
 		$this->size += strlen($contents);
+
 		fwrite($this->handler, $contents);
 	}
 
