@@ -115,7 +115,7 @@ SET foreign_key_checks = 0;
 						}
 
 						Admin::get()->dumpTable($name, ($table ? $_POST["table_style"] : ""), (is_view($table_status) ? 2 : 0));
-						if (is_view($table_status)) {
+						if (is_view($table_status) && $ext != "tar") {
 							$views[] = $name;
 						} elseif ($data) {
 							$fields = fields($name);
