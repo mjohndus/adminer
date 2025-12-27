@@ -2,6 +2,8 @@
 
 namespace AdminNeo;
 
+use Exception;
+
 /**
  * @deprecated
  */
@@ -902,7 +904,7 @@ function first(array $array) {
  *
  * @param $create bool
  * @return string|false Returns false if the file can not be created.
- * @throws \Random\RandomException
+ * @throws Exception
  */
 function get_private_key($create)
 {
@@ -919,7 +921,7 @@ function get_private_key($create)
 
 	$key = stream_get_contents($file);
 	if (!$key) {
-		$key = get_random_string();
+		$key = Random::strongKey();
 		write_and_unlock_file($file, $key);
 	} else {
 		unlock_file($file);
@@ -929,17 +931,15 @@ function get_private_key($create)
 }
 
 /**
- * Returns a random 32 characters long string.
+ * @deprecated
  *
- * @param $binary bool
- * @return string
- * @throws \Random\RandomException
- */
-function get_random_string($binary = false)
-{
-	$bytes = function_exists('random_bytes') ? random_bytes(32) : uniqid(mt_rand(), true);
+ * Returns a random string with 256 bits of entropy.
 
-	return $binary ? $bytes : md5($bytes);
+ * @throws Exception
+ */
+function get_random_string(): string
+{
+	return Random::strongKey();
 }
 
 /** Format value to use in select

@@ -62,6 +62,9 @@ class FileUploadPlugin extends Plugin
 		return "<input type='file'$attrs>";
 	}
 
+	/**
+	 * @throws Exception
+	 */
 	public function processFieldInput(?array $field, string $value, string $function = ""): ?string
 	{
 		if (!$field || !($shortFieldName = $this->matchField($field))) {
@@ -86,7 +89,7 @@ class FileUploadPlugin extends Plugin
 
 		// Generate random unique file name.
 		do {
-			$filename = $this->generateName() . $matches[0];
+			$filename = Random::strongKey() . $matches[0];
 
 			$targetPath = "$targetDir/" . $this->encodeFs($shortFieldName) . "-$filename";
 		} while (file_exists($targetPath));
@@ -102,15 +105,6 @@ class FileUploadPlugin extends Plugin
 	private function matchField(array $field): ?string
 	{
 		return preg_match('~(.*)_path$~', $field["field"], $matches) ? $matches[1] : null;
-	}
-
-	private function generateName(): string
-	{
-		try {
-			return function_exists('random_bytes') ? bin2hex(random_bytes(8)) : uniqid("", true);
-		} catch (Exception $e) {
-			return uniqid("", true);
-		}
 	}
 
 	private function encodeUrl(string $value): string

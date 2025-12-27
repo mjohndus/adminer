@@ -4,9 +4,17 @@ Changelog
 AdminNeo 5.3.0
 --------------
 
+### Changes
+
+- More secure randomness on PHP5 (by @pavetheway91)
+- 256 bits of entropy in all random strings
+
 ### Bugfixes
 
 - PostgreSQL: Fix connecting via TCP/IP if server is not specified (regression from 5.2.1)
+- MySQL: Fix selecting routines in DB export (issue #176)
+- Fix sending DB dump in CSV format / TAR file (issue #176)
+- Fix exporting views in CSV format
 
 AdminNeo 5.2.1 (2025-12-07)
 ---------------------------

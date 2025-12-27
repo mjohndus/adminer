@@ -633,22 +633,24 @@ function format_foreign_key($foreign_key) {
 	;
 }
 
-/** Add a file to TAR
-* @param string
-* @param TmpFile
-* @return null prints the output
-*/
-function tar_file($filename, $tmp_file) {
-	$return = pack("a100a8a8a8a12a12", $filename, 644, 0, 0, decoct($tmp_file->size), decoct(time()));
-	$checksum = 8*32; // space for checksum itself
-	for ($i=0; $i < strlen($return); $i++) {
-		$checksum += ord($return[$i]);
+/**
+ * Add a file to TAR and send it to output.
+ */
+function tar_file(string $filename, TmpFile $tmp_file): void
+{
+	$header = pack("a100a8a8a8a12a12", $filename, 644, 0, 0, decoct($tmp_file->getSize()), decoct(time()));
+
+	$checksum = 8 * 32; // space for checksum itself
+	for ($i = 0; $i < strlen($header); $i++) {
+		$checksum += ord($header[$i]);
 	}
-	$return .= sprintf("%06o", $checksum) . "\0 ";
-	echo $return;
-	echo str_repeat("\0", 512 - strlen($return));
+	$header .= sprintf("%06o", $checksum) . "\0 ";
+
+	echo $header;
+	echo str_repeat("\0", 512 - strlen($header));
+
 	$tmp_file->send();
-	echo str_repeat("\0", 511 - ($tmp_file->size + 511) % 512);
+	echo str_repeat("\0", 511 - ($tmp_file->getSize() + 511) % 512);
 }
 
 /** Get INI bytes value
