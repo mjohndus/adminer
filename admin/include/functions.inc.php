@@ -55,12 +55,11 @@ function number_type() {
 	return '((?<!o)int(?!er)|numeric|real|float|double|decimal|money)'; // not point, not interval
 }
 
-/** Disable magic_quotes_gpc
+/** Disable magic_quotes_gpc, modified in place
 * @param list<array> e.g. (&$_GET, &$_POST, &$_COOKIE)
 * @param bool whether to leave values as is
-* @return null modified in place
 */
-function remove_slashes($process, $filter = false) {
+function remove_slashes($process, $filter = false): void {
 	if (function_exists("get_magic_quotes_gpc") && get_magic_quotes_gpc()) {
 		foreach ($process as $key => $val) {
 			foreach ($val as $k => $v) {
@@ -169,9 +168,8 @@ function get_driver_name(string $driver, ?string $server = null): string
 * @param string
 * @param string
 * @param string
-* @return null
 */
-function set_password($vendor, $server, $username, $password) {
+function set_password($vendor, $server, $username, $password): void {
 	$_SESSION["pwds"][$vendor][$server][$username] = ($_COOKIE["neo_key"] && is_string($password)
 		? [encrypt_string($password, $_COOKIE["neo_key"])]
 		: $password
@@ -435,9 +433,8 @@ function save_settings(array $settings, string $cookie = "neo_settings"): void
 }
 
 /** Restart stopped session
-* @return null
 */
-function restart_session() {
+function restart_session(): void {
 	if (!ini_bool("session.use_cookies") && session_status() == PHP_SESSION_NONE) {
 		session_start();
 	}
@@ -445,9 +442,8 @@ function restart_session() {
 
 /** Stop session if possible
 * @param bool
-* @return null
 */
-function stop_session($force = false) {
+function stop_session($force = false): void {
 	$use_cookies = ini_bool("session.use_cookies");
 	if (!$use_cookies || $force) {
 		session_write_close(); // improves concurrency if a user opens several pages at once, may be restarted later
@@ -820,9 +816,8 @@ function dump_headers(string $identifier, bool $multi_table = false): string
 
 /** Print CSV row
 * @param string[]
-* @return null
 */
-function dump_csv($row) {
+function dump_csv($row): void {
 	foreach ($row as $key => $val) {
 		if (preg_match('~["\n,;\t]|^0|\.\d*0$~', $val) || $val === "") {
 			$row[$key] = '"' . str_replace('"', '""', $val) . '"';

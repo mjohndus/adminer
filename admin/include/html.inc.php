@@ -344,9 +344,8 @@ function enum_input(string $attrs, array $field, $value, ?string $empty = null, 
 * @param mixed
 * @param string
 * @param bool
-* @return null
 */
-function input($field, $value, $function, $autofocus = false) {
+function input($field, $value, $function, $autofocus = false): void {
 	$name = h(bracket_escape($field["field"]));
 
 	$types = Driver::get()->getTypes();
@@ -576,9 +575,8 @@ function help_script_command(string $command, bool $side = false): string
 * @param array[]
 * @param mixed
 * @param bool
-* @return null
 */
-function edit_form($table, $fields, $row, $update) {
+function edit_form($table, $fields, $row, $update): void {
 	$table_name = Admin::get()->getTableName(table_status1($table, true));
 	$title = $update ? lang('Edit') : lang('Insert');
 

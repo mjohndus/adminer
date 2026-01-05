@@ -136,9 +136,8 @@ function referencable_primary($self) {
 * @param string or array in which case [0] of every element is used
 * @param int
 * @param int
-* @return null
 */
-function textarea($name, $value, $rows = 10, $cols = 80) {
+function textarea($name, $value, $rows = 10, $cols = 80): void {
 	echo "<textarea name='" . h($name) . "' rows='$rows' cols='$cols' class='sqlarea jush-" . DIALECT . "' spellcheck='false' wrap='off'>";
 	if (is_array($value)) {
 		foreach ($value as $val) { // not implode() to save memory
@@ -169,10 +168,10 @@ function select_input($attrs, $options, $value = "", $onchange = "", $placeholde
 /** Print one row in JSON object
 * @param string or "" to close the object
 * @param string
-* @return null
+
 * @deprecated
 */
-function json_row($key, $val = null) {
+function json_row($key, $val = null): void {
 	static $first = true;
 	if ($first) {
 		echo "{";
@@ -192,9 +191,8 @@ function json_row($key, $val = null) {
 * @param array[]
 * @param array[] returned by referencable_primary()
 * @param list<string> extra types to prepend
-* @return null
 */
-function edit_type($key, $field, $collations, $foreign_keys = [], $extra_types = []) {
+function edit_type($key, $field, $collations, $foreign_keys = [], $extra_types = []): void {
 	$type = $field["type"] ?? null;
 	?>
 <td><select name="<?php echo h($key); ?>[type]" class="type" aria-labelledby="label-type"><?php
@@ -343,7 +341,7 @@ function type_class(string $type): string
  * @param string $type TABLE, FUNCTION or PROCEDURE
  * @param array[] $foreign_keys returned by referencable_primary()
  */
-function edit_fields(array $fields, array $collations, $type = "TABLE", $foreign_keys = []) {
+function edit_fields(array $fields, array $collations, $type = "TABLE", $foreign_keys = []): void {
 	$fields = array_values($fields);
 	$comments_opened = $_POST ? $_POST["comments"] : Admin::get()->getSettings()->getParameter("commentsOpened");
 	$comment_class = $comments_opened ? "" : "class='hidden'";
@@ -536,7 +534,7 @@ function grant($grant, array $privileges, $columns, $on, $user) {
 	);
 }
 
-/** Drop old object and create a new one
+/** Drop old object and create a new one. Redirect in success.
 * @param string drop old object query
 * @param string create new object query
 * @param string drop new object query
@@ -548,9 +546,8 @@ function grant($grant, array $privileges, $columns, $on, $user) {
 * @param string
 * @param string
 * @param string
-* @return null redirect in success
 */
-function drop_create($drop, $create, $drop_created, $test, $drop_test, $location, $message_drop, $message_alter, $message_create, $old_name, $new_name) {
+function drop_create($drop, $create, $drop_created, $test, $drop_test, $location, $message_drop, $message_alter, $message_create, $old_name, $new_name): void {
 	if ($_POST["drop"]) {
 		query_redirect($drop, $location, $message_drop);
 	} elseif ($old_name == "") {
@@ -721,9 +718,8 @@ function db_size($db) {
 
 /** Print SET NAMES if utf8mb4 might be needed
 * @param string
-* @return null
 */
-function set_utf8mb4($create) {
+function set_utf8mb4($create): void {
 	static $set = false;
 	if (!$set && preg_match('~\butf8mb4~i', $create)) { // possible false positive
 		$set = true;
