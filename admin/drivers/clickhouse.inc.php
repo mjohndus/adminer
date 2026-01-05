@@ -280,9 +280,11 @@ if (isset($_GET["clickhouse"])) {
 		return false;
 	}
 
-	function found_rows($table_status, $where) {
+	function found_rows(array $table_status, array $where): ?int
+	{
 		$rows = get_vals("SELECT COUNT(*) FROM " . idf_escape($table_status["Name"]) . ($where ? " WHERE " . implode(" AND ", $where) : ""));
-		return empty($rows) ? false : $rows[0];
+
+		return $rows ? (int)$rows[0] : null;
 	}
 
 	function alter_table($table, $name, $fields, $foreign, $comment, $engine, $collation, $auto_increment, $partitioning) {
@@ -360,15 +362,18 @@ if (isset($_GET["clickhouse"])) {
 		return $connection;
 	}
 
-	function get_databases($flush) {
+	function get_databases(bool $flush): array
+	{
 		$result = get_rows('SHOW DATABASES');
 
-		$return = [];
+		$databases = [];
 		foreach ($result as $row) {
-			$return[] = $row['name'];
+			$databases[] = $row['name'];
 		}
-		sort($return);
-		return $return;
+
+		sort($databases);
+
+		return $databases;
 	}
 
 	function limit($query, $where, ?int $limit, $offset = 0, $separator = " ") {
@@ -474,7 +479,8 @@ if (isset($_GET["clickhouse"])) {
 		return [];
 	}
 
-	function information_schema($db) {
+	function information_schema(?string $db): bool
+	{
 		return false;
 	}
 

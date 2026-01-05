@@ -376,7 +376,8 @@ if (isset($_GET["simpledb"])) {
 		return $credentials[1];
 	}
 
-	function get_databases() {
+	function get_databases(bool $flush): array
+	{
 		return ["domain"];
 	}
 
@@ -429,7 +430,9 @@ if (isset($_GET["simpledb"])) {
 		return h(Connection::get()->getError());
 	}
 
-	function information_schema() {
+	function information_schema(?string $db): bool
+	{
+		return false;
 	}
 
 	function indexes(string $table, ?Connection $connection = null): array
@@ -491,8 +494,9 @@ if (isset($_GET["simpledb"])) {
 		}
 	}
 
-	function found_rows($table_status, $where) {
-		return ($where ? null : $table_status["Rows"]);
+	function found_rows(array $table_status, array $where): ?int
+	{
+		return !$where ? (int)$table_status["Rows"] : null;
 	}
 
 	function last_id($result)

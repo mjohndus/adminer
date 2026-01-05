@@ -340,7 +340,8 @@ if (isset($_GET["oracle"])) {
 		return $connection;
 	}
 
-	function get_databases() {
+	function get_databases(bool $flush): array
+	{
 		return get_vals("SELECT DISTINCT tablespace_name FROM (
 SELECT tablespace_name FROM user_tablespaces
 UNION SELECT tablespace_name FROM all_tables WHERE tablespace_name IS NOT NULL
@@ -477,7 +478,8 @@ ORDER BY ac.constraint_type, aic.column_position", $connection) as $row) {
 		return []; //!
 	}
 
-	function information_schema($db) {
+	function information_schema(?string $db): bool
+	{
 		return get_schema() == "INFORMATION_SCHEMA";
 	}
 
@@ -492,7 +494,9 @@ ORDER BY ac.constraint_type, aic.column_position", $connection) as $row) {
 		return $connection->query("SELECT * FROM plan_table");
 	}
 
-	function found_rows($table_status, $where) {
+	function found_rows(array $table_status, array $where): ?int
+	{
+		return null;
 	}
 
 	function auto_increment() {

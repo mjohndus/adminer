@@ -497,7 +497,8 @@ if (isset($_GET["pgsql"])) {
 		return $connection;
 	}
 
-	function get_databases() {
+	function get_databases(bool $flush): array
+	{
 		return get_vals("SELECT datname FROM pg_database
 WHERE datallowconn = TRUE AND has_database_privilege(datname, 'CONNECT')
 ORDER BY datname");
@@ -703,7 +704,8 @@ ORDER BY s.ordinal_position";
 		return [];
 	}
 
-	function information_schema($db) {
+	function information_schema(?string $db): bool
+	{
 		return get_schema() == "information_schema";
 	}
 
@@ -860,27 +862,32 @@ ORDER BY s.ordinal_position";
 		return true;
 	}
 
-	function trigger($name, $table) {
+	function trigger(string $name, string $table): array
+	{
 		if ($name == "") {
 			return ["Statement" => "EXECUTE PROCEDURE ()"];
 		}
+
 		$columns = [];
 		$where = "WHERE trigger_schema = current_schema() AND event_object_table = " . q($table) . " AND trigger_name = " . q($name);
 		foreach (get_rows("SELECT * FROM information_schema.triggered_update_columns $where") as $row) {
 			$columns[] = $row["event_object_column"];
 		}
-		$return = [];
+
+		$trigger = [];
 		foreach (get_rows('SELECT trigger_name AS "Trigger", action_timing AS "Timing", event_manipulation AS "Event", \'FOR EACH \' || action_orientation AS "Type", action_statement AS "Statement" FROM information_schema.triggers ' . "$where ORDER BY event_manipulation DESC") as $row) {
 			if ($columns && $row["Event"] == "UPDATE") {
 				$row["Event"] .= " OF";
 			}
 			$row["Of"] = implode(", ", $columns);
-			if ($return) {
-				$row["Event"] .= " OR $return[Event]";
+			if ($trigger) {
+				$row["Event"] .= " OR $trigger[Event]";
 			}
-			$return = $row;
+
+			$trigger = $row;
 		}
-		return $return;
+
+		return $trigger;
 	}
 
 	function triggers($table) {
@@ -951,15 +958,17 @@ ORDER BY s.ordinal_position";
 		return $connection->query("EXPLAIN $query");
 	}
 
-	function found_rows($table_status, $where) {
+	function found_rows(array $table_status, array $where): ?int
+	{
 		if (preg_match(
 			"~ rows=([0-9]+)~",
 			Connection::get()->getValue("EXPLAIN SELECT * FROM " . idf_escape($table_status["Name"]) . ($where ? " WHERE " . implode(" AND ", $where) : "")),
 			$regs
 		)) {
-			return $regs[1];
+			return (int)$regs[1];
 		}
-		return false;
+
+		return null;
 	}
 
 	function types() {
@@ -1098,14 +1107,17 @@ AND typelem = 0"
 		return "TRUNCATE " . table($table);
 	}
 
-	function trigger_sql($table) {
+	function trigger_sql(string $table): string
+	{
 		$status = table_status1($table);
-		$return = "";
+
+		$sql = "";
 		foreach (triggers($table) as $trg_id => $trg) {
 			$trigger = trigger($trg_id, $status['Name']);
-			$return .= "\nCREATE TRIGGER " . idf_escape($trigger['Trigger']) . " $trigger[Timing] $trigger[Event] ON " . idf_escape($status["nspname"]) . "." . idf_escape($status['Name']) . " $trigger[Type] $trigger[Statement];;\n";
+			$sql .= "\nCREATE TRIGGER " . idf_escape($trigger['Trigger']) . " $trigger[Timing] $trigger[Event] ON " . idf_escape($status["nspname"]) . "." . idf_escape($status['Name']) . " $trigger[Type] $trigger[Statement];;\n";
 		}
-		return $return;
+
+		return $sql;
 	}
 
 
@@ -1152,7 +1164,8 @@ AND typelem = 0"
 		return "SELECT pg_backend_pid()";
 	}
 
-	function max_connections() {
-		return Connection::get()->getValue("SHOW max_connections");
+	function max_connections(): int
+	{
+		return (int)Connection::get()->getValue("SHOW max_connections");
 	}
 }

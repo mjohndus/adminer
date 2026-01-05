@@ -285,7 +285,8 @@ if (isset($_GET["sqlite"])) {
 		return $connection;
 	}
 
-	function get_databases() {
+	function get_databases(bool $flush): array
+	{
 		return [];
 	}
 
@@ -452,7 +453,8 @@ if (isset($_GET["sqlite"])) {
 		return (isset($_GET["create"]) ? get_vals("PRAGMA collation_list", 1) : []);
 	}
 
-	function information_schema($db) {
+	function information_schema(?string $db): bool
+	{
 		return false;
 	}
 
@@ -677,7 +679,7 @@ if (isset($_GET["sqlite"])) {
 
 			$triggers = [];
 			foreach (triggers($table) as $trigger_name => $timing_event) {
-				$trigger = trigger($trigger_name);
+				$trigger = trigger($trigger_name, $table);
 				$triggers[] = "CREATE TRIGGER " . idf_escape($trigger_name) . " " . implode(" ", $timing_event) . " ON " . table($name) . "\n$trigger[Statement]";
 			}
 
@@ -748,23 +750,27 @@ if (isset($_GET["sqlite"])) {
 		return false;
 	}
 
-	function trigger($name) {
+	function trigger(string $name, string $table): array
+	{
 		if ($name == "") {
 			return ["Statement" => "BEGIN\n\t;\nEND"];
 		}
+
 		$idf = '(?:[^`"\s]+|`[^`]*`|"[^"]*")+';
 		$trigger_options = trigger_options();
+
 		preg_match(
 			"~^CREATE\\s+TRIGGER\\s*$idf\\s*(" . implode("|", $trigger_options["Timing"]) . ")\\s+([a-z]+)(?:\\s+OF\\s+($idf))?\\s+ON\\s*$idf\\s*(?:FOR\\s+EACH\\s+ROW\\s)?(.*)~is",
 			Connection::get()->getValue("SELECT sql FROM sqlite_master WHERE type = 'trigger' AND name = " . q($name)),
 			$match
 		);
 		$of = $match[3];
+
 		return [
+			"Trigger" => $name,
 			"Timing" => strtoupper($match[1]),
 			"Event" => strtoupper($match[2]) . ($of ? " OF" : ""),
 			"Of" => idf_unescape($of),
-			"Trigger" => $name,
 			"Statement" => $match[4],
 		];
 	}
@@ -801,7 +807,9 @@ if (isset($_GET["sqlite"])) {
 		return $connection->query("EXPLAIN QUERY PLAN $query");
 	}
 
-	function found_rows($table_status, $where) {
+	function found_rows(array $table_status, array $where): ?int
+	{
+		return null;
 	}
 
 	function types() {
@@ -829,7 +837,8 @@ if (isset($_GET["sqlite"])) {
 	function use_sql($database) {
 	}
 
-	function trigger_sql($table) {
+	function trigger_sql(string $table): string
+	{
 		return implode(get_vals("SELECT sql || ';;\n' FROM sqlite_master WHERE type = 'trigger' AND tbl_name = " . q($table)));
 	}
 

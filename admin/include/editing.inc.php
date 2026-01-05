@@ -567,17 +567,19 @@ function drop_create($drop, $create, $drop_created, $test, $drop_test, $location
 	}
 }
 
-/** Generate SQL query for creating trigger
-* @param string
-* @param array result of trigger()
-* @return string
-*/
-function create_trigger($on, $row) {
-	$timing_event = " $row[Timing] $row[Event]" . (preg_match('~ OF~', $row["Event"]) ? " $row[Of]" : ""); // SQL injection
+/**
+ * Generates SQL query for creating a trigger.
+ *
+ * @param array $trigger The result of trigger().
+ */
+function create_trigger(string $on, array $trigger): string
+{
+	$timing_event = " $trigger[Timing] $trigger[Event]" . (preg_match('~ OF~', $trigger["Event"]) ? " $trigger[Of]" : ""); // SQL injection
+
 	return "CREATE TRIGGER "
-		. idf_escape($row["Trigger"])
+		. idf_escape($trigger["Trigger"])
 		. (DIALECT == "mssql" ? $on . $timing_event : $timing_event . $on)
-		. rtrim(" $row[Type]\n$row[Statement]", ";")
+		. rtrim(" $trigger[Type]\n$trigger[Statement]", ";")
 		. ";"
 	;
 }

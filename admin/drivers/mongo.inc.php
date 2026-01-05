@@ -307,7 +307,8 @@ if (isset($_GET["mongo"])) {
 		return MongoDriver::create($connection, Admin::get());
 	}
 
-	function get_databases($flush) {
+	function get_databases(bool $flush): array
+	{
 		$cursor = Connection::get()->executeCommand(['listDatabases' => 1], true);
 		if (!$cursor) {
 			return [];
@@ -401,15 +402,16 @@ if (isset($_GET["mongo"])) {
 		return $fields;
 	}
 
-	function found_rows($table_status, $where) {
+	function found_rows(array $table_status, array $where): ?int
+	{
 		$where = where_to_query($where);
 
 		$cursor = Connection::get()->executeCommand(['count' => $table_status['Name'], 'query' => $where]);
 		if (!$cursor) {
-			return 0;
+			return null;
 		}
 
-		return $cursor->toArray()[0]->n;
+		return (int)$cursor->toArray()[0]->n;
 	}
 
 	function sql_query_where_parser($queryWhere) {
@@ -588,7 +590,9 @@ if (isset($_GET["mongo"])) {
 	function db_collation($db, $collations) {
 	}
 
-	function information_schema() {
+	function information_schema(?string $db): bool
+	{
+		return false;
 	}
 
 	function is_view($table_status) {

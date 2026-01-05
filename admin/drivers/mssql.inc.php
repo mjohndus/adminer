@@ -465,7 +465,8 @@ if (isset($_GET["mssql"])) {
 		return $connection;
 	}
 
-	function get_databases() {
+	function get_databases(bool $flush): array
+	{
 		return get_vals("SELECT name FROM sys.databases WHERE name NOT IN ('master', 'tempdb', 'model', 'msdb') ORDER BY name");
 	}
 
@@ -585,7 +586,8 @@ WHERE OBJECT_NAME(i.object_id) = " . q($table)
 		return $return;
 	}
 
-	function information_schema($db) {
+	function information_schema(?string $db): bool
+	{
 		return get_schema() == "INFORMATION_SCHEMA";
 	}
 
@@ -695,7 +697,9 @@ WHERE OBJECT_NAME(i.object_id) = " . q($table)
 		;
 	}
 
-	function found_rows($table_status, $where) {
+	function found_rows(array $table_status, array $where): ?int
+	{
+		return null;
 	}
 
 	function foreign_keys($table) {
@@ -747,10 +751,13 @@ ORDER BY table_schema, table_name";
 		return apply_queries("ALTER SCHEMA " . idf_escape($target) . " TRANSFER", array_merge($tables, $views));
 	}
 
-	function trigger($name) {
+	function trigger(string $name, string $table): array
+	{
 		if ($name == "") {
 			return [];
 		}
+
+		// Triggers are not schema-scoped.
 		$rows = get_rows("SELECT s.name [Trigger],
 CASE WHEN OBJECTPROPERTY(s.id, 'ExecIsInsertTrigger') = 1 THEN 'INSERT' WHEN OBJECTPROPERTY(s.id, 'ExecIsUpdateTrigger') = 1 THEN 'UPDATE' WHEN OBJECTPROPERTY(s.id, 'ExecIsDeleteTrigger') = 1 THEN 'DELETE' END [Event],
 CASE WHEN OBJECTPROPERTY(s.id, 'ExecIsInsteadOfTrigger') = 1 THEN 'INSTEAD OF' ELSE 'AFTER' END [Timing],
@@ -758,12 +765,14 @@ c.text
 FROM sysobjects s
 JOIN syscomments c ON s.id = c.id
 WHERE s.xtype = 'TR' AND s.name = " . q($name)
-		); // triggers are not schema-scoped
-		$return = reset($rows);
-		if ($return) {
-			$return["Statement"] = preg_replace('~^.+\s+AS\s+~isU', '', $return["text"]); //! identifiers, comments
+		);
+
+		$trigger = reset($rows);
+		if ($trigger) {
+			$trigger["Statement"] = preg_replace('~^.+\s+AS\s+~isU', '', $trigger["text"]); //! identifiers, comments
 		}
-		return $return;
+
+		return $trigger;
 	}
 
 	function triggers($table) {
@@ -854,12 +863,14 @@ WHERE sys1.xtype = 'TR' AND sys2.name = " . q($table)
 		return "USE " . idf_escape($database);
 	}
 
-	function trigger_sql($table) {
-		$return = "";
+	function trigger_sql(string $table): string
+	{
+		$sql = "";
 		foreach (triggers($table) as $name => $trigger) {
-			$return .= create_trigger(" ON " . table($table), trigger($name)) . ";";
+			$sql .= create_trigger(" ON " . table($table), trigger($name, $table)) . ";";
 		}
-		return $return;
+
+		return $sql;
 	}
 
 	function convert_field(array $field): ?string

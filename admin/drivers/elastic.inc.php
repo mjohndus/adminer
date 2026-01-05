@@ -418,7 +418,8 @@ if (isset($_GET["elastic"])) {
 		return $credentials[1];
 	}
 
-	function get_databases() {
+	function get_databases(bool $flush): array
+	{
 		return [ELASTIC_DB_NAME];
 	}
 
@@ -542,8 +543,9 @@ if (isset($_GET["elastic"])) {
 		return h(Connection::get()->getError());
 	}
 
-	function information_schema() {
-		//
+	function information_schema(?string $db): bool
+	{
+		return false;
 	}
 
 	function indexes(string $table, ?Connection $connection = null): array
@@ -631,7 +633,8 @@ if (isset($_GET["elastic"])) {
 		//
 	}
 
-	function found_rows($table_status, $where) {
+	function found_rows(array $table_status, array $where): ?int
+	{
 		return null;
 	}
 

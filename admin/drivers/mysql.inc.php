@@ -505,21 +505,26 @@ if (isset($_GET["mysql"])) {
 		return $connection;
 	}
 
-	/** Get cached list of databases
-	* @param bool
-	* @return list<string>
-	*/
-	function get_databases($flush) {
-		// SHOW DATABASES can take a very long time so it is cached
-		$return = get_session("dbs");
-		if ($return === null) {
-			$query = "SELECT SCHEMA_NAME FROM information_schema.SCHEMATA ORDER BY SCHEMA_NAME"; // SHOW DATABASES can be disabled by skip_show_database
-			$return = ($flush ? slow_query($query) : get_vals($query));
+	/**
+	 * Returns cached list of databases.
+	 *
+	 * @return list<string>
+	 */
+	function get_databases(bool $flush): array
+	{
+		// SHOW DATABASES can take a very long time so it is cached.
+		$databases = get_session("dbs");
+
+		if ($databases === null) {
+			// SHOW DATABASES can be disabled by skip_show_database
+			$query = "SELECT SCHEMA_NAME FROM information_schema.SCHEMATA ORDER BY SCHEMA_NAME";
+			$databases = ($flush ? slow_query($query) : get_vals($query));
 			restart_session();
-			set_session("dbs", $return);
+			set_session("dbs", $databases);
 			stop_session();
 		}
-		return $return;
+
+		return $databases;
 	}
 
 	/** Formulate SQL query with limit
@@ -800,11 +805,11 @@ ORDER BY ordinal_position";
 		return $return;
 	}
 
-	/** Find out if database is information_schema
-	* @param string
-	* @return bool
-	*/
-	function information_schema($db) {
+	/**
+	 * Finds out if database is information_schema.
+	 */
+	function information_schema(?string $db): bool
+	{
 		return ($db == "information_schema")
 			|| (Connection::get()->isMinVersion("5.5") && $db == "performance_schema");
 	}
@@ -1026,15 +1031,19 @@ ORDER BY ordinal_position";
 		return true;
 	}
 
-	/** Get information about trigger
-	* @param string trigger name
-	* @return array{Trigger:string, Timing:string, Event:string, Of:string, Type:string, Statement:string}
-	*/
-	function trigger($name) {
+	/**
+	 * Returns information about a trigger.
+	 *
+	 * @return array{Trigger:string, Timing:string, Event:string, Of:string, Type:string, Statement:string}
+	 */
+	function trigger(string $name, string $table): array
+	{
 		if ($name == "") {
 			return [];
 		}
+
 		$rows = get_rows("SHOW TRIGGERS WHERE `Trigger` = " . q($name));
+
 		return reset($rows);
 	}
 
@@ -1156,13 +1165,16 @@ ORDER BY ordinal_position";
 		return $connection->query("EXPLAIN " . (Connection::get()->isMinVersion("5.1") && !Connection::get()->isMinVersion("5.7") ? "PARTITIONS " : "") . $query);
 	}
 
-	/** Get approximate number of rows
-	* @param array
-	* @param list<string>
-	* @return int or null if approximate number can't be retrieved
-	*/
-	function found_rows($table_status, $where) {
-		return ($where || $table_status["Engine"] != "InnoDB" ? null : $table_status["Rows"]);
+	/**
+	 * Returns approximate number of rows.
+	 *
+	 * @param list<string> $where
+	 *
+	 * @return ?int null if approximate number can't be retrieved.
+	 */
+	function found_rows(array $table_status, array $where): ?int
+	{
+		return $table_status["Engine"] == "InnoDB" && !$where ? (int)$table_status["Rows"] : null;
 	}
 
 	/** Get SQL command to create table
@@ -1195,16 +1207,17 @@ ORDER BY ordinal_position";
 		return "USE " . idf_escape($database);
 	}
 
-	/** Get SQL commands to create triggers
-	* @param string
-	* @return string
-	*/
-	function trigger_sql($table) {
-		$return = "";
+	/**
+	 * Returns SQL commands to create triggers.
+	 */
+	function trigger_sql(string $table): string
+	{
+		$sql = "";
 		foreach (get_rows("SHOW TRIGGERS LIKE " . q(addcslashes($table, "%_\\")), null, "-- ") as $row) {
-			$return .= "\nCREATE TRIGGER " . idf_escape($row["Trigger"]) . " $row[Timing] $row[Event] ON " . table($row["Table"]) . " FOR EACH ROW\n$row[Statement];;\n";
+			$sql .= "\nCREATE TRIGGER " . idf_escape($row["Trigger"]) . " $row[Timing] $row[Event] ON " . table($row["Table"]) . " FOR EACH ROW\n$row[Statement];;\n";
 		}
-		return $return;
+
+		return $sql;
 	}
 
 	/** Get server variables
@@ -1294,10 +1307,11 @@ ORDER BY ordinal_position";
 		return "SELECT CONNECTION_ID()";
 	}
 
-	/** Get maximum number of connections
-	* @return int
-	*/
-	function max_connections() {
-		return Connection::get()->getValue("SELECT @@max_connections");
+	/**
+	 * Returns maximum number of connections.
+	 */
+	function max_connections(): int
+	{
+		return (int)Connection::get()->getValue("SELECT @@max_connections");
 	}
 }
