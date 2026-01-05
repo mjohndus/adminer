@@ -235,9 +235,7 @@ if (isset($_GET["elastic"])) {
 			if (empty($search)) {
 				return false;
 			}
-			if ($select == ["*"]) {
-				$tableFields = array_keys(fields($table));
-			}
+			$tableFields = $select == ["*"] ? array_keys(fields($table)) : [];
 
 			$return = [];
 			foreach ($search["hits"]["hits"] as $hit) {

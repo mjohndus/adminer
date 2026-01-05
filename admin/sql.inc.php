@@ -176,7 +176,7 @@ if ($_POST) {
 									$warnings_id = "warnings-$commands";
 									$warnings_link = $warnings ? "<a href='#$warnings_id' class='toggle'>" . lang('Warnings') . icon_chevron_down() . "</a>" : null;
 
-									$explain = null;
+									$explain = $orgtables = null;
 									$explain_id = "explain-$commands";
 									$export = false;
 									$export_id = "export-$commands";
