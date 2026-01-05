@@ -316,21 +316,23 @@ function default_value($field) {
 	}
 }
 
-/** Get type class to use in CSS
-* @param string
-* @return string class=''
-*/
-function type_class($type) {
+/**
+ * Returns class HTML parameter for given type.
+ */
+function type_class(string $type): string
+{
 	foreach ([
 		'char' => 'text',
 		'date' => 'time|year',
 		'binary' => 'blob',
 		'enum' => 'set',
-	] as $key => $val) {
-		if (preg_match("~$key|$val~", $type)) {
-			return " class='$key'";
+	] as $class => $pattern) {
+		if (preg_match("~$class|$pattern~", $type)) {
+			return "class='$class'";
 		}
 	}
+
+	return "";
 }
 
 /**

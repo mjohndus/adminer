@@ -258,24 +258,33 @@ function get_rows($query, ?Connection $connection = null, $error = "<p class='er
 	return $return;
 }
 
-/** Find unique identifier of a row
-* @param string[]
-* @param array[] result of indexes()
-* @return string[] or null if there is no unique identifier
-*/
-function unique_array($row, $indexes) {
+/**
+ * Finds unique identifier of a row.
+ *
+ * @param string[] $row
+ * @param array[] $indexes Result of indexes().
+ *
+ * @return string[]|null null if there is no unique identifier.
+ */
+function unique_array(array $row, array $indexes): ?array
+{
 	foreach ($indexes as $index) {
-		if (preg_match("~PRIMARY|UNIQUE~", $index["type"])) {
-			$return = [];
-			foreach ($index["columns"] as $key) {
-				if (!isset($row[$key])) { // NULL is ambiguous
-					continue 2;
-				}
-				$return[$key] = $row[$key];
-			}
-			return $return;
+		if (!preg_match("~PRIMARY|UNIQUE~", $index["type"])) {
+			continue;
 		}
+
+		$unique = [];
+		foreach ($index["columns"] as $key) {
+			if (!isset($row[$key])) { // NULL is ambiguous
+				continue 2;
+			}
+			$unique[$key] = $row[$key];
+		}
+
+		return $unique;
 	}
+
+	return null;
 }
 
 /** Escape column key used in where()
@@ -349,24 +358,31 @@ function where_link($i, $column, $value, $operator = "=") {
 	return "&where%5B$i%5D%5Bcol%5D=" . urlencode($column) . "&where%5B$i%5D%5Bop%5D=" . urlencode(($value !== null ? $operator : "IS NULL")) . "&where%5B$i%5D%5Bval%5D=" . urlencode($value);
 }
 
-/** Get select clause for convertible fields
-* @param string[]
-* @param array[]
-* @param list<string>
-* @return string
-*/
-function convert_fields($columns, $fields, $select = []) {
-	$return = "";
+/**
+ * Returns select clause for convertible fields.
+ *
+ * @param string[] $columns
+ * @param array[] $fields
+ * @param list<string> $select
+ *
+ * @return string
+ */
+function convert_fields(array $columns, array $fields, array $select = []): string
+{
+	$result = "";
+
 	foreach ($columns as $key => $val) {
 		if ($select && !in_array(idf_escape($key), $select)) {
 			continue;
 		}
+
 		$as = convert_field($fields[$key]);
 		if ($as) {
-			$return .= ", $as AS " . idf_escape($key);
+			$result .= ", $as AS " . idf_escape($key);
 		}
 	}
-	return $return;
+
+	return $result;
 }
 
 /**
@@ -490,16 +506,18 @@ function is_ajax() {
 	return ($_SERVER["HTTP_X_REQUESTED_WITH"] == "XMLHttpRequest");
 }
 
-/** Send Location header and exit
-* @param string null to only set a message
-* @param string
-* @return null
-*/
-function redirect($location, $message = null) {
+/**
+ * Redirects to location and/or set a message.
+ *
+ * @param ?string $location null to only set a message.
+ */
+function redirect(?string $location, ?string $message = null): void
+{
 	if ($message !== null) {
 		restart_session();
 		$_SESSION["messages"][preg_replace('~^[^?]*~', '', ($location !== null ? $location : $_SERVER["REQUEST_URI"]))][] = $message;
 	}
+
 	if ($location !== null) {
 		if ($location == "") {
 			$location = ".";

@@ -464,7 +464,8 @@ if (isset($_GET["simpledb"])) {
 		return " $query$where" . ($limit !== null ? $separator . "LIMIT $limit" : "");
 	}
 
-	function unconvert_field(array $field, $return) {
+	function unconvert_field(array $field, string $return): string
+	{
 		return $return;
 	}
 

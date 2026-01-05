@@ -1228,11 +1228,15 @@ ORDER BY ordinal_position";
 		return get_rows("SHOW FULL PROCESSLIST");
 	}
 
-	/** Convert field in select and edit
-	* @param array one element from fields()
-	* @return string
-	*/
-	function convert_field($field) {
+	/**
+	 * Returns expression for field conversion in select and edit.
+	 *
+	 * @param array $field One element from fields().
+	 *
+	 * @return ?string Null if conversion is not necessary.
+	 */
+	function convert_field(array $field): ?string
+	{
 		if (preg_match("~binary~", $field["type"])) {
 			return "HEX(" . idf_escape($field["field"]) . ")";
 		}
@@ -1242,14 +1246,17 @@ ORDER BY ordinal_position";
 		if (preg_match("~geometry|point|linestring|polygon~", $field["type"])) {
 			return (Connection::get()->isMinVersion("8") ? "ST_" : "") . "AsWKT(" . idf_escape($field["field"]) . ")";
 		}
+
+		return null;
 	}
 
-	/** Convert value in edit after applying functions back
-	* @param array one element from fields()
-	* @param string
-	* @return string
-	*/
-	function unconvert_field(array $field, $return) {
+	/**
+	 * Converts value in edit after applying functions back.
+	 *
+	 * @param array $field One element from fields().
+	 */
+	function unconvert_field(array $field, string $return): string
+	{
 		if (preg_match("~binary~", $field["type"])) {
 			$return = "UNHEX($return)";
 		}

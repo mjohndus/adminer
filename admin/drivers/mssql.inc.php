@@ -862,10 +862,13 @@ WHERE sys1.xtype = 'TR' AND sys2.name = " . q($table)
 		return $return;
 	}
 
-	function convert_field($field) {
+	function convert_field(array $field): ?string
+	{
+		return null;
 	}
 
-	function unconvert_field(array $field, $return) {
+	function unconvert_field(array $field, string $return): string
+	{
 		return $return;
 	}
 

@@ -422,13 +422,17 @@ if (isset($_GET["clickhouse"])) {
 		return false;
 	}
 
-	function convert_field($field) {
+	function convert_field(array $field): ?string
+	{
+		return null;
 	}
 
-	function unconvert_field(array $field, $return) {
+	function unconvert_field(array $field, string $return): string
+	{
 		if (in_array($field['type'], ["Int8", "Int16", "Int32", "Int64", "UInt8", "UInt16", "UInt32", "UInt64", "Float32", "Float64"])) {
 			return "to$field[type]($return)";
 		}
+
 		return $return;
 	}
 

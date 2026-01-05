@@ -261,10 +261,7 @@ if (isset($_GET["pgsql"])) {
 				return $return;
 			}
 
-			public function warnings(): ?string
-			{
-				return null; // not implemented in PDO_PgSQL as of PHP 7.2.1
-			}
+			// warnings() not implemented in PDO_PgSQL as of PHP 7.2.1
 
 			public function close(): void
 			{
@@ -1124,10 +1121,13 @@ AND typelem = 0"
 		return get_rows("SELECT * FROM pg_stat_activity ORDER BY " . (Connection::get()->isMinVersion("9.2") ? "pid" : "procpid"));
 	}
 
-	function convert_field($field) {
+	function convert_field(array $field): ?string
+	{
+		return null;
 	}
 
-	function unconvert_field(array $field, $return) {
+	function unconvert_field(array $field, string $return): string
+	{
 		return $return;
 	}
 

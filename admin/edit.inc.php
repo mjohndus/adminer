@@ -21,7 +21,7 @@ if ($_POST && !isset($_GET["select"])) {
 	}
 
 	$indexes = indexes($TABLE);
-	$unique_array = unique_array($_GET["where"], $indexes);
+	$unique_array = unique_array($_GET["where"] ?? [], $indexes);
 	$query_where = "\nWHERE $where";
 
 	if (isset($_POST["delete"])) {

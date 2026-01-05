@@ -594,10 +594,13 @@ if (isset($_GET["mongo"])) {
 	function is_view($table_status) {
 	}
 
-	function convert_field($field) {
+	function convert_field(array $field): ?string
+	{
+		return null;
 	}
 
-	function unconvert_field(array $field, $return) {
+	function unconvert_field(array $field, string $return): string
+	{
 		return $return;
 	}
 

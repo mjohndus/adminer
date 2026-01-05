@@ -71,7 +71,7 @@ foreach ($schema as $name => $table) {
 	echo script("qsl('div').onmousedown = schemaMousedown;");
 
 	foreach ($table["fields"] as $field) {
-		$val = '<span' . type_class($field["type"]) . ' title="' . h($field["type"] . ($field["length"] ? "($field[length])" : "") . ($field["null"] ? " NULL" : '')) . '">' . h($field["field"]) . '</span>';
+		$val = '<span ' . type_class($field["type"]) . ' title="' . h($field["type"] . ($field["length"] ? "($field[length])" : "") . ($field["null"] ? " NULL" : '')) . '">' . h($field["field"]) . '</span>';
 		echo "<br>" . ($field["primary"] ? "<i>$val</i>" : $val);
 	}
 
