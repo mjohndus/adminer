@@ -646,7 +646,7 @@ ORDER BY a.attnum"
 					$return[$relname]["columns"][] = $columns[$indkey];
 				}
 				foreach (explode(" ", $row["indoption"]) as $indoption) {
-					$return[$relname]["descs"][] = ($indoption & 1 ? '1' : null); // 1 - INDOPTION_DESC
+					$return[$relname]["descs"][] = (intval($indoption) & 1 ? '1' : null); // 1 - INDOPTION_DESC
 				}
 			}
 			$return[$relname]["lengths"] = [];

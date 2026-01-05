@@ -291,7 +291,7 @@ if (!$columns && support("table")) {
 	$page = $_GET["page"] ?? null;
 	if ($page == "last") {
 		$found_rows = Connection::get()->getValue(count_rows($TABLE, $where, $is_group, $group));
-		$page = (int)floor(max(0, $found_rows - 1) / $limit);
+		$page = (int)floor(max(0, intval($found_rows) - 1) / $limit);
 	} else {
 		$found_rows = false;
 		$page = (int)$page;

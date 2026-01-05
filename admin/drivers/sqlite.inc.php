@@ -75,7 +75,7 @@ if (isset($_GET["sqlite"])) {
 
 			public function __destruct()
 			{
-				return $this->resource->finalize();
+				$this->resource->finalize();
 			}
 
 			public function fetchAssoc()

@@ -149,7 +149,7 @@ if (isset($_GET["oracle"])) {
 			{
 				if (is_array($row)) {
 					foreach ($row as $key => $val) {
-						if (is_a($val, 'OCI-Lob')) {
+						if (is_a($val, 'OCILob') || is_a($val, 'OCI-Lob')) {
 							$row[$key] = $val->load();
 						}
 					}

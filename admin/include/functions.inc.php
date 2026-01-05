@@ -781,7 +781,7 @@ function fields_from_edit() {
 		$return[$name] = [
 			"field" => $name,
 			"privileges" => ["insert" => 1, "update" => 1, "where" => 1, "order" => 1],
-			"null" => 1,
+			"null" => true,
 			"auto_increment" => ($key == Driver::get()->primary),
 		];
 	}
