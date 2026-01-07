@@ -56,7 +56,7 @@ function number_type() {
 }
 
 /** Disable magic_quotes_gpc, modified in place
-* @param list<array> e.g. (&$_GET, &$_POST, &$_COOKIE)
+* @param list<array> e.g. [&$_GET, &$_POST, &$_COOKIE]
 * @param bool whether to leave values as is
 */
 function remove_slashes($process, $filter = false): void {
@@ -167,7 +167,7 @@ function get_driver_name(string $driver, ?string $server = null): string
 * @param string
 * @param string
 * @param string
-* @param string
+* @param ?string
 */
 function set_password($vendor, $server, $username, $password): void {
 	$_SESSION["pwds"][$vendor][$server][$username] = ($_COOKIE["neo_key"] && is_string($password)
@@ -177,7 +177,7 @@ function set_password($vendor, $server, $username, $password): void {
 }
 
 /** Get password from session
-* @return string or null for missing password or false for expired password
+* @return string|false|null null for missing password or false for expired password
 */
 function get_password() {
 	$return = get_session("pwds");
@@ -192,7 +192,7 @@ function get_password() {
 
 /** Get list of values from database
 * @param string
-* @param mixed
+* @param array-key
 * @return list<string>
 */
 function get_vals($query, $column = 0) {
@@ -305,7 +305,7 @@ function where($where, $fields = []) {
 	$conditions = [];
 
 	foreach ((array) $where["where"] as $key => $val) {
-		$key = bracket_escape($key, 1); // 1 - back
+		$key = bracket_escape($key, true);
 		$column = escape_key($key);
 		$field_type = $fields[$key]["type"] ?? null;
 
@@ -729,7 +729,7 @@ function truncate_utf8(string $string, int $length = 80): string
 }
 
 /** Format decimal number
-* @param int
+* @param float|numeric-string
 * @return string
 */
 function format_number($val) {
@@ -782,7 +782,7 @@ function fields_from_edit() {
 		}
 	}
 	foreach ((array) $_POST["fields"] as $key => $val) {
-		$name = bracket_escape($key, 1); // 1 - back
+		$name = bracket_escape($key, true);
 		$return[$name] = [
 			"field" => $name,
 			"privileges" => ["insert" => 1, "update" => 1, "where" => 1, "order" => 1],
@@ -961,7 +961,7 @@ function get_random_string(): string
 }
 
 /** Format value to use in select
-* @param string
+* @param string|string[]
 * @param string
 * @param ?array
 * @param int

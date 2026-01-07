@@ -52,7 +52,7 @@ if (isset($_GET["mysql"])) {
 					($server . $username != "" ? $username : ini_get("mysqli.default_user")),
 					($server . $username . $password != "" ? $password : ini_get("mysqli.default_pw")),
 					$database,
-					(is_numeric($port) ? $port : ini_get("mysqli.default_port")),
+					(is_numeric($port) ? (int)$port : ini_get("mysqli.default_port")),
 					(!is_numeric($port) ? $port : $socket),
 					$flags
 				);
@@ -881,6 +881,7 @@ ORDER BY ordinal_position";
 				}
 			}
 		}
+
 		return " AUTO_INCREMENT$auto_increment_index";
 	}
 
@@ -1293,8 +1294,8 @@ ORDER BY ordinal_position";
 	}
 
 	/** Kill a process
-	* @param int
-	* @return bool
+	* @param numeric-string
+	* @return Result|bool
 	*/
 	function kill_process($val) {
 		return queries("KILL " . number($val));

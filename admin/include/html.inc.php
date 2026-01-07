@@ -102,7 +102,7 @@ function icon(string $id, ?string $class = null): string
 
 /** Generate HTML checkbox
 * @param string
-* @param string
+* @param string|int
 * @param bool
 * @param string
 * @param string
@@ -342,8 +342,8 @@ function enum_input(string $attrs, array $field, $value, ?string $empty = null, 
 /** Print edit input field
 * @param array one field from fields()
 * @param mixed
-* @param string
-* @param bool
+* @param ?string
+* @param ?bool
 */
 function input($field, $value, $function, $autofocus = false): void {
 	$name = h(bracket_escape($field["field"]));

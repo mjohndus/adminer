@@ -186,7 +186,7 @@ if ($_POST) {
 			foreach ($_POST["val"] as $unique_idf => $row) {
 				$set = [];
 				foreach ($row as $key => $val) {
-					$key = bracket_escape($key, 1); // 1 - back
+					$key = bracket_escape($key, true);
 					$set[idf_escape($key)] = (preg_match('~char|text~', $fields[$key]["type"]) || $val != "" ? Admin::get()->processFieldInput($fields[$key], $val) : "NULL");
 				}
 				$result = Driver::get()->update(
@@ -368,7 +368,8 @@ if (!$columns && support("table")) {
 			foreach ($rows[0] as $key => $val) {
 				if (!isset($unselected[$key])) {
 					$select_key = key($select);
-					$val = $_GET["columns"][$select_key] ?? null;
+					/** @var array{fun?:string, col?:string} $val */
+					$val = $_GET["columns"][$select_key] ?? [];
 					$field = $fields[$select ? ($val ? $val["col"] : current($select)) : $key];
 					$name = ($field ? Admin::get()->getFieldName($field, $rank) : (isset($val["fun"]) ? "*" : h($key)));
 					if ($name != "") {
