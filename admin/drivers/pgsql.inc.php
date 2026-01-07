@@ -971,7 +971,13 @@ ORDER BY s.ordinal_position";
 		return null;
 	}
 
-	function types() {
+	/**
+	 * Returns user defined types.
+	 *
+	 * @return string[] [$id => $name]
+	 */
+	function types(): array
+	{
 		return get_key_vals("SELECT oid, typname
 FROM pg_type
 WHERE typnamespace = (SELECT oid FROM pg_namespace WHERE nspname = current_schema())
@@ -980,10 +986,15 @@ AND typelem = 0"
 		);
 	}
 
-	function type_values($id) {
+	function type_values(int $id): string
+	{
 		// to get values from type string: unnest(enum_range(NULL::"$type"))
 		$enums = get_vals("SELECT enumlabel FROM pg_enum WHERE enumtypid = $id ORDER BY enumsortorder");
-		return ($enums ? "'" . implode("', '", array_map('addslashes', $enums)) . "'" : "");
+		if (!$enums) {
+			return "";
+		}
+
+		return "'" . implode("', '", array_map('addslashes', $enums)) . "'";
 	}
 
 	function schemas(): array

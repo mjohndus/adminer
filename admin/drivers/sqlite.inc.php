@@ -812,7 +812,8 @@ if (isset($_GET["sqlite"])) {
 		return null;
 	}
 
-	function types() {
+	function types(): array
+	{
 		return [];
 	}
 

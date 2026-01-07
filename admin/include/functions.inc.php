@@ -523,17 +523,11 @@ function redirect(?string $location, ?string $message = null): void
 	}
 }
 
-/** Execute query and redirect if successful
-* @param string
-* @param string
-* @param string
-* @param bool
-* @param bool
-* @param bool
-* @param string
-* @return bool
-*/
-function query_redirect($query, $location, $message, $redirect = true, $execute = true, $failed = false, $time = "") {
+/**
+ * Executes SQL query and redirect if successful
+ */
+function query_redirect(string $query, ?string $location, string $message, bool $redirect = true, bool $execute = true, bool $failed = false, string $time = ""): bool
+{
 	if ($execute) {
 		$start = microtime(true);
 		$failed = !Connection::get()->query($query);
@@ -554,6 +548,17 @@ function query_redirect($query, $location, $message, $redirect = true, $execute 
 	return true;
 }
 
+/**
+ * Redirects by remembered queries.
+ */
+function queries_redirect(?string $location, $message, bool $redirect): bool
+{
+	$queries = implode("\n", Queries::$queries);
+	$time = format_time(Queries::$start);
+
+	return query_redirect($queries, $location, $message, $redirect, false, !$redirect, $time);
+}
+
 class Queries {
 	/** @var string[] */
 	static $queries = [];
@@ -562,11 +567,15 @@ class Queries {
 	static $start = 0.0;
 }
 
-/** Execute and remember query
-* @param string end with ';' to use DELIMITER
-* @return Result|array|bool
-*/
-function queries($query) {
+/**
+ * Executes and remembers SQL query.
+ *
+ * @param string $query Ends with ';' to use DELIMITER.
+ *
+ * @return Result|array|bool
+ */
+function queries(string $query)
+{
 	if (!Queries::$start) {
 		Queries::$start = microtime(true);
 	}
@@ -582,31 +591,24 @@ function queries($query) {
 	}
 }
 
-/** Apply command to all array items
-* @param string
-* @param list<string>
-* @param callable(string):string
-* @return bool
-*/
-function apply_queries($query, $tables, $escape = 'AdminNeo\table') {
+/**
+ * Applies SQL query to all array items (tables, views, databases, etc.).
+ *
+ * @param string $query
+ * @param list<string> $tables
+ * @param callable(string):string $escape
+ *
+ * @return bool
+ */
+function apply_queries(string $query, array $tables, $escape = 'AdminNeo\table'): bool
+{
 	foreach ($tables as $table) {
 		if (!queries("$query " . $escape($table))) {
 			return false;
 		}
 	}
-	return true;
-}
 
-/** Redirect by remembered queries
-* @param string
-* @param string
-* @param bool
-* @return bool
-*/
-function queries_redirect($location, $message, $redirect) {
-	$queries = implode("\n", Queries::$queries);
-	$time = format_time(Queries::$start);
-	return query_redirect($queries, $location, $message, $redirect, false, !$redirect, $time);
+	return true;
 }
 
 /** Format elapsed time

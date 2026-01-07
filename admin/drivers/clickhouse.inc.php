@@ -488,7 +488,8 @@ if (isset($_GET["clickhouse"])) {
 		return h(Connection::get()->getError());
 	}
 
-	function types() {
+	function types(): array
+	{
 		return [];
 	}
 
