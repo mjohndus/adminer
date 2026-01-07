@@ -110,6 +110,9 @@ function minify_css(string $file): string
 
 function minify_js(string $file): string
 {
+	// Keep only the first 'use strict'.
+	$file = preg_replace("~(.)'use strict';~s", "$1", $file);
+
 	return jsShrink($file);
 }
 
