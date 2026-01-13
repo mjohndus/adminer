@@ -67,6 +67,24 @@ function h(?string $string): string
 }
 
 /**
+ * Truncates UTF-8 string.
+ *
+ * @return string Escaped string with appended ellipsis.
+ */
+function truncate_utf8(string $string, int $length = 80): string
+{
+	if ($string == "") return "";
+
+	// ~s causes trash in $match[2] under some PHP versions, (.|\n) is slow.
+	if (!preg_match("(^(" . repeat_pattern("[\t\r\n -\x{10FFFF}]", $length) . ")($)?)u", $string, $match)) {
+		preg_match("(^(" . repeat_pattern("[\t\r\n -~]", $length) . ")($)?)", $string, $match);
+	}
+
+	// Tag <i> is required for inline editing of long texts (see strpos($val, "<i>…</i>");).
+	return h($match[1]) . (isset($match[2]) ? "" : "<i>…</i>");
+}
+
+/**
  * Returns HTML for solo icon with given ID.
  */
 function icon_solo(string $id): string
