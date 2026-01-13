@@ -611,7 +611,8 @@ WHERE OBJECT_NAME(i.object_id) = " . q($table)
 		return true; //! false negative "The database name 'test2' has been set."
 	}
 
-	function auto_increment() {
+	function auto_increment(): string
+	{
 		return " IDENTITY" . ($_POST["Auto_increment"] != "" ? "(" . number($_POST["Auto_increment"]) . ",1)" : "") . " PRIMARY KEY";
 	}
 

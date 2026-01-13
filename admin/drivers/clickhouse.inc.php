@@ -493,8 +493,9 @@ if (isset($_GET["clickhouse"])) {
 		return [];
 	}
 
-	function auto_increment() {
-		return '';
+	function auto_increment(): string
+	{
+		return "";
 	}
 
 	function last_id($result)

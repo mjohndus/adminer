@@ -620,6 +620,11 @@ if (isset($_GET["mongo"])) {
 	function fk_support($table_status) {
 	}
 
+	function auto_increment(): string
+	{
+		return "";
+	}
+
 	function alter_table($table, $name, $fields, $foreign, $comment, $engine, $collation, $auto_increment, $partitioning) {
 		if ($table == "") {
 			return (bool)Connection::get()->executeCommand(["create" => $name]);

@@ -500,7 +500,8 @@ ORDER BY ac.constraint_type, aic.column_position", $connection) as $row) {
 		return null;
 	}
 
-	function auto_increment() {
+	function auto_increment(): string
+	{
 		return "";
 	}
 

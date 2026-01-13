@@ -513,7 +513,8 @@ if (isset($_GET["sqlite"])) {
 		return @rename(DB, $name);
 	}
 
-	function auto_increment() {
+	function auto_increment(): string
+	{
 		return " PRIMARY KEY AUTOINCREMENT";
 	}
 

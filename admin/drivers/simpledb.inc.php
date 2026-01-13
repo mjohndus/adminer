@@ -475,6 +475,11 @@ if (isset($_GET["simpledb"])) {
 	function fk_support($table_status) {
 	}
 
+	function auto_increment(): string
+	{
+		return "";
+	}
+
 	function alter_table($table, $name, $fields, $foreign, $comment, $engine, $collation, $auto_increment, $partitioning) {
 		return ($table == "" && sdb_request('CreateDomain', ['DomainName' => $name]));
 	}

@@ -733,7 +733,8 @@ ORDER BY s.ordinal_position";
 		return queries("ALTER DATABASE " . idf_escape(DB) . " RENAME TO " . idf_escape($name));
 	}
 
-	function auto_increment() {
+	function auto_increment(): string
+	{
 		return "";
 	}
 

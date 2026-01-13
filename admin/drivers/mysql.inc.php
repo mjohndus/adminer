@@ -864,10 +864,11 @@ ORDER BY ordinal_position";
 		return $return;
 	}
 
-	/** Generate modifier for auto increment column
-	* @return string
-	*/
-	function auto_increment() {
+	/**
+	 * Generates modifier for auto increment column.
+	 */
+	function auto_increment(): string
+	{
 		$auto_increment_index = " PRIMARY KEY";
 		// don't overwrite primary key by auto_increment
 		if ($_GET["create"] != "" && $_POST["auto_increment_col"]) {

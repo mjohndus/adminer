@@ -551,7 +551,7 @@ function query_redirect(string $query, ?string $location, string $message, bool 
 /**
  * Redirects by remembered queries.
  */
-function queries_redirect(?string $location, $message, bool $redirect): bool
+function queries_redirect(?string $location, string $message, bool $redirect): bool
 {
 	$queries = implode("\n", Queries::$queries);
 	$time = format_time(Queries::$start);
@@ -912,7 +912,8 @@ function unlock_file($file)
  *
  * @return mixed|false The value of the first array element, or false if the array is empty.
  */
-function first(array $array) {
+function first(array $array)
+{
 	// reset(f()) triggers a notice
 	return reset($array);
 }
@@ -920,11 +921,10 @@ function first(array $array) {
 /**
  * Reads password from file adminneo.key in temporary directory or create one.
  *
- * @param $create bool
  * @return string|false Returns false if the file can not be created.
  * @throws Exception
  */
-function get_private_key($create)
+function get_private_key(bool $create)
 {
 	$filename = get_temp_dir() . "/adminneo.key";
 
@@ -994,11 +994,13 @@ function select_value($val, $link, $field, $text_length) {
 	return Admin::get()->formatSelectionValue($return, $link, $field, $val);
 }
 
-/** Check whether the string is e-mail address
-* @param string
-* @return bool
-*/
-function is_mail($value) {
+/**
+ * Checks whether the string is e-mail address.
+ *
+ * @param mixed $value
+ */
+function is_mail($value): bool
+{
 	return is_string($value) && filter_var($value, FILTER_VALIDATE_EMAIL);
 }
 
