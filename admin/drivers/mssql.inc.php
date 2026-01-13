@@ -351,13 +351,13 @@ if (isset($_GET["mssql"])) {
 
 			$this->onActions = ["CASCADE", "SET NULL", "SET DEFAULT", "NO ACTION"];
 
+			$this->insertFunctions = [
+				"date|time" => "getdate"
+			];
+
 			$this->editFunctions = [
-				[
-					"date|time" => "getdate",
-				], [
-					"int|decimal|real|float|money|datetime" => "+/-",
-					"char|text" => "+",
-				]
+				"int|decimal|real|float|money|datetime" => "+/-",
+				"char|text" => "+",
 			];
 
 			$this->systemDatabases = ["INFORMATION_SCHEMA", "guest", "sys", "db_*"];

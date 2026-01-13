@@ -256,15 +256,16 @@ if (isset($_GET["oracle"])) {
 				"count", "count distinct",
 			];
 
+			//! no parentheses
+			$this->insertFunctions = [
+				"date" => "current_date",
+				"timestamp" => "current_timestamp",
+			];
+
 			$this->editFunctions = [
-				[ //! no parentheses
-					"date" => "current_date",
-					"timestamp" => "current_timestamp",
-				], [
-					"number|float|double" => "+/-",
-					"date|timestamp" => "+ interval/- interval",
-					"char|clob" => "||",
-				]
+				"number|float|double" => "+/-",
+				"date|timestamp" => "+ interval/- interval",
+				"char|clob" => "||",
 			];
 		}
 

@@ -197,14 +197,14 @@ if (isset($_GET["sqlite"])) {
 				"group_concat",
 			];
 
+			$this->insertFunctions = [
+				// "text" => "date('now')/time('now')/datetime('now')",
+			];
+
 			$this->editFunctions = [
-				[
-					// "text" => "date('now')/time('now')/datetime('now')",
-				], [
-					"integer|real|numeric" => "+/-",
-					// "text" => "date/time/datetime",
-					"text" => "||",
-				]
+				"integer|real|numeric" => "+/-",
+				// "text" => "date/time/datetime",
+				"text" => "||",
 			];
 		}
 

@@ -791,7 +791,7 @@ class Admin extends Origin
 		$return = ($field["null"] ? "NULL/" : "");
 		$update = isset($_GET["select"]) || where($_GET);
 
-		foreach (Driver::get()->getEditFunctions() as $key => $functions) {
+		foreach ([Driver::get()->getInsertFunctions(), Driver::get()->getEditFunctions()] as $key => $functions) {
 			if (!$key || (!isset($_GET["call"]) && $update)) { // relative functions
 				foreach ($functions as $pattern => $val) {
 					if (!$pattern || preg_match("~$pattern~", $field["type"])) {
@@ -800,7 +800,7 @@ class Admin extends Origin
 				}
 			}
 
-			if ($key && !preg_match('~enum|set|blob|bytea|raw|file|bool~', $field["type"])) {
+			if ($key && $functions && !preg_match('~enum|set|blob|bytea|raw|file|bool~', $field["type"])) {
 				$return .= "/SQL";
 			}
 		}

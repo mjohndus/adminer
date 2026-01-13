@@ -201,7 +201,7 @@ if (isset($_GET["simpledb"])) {
 				"count",
 			];
 
-			$this->editFunctions = [["json"]];
+			$this->insertFunctions = ["json"];
 		}
 
 		private function chunkRequest($ids, $action, $params, $expand = []) {

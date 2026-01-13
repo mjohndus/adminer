@@ -344,15 +344,15 @@ if (isset($_GET["pgsql"])) {
 				"count", "count distinct",
 			];
 
+			$this->insertFunctions = [
+				"char" => "md5",
+				"date|time" => "now",
+			];
+
 			$this->editFunctions = [
-				[
-					"char" => "md5",
-					"date|time" => "now",
-				], [
-					number_type() => "+/-",
-					"date|time" => "+ interval/- interval", //! escape
-					"char|text" => "||",
-				]
+				number_type() => "+/-",
+				"date|time" => "+ interval/- interval", //! escape
+				"char|text" => "||",
 			];
 
 			$this->systemDatabases = ["template1"];

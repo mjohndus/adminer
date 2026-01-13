@@ -302,17 +302,17 @@ if (isset($_GET["mysql"])) {
 				"group_concat",
 			];
 
+			$this->insertFunctions = [
+				"char" => "md5/sha1/password/encrypt/uuid",
+				"binary" => "md5/sha1",
+				"date|time" => "now",
+			];
+
 			$this->editFunctions = [
-				[
-					"char" => "md5/sha1/password/encrypt/uuid",
-					"binary" => "md5/sha1",
-					"date|time" => "now",
-				], [
-					number_type() => "+/-",
-					"date" => "+ interval/- interval",
-					"time" => "addtime/subtime",
-					"char|text" => "concat",
-				]
+				number_type() => "+/-",
+				"date" => "+ interval/- interval",
+				"time" => "addtime/subtime",
+				"char|text" => "concat",
 			];
 
 			if ($connection->isMinVersion($maria ? "10.2" : "5.7.8")) {
@@ -322,12 +322,12 @@ if (isset($_GET["mysql"])) {
 			// UUID data type for Mariadb >= 10.7
 			if ($maria && $connection->isMinVersion("10.7")) {
 				$this->types[lang('Strings')]["uuid"] = 128;
-				$this->editFunctions[0]['uuid'] = 'uuid';
+				$this->insertFunctions['uuid'] = 'uuid';
 			}
 
 			if ($connection->isMinVersion("9")) {
 				$this->types[lang('Numbers')]["vector"] = 16383;
-				$this->editFunctions[0]['vector'] = 'string_to_vector';
+				$this->insertFunctions['vector'] = 'string_to_vector';
 			}
 
 			$this->systemDatabases = ["mysql", "information_schema", "performance_schema", "sys"];

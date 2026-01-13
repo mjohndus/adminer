@@ -42,7 +42,10 @@ abstract class Driver
 	/** @var list<string> List of actions used within the foreign keys. */
 	protected $onActions = ["RESTRICT", "CASCADE", "SET NULL", "SET DEFAULT", "NO ACTION"];
 
-	/** @var list<string[]> Array of ["$type|$type2" => "$function/$function2"] functions used in editing, [0] - edit and insert, [1] - edit only */
+	/** @var string[] ["$type|$type2" => "$function/$function2"] Functions used in edit and insert. **/
+	protected $insertFunctions = [];
+
+	/** @var string[] ["$type|$type2" => "$function/$function2"] Functions used in edit only. **/
 	protected $editFunctions = [];
 
 	/** @var list<string> Array of internal system databases. */
@@ -183,7 +186,15 @@ abstract class Driver
 	}
 
 	/**
-	 * @return string[][]
+	 * @return string[]
+	 */
+	public function getInsertFunctions(): array
+	{
+		return $this->insertFunctions;
+	}
+
+	/**
+	 * @return string[]
 	 */
 	public function getEditFunctions(): array
 	{

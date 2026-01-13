@@ -187,7 +187,7 @@ if (isset($_GET["elastic"])) {
 			$this->likeOperator = "should(match)";
 			$this->regexpOperator = "should(regexp)";
 
-			$this->editFunctions = [["json"]];
+			$this->insertFunctions = ["json"];
 		}
 
 		public function select(string $table, array $select, array $where, array $group, array $order = [], ?int $limit = 1, int $page = 0, bool $print = false)
