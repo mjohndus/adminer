@@ -187,7 +187,7 @@ if ($_POST) {
 										}
 
 										$limit = $_POST["limit"];
-										$orgtables = select($result, $connection2, [], $limit);
+										$orgtables = print_select_result($result, $connection2, [], $limit);
 
 										if (!$_POST["only_errors"]) {
 											echo "<p class='links'>";
@@ -233,7 +233,7 @@ if ($_POST) {
 
 									if ($explain) {
 										echo "<div id='$explain_id' class='hidden explain'>\n";
-										select($explain, $connection2, $orgtables);
+										print_select_result($explain, $connection2, $orgtables);
 										echo "</div>\n";
 									}
 

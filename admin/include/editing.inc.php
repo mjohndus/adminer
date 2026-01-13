@@ -3,16 +3,16 @@
 
 namespace AdminNeo;
 
-/** Print select result
-*
-* @param Result
-* @param ?Connection connection to examine indexes
-* @param string[]
-* @param int
-*
-* @return string[] $orgtables
-*/
-function select(Result $result, ?Connection $connection = null, $orgtables = [], $limit = 0) {
+/**
+ * Prints select result.
+ *
+ * @param ?Connection $connection Connection to examine indexes.
+ * @param string[] $orgtables
+ *
+ * @return string[] orgtables
+ */
+function print_select_result(Result $result, ?Connection $connection = null, array $orgtables = [], int $limit = 0): array
+{
 	$links = []; // colno => orgtable - create links from these columns
 	$indexes = []; // orgtable => array(column => colno) - primary keys
 	$columns = []; // orgtable => array(column => ) - not selected columns in primary key
@@ -25,6 +25,7 @@ function select(Result $result, ?Connection $connection = null, $orgtables = [],
 			echo "<div class='scrollable'>\n";
 			echo "<table class='nowrap'>\n";
 			echo "<thead><tr>";
+
 			for ($j=0; $j < count($row); $j++) {
 				$field = $result->fetchField();
 				if (!$field) {
@@ -35,14 +36,16 @@ function select(Result $result, ?Connection $connection = null, $orgtables = [],
 				$name = $field->name;
 				$orgtable = $field->orgtable ?? "";
 				$orgname = $field->orgname ?? $name;
+
 				if (isset($field->table)) {
 					$return[$field->table] = $orgtable;
 				}
+
 				if ($orgtables && DIALECT == "sql") { // MySQL EXPLAIN
 					$links[$j] = ($name == "table" ? "table=" : ($name == "possible_keys" ? "indexes=" : null));
 				} elseif ($orgtable != "") {
 					if (!isset($indexes[$orgtable])) {
-						// find primary key in each table
+						// Find primary key in each table.
 						$indexes[$orgtable] = [];
 						foreach (indexes($orgtable, $connection) as $index) {
 							if ($index["type"] == "PRIMARY") {
@@ -52,16 +55,20 @@ function select(Result $result, ?Connection $connection = null, $orgtables = [],
 						}
 						$columns[$orgtable] = $indexes[$orgtable];
 					}
+
 					if (isset($columns[$orgtable][$orgname])) {
 						unset($columns[$orgtable][$orgname]);
 						$indexes[$orgtable][$orgname] = $j;
 						$links[$j] = $orgtable;
 					}
 				}
+
 				if ($field->charsetnr == 63) { // 63 - binary
 					$blobs[$j] = true;
 				}
+
 				$types[$j] = $field->type;
+
 				echo "<th" . ($orgtable != "" || $field->name != $orgname ? " title='" . h(($orgtable != "" ? "$orgtable." : "") . $orgname) . "'" : "") . ">" . h($name)
 					. ($orgtables ? doc_link([
 						'sql' => "explain-output.html#explain_" . strtolower($name),
@@ -69,8 +76,10 @@ function select(Result $result, ?Connection $connection = null, $orgtables = [],
 					]) : "")
 				;
 			}
+
 			echo "</thead>\n";
 		}
+
 		echo "<tr>";
 		foreach ($row as $key => $val) {
 			$link = "";
@@ -87,6 +96,7 @@ function select(Result $result, ?Connection $connection = null, $orgtables = [],
 			} elseif (is_web_url($val)) {
 				$link = $val;
 			}
+
 			if ($val === null) {
 				$val = "<i>NULL</i>";
 			} elseif ($blobs[$key] && !is_utf8($val)) {
@@ -97,15 +107,25 @@ function select(Result $result, ?Connection $connection = null, $orgtables = [],
 					$val = "<code>$val</code>";
 				}
 			}
+
 			if ($link) {
 				$val = "<a href='" . h($link) . "'" . (is_web_url($link) ? target_blank() : '') . ">$val</a>";
 			}
+
 			// https://dev.mysql.com/doc/dev/mysql-server/latest/field__types_8h.html
 			$class = $types[$key] <= 9 || $types[$key] == 246 ? "class='number'" : "";
+
 			echo "<td $class>$val</td>";
 		}
 	}
-	echo ($i ? "</table>\n</div>" : "<p class='message'>" . lang('No rows.')) . "\n";
+
+	if ($i) {
+		echo "</table>\n</div>";
+	} else {
+		echo "<p class='message'>" . lang('No rows.');
+	}
+	echo "\n";
+
 	return $return;
 }
 
