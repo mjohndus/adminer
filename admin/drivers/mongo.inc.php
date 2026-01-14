@@ -227,7 +227,7 @@ if (isset($_GET["mongo"])) {
 			$this->systemDatabases = ["admin", "config", "local"];
 		}
 
-		public function select(string $table, array $select, array $where, array $group, array $order = [], ?int $limit = 1, int $page = 0, bool $print = false)
+		public function select(string $table, array $select, array $where, array $group, array $order = [], int $limit = 1, int $page = 0, bool $print = false)
 		{
 			$select = ($select == ["*"]
 				? []
@@ -244,7 +244,7 @@ if (isset($_GET["mongo"])) {
 				$sort[$val] = ($count ? -1 : 1);
 			}
 
-			$limit = min(200, max(1, (int) $limit));
+			$limit = min(200, max(1, $limit));
 			$skip = $page * $limit;
 
 			$query = new Query($where, ['projection' => $select, 'limit' => $limit, 'skip' => $skip, 'sort' => $sort]);

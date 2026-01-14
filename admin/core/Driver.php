@@ -233,20 +233,20 @@ abstract class Driver
 	 * @param list<string> $where The result of Admin::get()->processSelectionSearch().
 	 * @param list<string> $group The result of Admin::get()->processSelectionColumns()[1].
 	 * @param list<string> $order The result of Admin::get()->processSelectionOrder().
-	 * @param ?int $limit The result of Admin::get()->processSelectionLimit().
+	 * @param int $limit The result of Admin::get()->processSelectionLimit().
 	 * @param int $page Index of page starting at zero.
 	 * @param bool $print Whether to print the query.
 	 *
 	 * @return Result|false
 	 */
-	public function select(string $table, array $select, array $where, array $group, array $order = [], ?int $limit = 1, int $page = 0, bool $print = false)
+	public function select(string $table, array $select, array $where, array $group, array $order = [], int $limit = 1, int $page = 0, bool $print = false)
 	{
 		$is_group = (count($group) < count($select));
 
 		$query = "SELECT" . limit(
-			($_GET["page"] != "last" && $limit !== null && $group && $is_group && DIALECT == "sql" ? "SQL_CALC_FOUND_ROWS " : "") . implode(", ", $select) . "\nFROM " . table($table),
+			($_GET["page"] != "last" && $limit && $group && $is_group && DIALECT == "sql" ? "SQL_CALC_FOUND_ROWS " : "") . implode(", ", $select) . "\nFROM " . table($table),
 			($where ? "\nWHERE " . implode(" AND ", $where) : "") . ($group && $is_group ? "\nGROUP BY " . implode(", ", $group) : "") . ($order ? "\nORDER BY " . implode(", ", $order) : ""),
-			($limit !== null ? +$limit : null),
+			$limit,
 			($page ? $limit * $page : 0),
 			"\n"
 		);

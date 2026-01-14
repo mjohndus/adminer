@@ -233,11 +233,12 @@ if (isset($_GET["simpledb"])) {
 			return $return;
 		}
 
-		public function select(string $table, array $select, array $where, array $group, array $order = [], ?int $limit = 1, int $page = 0, bool $print = false)
+		public function select(string $table, array $select, array $where, array $group, array $order = [], int $limit = 1, int $page = 0, bool $print = false)
 		{
 			Connection::get()->next = $_GET["next"];
 			$return = parent::select($table, $select, $where, $group, $order, $limit, $page, $print);
 			Connection::get()->next = 0;
+
 			return $return;
 		}
 
@@ -463,8 +464,8 @@ if (isset($_GET["simpledb"])) {
 		return "`" . str_replace("`", "``", $idf) . "`";
 	}
 
-	function limit($query, $where, ?int $limit, $offset = 0, $separator = " ") {
-		return " $query$where" . ($limit !== null ? $separator . "LIMIT $limit" : "");
+	function limit($query, $where, int $limit, $offset = 0, $separator = " ") {
+		return " $query$where" . ($limit ? $separator . "LIMIT $limit" : "");
 	}
 
 	function unconvert_field(array $field, string $return): string

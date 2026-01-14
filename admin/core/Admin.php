@@ -607,10 +607,10 @@ class Admin extends Origin
 	/**
 	 * Prints limit box in selection filter.
 	 */
-	public function printSelectionLimit(?int $limit): void
+	public function printSelectionLimit(int $limit): void
 	{
 		echo "<fieldset><legend>" . lang('Limit') . "</legend><div class='fieldset-content'>";
-		echo "<input type='number' name='limit' class='input size' value='" . h($limit) . "'>";
+		echo "<input type='number' name='limit' class='input size' value='$limit'>";
 		echo script("qsl('input').oninput = selectFieldChange;", "");
 		echo "</div></fieldset>\n";
 	}

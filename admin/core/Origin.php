@@ -593,7 +593,7 @@ abstract class Origin extends Plugin
 
 	public abstract function printSelectionOrder(array $order, array $columns, array $indexes): void;
 
-	public abstract function printSelectionLimit(?int $limit): void;
+	public abstract function printSelectionLimit(int $limit): void;
 
 	public abstract function printSelectionLength(?string $textLength): void;
 
@@ -611,17 +611,15 @@ abstract class Origin extends Plugin
 	public abstract function processSelectionOrder(array $fields, array $indexes): array;
 
 	/**
-	 * Processed limit box in select.
-	 *
-	 * @return ?int Expression to use in LIMIT, will be escaped.
+	 * Returns selected value of limit box.
 	 */
-	public function processSelectionLimit(): ?int
+	public function processSelectionLimit(): int
 	{
 		if (!isset($_GET["limit"])) {
 			return $this->settings->getRecordsPerPage();
 		}
 
-		return $_GET["limit"] != "" ? (int)$_GET["limit"] : null;
+		return $_GET["limit"] != "" ? (int)$_GET["limit"] : 0;
 	}
 
 	public abstract function processSelectionLength(): string;

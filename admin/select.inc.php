@@ -339,7 +339,7 @@ if (!$columns && support("table")) {
 		}
 
 		// use count($rows) without LIMIT, COUNT(*) without grouping, FOUND_ROWS otherwise (slowest)
-		if ($_GET["page"] != "last" && $limit !== null && $group && $is_group && DIALECT == "sql") {
+		if ($_GET["page"] != "last" && $limit && $group && $is_group && DIALECT == "sql") {
 			$found_rows = Connection::get()->getValue(" SELECT FOUND_ROWS()"); // space to allow mysql.trace_mode
 		}
 
@@ -536,7 +536,7 @@ if (!$columns && support("table")) {
 				$found_rows = null;
 
 				if ($_GET["page"] != "last") {
-					if ($limit == "" || (count($rows) < $limit && ($rows || !$page))) {
+					if (!$limit || (count($rows) < $limit && ($rows || !$page))) {
 						$found_rows = ($page ? $page * $limit : 0) + count($rows);
 					} elseif (DIALECT != "sql" || !$is_group) {
 						$found_rows = ($is_group ? false : found_rows($table_status, $where));
@@ -554,7 +554,7 @@ if (!$columns && support("table")) {
 					if (($found_rows === false ? count($rows) + 1 : $found_rows - $page * $limit) > $limit) {
 						echo '<p class="links">',
 							'<a href="', h(remove_from_uri("page") . "&page=" . ($page + 1)), '" class="loadmore">', icon("expand"), lang('Load more data'), '</a>',
-							script("qsl('a').onclick = partial(loadNextPage, " . (+$limit) . ", '" . lang('Loading') . "…');", "");
+							script("qsl('a').onclick = partial(loadNextPage, $limit, '" . lang('Loading') . "…');", "");
 					}
 					echo "\n";
 				}

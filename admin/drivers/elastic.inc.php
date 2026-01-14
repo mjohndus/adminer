@@ -190,7 +190,7 @@ if (isset($_GET["elastic"])) {
 			$this->insertFunctions = ["json"];
 		}
 
-		public function select(string $table, array $select, array $where, array $group, array $order = [], ?int $limit = 1, int $page = 0, bool $print = false)
+		public function select(string $table, array $select, array $where, array $group, array $order = [], int $limit = 1, int $page = 0, bool $print = false)
 		{
 			$data = [];
 			if ($select != ["*"]) {
@@ -206,8 +206,8 @@ if (isset($_GET["elastic"])) {
 				$data["sort"] = $sort;
 			}
 
-			if ($limit !== null) {
-				$data["size"] = +$limit;
+			if ($limit) {
+				$data["size"] = $limit;
 				if ($page) {
 					$data["from"] = ($page * $limit);
 				}
@@ -423,8 +423,8 @@ if (isset($_GET["elastic"])) {
 		return [ELASTIC_DB_NAME];
 	}
 
-	function limit($query, $where, ?int $limit, $offset = 0, $separator = " ") {
-		return " $query$where" . ($limit !== null ? $separator . "LIMIT $limit" . ($offset ? " OFFSET $offset" : "") : "");
+	function limit($query, $where, int $limit, $offset = 0, $separator = " ") {
+		return " $query$where" . ($limit ? $separator . "LIMIT $limit" . ($offset ? " OFFSET $offset" : "") : "");
 	}
 
 	function collations() {

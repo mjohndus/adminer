@@ -470,8 +470,8 @@ if (isset($_GET["mssql"])) {
 		return get_vals("SELECT name FROM sys.databases WHERE name NOT IN ('master', 'tempdb', 'model', 'msdb') ORDER BY name");
 	}
 
-	function limit($query, $where, ?int $limit, $offset = 0, $separator = " ") {
-		return ($limit !== null ? " TOP (" . ($limit + $offset) . ")" : "") . " $query$where"; // seek later
+	function limit($query, $where, int $limit, $offset = 0, $separator = " ") {
+		return ($limit ? " TOP (" . ($limit + $offset) . ")" : "") . " $query$where"; // seek later
 	}
 
 	function limit1($table, $query, $where, $separator = "\n") {

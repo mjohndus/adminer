@@ -376,8 +376,8 @@ if (isset($_GET["clickhouse"])) {
 		return $databases;
 	}
 
-	function limit($query, $where, ?int $limit, $offset = 0, $separator = " ") {
-		return " $query$where" . ($limit !== null ? $separator . "LIMIT $limit" . ($offset ? ", $offset" : "") : "");
+	function limit($query, $where, int $limit, $offset = 0, $separator = " ") {
+		return " $query$where" . ($limit ? $separator . "LIMIT $limit" . ($offset ? ", $offset" : "") : "");
 	}
 
 	function limit1($table, $query, $where, $separator = "\n") {

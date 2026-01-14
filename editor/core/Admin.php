@@ -285,7 +285,7 @@ class Admin extends Origin
 		}
 	}
 
-	public function printSelectionLimit(?int $limit): void
+	public function printSelectionLimit(int $limit): void
 	{
 		echo "<fieldset><legend>" . lang('Limit') . "</legend><div class='fieldset-content'>";
 		echo html_select("limit", ["", "20", "30", "50", "70", "100"], (string)$limit);
