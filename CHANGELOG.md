@@ -19,6 +19,8 @@ AdminNeo 5.3.0
 - Fix importing of tables without primary key (by @vrana, regression from 5.1.0)
 - Fix search anywhere for columns that needs value conversion (by @vrana)
 
+(Ported relevant changes from Adminer 5.1.1.)
+
 AdminNeo 5.2.1 (2025-12-07)
 ---------------------------
 
