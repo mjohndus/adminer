@@ -77,7 +77,7 @@ if (isset($_GET["mssql"])) {
 
 			public function selectDatabase(string $name): bool
 			{
-				return $this->query(use_sql($name));
+				return (bool)$this->query(use_sql($name));
 			}
 
 			function query(string $query, bool $unbuffered = false)
