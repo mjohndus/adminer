@@ -464,12 +464,8 @@ class Admin extends Origin
 		return $hint;
 	}
 
-	public function processFieldInput(?array $field, string $value, string $function = ""): string
+	public function processFieldInput(array $field, string $value, string $function = ""): string
 	{
-		if (!$field) {
-			return q($value);
-		}
-
 		if ($function == "now") {
 			return "$function()";
 		}

@@ -833,17 +833,14 @@ class Admin extends Origin
 	/**
 	 * Processes sent input.
 	 *
-	 * @param ?array $field Single field from fields().
+	 * @param array $field Single field from fields().
 	 *
 	 * @return string Expression to use in a query.
 	 */
-	public function processFieldInput(?array $field, string $value, string $function = ""): string
+	public function processFieldInput(array $field, string $value, string $function = ""): string
 	{
 		if ($function == "SQL") {
 			return $value; //! SQL injection
-		}
-		if (!$field) {
-			return q($value);
 		}
 
 		if (isset($field["type"])) {
