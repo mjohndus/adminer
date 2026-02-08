@@ -55,24 +55,20 @@ function number_type() {
 	return '((?<!o)int(?!er)|numeric|real|float|double|decimal|money)'; // not point, not interval
 }
 
-/** Disable magic_quotes_gpc, modified in place
-* @param list<array> e.g. [&$_GET, &$_POST, &$_COOKIE]
-* @param bool whether to leave values as is
+/** Disable magic_quotes_gpc
+* @param mixed[] $values
+* @param bool $filter whether to leave values as is
+* @return mixed[]
 */
-function remove_slashes($process, $filter = false): void {
-	if (function_exists("get_magic_quotes_gpc") && get_magic_quotes_gpc()) {
-		foreach ($process as $key => $val) {
-			foreach ($val as $k => $v) {
-				unset($process[$key][$k]);
-				if (is_array($v)) {
-					$process[$key][stripslashes($k)] = $v;
-					$process[] = &$process[$key][stripslashes($k)];
-				} else {
-					$process[$key][stripslashes($k)] = ($filter ? $v : stripslashes($v));
-				}
-			}
-		}
+function remove_slashes(array $values, bool $filter = false): array {
+	$return = [];
+	foreach ($values as $key => $val) {
+		$return[stripslashes($key)] = (is_array($val)
+			? remove_slashes($val, $filter)
+			: ($filter ? $val : stripslashes($val))
+		);
 	}
+	return $return;
 }
 
 /** Escape or unescape string to use inside form []

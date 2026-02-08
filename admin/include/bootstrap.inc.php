@@ -75,7 +75,11 @@ if (!defined("SID")) {
 
 // Disable magic quotes to be able to use database escaping function.
 // get_magic_quotes_gpc() is supported up to PHP 7.3
-remove_slashes([&$_GET, &$_POST, &$_COOKIE], $filter);
+if (function_exists("get_magic_quotes_gpc") && get_magic_quotes_gpc()) {
+	$_GET = remove_slashes($_GET, $filter);
+	$_POST = remove_slashes($_POST, $filter);
+	$_COOKIE = remove_slashes($_COOKIE, $filter);
+}
 
 @set_time_limit(0); // @ - can be disabled
 @ini_set("precision", "15"); // @ - can be disabled, 15 - internal PHP precision
