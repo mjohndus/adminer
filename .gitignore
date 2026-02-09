@@ -1,11 +1,10 @@
-/**/compiled/*
 /**/adminneo.css
 /**/adminneo-light.css
 /**/adminneo-dark.css
 /**/adminneo.js
 /**/adminneo-config.php
 /**/adminneo-plugins.php
-/export
+/compiled
 /externals
 vendor/composer
 vendor/autoload.php
