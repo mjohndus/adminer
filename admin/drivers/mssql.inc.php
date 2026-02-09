@@ -595,15 +595,18 @@ WHERE OBJECT_NAME(i.object_id) = " . q($table)
 		return nl2br(h(preg_replace('~^(\[[^]]*])+~m', '', Connection::get()->getError())));
 	}
 
-	function create_database($db, $collation) {
-		return queries("CREATE DATABASE " . idf_escape($db) . (preg_match('~^[a-z0-9_]+$~i', $collation) ? " COLLATE $collation" : ""));
+	function create_database($db, $collation): bool
+	{
+		return (bool)queries("CREATE DATABASE " . idf_escape($db) . (preg_match('~^[a-z0-9_]+$~i', $collation) ? " COLLATE $collation" : ""));
 	}
 
-	function drop_databases($databases) {
-		return queries("DROP DATABASE " . implode(", ", array_map('AdminNeo\idf_escape', $databases)));
+	function drop_databases($databases): bool
+	{
+		return (bool)queries("DROP DATABASE " . implode(", ", array_map('AdminNeo\idf_escape', $databases)));
 	}
 
-	function rename_database($name, $collation) {
+	function rename_database($name, $collation): bool
+	{
 		if (preg_match('~^[a-z0-9_]+$~i', $collation)) {
 			queries("ALTER DATABASE " . idf_escape(DB) . " COLLATE $collation");
 		}
@@ -616,7 +619,8 @@ WHERE OBJECT_NAME(i.object_id) = " . q($table)
 		return " IDENTITY" . ($_POST["Auto_increment"] != "" ? "(" . number($_POST["Auto_increment"]) . ",1)" : "") . " PRIMARY KEY";
 	}
 
-	function alter_table($table, $name, $fields, $foreign, $comment, $engine, $collation, $auto_increment, $partitioning) {
+	function alter_table($table, $name, $fields, $foreign, $comment, $engine, $collation, $auto_increment, $partitioning): bool
+	{
 		$alter = [];
 		$comments = [];
 		$orig_fields = fields($table);
@@ -655,7 +659,7 @@ WHERE OBJECT_NAME(i.object_id) = " . q($table)
 			}
 		}
 		if ($table == "") {
-			return queries("CREATE TABLE " . table($name) . " (" . implode(",", (array) $alter["ADD"]) . "\n)");
+			return (bool)queries("CREATE TABLE " . table($name) . " (" . implode(",", (array) $alter["ADD"]) . "\n)");
 		}
 		if ($table != $name) {
 			queries("EXEC sp_rename " . q(table($table)) . ", " . q($name));
@@ -676,7 +680,8 @@ WHERE OBJECT_NAME(i.object_id) = " . q($table)
 		return true;
 	}
 
-	function alter_indexes($table, $alter) {
+	function alter_indexes($table, $alter): bool
+	{
 		$index = [];
 		$drop = [];
 		foreach ($alter as $val) {
@@ -736,19 +741,23 @@ ORDER BY table_schema, table_name";
 		return get_rows($query, null, "");
 	}
 
-	function truncate_tables($tables) {
+	function truncate_tables($tables): bool
+	{
 		return apply_queries("TRUNCATE TABLE", $tables);
 	}
 
-	function drop_views($views) {
-		return queries("DROP VIEW " . implode(", ", array_map('AdminNeo\table', $views)));
+	function drop_views($views): bool
+	{
+		return (bool)queries("DROP VIEW " . implode(", ", array_map('AdminNeo\table', $views)));
 	}
 
-	function drop_tables($tables) {
-		return queries("DROP TABLE " . implode(", ", array_map('AdminNeo\table', $tables)));
+	function drop_tables($tables): bool
+	{
+		return (bool)queries("DROP TABLE " . implode(", ", array_map('AdminNeo\table', $tables)));
 	}
 
-	function move_tables($tables, $views, $target) {
+	function move_tables($tables, $views, $target): bool
+	{
 		return apply_queries("ALTER SCHEMA " . idf_escape($target) . " TRANSFER", array_merge($tables, $views));
 	}
 

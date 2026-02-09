@@ -343,7 +343,8 @@ if (isset($_GET["mongo"])) {
 		return $collections;
 	}
 
-	function drop_databases($databases) {
+	function drop_databases($databases): bool
+	{
 		return false;
 	}
 
@@ -507,7 +508,8 @@ if (isset($_GET["mongo"])) {
 		return $return;
 	}
 
-	function create_database($db, $collation) {
+	function create_database($db, $collation): bool
+	{
 		return true;
 	}
 
@@ -550,7 +552,8 @@ if (isset($_GET["mongo"])) {
 		return $connection;
 	}
 
-	function alter_indexes($table, $alter) {
+	function alter_indexes($table, $alter): bool
+	{
 		foreach ($alter as $val) {
 			list($type, $name, $set) = $val;
 
@@ -625,7 +628,8 @@ if (isset($_GET["mongo"])) {
 		return "";
 	}
 
-	function alter_table($table, $name, $fields, $foreign, $comment, $engine, $collation, $auto_increment, $partitioning) {
+	function alter_table($table, $name, $fields, $foreign, $comment, $engine, $collation, $auto_increment, $partitioning): bool
+	{
 		if ($table == "") {
 			return (bool)Connection::get()->executeCommand(["create" => $name]);
 		}
@@ -633,7 +637,8 @@ if (isset($_GET["mongo"])) {
 		return false;
 	}
 
-	function drop_tables($tables) {
+	function drop_tables($tables): bool
+	{
 		foreach ($tables as $name) {
 			if (!Connection::get()->executeCommand(["drop" => $name])) {
 				return false;
@@ -643,7 +648,8 @@ if (isset($_GET["mongo"])) {
 		return true;
 	}
 
-	function truncate_tables($tables) {
+	function truncate_tables($tables): bool
+	{
 		foreach ($tables as $name) {
 			$command = [
 				"delete" => $name,

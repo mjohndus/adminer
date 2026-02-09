@@ -824,17 +824,19 @@ ORDER BY ordinal_position";
 	/** Create database
 	* @param string
 	* @param string
-	* @return string
+	* @return bool
 	*/
-	function create_database($db, $collation) {
-		return queries("CREATE DATABASE " . idf_escape($db) . ($collation ? " COLLATE " . q($collation) : ""));
+	function create_database($db, $collation): bool
+	{
+		return (bool)queries("CREATE DATABASE " . idf_escape($db) . ($collation ? " COLLATE " . q($collation) : ""));
 	}
 
 	/** Drop databases
 	* @param list<string>
 	* @return bool
 	*/
-	function drop_databases($databases) {
+	function drop_databases($databases): bool
+	{
 		$return = apply_queries("DROP DATABASE", $databases, 'AdminNeo\idf_escape');
 		restart_session();
 		set_session("dbs", null);
@@ -846,7 +848,8 @@ ORDER BY ordinal_position";
 	* @param string
 	* @return bool
 	*/
-	function rename_database($name, $collation) {
+	function rename_database($name, $collation): bool
+	{
 		$return = false;
 		if (create_database($name, $collation)) {
 			$tables = [];
@@ -898,7 +901,8 @@ ORDER BY ordinal_position";
 	* @param string
 	* @return bool
 	*/
-	function alter_table($table, $name, $fields, $foreign, $comment, $engine, $collation, $auto_increment, $partitioning) {
+	function alter_table($table, $name, $fields, $foreign, $comment, $engine, $collation, $auto_increment, $partitioning): bool
+	{
 		$alter = [];
 		foreach ($fields as $field) {
 			if ($field[1]) {
@@ -920,7 +924,7 @@ ORDER BY ordinal_position";
 			. ($auto_increment != "" ? " AUTO_INCREMENT=$auto_increment" : "")
 		;
 		if ($table == "") {
-			return queries("CREATE TABLE " . table($name) . " (\n" . implode(",\n", $alter) . "\n)$status$partitioning");
+			return (bool)queries("CREATE TABLE " . table($name) . " (\n" . implode(",\n", $alter) . "\n)$status$partitioning");
 		}
 		if ($table != $name) {
 			$alter[] = "RENAME TO " . table($name);
@@ -928,7 +932,7 @@ ORDER BY ordinal_position";
 		if ($status) {
 			$alter[] = ltrim($status);
 		}
-		return ($alter || $partitioning ? queries("ALTER TABLE " . table($table) . "\n" . implode(",\n", $alter) . $partitioning) : true);
+		return !($alter || $partitioning) || queries("ALTER TABLE " . table($table) . "\n" . implode(",\n", $alter) . $partitioning);
 	}
 
 	/** Run commands to alter indexes
@@ -936,7 +940,8 @@ ORDER BY ordinal_position";
 	* @param list<array{string, string, 'DROP'|list<string>}> of ["index type", "name", ["column definition", ...]] or ["index type", "name", "DROP"]
 	* @return bool
 	*/
-	function alter_indexes($table, $alter) {
+	function alter_indexes($table, $alter): bool
+	{
 		$changes = [];
 		foreach ($alter as $key => $val) {
 			$changes[] = ($val[2] == "DROP"
@@ -944,14 +949,15 @@ ORDER BY ordinal_position";
 				: "\nADD $val[0] " . ($val[0] == "PRIMARY" ? "KEY " : "") . ($val[1] != "" ? idf_escape($val[1]) . " " : "") . "(" . implode(", ", $val[2]) . ")"
 			);
 		}
-		return queries("ALTER TABLE " . table($table) . implode(",", $changes));
+		return (bool)queries("ALTER TABLE " . table($table) . implode(",", $changes));
 	}
 
 	/** Run commands to truncate tables
 	* @param list<string>
 	* @return bool
 	*/
-	function truncate_tables($tables) {
+	function truncate_tables($tables): bool
+	{
 		return apply_queries("TRUNCATE TABLE", $tables);
 	}
 
@@ -959,16 +965,18 @@ ORDER BY ordinal_position";
 	* @param list<string>
 	* @return bool
 	*/
-	function drop_views($views) {
-		return queries("DROP VIEW " . implode(", ", array_map('AdminNeo\table', $views)));
+	function drop_views($views): bool
+	{
+		return (bool)queries("DROP VIEW " . implode(", ", array_map('AdminNeo\table', $views)));
 	}
 
 	/** Drop tables
 	* @param list<string>
 	* @return bool
 	*/
-	function drop_tables($tables) {
-		return queries("DROP TABLE " . implode(", ", array_map('AdminNeo\table', $tables)));
+	function drop_tables($tables): bool
+	{
+		return (bool)queries("DROP TABLE " . implode(", ", array_map('AdminNeo\table', $tables)));
 	}
 
 	/** Move tables to other schema
@@ -977,7 +985,8 @@ ORDER BY ordinal_position";
 	* @param string
 	* @return bool
 	*/
-	function move_tables($tables, $views, $target) {
+	function move_tables($tables, $views, $target): bool
+	{
 		$rename = [];
 		foreach ($tables as $table) {
 			$rename[] = table($table) . " TO " . idf_escape($target) . "." . table($table);

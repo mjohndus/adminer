@@ -50,7 +50,7 @@ if ($tables_views && !$_POST["search"]) {
 		}
 	}
 
-	queries_redirect(substr(ME, 0, -1), $message, $result);
+	queries_redirect(substr(ME, 0, -1), $message, (bool)$result);
 }
 
 if ($_GET["ns"] == "") {

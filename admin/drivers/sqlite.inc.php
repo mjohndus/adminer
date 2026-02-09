@@ -472,7 +472,8 @@ if (isset($_GET["sqlite"])) {
 		return true;
 	}
 
-	function create_database($db, $collation) {
+	function create_database($db, $collation): bool
+	{
 		if (file_exists($db)) {
 			Connection::get()->setError(lang('File exists.'));
 			return false;
@@ -493,7 +494,8 @@ if (isset($_GET["sqlite"])) {
 		return true;
 	}
 
-	function drop_databases($databases) {
+	function drop_databases($databases): bool
+	{
 		Connection::get()->close(); // to unlock file, doesn't work in PDO on Windows
 		foreach ($databases as $db) {
 			if (!@unlink($db)) {
@@ -504,7 +506,8 @@ if (isset($_GET["sqlite"])) {
 		return true;
 	}
 
-	function rename_database($name, $collation) {
+	function rename_database($name, $collation): bool
+	{
 		if (!check_sqlite_name($name)) {
 			return false;
 		}
@@ -518,7 +521,8 @@ if (isset($_GET["sqlite"])) {
 		return " PRIMARY KEY AUTOINCREMENT";
 	}
 
-	function alter_table($table, $name, $fields, $foreign, $comment, $engine, $collation, $auto_increment, $partitioning) {
+	function alter_table($table, $name, $fields, $foreign, $comment, $engine, $collation, $auto_increment, $partitioning): bool
+	{
 		$use_all_fields = ($table == "" || $foreign);
 		foreach ($fields as $field) {
 			if ($field[0] != "" || !$field[1] || $field[2]) {
@@ -580,7 +584,8 @@ if (isset($_GET["sqlite"])) {
 	* @param string CHECK constraint to add
 	* @return bool
 	*/
-	function recreate_table($table, $name, $fields, $originals, $foreign, $auto_increment = "", $indexes = [], $drop_check = "", $add_check = "") {
+	function recreate_table($table, $name, $fields, $originals, $foreign, $auto_increment = "", $indexes = [], $drop_check = "", $add_check = ""): bool
+	{
 		if ($table != "") {
 			if (!$fields) {
 				foreach (fields($table) as $key => $field) {
@@ -717,7 +722,8 @@ if (isset($_GET["sqlite"])) {
 		;
 	}
 
-	function alter_indexes($table, $alter) {
+	function alter_indexes($table, $alter): bool
+	{
 		foreach ($alter as $index) {
 			if ($index[0] == "PRIMARY" || (preg_match('~^sqlite_~', $index[1]))) {
 				return recreate_table($table, $table, [], [], [], "", $alter);
@@ -736,19 +742,23 @@ if (isset($_GET["sqlite"])) {
 		return true;
 	}
 
-	function truncate_tables($tables) {
+	function truncate_tables($tables): bool
+	{
 		return apply_queries("DELETE FROM", $tables);
 	}
 
-	function drop_views($views) {
+	function drop_views($views): bool
+	{
 		return apply_queries("DROP VIEW", $views);
 	}
 
-	function drop_tables($tables) {
+	function drop_tables($tables): bool
+	{
 		return apply_queries("DROP TABLE", $tables);
 	}
 
-	function move_tables($tables, $views, $target) {
+	function move_tables($tables, $views, $target): bool
+	{
 		return false;
 	}
 

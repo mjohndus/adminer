@@ -481,11 +481,13 @@ if (isset($_GET["simpledb"])) {
 		return "";
 	}
 
-	function alter_table($table, $name, $fields, $foreign, $comment, $engine, $collation, $auto_increment, $partitioning) {
-		return ($table == "" && sdb_request('CreateDomain', ['DomainName' => $name]));
+	function alter_table($table, $name, $fields, $foreign, $comment, $engine, $collation, $auto_increment, $partitioning): bool
+	{
+		return $table == "" && sdb_request('CreateDomain', ['DomainName' => $name]);
 	}
 
-	function drop_tables($tables) {
+	function drop_tables($tables): bool
+	{
 		foreach ($tables as $table) {
 			if (!sdb_request('DeleteDomain', ['DomainName' => $table])) {
 				return false;

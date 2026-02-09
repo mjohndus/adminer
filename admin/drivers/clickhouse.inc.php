@@ -287,7 +287,8 @@ if (isset($_GET["clickhouse"])) {
 		return $rows ? (int)$rows[0] : null;
 	}
 
-	function alter_table($table, $name, $fields, $foreign, $comment, $engine, $collation, $auto_increment, $partitioning) {
+	function alter_table($table, $name, $fields, $foreign, $comment, $engine, $collation, $auto_increment, $partitioning): bool
+	{
 		$alter = $order = [];
 		foreach ($fields as $field) {
 			if ($field[1][2] === " NULL") {
@@ -311,10 +312,10 @@ if (isset($_GET["clickhouse"])) {
 		$alter = array_merge($alter, $foreign);
 		$status = ($engine ? " ENGINE " . $engine : "");
 		if ($table == "") {
-			return queries("CREATE TABLE " . table($name) . " (\n" . implode(",\n", $alter) . "\n)$status$partitioning" . ' ORDER BY (' . implode(',', $order) . ')');
+			return (bool)queries("CREATE TABLE " . table($name) . " (\n" . implode(",\n", $alter) . "\n)$status$partitioning" . ' ORDER BY (' . implode(',', $order) . ')');
 		}
 		if ($table != $name) {
-			$result = queries("RENAME TABLE " . table($table) . " TO " . table($name));
+			$result = (bool)queries("RENAME TABLE " . table($table) . " TO " . table($name));
 			if ($alter) {
 				$table = $name;
 			} else {
@@ -324,18 +325,21 @@ if (isset($_GET["clickhouse"])) {
 		if ($status) {
 			$alter[] = ltrim($status);
 		}
-		return ($alter || $partitioning ? queries("ALTER TABLE " . table($table) . "\n" . implode(",\n", $alter) . $partitioning) : true);
+		return !($alter || $partitioning) || queries("ALTER TABLE " . table($table) . "\n" . implode(",\n", $alter) . $partitioning);
 	}
 
-	function truncate_tables($tables) {
+	function truncate_tables($tables): bool
+	{
 		return apply_queries("TRUNCATE TABLE", $tables);
 	}
 
-	function drop_views($views) {
+	function drop_views($views): bool
+	{
 		return drop_tables($views);
 	}
 
-	function drop_tables($tables) {
+	function drop_tables($tables): bool
+	{
 		return apply_queries("DROP TABLE", $tables);
 	}
 

@@ -643,7 +643,8 @@ if (isset($_GET["elastic"])) {
 		return "";
 	}
 
-	function alter_table($table, $name, $fields, $foreign, $comment, $engine, $collation, $auto_increment, $partitioning) {
+	function alter_table($table, $name, $fields, $foreign, $comment, $engine, $collation, $auto_increment, $partitioning): bool
+	{
 		$properties = [];
 
 		foreach ($fields as $field) {
@@ -665,18 +666,19 @@ if (isset($_GET["elastic"])) {
 			// Save the query for later use in a flesh message. TODO: This is so ugly.
 			queries("\"POST $name/_mapping\": " . json_encode($mappings));
 
-			return Connection::get()->rootQuery("$name/_mapping", $mappings, "POST");
+			return (bool)Connection::get()->rootQuery("$name/_mapping", $mappings, "POST");
 		} else {
 			$content = ["mappings" => $mappings];
 
 			// Save the query for later use in a flesh message. TODO: This is so ugly.
 			queries("\"PUT $name\": " . json_encode($content));
 
-			return Connection::get()->rootQuery($name, $content, "PUT");
+			return (bool)Connection::get()->rootQuery($name, $content, "PUT");
 		}
 	}
 
-	function drop_tables($tables) {
+	function drop_tables($tables): bool
+	{
 		$return = true;
 		foreach ($tables as $table) { //! convert to bulk api
 			$table = urlencode($table);

@@ -505,7 +505,8 @@ ORDER BY ac.constraint_type, aic.column_position", $connection) as $row) {
 		return "";
 	}
 
-	function alter_table($table, $name, $fields, $foreign, $comment, $engine, $collation, $auto_increment, $partitioning) {
+	function alter_table($table, $name, $fields, $foreign, $comment, $engine, $collation, $auto_increment, $partitioning): bool
+	{
 		$alter = $drop = [];
 		$orig_fields = ($table ? fields($table) : []);
 		foreach ($fields as $field) {
@@ -527,7 +528,7 @@ ORDER BY ac.constraint_type, aic.column_position", $connection) as $row) {
 			}
 		}
 		if ($table == "") {
-			return queries("CREATE TABLE " . table($name) . " (\n" . implode(",\n", $alter) . "\n)");
+			return (bool)queries("CREATE TABLE " . table($name) . " (\n" . implode(",\n", $alter) . "\n)");
 		}
 		return (!$alter || queries("ALTER TABLE " . table($table) . "\n" . implode("\n", $alter)))
 			&& (!$drop || queries("ALTER TABLE " . table($table) . " DROP (" . implode(", ", $drop) . ")"))
@@ -535,7 +536,8 @@ ORDER BY ac.constraint_type, aic.column_position", $connection) as $row) {
 		;
 	}
 
-	function alter_indexes($table, $alter) {
+	function alter_indexes($table, $alter): bool
+	{
 		$drop = [];
 		$queries = [];
 		foreach ($alter as $val) {
@@ -595,15 +597,18 @@ AND c_src.TABLE_NAME = " . q($table);
 		return [];
 	}
 
-	function truncate_tables($tables) {
+	function truncate_tables($tables): bool
+	{
 		return apply_queries("TRUNCATE TABLE", $tables);
 	}
 
-	function drop_views($views) {
+	function drop_views($views): bool
+	{
 		return apply_queries("DROP VIEW", $views);
 	}
 
-	function drop_tables($tables) {
+	function drop_tables($tables): bool
+	{
 		return apply_queries("DROP TABLE", $tables);
 	}
 

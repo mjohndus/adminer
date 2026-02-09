@@ -717,20 +717,23 @@ ORDER BY s.ordinal_position";
 		return nl2br($return);
 	}
 
-	function create_database($db, $collation) {
-		return queries("CREATE DATABASE " . idf_escape($db) . ($collation ? " ENCODING " . idf_escape($collation) : ""));
+	function create_database($db, $collation): bool
+	{
+		return (bool)queries("CREATE DATABASE " . idf_escape($db) . ($collation ? " ENCODING " . idf_escape($collation) : ""));
 	}
 
-	function drop_databases($databases) {
+	function drop_databases($databases): bool
+	{
 		Connection::get()->close();
 
 		return apply_queries("DROP DATABASE", $databases, 'AdminNeo\idf_escape');
 	}
 
-	function rename_database($name, $collation) {
+	function rename_database($name, $collation): bool
+	{
 		Connection::get()->close();
 
-		return queries("ALTER DATABASE " . idf_escape(DB) . " RENAME TO " . idf_escape($name));
+		return (bool)queries("ALTER DATABASE " . idf_escape(DB) . " RENAME TO " . idf_escape($name));
 	}
 
 	function auto_increment(): string
@@ -738,7 +741,8 @@ ORDER BY s.ordinal_position";
 		return "";
 	}
 
-	function alter_table($table, $name, $fields, $foreign, $comment, $engine, $collation, $auto_increment, $partitioning) {
+	function alter_table($table, $name, $fields, $foreign, $comment, $engine, $collation, $auto_increment, $partitioning): bool
+	{
 		$alter = [];
 		$queries = [];
 		if ($table != "" && $table != $name) {
@@ -804,7 +808,8 @@ ORDER BY s.ordinal_position";
 		return true;
 	}
 
-	function alter_indexes($table, $alter) {
+	function alter_indexes($table, $alter): bool
+	{
 		$create = [];
 		$drop = [];
 		$queries = [];
@@ -835,15 +840,18 @@ ORDER BY s.ordinal_position";
 		return true;
 	}
 
-	function truncate_tables($tables) {
-		return queries("TRUNCATE " . implode(", ", array_map('AdminNeo\table', $tables)));
+	function truncate_tables($tables): bool
+	{
+		return (bool)queries("TRUNCATE " . implode(", ", array_map('AdminNeo\table', $tables)));
 	}
 
-	function drop_views($views) {
+	function drop_views($views): bool
+	{
 		return drop_tables($views);
 	}
 
-	function drop_tables($tables) {
+	function drop_tables($tables): bool
+	{
 		foreach ($tables as $table) {
 				$status = table_status1($table);
 				if (!queries("DROP " . strtoupper($status["Engine"]) . " " . table($table))) {
@@ -853,7 +861,8 @@ ORDER BY s.ordinal_position";
 		return true;
 	}
 
-	function move_tables($tables, $views, $target) {
+	function move_tables($tables, $views, $target):bool
+	{
 		foreach (array_merge($tables, $views) as $table) {
 			$status = table_status1($table);
 			if (!queries("ALTER " . strtoupper($status["Engine"]) . " " . table($table) . " SET SCHEMA " . idf_escape($target))) {

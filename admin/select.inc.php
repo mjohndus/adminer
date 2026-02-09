@@ -169,7 +169,7 @@ if ($_POST) {
 				$message = lang('Item%s has been inserted.', " $last_id");
 			}
 		}
-		queries_redirect(remove_from_uri($_POST["all"] && $_POST["delete"] ? "page" : ""), $message, $result);
+		queries_redirect(remove_from_uri($_POST["all"] && $_POST["delete"] ? "page" : ""), $message, (bool)$result);
 		if (!$_POST["delete"]) {
 			$post_fields = (array) $_POST["fields"];
 			edit_form($TABLE, array_intersect_key($fields, $post_fields), $post_fields, !$_POST["clone"]);
