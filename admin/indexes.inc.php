@@ -4,7 +4,7 @@ namespace AdminNeo;
 
 $TABLE = $_GET["indexes"];
 $index_types = ["PRIMARY", "UNIQUE", "INDEX"];
-$table_status = table_status($TABLE, true);
+$table_status = table_status1($TABLE, true);
 $connection = Connection::get();
 $maria = $connection->isMariaDB();
 if (preg_match('~MyISAM|M?aria' . ($connection->isMinVersion($maria ? "10.0.5" : "5.6") ? '|InnoDB' : '') . '~i', $table_status["Engine"])) {

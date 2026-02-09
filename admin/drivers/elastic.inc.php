@@ -187,10 +187,10 @@ if (isset($_GET["elastic"])) {
 			$this->likeOperator = "should(match)";
 			$this->regexpOperator = "should(regexp)";
 
-			$this->editFunctions = [["json"]];
+			$this->insertFunctions = ["json"];
 		}
 
-		public function select(string $table, array $select, array $where, array $group, array $order = [], ?int $limit = 1, int $page = 0, bool $print = false)
+		public function select(string $table, array $select, array $where, array $group, array $order = [], int $limit = 1, int $page = 0, bool $print = false)
 		{
 			$data = [];
 			if ($select != ["*"]) {
@@ -206,8 +206,8 @@ if (isset($_GET["elastic"])) {
 				$data["sort"] = $sort;
 			}
 
-			if ($limit !== null) {
-				$data["size"] = +$limit;
+			if ($limit) {
+				$data["size"] = $limit;
 				if ($page) {
 					$data["from"] = ($page * $limit);
 				}
@@ -235,9 +235,7 @@ if (isset($_GET["elastic"])) {
 			if (empty($search)) {
 				return false;
 			}
-			if ($select == ["*"]) {
-				$tableFields = array_keys(fields($table));
-			}
+			$tableFields = $select == ["*"] ? array_keys(fields($table)) : [];
 
 			$return = [];
 			foreach ($search["hits"]["hits"] as $hit) {
@@ -420,12 +418,13 @@ if (isset($_GET["elastic"])) {
 		return $credentials[1];
 	}
 
-	function get_databases() {
+	function get_databases(bool $flush): array
+	{
 		return [ELASTIC_DB_NAME];
 	}
 
-	function limit($query, $where, ?int $limit, $offset = 0, $separator = " ") {
-		return " $query$where" . ($limit !== null ? $separator . "LIMIT $limit" . ($offset ? " OFFSET $offset" : "") : "");
+	function limit($query, $where, int $limit, $offset = 0, $separator = " ") {
+		return " $query$where" . ($limit ? $separator . "LIMIT $limit" . ($offset ? " OFFSET $offset" : "") : "");
 	}
 
 	function collations() {
@@ -484,14 +483,16 @@ if (isset($_GET["elastic"])) {
 
 		if ($name != "") {
 			if (isset($stats["indices"][$name])) {
-				return format_index_status($name, $stats["indices"][$name]);
+				return [format_index_status($name, $stats["indices"][$name])];
 			} else foreach ($aliases as $index_name => $index) {
 				foreach ($index["aliases"] as $alias_name => $alias) {
 					if ($alias_name == $name) {
-						return format_alias_status($alias_name, $stats["indices"][$index_name]);
+						return [format_alias_status($alias_name, $stats["indices"][$index_name])];
 					}
 				}
 			}
+
+			return [];
 		}
 
 		ksort($stats["indices"]);
@@ -542,8 +543,9 @@ if (isset($_GET["elastic"])) {
 		return h(Connection::get()->getError());
 	}
 
-	function information_schema() {
-		//
+	function information_schema(?string $db): bool
+	{
+		return false;
 	}
 
 	function indexes(string $table, ?Connection $connection = null): array
@@ -617,11 +619,13 @@ if (isset($_GET["elastic"])) {
 		return $idf;
 	}
 
-	function convert_field($field) {
-		//
+	function convert_field(array $field): ?string
+	{
+		return null;
 	}
 
-	function unconvert_field(array $field, $return) {
+	function unconvert_field(array $field, string $return): string
+	{
 		return $return;
 	}
 
@@ -629,14 +633,16 @@ if (isset($_GET["elastic"])) {
 		//
 	}
 
-	function found_rows($table_status, $where) {
+	function found_rows(array $table_status, array $where): ?int
+	{
 		return null;
 	}
 
-	/** Alter type
-	 * @param array
-	 * @return mixed
-	 */
+	function auto_increment(): string
+	{
+		return "";
+	}
+
 	function alter_table($table, $name, $fields, $foreign, $comment, $engine, $collation, $auto_increment, $partitioning) {
 		$properties = [];
 
@@ -670,10 +676,6 @@ if (isset($_GET["elastic"])) {
 		}
 	}
 
-	/** Drop types
-	 * @param array
-	 * @return bool
-	 */
 	function drop_tables($tables) {
 		$return = true;
 		foreach ($tables as $table) { //! convert to bulk api

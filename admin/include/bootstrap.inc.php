@@ -65,7 +65,7 @@ if ($_SERVER["HTTP_X_FORWARDED_PREFIX"]) {
 // session.cookie_secure could be set on HTTP if we are behind a reverse proxy.
 define("Adminneo\HTTPS", ($_SERVER["HTTPS"] && strcasecmp($_SERVER["HTTPS"], "off")) || ini_bool("session.cookie_secure"));
 
-@ini_set("session.use_trans_sid", false); // protect links in export @ - may be disabled
+@ini_set("session.use_trans_sid", "0"); // protect links in export @ - may be disabled
 if (!defined("SID")) {
 	session_cache_limiter(""); // to allow restarting session
 	session_name("neo_sid");
@@ -75,10 +75,14 @@ if (!defined("SID")) {
 
 // Disable magic quotes to be able to use database escaping function.
 // get_magic_quotes_gpc() is supported up to PHP 7.3
-remove_slashes([&$_GET, &$_POST, &$_COOKIE], $filter);
+if (function_exists("get_magic_quotes_gpc") && get_magic_quotes_gpc()) {
+	$_GET = remove_slashes($_GET, $filter);
+	$_POST = remove_slashes($_POST, $filter);
+	$_COOKIE = remove_slashes($_COOKIE, $filter);
+}
 
 @set_time_limit(0); // @ - can be disabled
-@ini_set("precision", 15); // @ - can be disabled, 15 - internal PHP precision
+@ini_set("precision", "15"); // @ - can be disabled, 15 - internal PHP precision
 
 // Migrate changed cookies.
 if (!isset($_COOKIE["neo_dump"]) && str_contains($_COOKIE["neo_export"] ?? "", "db_style")) {

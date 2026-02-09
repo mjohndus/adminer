@@ -280,9 +280,11 @@ if (isset($_GET["clickhouse"])) {
 		return false;
 	}
 
-	function found_rows($table_status, $where) {
+	function found_rows(array $table_status, array $where): ?int
+	{
 		$rows = get_vals("SELECT COUNT(*) FROM " . idf_escape($table_status["Name"]) . ($where ? " WHERE " . implode(" AND ", $where) : ""));
-		return empty($rows) ? false : $rows[0];
+
+		return $rows ? (int)$rows[0] : null;
 	}
 
 	function alter_table($table, $name, $fields, $foreign, $comment, $engine, $collation, $auto_increment, $partitioning) {
@@ -360,19 +362,22 @@ if (isset($_GET["clickhouse"])) {
 		return $connection;
 	}
 
-	function get_databases($flush) {
+	function get_databases(bool $flush): array
+	{
 		$result = get_rows('SHOW DATABASES');
 
-		$return = [];
+		$databases = [];
 		foreach ($result as $row) {
-			$return[] = $row['name'];
+			$databases[] = $row['name'];
 		}
-		sort($return);
-		return $return;
+
+		sort($databases);
+
+		return $databases;
 	}
 
-	function limit($query, $where, ?int $limit, $offset = 0, $separator = " ") {
-		return " $query$where" . ($limit !== null ? $separator . "LIMIT $limit" . ($offset ? ", $offset" : "") : "");
+	function limit($query, $where, int $limit, $offset = 0, $separator = " ") {
+		return " $query$where" . ($limit ? $separator . "LIMIT $limit" . ($offset ? ", $offset" : "") : "");
 	}
 
 	function limit1($table, $query, $where, $separator = "\n") {
@@ -410,9 +415,6 @@ if (isset($_GET["clickhouse"])) {
 				'Name' => $table['name'],
 				'Engine' => $table['engine'],
 			];
-			if ($name === $table['name']) {
-				return $return[$table['name']];
-			}
 		}
 		return $return;
 	}
@@ -425,13 +427,17 @@ if (isset($_GET["clickhouse"])) {
 		return false;
 	}
 
-	function convert_field($field) {
+	function convert_field(array $field): ?string
+	{
+		return null;
 	}
 
-	function unconvert_field(array $field, $return) {
+	function unconvert_field(array $field, string $return): string
+	{
 		if (in_array($field['type'], ["Int8", "Int16", "Int32", "Int64", "UInt8", "UInt16", "UInt32", "UInt64", "Float32", "Float64"])) {
 			return "to$field[type]($return)";
 		}
+
 		return $return;
 	}
 
@@ -473,7 +479,8 @@ if (isset($_GET["clickhouse"])) {
 		return [];
 	}
 
-	function information_schema($db) {
+	function information_schema(?string $db): bool
+	{
 		return false;
 	}
 
@@ -481,12 +488,14 @@ if (isset($_GET["clickhouse"])) {
 		return h(Connection::get()->getError());
 	}
 
-	function types() {
+	function types(): array
+	{
 		return [];
 	}
 
-	function auto_increment() {
-		return '';
+	function auto_increment(): string
+	{
+		return "";
 	}
 
 	function last_id($result)

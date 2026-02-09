@@ -40,8 +40,8 @@ function escape_string($val) {
 	return substr(q($val), 1, -1);
 }
 
-/** Remove non-digits from a string
-* @param string
+/** Remove non-digits from a string; used instead of intval() to not corrupt big numbers
+* @param numeric-string
 * @return string
 */
 function number($val) {
@@ -56,24 +56,19 @@ function number_type() {
 }
 
 /** Disable magic_quotes_gpc
-* @param array e.g. (&$_GET, &$_POST, &$_COOKIE)
-* @param bool whether to leave values as is
-* @return null modified in place
+* @param mixed[] $values
+* @param bool $filter whether to leave values as is
+* @return mixed[]
 */
-function remove_slashes($process, $filter = false) {
-	if (function_exists("get_magic_quotes_gpc") && get_magic_quotes_gpc()) {
-		foreach ($process as $key => $val) {
-			foreach ($val as $k => $v) {
-				unset($process[$key][$k]);
-				if (is_array($v)) {
-					$process[$key][stripslashes($k)] = $v;
-					$process[] = &$process[$key][stripslashes($k)];
-				} else {
-					$process[$key][stripslashes($k)] = ($filter ? $v : stripslashes($v));
-				}
-			}
-		}
+function remove_slashes(array $values, bool $filter = false): array {
+	$return = [];
+	foreach ($values as $key => $val) {
+		$return[stripslashes($key)] = (is_array($val)
+			? remove_slashes($val, $filter)
+			: ($filter ? $val : stripslashes($val))
+		);
 	}
+	return $return;
 }
 
 /** Escape or unescape string to use inside form []
@@ -168,10 +163,9 @@ function get_driver_name(string $driver, ?string $server = null): string
 * @param string
 * @param string
 * @param string
-* @param string
-* @return null
+* @param ?string
 */
-function set_password($vendor, $server, $username, $password) {
+function set_password($vendor, $server, $username, $password): void {
 	$_SESSION["pwds"][$vendor][$server][$username] = ($_COOKIE["neo_key"] && is_string($password)
 		? [encrypt_string($password, $_COOKIE["neo_key"])]
 		: $password
@@ -179,7 +173,7 @@ function set_password($vendor, $server, $username, $password) {
 }
 
 /** Get password from session
-* @return string or null for missing password or false for expired password
+* @return string|false|null null for missing password or false for expired password
 */
 function get_password() {
 	$return = get_session("pwds");
@@ -194,8 +188,8 @@ function get_password() {
 
 /** Get list of values from database
 * @param string
-* @param mixed
-* @return array
+* @param array-key
+* @return list<string>
 */
 function get_vals($query, $column = 0) {
 	$return = [];
@@ -214,7 +208,7 @@ function get_vals($query, $column = 0) {
 * @param ?Connection
 * @param bool
 *
-* @return array
+* @return string[]
 */
 function get_key_vals($query, ?Connection $connection = null, $set_keys = true) {
 	if (!$connection) {
@@ -240,7 +234,7 @@ function get_key_vals($query, ?Connection $connection = null, $set_keys = true) 
  * @param Connection
 * @param string
 *
-* @return array of associative arrays
+* @return list<string[]> of associative arrays
 */
 function get_rows($query, ?Connection $connection = null, $error = "<p class='error'>") {
 	if (!$connection) {
@@ -258,24 +252,33 @@ function get_rows($query, ?Connection $connection = null, $error = "<p class='er
 	return $return;
 }
 
-/** Find unique identifier of a row
-* @param array
-* @param array result of indexes()
-* @return array or null if there is no unique identifier
-*/
-function unique_array($row, $indexes) {
+/**
+ * Finds unique identifier of a row.
+ *
+ * @param string[] $row
+ * @param array[] $indexes Result of indexes().
+ *
+ * @return string[]|null null if there is no unique identifier.
+ */
+function unique_array(array $row, array $indexes): ?array
+{
 	foreach ($indexes as $index) {
-		if (preg_match("~PRIMARY|UNIQUE~", $index["type"])) {
-			$return = [];
-			foreach ($index["columns"] as $key) {
-				if (!isset($row[$key])) { // NULL is ambiguous
-					continue 2;
-				}
-				$return[$key] = $row[$key];
-			}
-			return $return;
+		if (!preg_match("~PRIMARY|UNIQUE~", $index["type"])) {
+			continue;
 		}
+
+		$unique = [];
+		foreach ($index["columns"] as $key) {
+			if (!isset($row[$key])) { // NULL is ambiguous
+				continue 2;
+			}
+			$unique[$key] = $row[$key];
+		}
+
+		return $unique;
 	}
+
+	return null;
 }
 
 /** Escape column key used in where()
@@ -291,14 +294,14 @@ function escape_key($key) {
 
 /** Create SQL condition from parsed query string
 * @param array parsed query string
-* @param array
+* @param array[]
 * @return string
 */
 function where($where, $fields = []) {
 	$conditions = [];
 
 	foreach ((array) $where["where"] as $key => $val) {
-		$key = bracket_escape($key, 1); // 1 - back
+		$key = bracket_escape($key, true);
 		$column = escape_key($key);
 		$field_type = $fields[$key]["type"] ?? null;
 
@@ -329,7 +332,7 @@ function where($where, $fields = []) {
 
 /** Create SQL condition from query string
 * @param string
-* @param array
+* @param array[]
 * @return string
 */
 function where_check($val, $fields = []) {
@@ -349,24 +352,31 @@ function where_link($i, $column, $value, $operator = "=") {
 	return "&where%5B$i%5D%5Bcol%5D=" . urlencode($column) . "&where%5B$i%5D%5Bop%5D=" . urlencode(($value !== null ? $operator : "IS NULL")) . "&where%5B$i%5D%5Bval%5D=" . urlencode($value);
 }
 
-/** Get select clause for convertible fields
-* @param array
-* @param array
-* @param array
-* @return string
-*/
-function convert_fields($columns, $fields, $select = []) {
-	$return = "";
+/**
+ * Returns select clause for convertible fields.
+ *
+ * @param array $columns
+ * @param array[] $fields
+ * @param list<string> $select
+ *
+ * @return string
+ */
+function convert_fields(array $columns, array $fields, array $select = []): string
+{
+	$result = "";
+
 	foreach ($columns as $key => $val) {
 		if ($select && !in_array(idf_escape($key), $select)) {
 			continue;
 		}
+
 		$as = convert_field($fields[$key]);
 		if ($as) {
-			$return .= ", $as AS " . idf_escape($key);
+			$result .= ", $as AS " . idf_escape($key);
 		}
 	}
-	return $return;
+
+	return $result;
 }
 
 /**
@@ -419,9 +429,8 @@ function save_settings(array $settings, string $cookie = "neo_settings"): void
 }
 
 /** Restart stopped session
-* @return null
 */
-function restart_session() {
+function restart_session(): void {
 	if (!ini_bool("session.use_cookies") && session_status() == PHP_SESSION_NONE) {
 		session_start();
 	}
@@ -429,13 +438,12 @@ function restart_session() {
 
 /** Stop session if possible
 * @param bool
-* @return null
 */
-function stop_session($force = false) {
+function stop_session($force = false): void {
 	$use_cookies = ini_bool("session.use_cookies");
 	if (!$use_cookies || $force) {
 		session_write_close(); // improves concurrency if a user opens several pages at once, may be restarted later
-		if ($use_cookies && @ini_set("session.use_cookies", false) === false) { // @ - may be disabled
+		if ($use_cookies && @ini_set("session.use_cookies", "0") === false) { // @ - may be disabled
 			session_start();
 		}
 	}
@@ -490,16 +498,18 @@ function is_ajax() {
 	return ($_SERVER["HTTP_X_REQUESTED_WITH"] == "XMLHttpRequest");
 }
 
-/** Send Location header and exit
-* @param string null to only set a message
-* @param string
-* @return null
-*/
-function redirect($location, $message = null) {
+/**
+ * Redirects to location and/or set a message.
+ *
+ * @param ?string $location null to only set a message.
+ */
+function redirect(?string $location, ?string $message = null): void
+{
 	if ($message !== null) {
 		restart_session();
 		$_SESSION["messages"][preg_replace('~^[^?]*~', '', ($location !== null ? $location : $_SERVER["REQUEST_URI"]))][] = $message;
 	}
+
 	if ($location !== null) {
 		if ($location == "") {
 			$location = ".";
@@ -509,17 +519,11 @@ function redirect($location, $message = null) {
 	}
 }
 
-/** Execute query and redirect if successful
-* @param string
-* @param string
-* @param string
-* @param bool
-* @param bool
-* @param bool
-* @param string
-* @return bool
-*/
-function query_redirect($query, $location, $message, $redirect = true, $execute = true, $failed = false, $time = "") {
+/**
+ * Executes SQL query and redirect if successful
+ */
+function query_redirect(string $query, ?string $location, string $message, bool $redirect = true, bool $execute = true, bool $failed = false, string $time = ""): bool
+{
 	if ($execute) {
 		$start = microtime(true);
 		$failed = !Connection::get()->query($query);
@@ -540,56 +544,67 @@ function query_redirect($query, $location, $message, $redirect = true, $execute 
 	return true;
 }
 
-/** Execute and remember query
-* @param string or null to return remembered queries, end with ';' to use DELIMITER
-* @return Result|array|bool or [$queries, $time] if $query = null
-*/
-function queries($query) {
+/**
+ * Redirects by remembered queries.
+ */
+function queries_redirect(?string $location, string $message, bool $redirect): bool
+{
+	$queries = implode("\n", Queries::$queries);
+	$time = format_time(Queries::$start);
+
+	return query_redirect($queries, $location, $message, $redirect, false, !$redirect, $time);
+}
+
+class Queries {
+	/** @var string[] */
 	static $queries = [];
-	static $start;
-	if (!$start) {
-		$start = microtime(true);
-	}
-	if ($query === null) {
-		// return executed queries
-		return [implode("\n", $queries), format_time($start)];
+
+	/** @var float */
+	static $start = 0.0;
+}
+
+/**
+ * Executes and remembers SQL query.
+ *
+ * @param string $query Ends with ';' to use DELIMITER.
+ *
+ * @return Result|array|bool
+ */
+function queries(string $query)
+{
+	if (!Queries::$start) {
+		Queries::$start = microtime(true);
 	}
 
 	if (support("sql")) {
-		$queries[] = (preg_match('~;$~', $query) ? "DELIMITER ;;\n$query;\nDELIMITER " : $query) . ";";
+		Queries::$queries[] = (preg_match('~;$~', $query) ? "DELIMITER ;;\n$query;\nDELIMITER " : $query) . ";";
 
 		return Connection::get()->query($query);
 	} else {
 		// Save the query for later use in a flesh message. TODO: This is so ugly.
-		$queries[] = $query;
+		Queries::$queries[] = $query;
 		return [];
 	}
 }
 
-/** Apply command to all array items
-* @param string
-* @param array
-* @param callback
-* @return bool
-*/
-function apply_queries($query, $tables, $escape = 'AdminNeo\table') {
+/**
+ * Applies SQL query to all array items (tables, views, databases, etc.).
+ *
+ * @param string $query
+ * @param list<string> $tables
+ * @param callable(string):string $escape
+ *
+ * @return bool
+ */
+function apply_queries(string $query, array $tables, $escape = 'AdminNeo\table'): bool
+{
 	foreach ($tables as $table) {
 		if (!queries("$query " . $escape($table))) {
 			return false;
 		}
 	}
-	return true;
-}
 
-/** Redirect by remembered queries
-* @param string
-* @param string
-* @param bool
-* @return bool
-*/
-function queries_redirect($location, $message, $redirect) {
-	list($queries, $time) = queries(null);
-	return query_redirect($queries, $location, $message, $redirect, false, !$redirect, $time);
+	return true;
 }
 
 /** Format elapsed time
@@ -691,26 +706,8 @@ function is_utf8($val) {
 	return (preg_match('~~u', $val) && !preg_match('~[\0-\x8\xB\xC\xE-\x1F]~', $val));
 }
 
-/**
- * Truncates UTF-8 string.
- *
- * @return string Escaped string with appended ellipsis.
- */
-function truncate_utf8(string $string, int $length = 80): string
-{
-	if ($string == "") return "";
-
-	// ~s causes trash in $match[2] under some PHP versions, (.|\n) is slow.
-	if (!preg_match("(^(" . repeat_pattern("[\t\r\n -\x{10FFFF}]", $length) . ")($)?)u", $string, $match)) {
-		preg_match("(^(" . repeat_pattern("[\t\r\n -~]", $length) . ")($)?)", $string, $match);
-	}
-
-	// Tag <i> is required for inline editing of long texts (see strpos($val, "<i>…</i>");).
-	return h($match[1]) . (isset($match[2]) ? "" : "<i>…</i>");
-}
-
 /** Format decimal number
-* @param int
+* @param float|numeric-string
 * @return string
 */
 function format_number($val) {
@@ -729,16 +726,16 @@ function friendly_url($val) {
 /** Get status of a single table and fall back to name on error
 * @param string
 * @param bool
-* @return array
+* @return array one element from table_status()
 */
 function table_status1($table, $fast = false) {
 	$return = table_status($table, $fast);
-	return ($return ?: ["Name" => $table]);
+	return ($return ? reset($return) : ["Name" => $table]);
 }
 
 /** Find out foreign keys for each column
 * @param string
-* @return array [$col => []]
+* @return list<string>[] [$col => []]
 */
 function column_foreign_keys($table) {
 	$return = [];
@@ -751,7 +748,7 @@ function column_foreign_keys($table) {
 }
 
 /** Compute fields() from $_POST edit data
-* @return array
+* @return array[] same as fields()
 */
 function fields_from_edit() {
 	$return = [];
@@ -763,11 +760,11 @@ function fields_from_edit() {
 		}
 	}
 	foreach ((array) $_POST["fields"] as $key => $val) {
-		$name = bracket_escape($key, 1); // 1 - back
+		$name = bracket_escape($key, true);
 		$return[$name] = [
 			"field" => $name,
 			"privileges" => ["insert" => 1, "update" => 1, "where" => 1, "order" => 1],
-			"null" => 1,
+			"null" => true,
 			"auto_increment" => ($key == Driver::get()->primary),
 		];
 	}
@@ -801,10 +798,9 @@ function dump_headers(string $identifier, bool $multi_table = false): string
 }
 
 /** Print CSV row
-* @param array
-* @return null
+* @param string[]
 */
-function dump_csv($row) {
+function dump_csv($row): void {
 	foreach ($row as $key => $val) {
 		if (preg_match('~["\n,;\t]|^0|\.\d*0$~', $val) || $val === "") {
 			$row[$key] = '"' . str_replace('"', '""', $val) . '"';
@@ -894,7 +890,8 @@ function unlock_file($file)
  *
  * @return mixed|false The value of the first array element, or false if the array is empty.
  */
-function first(array $array) {
+function first(array $array)
+{
 	// reset(f()) triggers a notice
 	return reset($array);
 }
@@ -902,11 +899,10 @@ function first(array $array) {
 /**
  * Reads password from file adminneo.key in temporary directory or create one.
  *
- * @param $create bool
  * @return string|false Returns false if the file can not be created.
  * @throws Exception
  */
-function get_private_key($create)
+function get_private_key(bool $create)
 {
 	$filename = get_temp_dir() . "/adminneo.key";
 
@@ -943,7 +939,7 @@ function get_random_string(): string
 }
 
 /** Format value to use in select
-* @param string
+* @param string|string[]
 * @param string
 * @param ?array
 * @param int
@@ -976,11 +972,13 @@ function select_value($val, $link, $field, $text_length) {
 	return Admin::get()->formatSelectionValue($return, $link, $field, $val);
 }
 
-/** Check whether the string is e-mail address
-* @param string
-* @return bool
-*/
-function is_mail($value) {
+/**
+ * Checks whether the string is e-mail address.
+ *
+ * @param mixed $value
+ */
+function is_mail($value): bool
+{
 	return is_string($value) && filter_var($value, FILTER_VALIDATE_EMAIL);
 }
 
@@ -1018,9 +1016,9 @@ function is_shortable(?array $field): bool
 
 /** Get query to compute number of found rows
 * @param string
-* @param array
+* @param list<string>
 * @param bool
-* @param array
+* @param list<string>
 * @return string
 */
 function count_rows($table, $where, $is_group, $group) {
@@ -1033,15 +1031,18 @@ function count_rows($table, $where, $is_group, $group) {
 
 /** Run query which can be killed by AJAX call after timing out
 * @param string
-* @return array of strings
+* @return string[]
 */
 function slow_query($query) {
 	$db = Admin::get()->getDatabase();
 	$timeout = Admin::get()->getQueryTimeout();
 	$slow_query = Driver::get()->slowQuery($query, $timeout);
-	if (!$slow_query && support("kill") && ($connection = connect()) && ($db == "" || $connection->selectDatabase($db))) {
-		$kill = $connection->getValue(connection_id()); // MySQL and MySQLi can use thread_id but it's not in PDO_MySQL
-		?>
+	$connection = null;
+	if (!$slow_query && support("kill")) {
+		$connection = connect();
+		if ($connection && ($db == "" || $connection->selectDatabase($db))) {
+			$kill = $connection->getValue(connection_id()); // MySQL and MySQLi can use thread_id but it's not in PDO_MySQL
+			?>
 <script<?php echo nonce(); ?>>
 	const timeout = setTimeout(() => {
 		ajax('<?php echo js_escape(ME); ?>script=kill', function() {
@@ -1049,8 +1050,7 @@ function slow_query($query) {
 	}, <?php echo 1000 * $timeout; ?>);
 </script>
 <?php
-	} else {
-		$connection = null;
+		}
 	}
 	ob_flush();
 	flush();

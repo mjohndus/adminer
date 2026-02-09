@@ -67,6 +67,24 @@ function h(?string $string): string
 }
 
 /**
+ * Truncates UTF-8 string.
+ *
+ * @return string Escaped string with appended ellipsis.
+ */
+function truncate_utf8(string $string, int $length = 80): string
+{
+	if ($string == "") return "";
+
+	// ~s causes trash in $match[2] under some PHP versions, (.|\n) is slow.
+	if (!preg_match("(^(" . repeat_pattern("[\t\r\n -\x{10FFFF}]", $length) . ")($)?)u", $string, $match)) {
+		preg_match("(^(" . repeat_pattern("[\t\r\n -~]", $length) . ")($)?)", $string, $match);
+	}
+
+	// Tag <i> is required for inline editing of long texts (see strpos($val, "<i>…</i>");).
+	return h($match[1]) . (isset($match[2]) ? "" : "<i>…</i>");
+}
+
+/**
  * Returns HTML for solo icon with given ID.
  */
 function icon_solo(string $id): string
@@ -102,7 +120,7 @@ function icon(string $id, ?string $class = null): string
 
 /** Generate HTML checkbox
 * @param string
-* @param string
+* @param string|int
 * @param bool
 * @param string
 * @param string
@@ -121,7 +139,7 @@ function checkbox($name, $value, $checked, $label = "", $onclick = "", $class = 
 }
 
 /** Generate list of HTML options
-* @param array array of strings or arrays (creates optgroup)
+* @param string[]|string[][] array of strings or arrays (creates optgroup)
 * @param mixed
 * @param bool always use array keys for value="", otherwise only string keys are used
 * @return string
@@ -150,7 +168,7 @@ function optionlist($options, $selected = null, $use_keys = false) {
 
 /** Generate HTML <select>
 * @param string
-* @param array
+* @param string[]
 * @param ?string
 * @param string
 * @param string
@@ -165,7 +183,7 @@ function html_select($name, $options, $value = "", $onchange = "", $labelled_by 
 
 /** Generate HTML radio list
 * @param string
-* @param array
+* @param string[]
 * @param string
 * @return string
 */
@@ -246,6 +264,8 @@ function pagination(int $page, int $current): string
 
 /**
  * Prints hidden fields.
+ *
+ * @param list<string> $ignore
 */
 function print_hidden_fields(array $process, array $ignore = [], string $prefix = ""): bool
 {
@@ -340,11 +360,10 @@ function enum_input(string $attrs, array $field, $value, ?string $empty = null, 
 /** Print edit input field
 * @param array one field from fields()
 * @param mixed
-* @param string
-* @param bool
-* @return null
+* @param ?string
+* @param ?bool
 */
-function input($field, $value, $function, $autofocus = false) {
+function input($field, $value, $function, $autofocus = false): void {
 	$name = h(bracket_escape($field["field"]));
 
 	$types = Driver::get()->getTypes();
@@ -571,12 +590,11 @@ function help_script_command(string $command, bool $side = false): string
 
 /** Print edit data form
 * @param string
-* @param array
+* @param array[]
 * @param mixed
 * @param bool
-* @return null
 */
-function edit_form($table, $fields, $row, $update) {
+function edit_form($table, $fields, $row, $update): void {
 	$table_name = Admin::get()->getTableName(table_status1($table, true));
 	$title = $update ? lang('Edit') : lang('Insert');
 

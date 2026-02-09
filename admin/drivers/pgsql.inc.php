@@ -261,10 +261,7 @@ if (isset($_GET["pgsql"])) {
 				return $return;
 			}
 
-			public function warnings(): ?string
-			{
-				return null; // not implemented in PDO_PgSQL as of PHP 7.2.1
-			}
+			// warnings() not implemented in PDO_PgSQL as of PHP 7.2.1
 
 			public function close(): void
 			{
@@ -347,15 +344,15 @@ if (isset($_GET["pgsql"])) {
 				"count", "count distinct",
 			];
 
+			$this->insertFunctions = [
+				"char" => "md5",
+				"date|time" => "now",
+			];
+
 			$this->editFunctions = [
-				[
-					"char" => "md5",
-					"date|time" => "now",
-				], [
-					number_type() => "+/-",
-					"date|time" => "+ interval/- interval", //! escape
-					"char|text" => "||",
-				]
+				number_type() => "+/-",
+				"date|time" => "+ interval/- interval", //! escape
+				"char|text" => "||",
 			];
 
 			$this->systemDatabases = ["template1"];
@@ -500,14 +497,15 @@ if (isset($_GET["pgsql"])) {
 		return $connection;
 	}
 
-	function get_databases() {
+	function get_databases(bool $flush): array
+	{
 		return get_vals("SELECT datname FROM pg_database
 WHERE datallowconn = TRUE AND has_database_privilege(datname, 'CONNECT')
 ORDER BY datname");
 	}
 
-	function limit($query, $where, ?int $limit, $offset = 0, $separator = " ") {
-		return " $query$where" . ($limit !== null ? $separator . "LIMIT $limit" . ($offset ? " OFFSET $offset" : "") : "");
+	function limit($query, $where, int $limit, $offset = 0, $separator = " ") {
+		return " $query$where" . ($limit ? $separator . "LIMIT $limit" . ($offset ? " OFFSET $offset" : "") : "");
 	}
 
 	function limit1($table, $query, $where, $separator = "\n") {
@@ -574,11 +572,7 @@ WHERE relkind IN ('r', 'm', 'v', 'f', 'p')
 			$return[$row["Name"]] = $row;
 		}
 
-		if ($name != "") {
-			return $return[$name] ?? ["Name" => $name];
-		} else {
-			return $return;
-		}
+		return $return;
 	}
 
 	function is_view($table_status) {
@@ -652,7 +646,7 @@ ORDER BY a.attnum"
 					$return[$relname]["columns"][] = $columns[$indkey];
 				}
 				foreach (explode(" ", $row["indoption"]) as $indoption) {
-					$return[$relname]["descs"][] = ($indoption & 1 ? '1' : null); // 1 - INDOPTION_DESC
+					$return[$relname]["descs"][] = (intval($indoption) & 1 ? '1' : null); // 1 - INDOPTION_DESC
 				}
 			}
 			$return[$relname]["lengths"] = [];
@@ -710,7 +704,8 @@ ORDER BY s.ordinal_position";
 		return [];
 	}
 
-	function information_schema($db) {
+	function information_schema(?string $db): bool
+	{
 		return get_schema() == "information_schema";
 	}
 
@@ -738,7 +733,8 @@ ORDER BY s.ordinal_position";
 		return queries("ALTER DATABASE " . idf_escape(DB) . " RENAME TO " . idf_escape($name));
 	}
 
-	function auto_increment() {
+	function auto_increment(): string
+	{
 		return "";
 	}
 
@@ -849,7 +845,7 @@ ORDER BY s.ordinal_position";
 
 	function drop_tables($tables) {
 		foreach ($tables as $table) {
-				$status = table_status($table);
+				$status = table_status1($table);
 				if (!queries("DROP " . strtoupper($status["Engine"]) . " " . table($table))) {
 					return false;
 				}
@@ -859,7 +855,7 @@ ORDER BY s.ordinal_position";
 
 	function move_tables($tables, $views, $target) {
 		foreach (array_merge($tables, $views) as $table) {
-			$status = table_status($table);
+			$status = table_status1($table);
 			if (!queries("ALTER " . strtoupper($status["Engine"]) . " " . table($table) . " SET SCHEMA " . idf_escape($target))) {
 				return false;
 			}
@@ -867,27 +863,32 @@ ORDER BY s.ordinal_position";
 		return true;
 	}
 
-	function trigger($name, $table) {
+	function trigger(string $name, string $table): array
+	{
 		if ($name == "") {
 			return ["Statement" => "EXECUTE PROCEDURE ()"];
 		}
+
 		$columns = [];
 		$where = "WHERE trigger_schema = current_schema() AND event_object_table = " . q($table) . " AND trigger_name = " . q($name);
 		foreach (get_rows("SELECT * FROM information_schema.triggered_update_columns $where") as $row) {
 			$columns[] = $row["event_object_column"];
 		}
-		$return = [];
+
+		$trigger = [];
 		foreach (get_rows('SELECT trigger_name AS "Trigger", action_timing AS "Timing", event_manipulation AS "Event", \'FOR EACH \' || action_orientation AS "Type", action_statement AS "Statement" FROM information_schema.triggers ' . "$where ORDER BY event_manipulation DESC") as $row) {
 			if ($columns && $row["Event"] == "UPDATE") {
 				$row["Event"] .= " OF";
 			}
 			$row["Of"] = implode(", ", $columns);
-			if ($return) {
-				$row["Event"] .= " OR $return[Event]";
+			if ($trigger) {
+				$row["Event"] .= " OR $trigger[Event]";
 			}
-			$return = $row;
+
+			$trigger = $row;
 		}
-		return $return;
+
+		return $trigger;
 	}
 
 	function triggers($table) {
@@ -908,9 +909,11 @@ ORDER BY s.ordinal_position";
 	}
 
 	function routine($name, $type) {
-		$info = get_rows('SELECT routine_definition, external_language, type_udt_name
+		$info = get_rows('SELECT routine_definition, LOWER(external_language) AS language, type_udt_name
 			FROM information_schema.routines
-			WHERE routine_schema = current_schema() AND specific_name = ' . q($name))[0];
+			WHERE routine_schema = current_schema() AND specific_name = ' . q($name));
+
+		$info = $info[0] ?? [];
 
 		$fields = get_rows('SELECT parameter_name AS field, data_type AS type, character_maximum_length AS length, parameter_mode AS inout
 			FROM information_schema.parameters
@@ -919,9 +922,9 @@ ORDER BY s.ordinal_position";
 
 		return [
 			"fields" => $fields,
-			"returns" => ["type" => $info["type_udt_name"]],
-			"definition" => $info["routine_definition"],
-			"language" => strtolower($info["external_language"]),
+			"returns" => ["type" => $info["type_udt_name"] ?? null],
+			"definition" => $info["routine_definition"] ?? null,
+			"language" => $info["language"] ?? null,
 			"comment" => null, // Comments are not supported.
 		];
 	}
@@ -958,18 +961,26 @@ ORDER BY s.ordinal_position";
 		return $connection->query("EXPLAIN $query");
 	}
 
-	function found_rows($table_status, $where) {
+	function found_rows(array $table_status, array $where): ?int
+	{
 		if (preg_match(
 			"~ rows=([0-9]+)~",
 			Connection::get()->getValue("EXPLAIN SELECT * FROM " . idf_escape($table_status["Name"]) . ($where ? " WHERE " . implode(" AND ", $where) : "")),
 			$regs
 		)) {
-			return $regs[1];
+			return (int)$regs[1];
 		}
-		return false;
+
+		return null;
 	}
 
-	function types() {
+	/**
+	 * Returns user defined types.
+	 *
+	 * @return string[] [$id => $name]
+	 */
+	function types(): array
+	{
 		return get_key_vals("SELECT oid, typname
 FROM pg_type
 WHERE typnamespace = (SELECT oid FROM pg_namespace WHERE nspname = current_schema())
@@ -978,10 +989,15 @@ AND typelem = 0"
 		);
 	}
 
-	function type_values($id) {
+	function type_values(int $id): string
+	{
 		// to get values from type string: unnest(enum_range(NULL::"$type"))
 		$enums = get_vals("SELECT enumlabel FROM pg_enum WHERE enumtypid = $id ORDER BY enumsortorder");
-		return ($enums ? "'" . implode("', '", array_map('addslashes', $enums)) . "'" : "");
+		if (!$enums) {
+			return "";
+		}
+
+		return "'" . implode("', '", array_map('addslashes', $enums)) . "'";
 	}
 
 	function schemas(): array
@@ -1014,7 +1030,7 @@ AND typelem = 0"
 	function foreign_keys_sql($table) {
 		$return = "";
 
-		$status = table_status($table);
+		$status = table_status1($table);
 		$fkeys = foreign_keys($table);
 		ksort($fkeys);
 
@@ -1029,14 +1045,14 @@ AND typelem = 0"
 		$return_parts = [];
 		$sequences = [];
 
-		$status = table_status($table);
+		$status = table_status1($table);
 		if (is_view($status)) {
 			$view = view($table);
 			return rtrim("CREATE VIEW " . idf_escape($table) . " AS $view[select]", ";");
 		}
 		$fields = fields($table);
 
-		if (!$status || empty($fields)) {
+		if (count($status) < 2 || empty($fields)) {
 			return false;
 		}
 
@@ -1046,7 +1062,7 @@ AND typelem = 0"
 		foreach ($fields as $field) {
 			$part = idf_escape($field['field']) . ' ' . $field['full_type']
 				. default_value($field)
-				. ($field['attnotnull'] ? " NOT NULL" : "");
+				. ($field['null'] ? "" : " NOT NULL");
 			$return_parts[] = $part;
 
 			// sequences for fields
@@ -1105,14 +1121,17 @@ AND typelem = 0"
 		return "TRUNCATE " . table($table);
 	}
 
-	function trigger_sql($table) {
-		$status = table_status($table);
-		$return = "";
+	function trigger_sql(string $table): string
+	{
+		$status = table_status1($table);
+
+		$sql = "";
 		foreach (triggers($table) as $trg_id => $trg) {
 			$trigger = trigger($trg_id, $status['Name']);
-			$return .= "\nCREATE TRIGGER " . idf_escape($trigger['Trigger']) . " $trigger[Timing] $trigger[Event] ON " . idf_escape($status["nspname"]) . "." . idf_escape($status['Name']) . " $trigger[Type] $trigger[Statement];;\n";
+			$sql .= "\nCREATE TRIGGER " . idf_escape($trigger['Trigger']) . " $trigger[Timing] $trigger[Event] ON " . idf_escape($status["nspname"]) . "." . idf_escape($status['Name']) . " $trigger[Type] $trigger[Statement];;\n";
 		}
-		return $return;
+
+		return $sql;
 	}
 
 
@@ -1128,10 +1147,13 @@ AND typelem = 0"
 		return get_rows("SELECT * FROM pg_stat_activity ORDER BY " . (Connection::get()->isMinVersion("9.2") ? "pid" : "procpid"));
 	}
 
-	function convert_field($field) {
+	function convert_field(array $field): ?string
+	{
+		return null;
 	}
 
-	function unconvert_field(array $field, $return) {
+	function unconvert_field(array $field, string $return): string
+	{
 		return $return;
 	}
 
@@ -1156,7 +1178,8 @@ AND typelem = 0"
 		return "SELECT pg_backend_pid()";
 	}
 
-	function max_connections() {
-		return Connection::get()->getValue("SHOW max_connections");
+	function max_connections(): int
+	{
+		return (int)Connection::get()->getValue("SHOW max_connections");
 	}
 }

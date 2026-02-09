@@ -21,14 +21,14 @@ if ($_POST && !isset($_GET["select"])) {
 	}
 
 	$indexes = indexes($TABLE);
-	$unique_array = unique_array($_GET["where"], $indexes);
+	$unique_array = unique_array($_GET["where"] ?? [], $indexes);
 	$query_where = "\nWHERE $where";
 
 	if (isset($_POST["delete"])) {
 		queries_redirect(
 			$location,
 			lang('Item has been deleted.'),
-			Driver::get()->delete($TABLE, $query_where, !$unique_array)
+			Driver::get()->delete($TABLE, $query_where, $unique_array ? 0 : 1)
 		);
 
 	} else {
@@ -47,7 +47,7 @@ if ($_POST && !isset($_GET["select"])) {
 			queries_redirect(
 				$location,
 				lang('Item has been updated.'),
-				Driver::get()->update($TABLE, $set, $query_where, !$unique_array)
+				Driver::get()->update($TABLE, $set, $query_where, $unique_array ? 0 : 1)
 			);
 			if (is_ajax()) {
 				page_headers();

@@ -53,103 +53,154 @@ class SystemForeignKeysPlugin extends Plugin
 					];
 			}
 		} elseif (DB == "information_schema") {
-			$schemas = [
-				"table" => "SCHEMATA",
-				"source" => ["TABLE_CATALOG", "TABLE_SCHEMA"],
-				"target" => ["CATALOG_NAME", "SCHEMA_NAME"],
-			];
-			$tables = [
-				"table" => "TABLES",
-				"source" => ["TABLE_CATALOG", "TABLE_SCHEMA", "TABLE_NAME"],
-				"target" => ["TABLE_CATALOG", "TABLE_SCHEMA", "TABLE_NAME"],
-			];
+			$schemas = $this->schemas("TABLE");
+			$tables = $this->tables("TABLE");
 			$columns = [
 				"table" => "COLUMNS",
 				"source" => ["TABLE_CATALOG", "TABLE_SCHEMA", "TABLE_NAME", "COLUMN_NAME"],
 				"target" => ["TABLE_CATALOG", "TABLE_SCHEMA", "TABLE_NAME", "COLUMN_NAME"],
 			];
-			$character_sets = [
-				"table" => "CHARACTER_SETS",
-				"source" => ["CHARACTER_SET_NAME"],
-				"target" => ["CHARACTER_SET_NAME"],
-			];
-			$collations = [
-				"table" => "COLLATIONS",
-				"source" => ["COLLATION_NAME"],
-				"target" => ["COLLATION_NAME"],
-			];
+			$characterSets = $this->characterSets("CHARACTER_SET_NAME");
+			$collations = $this->collations("COLLATION_NAME");
 			$routineCharsets = [
-				["source" => ["CHARACTER_SET_CLIENT"]] + $character_sets,
-				["source" => ["COLLATION_CONNECTION"]] + $collations,
-				["source" => ["DATABASE_COLLATION"]] + $collations,
+				$this->characterSets("CHARACTER_SET_CLIENT"),
+				$this->collations("COLLATION_CONNECTION"),
+				$this->collations("DATABASE_COLLATION")
 			];
 
 			switch ($table) {
 				case "CHARACTER_SETS":
-					return [["source" => ["DEFAULT_COLLATE_NAME"]] + $collations];
+					return [$this->collations("DEFAULT_COLLATE_NAME")];
+				case "CHECK_CONSTRAINTS":
+					return [$this->schemas("CONSTRAINT")];
 				case "COLLATIONS":
-					return [$character_sets];
+					return [$characterSets];
 				case "COLLATION_CHARACTER_SET_APPLICABILITY":
-					return [$collations, $character_sets];
+					return [$collations, $characterSets];
 				case "COLUMNS":
-					return [$schemas, $tables, $character_sets, $collations];
+					return [$schemas, $tables, $characterSets, $collations];
 				case "COLUMN_PRIVILEGES":
+				case "COLUMNS_EXTENSIONS":
 					return [$schemas, $tables, $columns];
 				case "TABLES":
-					return [$schemas, ["source" => ["TABLE_COLLATION"]] + $collations];
+					return [
+						$schemas,
+						$this->collations("TABLE_COLLATION"),
+						["table" => "ENGINES", "source" => ["ENGINE"], "target" => ["ENGINE"]]
+					];
 				case "SCHEMATA":
 					return [
-						["source" => ["DEFAULT_CHARACTER_SET_NAME"]] + $character_sets,
-						["source" => ["DEFAULT_COLLATION_NAME"]] + $collations,
+						$this->characterSets("DEFAULT_CHARACTER_SET_NAME"),
+						$this->collations("DEFAULT_COLLATION_NAME")
 					];
 				case "EVENTS":
-					return array_merge([["source" => ["EVENT_CATALOG", "EVENT_SCHEMA"]] + $schemas], $routineCharsets);
+					return array_merge([$this->schemas("EVENT")], $routineCharsets);
 				case "FILES":
+				case "PARAMETERS":
+					return [
+						$this->schemas("SPECIFIC"),
+						["table" => "ROUTINES", "source" => ["SPECIFIC_CATALOG", "SPECIFIC_SCHEMA", "SPECIFIC_NAME"], "target" => ["ROUTINE_CATALOG", "ROUTINE_SCHEMA", "SPECIFIC_NAME"]]
+					];
 				case "PARTITIONS":
 				case "TABLE_PRIVILEGES":
+				case "TABLES_EXTENSIONS":
 					return [$schemas, $tables];
 				case "KEY_COLUMN_USAGE":
 					return [
-						["source" => ["CONSTRAINT_CATALOG", "CONSTRAINT_SCHEMA"]] + $schemas,
+						$this->schemas("CONSTRAINT"),
 						$schemas,
 						$tables,
 						$columns,
-						["source" => ["TABLE_CATALOG", "REFERENCED_TABLE_SCHEMA"]] + $schemas,
-						["source" => ["TABLE_CATALOG", "REFERENCED_TABLE_SCHEMA", "REFERENCED_TABLE_NAME"]] + $tables,
+						$this->schemas("TABLE", "REFERENCED_TABLE"),
+						$this->tables("TABLE", "REFERENCED_TABLE"),
 						["source" => ["TABLE_CATALOG", "REFERENCED_TABLE_SCHEMA", "REFERENCED_TABLE_NAME", "REFERENCED_COLUMN_NAME"]] + $columns,
 					];
 				case "REFERENTIAL_CONSTRAINTS":
 					return [
-						["source" => ["CONSTRAINT_CATALOG", "CONSTRAINT_SCHEMA"]] + $schemas,
-						["source" => ["UNIQUE_CONSTRAINT_CATALOG", "UNIQUE_CONSTRAINT_SCHEMA"]] + $schemas,
-						["source" => ["CONSTRAINT_CATALOG", "CONSTRAINT_SCHEMA", "TABLE_NAME"]] + $tables,
-						["source" => ["CONSTRAINT_CATALOG", "CONSTRAINT_SCHEMA", "REFERENCED_TABLE_NAME"]] + $tables,
+						$this->schemas("CONSTRAINT"),
+						$this->schemas("UNIQUE_CONSTRAINT"),
+						$this->tables("CONSTRAINT", "CONSTRAINT", "TABLE_NAME"),
+						$this->tables("CONSTRAINT", "CONSTRAINT", "REFERENCED_TABLE_NAME"),
 					];
 				case "ROUTINES":
-					return array_merge([["source" => ["ROUTINE_CATALOG", "ROUTINE_SCHEMA"]] + $schemas], $routineCharsets);
-				case "VIEWS":
+					return array_merge([$this->schemas("ROUTINE")], $routineCharsets);
 				case "SCHEMA_PRIVILEGES":
 					return [$schemas];
+				case "SCHEMATA_EXTENSIONS":
+					return [["table" => "SCHEMATA", "source" => ["CATALOG_NAME", "SCHEMA_NAME"], "target" => ["CATALOG_NAME", "SCHEMA_NAME"]]];
 				case "STATISTICS":
-					return [$schemas, $tables, $columns, ["source" => ["TABLE_CATALOG", "INDEX_SCHEMA"]] + $schemas];
+					return [$schemas, $tables, $columns, $this->schemas("TABLE", "INDEX")];
 				case "TABLE_CONSTRAINTS":
 					return [
-						["source" => ["CONSTRAINT_CATALOG", "CONSTRAINT_SCHEMA"]] + $schemas,
-						["source" => ["CONSTRAINT_CATALOG", "TABLE_SCHEMA"]] + $schemas,
-						["source" => ["CONSTRAINT_CATALOG", "TABLE_SCHEMA", "TABLE_NAME"]] + $tables,
+						$this->schemas("CONSTRAINT"),
+						$this->schemas("CONSTRAINT", "TABLE"),
+						$this->tables("CONSTRAINT", "TABLE"),
 					];
+				case "TABLE_CONSTRAINTS_EXTENSIONS":
+					return [$this->schemas("CONSTRAINT"), $this->tables("CONSTRAINT", "CONSTRAINT", "TABLE_NAME")];
 				case "TRIGGERS":
 					return array_merge(
 						[
-							["source" => ["TRIGGER_CATALOG", "TRIGGER_SCHEMA"]] + $schemas,
-							["source" => ["EVENT_OBJECT_CATALOG", "EVENT_OBJECT_SCHEMA"]] + $schemas,
-							["source" => ["EVENT_OBJECT_CATALOG", "EVENT_OBJECT_SCHEMA", "EVENT_OBJECT_TABLE"]] + $tables,
+							$this->schemas("TRIGGER"),
+							$this->schemas("EVENT_OBJECT"),
+							$this->tables("EVENT_OBJECT", "EVENT_OBJECT", "EVENT_OBJECT_TABLE"),
 						],
 						$routineCharsets
 					);
+				case "VIEWS":
+					return [
+						$schemas,
+						$this->characterSets("CHARACTER_SET_CLIENT"),
+						$this->collations("COLLATION_CONNECTION")
+					];
+				case "VIEW_TABLE_USAGE":
+					return [
+						$schemas,
+						$this->schemas("VIEW"),
+						$tables,
+						["table" => "VIEWS", "source" => ["VIEW_CATALOG", "VIEW_SCHEMA", "VIEW_NAME"], "target" => ["TABLE_CATALOG", "TABLE_SCHEMA", "TABLE_NAME"]]
+					];
 			}
 		}
 
 		return null;
+	}
+
+	private function schemas(string $catalog, ?string $schema = null): array
+	{
+		return [
+			"table" => "SCHEMATA",
+			"source" => [$catalog . "_CATALOG", ($schema ?: $catalog) . "_SCHEMA"],
+			"target" => ["CATALOG_NAME", "SCHEMA_NAME"]
+		];
+	}
+
+	private function tables(string $catalog, ?string $schema = null, ?string $table_name = null): array
+	{
+		$schema = $schema ?: $catalog;
+
+		return [
+			"table" => "TABLES",
+			"source" => [$catalog . "_CATALOG", $schema . "_SCHEMA", ($table_name ?: $schema . "_NAME")],
+			"target" => ["TABLE_CATALOG", "TABLE_SCHEMA", "TABLE_NAME"]
+		];
+	}
+
+	private function characterSets(string $source): array
+	{
+		return [
+			"table" => "CHARACTER_SETS",
+			"source" => [$source],
+			"target" => ["CHARACTER_SET_NAME"]
+		];
+	}
+
+	private function collations(string $source): array
+	{
+		return [
+			"table" => "COLLATIONS",
+			"source" => [$source],
+			"target" => ["COLLATION_NAME"]
+		];
 	}
 }

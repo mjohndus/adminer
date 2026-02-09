@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<meta content="text/html; charset=UTF-8" http-equiv="content-type" />
+<title>elastic</title>
+</head>
+<body>
+<table cellpadding="1" cellspacing="1" border="1">
+<thead>
+<tr><td rowspan="1" colspan="3">Login</td></tr>
+</thead>
+<tbody>
+<tr><td>open</td><td>/adminneo/tests/admin-devel.php</td><td></td></tr>
+<tr><td>select</td><td>name=lang</td><td>label=English</td></tr>
+<tr><td>clickAndWait</td><td>css=div.toolbox input[type="submit"]</td><td></td></tr>
+<tr><td>select</td><td>name=auth[driver]</td><td>label=Elasticsearch 7 (beta)</td></tr>
+<tr><td>clickAndWait</td><td>//input[@value='Login']</td><td></td></tr>
+<tr><td>verifyTextPresent</td><td>Logged as</td><td></td></tr>
+</tbody></table>
+<table cellpadding="1" cellspacing="1" border="1">
+<thead>
+<tr><td rowspan="1" colspan="3">Create table</td></tr>
+</thead>
+<tbody>
+<tr><td>open</td><td>/adminneo/tests/admin-devel.php?elastic=&username=&db=elastic</td><td></td></tr>
+<tr><td>clickAndWait</td><td>link=Create table</td><td></td></tr>
+<tr><td>type</td><td>name</td><td>interprets</td></tr>
+<tr><td>type</td><td>fields[1][field]</td><td>name</td></tr>
+<tr><td>select</td><td>fields[1][type]</td><td>label=text</td></tr>
+<tr><td>clickAndWait</td><td>//input[@value='Save']</td><td></td></tr>
+<tr><td>verifyTextPresent</td><td>Table has been created.</td><td></td></tr>
+</tbody></table>
+<table cellpadding="1" cellspacing="1" border="1">
+<thead>
+<tr><td rowspan="1" colspan="3">Alter table</td></tr>
+</thead>
+<tbody>
+<tr><td>open</td><td>/adminneo/tests/admin-devel.php?elastic=&username=&db=elastic&table=interprets</td><td></td></tr>
+<tr><td>clickAndWait</td><td>link=Alter table</td><td></td></tr>
+<tr><td>click</td><td>add[2]</td><td></td></tr>
+<tr><td>type</td><td>fields[3][field]</td><td>albums</td></tr>
+<tr><td>select</td><td>fields[3][type]</td><td>label=integer</td></tr>
+<tr><td>clickAndWait</td><td>//input[@value='Save']</td><td></td></tr>
+<tr><td>verifyTextPresent</td><td>Table has been altered.</td><td></td></tr>
+</tbody></table>
+<table cellpadding="1" cellspacing="1" border="1">
+<thead>
+<tr><td rowspan="1" colspan="3">Insert</td></tr>
+</thead>
+<tbody>
+<tr><td>open</td><td>/adminneo/tests/admin-devel.php?elastic=&username=&db=elastic&edit=interprets</td><td></td></tr>
+<tr><td>type</td><td>fields[name]</td><td>Michael Jackson</td></tr>
+<tr><td>clickAndWait</td><td>//input[@value='Save']</td><td></td></tr>
+<tr><td>verifyTextPresent</td><td>has been inserted.</td><td></td></tr>
+</tbody></table>
+<table cellpadding="1" cellspacing="1" border="1">
+<thead>
+<tr><td rowspan="1" colspan="3">Select</td></tr>
+</thead>
+<tbody>
+<tr><td>open</td><td>/adminneo/tests/admin-devel.php?elastic=&username=&db=elastic&select=interprets</td><td></td></tr>
+<tr><td>click</td><td>link=Search</td><td></td></tr>
+<tr><td>select</td><td>name=where[0][col]</td><td>label=name</td></tr>
+<tr><td>select</td><td>name=where[0][op]</td><td>label=should(match)</td></tr>
+<tr><td>type</td><td>name=where[0][val]</td><td>Jackson</td></tr>
+<tr><td>click</td><td>link=Sort</td><td></td></tr>
+<tr><td>select</td><td>name=order[0]</td><td>label=albums</td></tr>
+<tr><td>clickAndWait</td><td>xpath=//input[@value='Select']</td><td></td></tr>
+<tr><td>verifyTextPresent</td><td>1 row</td><td></td></tr>
+</tbody></table>
+<table cellpadding="1" cellspacing="1" border="1">
+<thead>
+<tr><td rowspan="1" colspan="3">Update</td></tr>
+</thead>
+<tbody>
+<tr><td>open</td><td>/adminneo/tests/admin-devel.php?elastic=&username=&db=elastic&select=interprets</td><td></td></tr>
+<tr><td>clickAndWait</td><td>css=#table .actions a.edit</td><td></td></tr>
+<tr><td>type</td><td>fields[albums]</td><td>1</td></tr>
+<tr><td>clickAndWait</td><td>//input[@value='Save']</td><td></td></tr>
+<tr><td>verifyTextPresent</td><td>Item has been updated.</td><td></td></tr>
+</tbody></table>
+<table cellpadding="1" cellspacing="1" border="1">
+<thead>
+<tr><td rowspan="1" colspan="3">Delete</td></tr>
+</thead>
+<tbody>
+<tr><td>open</td><td>/adminneo/tests/admin-devel.php?elastic=&username=&db=elastic&select=interprets</td><td></td></tr>
+<tr><td>click</td><td>name=check[]</td><td></td></tr>
+<tr><td>waitForChecked</td><td>name=check[]</td><td></td></tr>
+<tr><td>chooseOkOnNextConfirmation</td><td>Are you sure?</td><td></td></tr>
+<tr><td>click</td><td>delete</td><td></td></tr>
+<tr><td>verifyTextPresent</td><td>1 item has been affected.</td><td></td></tr>
+</tbody></table>
+<table cellpadding="1" cellspacing="1" border="1">
+<thead>
+<tr><td rowspan="1" colspan="3">Drop</td></tr>
+</thead>
+<tbody>
+<tr><td>open</td><td>/adminneo/tests/admin-devel.php?elastic=&username=&db=elastic&create=interprets</td><td></td></tr>
+<tr><td>chooseOkOnNextConfirmation</td><td>Drop interprets?</td><td></td></tr>
+<tr><td>click</td><td>name=drop</td><td></td></tr>
+<tr><td>verifyTextPresent</td><td>Table has been dropped.</td><td></td></tr>
+</tbody></table>
+<table cellpadding="1" cellspacing="1" border="1">
+<thead>
+<tr><td rowspan="1" colspan="3">Logout</td></tr>
+</thead>
+<tbody>
+<tr><td>open</td><td>/adminneo/tests/admin-devel.php?elastic=&username=</td><td></td></tr>
+<tr><td>clickAndWait</td><td>logout</td><td></td></tr>
+<tr><td>verifyTextPresent</td><td>Logout successful.</td><td></td></tr>
+</tbody></table>
+</body>
+</html>

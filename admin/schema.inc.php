@@ -5,6 +5,7 @@ namespace AdminNeo;
 $title2 = h(": " . DB . ($_GET["ns"] ? ".$_GET[ns]" : ""));
 page_header(lang('Database schema') . $title2, [lang('Database schema')]);
 
+/** @var array{float, float}[] $table_pos */
 $table_pos = [];
 $table_pos_js = [];
 $SCHEMA = ($_GET["schema"] ?: $_COOKIE["neo_schema-" . str_replace(".", "_", DB)]); // $_COOKIE["neo_schema"] was used before 3.2.0 //! ':' in table name
@@ -16,6 +17,7 @@ foreach ($matches as $i => $match) {
 
 $top = 0;
 $base_left = -1;
+/** @var array{fields:array[], pos:array{float, float}, references:string[][][]}[] $schema */
 $schema = []; // table => array("fields" => array(name => field), "pos" => array(top, left), "references" => array(table => array(left => array(source, target))))
 $referenced = []; // target_table => array(table => array(left => target_column))
 $lefts = []; // float => bool
@@ -69,7 +71,7 @@ foreach ($schema as $name => $table) {
 	echo script("qsl('div').onmousedown = schemaMousedown;");
 
 	foreach ($table["fields"] as $field) {
-		$val = '<span' . type_class($field["type"]) . ' title="' . h($field["type"] . ($field["length"] ? "($field[length])" : "") . ($field["null"] ? " NULL" : '')) . '">' . h($field["field"]) . '</span>';
+		$val = '<span ' . type_class($field["type"]) . ' title="' . h($field["type"] . ($field["length"] ? "($field[length])" : "") . ($field["null"] ? " NULL" : '')) . '">' . h($field["field"]) . '</span>';
 		echo "<br>" . ($field["primary"] ? "<i>$val</i>" : $val);
 	}
 

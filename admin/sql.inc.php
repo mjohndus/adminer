@@ -22,6 +22,7 @@ if ($_POST["clear"]) {
 	$history = [];
 	redirect(remove_from_uri("history"));
 }
+stop_session();
 
 $title = isset($_GET["import"]) ? lang('Import') : lang('SQL command');
 page_header($title, [$title]);
@@ -47,7 +48,7 @@ if ($_POST) {
 
 	if (is_string($query)) { // get_file() returns error as number, fread() as false
 		if (function_exists('memory_get_usage') && ($memory_limit = ini_bytes("memory_limit")) != "-1") {
-			@ini_set("memory_limit", max($memory_limit, 2 * strlen($query) + memory_get_usage() + 8e6)); // @ - may be disabled, 2 - substr and trim, 8e6 - other variables
+			@ini_set("memory_limit", max($memory_limit, strval(2 * strlen($query) + memory_get_usage() + 8e6))); // @ - may be disabled, 2 - substr and trim, 8e6 - other variables
 		}
 
 		if ($query != "" && strlen($query) < 1e6) { // don't add big queries
@@ -176,7 +177,7 @@ if ($_POST) {
 									$warnings_id = "warnings-$commands";
 									$warnings_link = $warnings ? "<a href='#$warnings_id' class='toggle'>" . lang('Warnings') . icon_chevron_down() . "</a>" : null;
 
-									$explain = null;
+									$explain = $orgtables = null;
 									$explain_id = "explain-$commands";
 									$export = false;
 									$export_id = "export-$commands";
@@ -187,7 +188,7 @@ if ($_POST) {
 										}
 
 										$limit = $_POST["limit"];
-										$orgtables = select($result, $connection2, [], $limit);
+										$orgtables = print_select_result($result, $connection2, [], $limit);
 
 										if (!$_POST["only_errors"]) {
 											echo "<p class='links'>";
@@ -233,7 +234,7 @@ if ($_POST) {
 
 									if ($explain) {
 										echo "<div id='$explain_id' class='hidden explain'>\n";
-										select($explain, $connection2, $orgtables);
+										print_select_result($explain, $connection2, $orgtables);
 										echo "</div>\n";
 									}
 
