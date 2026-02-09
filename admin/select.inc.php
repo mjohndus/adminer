@@ -181,7 +181,7 @@ if ($_POST) {
 		if (!$_POST["val"]) {
 			Admin::get()->addError(lang('Ctrl+click on a value to modify it.'));
 		} else {
-			$result = true;
+			$success = true;
 			$affected = 0;
 			foreach ($_POST["val"] as $unique_idf => $row) {
 				$set = [];
@@ -189,19 +189,19 @@ if ($_POST) {
 					$key = bracket_escape($key, true);
 					$set[idf_escape($key)] = (preg_match('~char|text~', $fields[$key]["type"]) || $val != "" ? Admin::get()->processFieldInput($fields[$key], $val) : "NULL");
 				}
-				$result = Driver::get()->update(
+				$success = (bool)Driver::get()->update(
 					$TABLE,
 					$set,
 					" WHERE " . ($where ? implode(" AND ", $where) . " AND " : "") . where_check($unique_idf, $fields),
 					($is_group || $primary ? 0 : 1),
 					" "
 				);
-				if (!$result) {
+				if (!$success) {
 					break;
 				}
 				$affected += Connection::get()->getAffectedRows();
 			}
-			queries_redirect(remove_from_uri(), lang('%d item(s) have been affected.', $affected), $result);
+			queries_redirect(remove_from_uri(), lang('%d item(s) have been affected.', $affected), $success);
 		}
 
 	} elseif (!is_string($file = get_file("csv_file", true))) {
@@ -231,11 +231,11 @@ if ($_POST) {
 				$rows[] = $set;
 			}
 		}
-		$result = (!$rows || Driver::get()->insertUpdate($TABLE, $rows, $primary));
-		if ($result) {
+		$success = !$rows || Driver::get()->insertUpdate($TABLE, $rows, $primary);
+		if ($success) {
 			Driver::get()->commit();
 		}
-		queries_redirect(remove_from_uri("page"), lang('%d row(s) have been imported.', $affected), $result);
+		queries_redirect(remove_from_uri("page"), lang('%d row(s) have been imported.', $affected), $success);
 		Driver::get()->rollback(); // after queries_redirect() to not overwrite error
 	}
 }

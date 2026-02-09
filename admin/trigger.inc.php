@@ -3,7 +3,7 @@
 namespace AdminNeo;
 
 $TABLE = $_GET["trigger"];
-$name = $_GET["name"];
+$name = $_GET["name"] ?? "";
 $trigger_options = trigger_options();
 $row = trigger($name, $TABLE) + ["Trigger" => $TABLE . "_bi"];
 
@@ -22,7 +22,7 @@ if ($_POST) {
 			queries_redirect(
 				$location,
 				($name != "" ? lang('Trigger has been altered.') : lang('Trigger has been created.')),
-				queries(create_trigger($on, $_POST))
+				(bool)queries(create_trigger($on, $_POST))
 			);
 			if ($name != "") {
 				queries(create_trigger($on, $row + ["Type" => reset($trigger_options["Type"])]));

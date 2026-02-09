@@ -187,7 +187,7 @@ if ($_POST) {
 											echo "<div class='table-result'>\n";
 										}
 
-										$limit = $_POST["limit"];
+										$limit = (int)$_POST["limit"];
 										$orgtables = print_select_result($result, $connection2, [], $limit);
 
 										if (!$_POST["only_errors"]) {

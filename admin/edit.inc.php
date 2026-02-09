@@ -28,7 +28,7 @@ if ($_POST && !isset($_GET["select"])) {
 		queries_redirect(
 			$location,
 			lang('Item has been deleted.'),
-			Driver::get()->delete($TABLE, $query_where, $unique_array ? 0 : 1)
+			(bool)Driver::get()->delete($TABLE, $query_where, $unique_array ? 0 : 1)
 		);
 
 	} else {
@@ -47,7 +47,7 @@ if ($_POST && !isset($_GET["select"])) {
 			queries_redirect(
 				$location,
 				lang('Item has been updated.'),
-				Driver::get()->update($TABLE, $set, $query_where, $unique_array ? 0 : 1)
+				(bool)Driver::get()->update($TABLE, $set, $query_where, $unique_array ? 0 : 1)
 			);
 			if (is_ajax()) {
 				page_headers();
@@ -57,7 +57,11 @@ if ($_POST && !isset($_GET["select"])) {
 		} else {
 			$result = Driver::get()->insert($TABLE, $set);
 			$last_id = ($result ? last_id($result) : 0);
-			queries_redirect($location, lang('Item%s has been inserted.', ($last_id ? " $last_id" : "")), $result); //! link
+			queries_redirect(
+				$location,
+				lang('Item%s has been inserted.', ($last_id ? " $last_id" : "")),
+				(bool)$result
+			); //! link
 		}
 	}
 }

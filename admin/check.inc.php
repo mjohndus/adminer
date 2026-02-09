@@ -8,17 +8,17 @@ $row = $_POST;
 
 if ($row) {
 	if (DIALECT == "sqlite") {
-		$result = recreate_table($TABLE, $TABLE, [], [], [], "", [], "$name", ($row["drop"] ? "" : $row["clause"]));
+		$success = recreate_table($TABLE, $TABLE, [], [], [], "", [], "$name", ($row["drop"] ? "" : $row["clause"]));
 	} else {
-		$result = ($name == "" || queries("ALTER TABLE " . table($TABLE) . " DROP CONSTRAINT " . idf_escape($name)));
+		$success = ($name == "" || queries("ALTER TABLE " . table($TABLE) . " DROP CONSTRAINT " . idf_escape($name)));
 		if (!$row["drop"]) {
-			$result = queries("ALTER TABLE " . table($TABLE) . " ADD" . ($row["name"] != "" ? " CONSTRAINT " . idf_escape($row["name"]) : "") . " CHECK ($row[clause])"); //! SQL injection
+			$success = (bool)queries("ALTER TABLE " . table($TABLE) . " ADD" . ($row["name"] != "" ? " CONSTRAINT " . idf_escape($row["name"]) : "") . " CHECK ($row[clause])"); //! SQL injection
 		}
 	}
 	queries_redirect(
 		ME . "table=" . urlencode($TABLE),
 		($row["drop"] ? lang('Check has been dropped.') : ($name != "" ? lang('Check has been altered.') : lang('Check has been created.'))),
-		$result
+		$success
 	);
 }
 
