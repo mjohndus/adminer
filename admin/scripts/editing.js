@@ -590,20 +590,22 @@ function partitionNameChange() {
 	this.oninput = () => {};
 }
 
-/** Show or hide comment fields
-* @param HTMLInputElement
-* @param [boolean] whether to focus Comment if checked
-*/
-function editingCommentsClick(el, focus) {
+/**
+ * Toggles comment fields.
+ *
+ * @param {HTMLInputElement} el
+ * @param {number} columnIndex
+ */
+function editingCommentsClick(el, columnIndex) {
 	const comment = el.form['Comment'];
-	columnShow(el.checked, 7);
+
+	columnShow(el.checked, columnIndex);
+
 	comment.classList.toggle('hidden', !el.checked);
-	if (focus && el.checked) {
+	if (el.checked) {
 		comment.focus();
 	}
 }
-
-
 
 /** Uncheck 'all' checkbox
 * @param MouseEvent

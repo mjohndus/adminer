@@ -18,6 +18,7 @@ AdminNeo 5.3.0
 - MySQL: Fix selecting routines in DB export (issue #176)
 - Fix sending DB dump in CSV format / TAR file (issue #176)
 - Fix exporting views in CSV format
+- Fix toggling comment fields (regression from 5.0.0)
 - Fix importing of tables without primary key (by @vrana, regression from 5.1.0)
 - Fix search anywhere for columns that needs value conversion (by @vrana)
 

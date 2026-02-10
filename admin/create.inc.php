@@ -237,7 +237,7 @@ if (support("columns")) {
 	$comment_class = $comments_opened ? "" : "hidden";
 
 	if (support("comment")) {
-		echo checkbox("comments", 1, $comments_opened, lang('Comment'), "editingCommentsClick(this, true);", "jsonly");
+		echo checkbox("comments", 1, $comments_opened, lang('Comment'), "editingCommentsClick(this, " . (support("move_col") ? 7 : 6) . ");", "jsonly");
 		echo " ";
 		if (preg_match('~\n~', $row["Comment"])) {
 			echo "<textarea name='Comment' rows='2' cols='20'", ($comment_class ? " class='$comment_class'" : ""), ">", h($row["Comment"]), "</textarea>";
