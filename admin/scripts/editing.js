@@ -1,3 +1,4 @@
+'use strict';
 // Admin specific functions
 
 /**
@@ -589,20 +590,22 @@ function partitionNameChange() {
 	this.oninput = () => {};
 }
 
-/** Show or hide comment fields
-* @param HTMLInputElement
-* @param [boolean] whether to focus Comment if checked
-*/
-function editingCommentsClick(el, focus) {
+/**
+ * Toggles comment fields.
+ *
+ * @param {HTMLInputElement} el
+ * @param {number} columnIndex
+ */
+function editingCommentsClick(el, columnIndex) {
 	const comment = el.form['Comment'];
-	columnShow(el.checked, 7);
+
+	columnShow(el.checked, columnIndex);
+
 	comment.classList.toggle('hidden', !el.checked);
-	if (focus && el.checked) {
+	if (el.checked) {
 		comment.focus();
 	}
 }
-
-
 
 /** Uncheck 'all' checkbox
 * @param MouseEvent
@@ -800,7 +803,7 @@ function schemaMouseup(event, db) {
 		that = undefined;
 		let s = '';
 		for (const key in tablePos) {
-			s += '_' + key + ':' + Math.round(tablePos[key][0] * 10000) / 10000 + 'x' + Math.round(tablePos[key][1] * 10000) / 10000;
+			s += '_' + key + ':' + Math.round(tablePos[key][0]) + 'x' + Math.round(tablePos[key][1]);
 		}
 		s = encodeURIComponent(s.substr(1));
 		const link = gid('schema-link');

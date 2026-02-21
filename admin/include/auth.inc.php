@@ -73,7 +73,8 @@ function build_http_url(string $server, string $username, string $password, stri
 		($matches[3] ?? ($defaultPort ? ":$defaultPort" : ""));
 }
 
-function add_invalid_login() {
+function add_invalid_login(): void
+{
 	$base_name = get_temp_dir() . "/adminneo.invalid";
 	// adminer.invalid may not be writable by us, try the files with random suffixes
 	$file = null;
@@ -100,11 +101,13 @@ function add_invalid_login() {
 			}
 		}
 	}
+
 	$invalid = &$invalids[Admin::get()->getBruteForceKey()];
 	if (!$invalid) {
 		$invalid = [$time + 30*60, 0]; // active for 30 minutes
 	}
 	$invalid[1]++;
+
 	write_and_unlock_file($file, serialize($invalids));
 }
 
@@ -125,6 +128,7 @@ function check_invalid_login(array &$permanent): void
 		}
 	}
 
+	/** @var array{int, int} $invalid */
 	$invalid = ($invalids ? $invalids[Admin::get()->getBruteForceKey()] : []);
 
 	$next_attempt = ($invalid && $invalid[1] > 29 ? $invalid[0] - time() : 0); // allow 30 invalid attempts

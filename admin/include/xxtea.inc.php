@@ -9,7 +9,7 @@ namespace AdminNeo;
  * @link http://www.coolcode.cn/?action=show&id=128
  */
 
-function int32($n): int
+function int32(int $n): int
 {
 	while ($n >= 2147483648) {
 		$n -= 4294967296;
@@ -21,7 +21,10 @@ function int32($n): int
 	return (int)$n;
 }
 
-function long2str($v, $w)
+/**
+ * @param int[] $v
+ */
+function long2str(array $v, bool $w): string
 {
 	$s = '';
 	foreach ($v as $val) {
@@ -31,7 +34,7 @@ function long2str($v, $w)
 	return $w ? substr($s, 0, end($v)) : $s;
 }
 
-function str2long($s, $w)
+function str2long(string $s, bool $w): array
 {
 	$v = array_values(unpack('V*', str_pad($s, 4 * ceil(strlen($s) / 4), "\0")));
 	if ($w) {
@@ -41,7 +44,7 @@ function str2long($s, $w)
 	return $v;
 }
 
-function xxtea_mx($z, $y, $sum, $k): int
+function xxtea_mx(int $z, int $y, int $sum, int $k): int
 {
 	return int32((($z >> 5 & 0x7FFFFFF) ^ $y << 2) + (($y >> 3 & 0x1FFFFFFF) ^ $z << 4)) ^ int32(($sum ^ $y) + ($k ^ $z));
 }
@@ -52,9 +55,9 @@ function xxtea_mx($z, $y, $sum, $k): int
  * @param string $plaintext Plain text to encrypt.
  * @param string $key Encryption key.
  *
- * @return string|false Encrypted binary data or false.
+ * @return string Encrypted binary data or false.
  */
-function xxtea_encrypt_string(string $plaintext, string $key)
+function xxtea_encrypt_string(string $plaintext, string $key): string
 {
 	$key = array_values(unpack("V*", pack("H*", md5($key))));
 
@@ -91,7 +94,7 @@ function xxtea_encrypt_string(string $plaintext, string $key)
  * @param string $data Encrypted binary data.
  * @param string $key Decryption key.
  *
- * @return string|false Decrypted plain text or false.
+ * @return string Decrypted plain text or false.
  */
 function xxtea_decrypt_string(string $data, string $key)
 {

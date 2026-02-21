@@ -3,16 +3,16 @@
 
 namespace AdminNeo;
 
-/** Print select result
-*
-* @param Result
-* @param ?Connection connection to examine indexes
-* @param array
-* @param int
-*
-* @return array $orgtables
-*/
-function select(Result $result, ?Connection $connection = null, $orgtables = [], $limit = 0) {
+/**
+ * Prints select result.
+ *
+ * @param ?Connection $connection Connection to examine indexes.
+ * @param string[] $orgtables
+ *
+ * @return string[] orgtables
+ */
+function print_select_result(Result $result, ?Connection $connection = null, array $orgtables = [], int $limit = 0): array
+{
 	$links = []; // colno => orgtable - create links from these columns
 	$indexes = []; // orgtable => array(column => colno) - primary keys
 	$columns = []; // orgtable => array(column => ) - not selected columns in primary key
@@ -25,6 +25,7 @@ function select(Result $result, ?Connection $connection = null, $orgtables = [],
 			echo "<div class='scrollable'>\n";
 			echo "<table class='nowrap'>\n";
 			echo "<thead><tr>";
+
 			for ($j=0; $j < count($row); $j++) {
 				$field = $result->fetchField();
 				if (!$field) {
@@ -35,14 +36,16 @@ function select(Result $result, ?Connection $connection = null, $orgtables = [],
 				$name = $field->name;
 				$orgtable = $field->orgtable ?? "";
 				$orgname = $field->orgname ?? $name;
+
 				if (isset($field->table)) {
 					$return[$field->table] = $orgtable;
 				}
+
 				if ($orgtables && DIALECT == "sql") { // MySQL EXPLAIN
 					$links[$j] = ($name == "table" ? "table=" : ($name == "possible_keys" ? "indexes=" : null));
 				} elseif ($orgtable != "") {
 					if (!isset($indexes[$orgtable])) {
-						// find primary key in each table
+						// Find primary key in each table.
 						$indexes[$orgtable] = [];
 						foreach (indexes($orgtable, $connection) as $index) {
 							if ($index["type"] == "PRIMARY") {
@@ -52,16 +55,20 @@ function select(Result $result, ?Connection $connection = null, $orgtables = [],
 						}
 						$columns[$orgtable] = $indexes[$orgtable];
 					}
+
 					if (isset($columns[$orgtable][$orgname])) {
 						unset($columns[$orgtable][$orgname]);
 						$indexes[$orgtable][$orgname] = $j;
 						$links[$j] = $orgtable;
 					}
 				}
+
 				if ($field->charsetnr == 63) { // 63 - binary
 					$blobs[$j] = true;
 				}
+
 				$types[$j] = $field->type;
+
 				echo "<th" . ($orgtable != "" || $field->name != $orgname ? " title='" . h(($orgtable != "" ? "$orgtable." : "") . $orgname) . "'" : "") . ">" . h($name)
 					. ($orgtables ? doc_link([
 						'sql' => "explain-output.html#explain_" . strtolower($name),
@@ -69,8 +76,10 @@ function select(Result $result, ?Connection $connection = null, $orgtables = [],
 					]) : "")
 				;
 			}
+
 			echo "</thead>\n";
 		}
+
 		echo "<tr>";
 		foreach ($row as $key => $val) {
 			$link = "";
@@ -87,6 +96,7 @@ function select(Result $result, ?Connection $connection = null, $orgtables = [],
 			} elseif (is_web_url($val)) {
 				$link = $val;
 			}
+
 			if ($val === null) {
 				$val = "<i>NULL</i>";
 			} elseif ($blobs[$key] && !is_utf8($val)) {
@@ -97,21 +107,31 @@ function select(Result $result, ?Connection $connection = null, $orgtables = [],
 					$val = "<code>$val</code>";
 				}
 			}
+
 			if ($link) {
 				$val = "<a href='" . h($link) . "'" . (is_web_url($link) ? target_blank() : '') . ">$val</a>";
 			}
+
 			// https://dev.mysql.com/doc/dev/mysql-server/latest/field__types_8h.html
 			$class = $types[$key] <= 9 || $types[$key] == 246 ? "class='number'" : "";
+
 			echo "<td $class>$val</td>";
 		}
 	}
-	echo ($i ? "</table>\n</div>" : "<p class='message'>" . lang('No rows.')) . "\n";
+
+	if ($i) {
+		echo "</table>\n</div>";
+	} else {
+		echo "<p class='message'>" . lang('No rows.');
+	}
+	echo "\n";
+
 	return $return;
 }
 
 /** Get referencable tables with single column primary key except self
 * @param string
-* @return array [$table_name => $field]
+* @return array[] [$table_name => $field]
 */
 function referencable_primary($self) {
 	$return = []; // table_name => field
@@ -133,12 +153,11 @@ function referencable_primary($self) {
 
 /** Print SQL <textarea> tag
 * @param string
-* @param string or array in which case [0] of every element is used
+* @param string|list<array{string}>
 * @param int
 * @param int
-* @return null
 */
-function textarea($name, $value, $rows = 10, $cols = 80) {
+function textarea($name, $value, $rows = 10, $cols = 80): void {
 	echo "<textarea name='" . h($name) . "' rows='$rows' cols='$cols' class='sqlarea jush-" . DIALECT . "' spellcheck='false' wrap='off'>";
 	if (is_array($value)) {
 		foreach ($value as $val) { // not implode() to save memory
@@ -152,7 +171,7 @@ function textarea($name, $value, $rows = 10, $cols = 80) {
 
 /** Generate HTML <select> or <input> if $options are empty
 * @param string
-* @param array
+* @param string[]
 * @param string
 * @param string
 * @param string
@@ -168,11 +187,11 @@ function select_input($attrs, $options, $value = "", $onchange = "", $placeholde
 
 /** Print one row in JSON object
 * @param string or "" to close the object
-* @param string
-* @return null
+* @param string|int|null
+
 * @deprecated
 */
-function json_row($key, $val = null) {
+function json_row($key, $val = null): void {
 	static $first = true;
 	if ($first) {
 		echo "{";
@@ -188,13 +207,12 @@ function json_row($key, $val = null) {
 
 /** Print table columns for type edit
 * @param string
-* @param array
-* @param array
-* @param array returned by referencable_primary()
-* @param array extra types to prepend
-* @return null
+* @param list<string>[]
+* @param array[]
+* @param string[]
+* @param list<string> extra types to prepend
 */
-function edit_type($key, $field, $collations, $foreign_keys = [], $extra_types = []) {
+function edit_type($key, $field, $collations, $foreign_keys = [], $extra_types = []): void {
 	$type = $field["type"] ?? null;
 	?>
 <td><select name="<?php echo h($key); ?>[type]" class="type" aria-labelledby="label-type"><?php
@@ -216,7 +234,7 @@ echo optionlist(array_merge($extra_types, $structured_types), $type);
 
 /**
  * @param string $table
- * @return array
+ * @return array{partition_by:string, partition:string, partitions:string, partition_names:list<string>, partition_values:list<string>}
  */
 function get_partitions_info($table) {
 	$from = "FROM information_schema.PARTITIONS WHERE TABLE_SCHEMA = " . q(DB) . " AND TABLE_NAME = " . q($table);
@@ -262,7 +280,7 @@ function process_type($field, $collate = "COLLATE") {
 /** Create SQL string from field
 * @param array basic field information
 * @param array information about field type
-* @return array ["field", "type", "NULL", "DEFAULT", "ON UPDATE", "COMMENT", "AUTO_INCREMENT"]
+* @return list<string> ["field", "type", "NULL", "DEFAULT", "ON UPDATE", "COMMENT", "AUTO_INCREMENT"]
 */
 function process_field($field, $type_field) {
 	// MariaDB exports CURRENT_TIMESTAMP as a function.
@@ -316,30 +334,34 @@ function default_value($field) {
 	}
 }
 
-/** Get type class to use in CSS
-* @param string
-* @return string class=''
-*/
-function type_class($type) {
+/**
+ * Returns class HTML parameter for given type.
+ */
+function type_class(string $type): string
+{
 	foreach ([
 		'char' => 'text',
 		'date' => 'time|year',
 		'binary' => 'blob',
 		'enum' => 'set',
-	] as $key => $val) {
-		if (preg_match("~$key|$val~", $type)) {
-			return " class='$key'";
+	] as $class => $pattern) {
+		if (preg_match("~$class|$pattern~", $type)) {
+			return "class='$class'";
 		}
 	}
+
+	return "";
 }
 
 /**
  * Prints table interior for fields editing.
  *
- * @param string $type TABLE, FUNCTION or PROCEDURE
- * @param array $foreign_keys returned by referencable_primary()
+ * @param array[] $fields
+ * @param list<string> $collations
+ * @param 'TABLE'|'PROCEDURE'|'FUNCTION' $type
+ * @param string[] $foreign_keys
  */
-function edit_fields(array $fields, array $collations, $type = "TABLE", $foreign_keys = []) {
+function edit_fields(array $fields, array $collations, $type = "TABLE", $foreign_keys = []): void {
 	$fields = array_values($fields);
 	$comments_opened = $_POST ? $_POST["comments"] : Admin::get()->getSettings()->getParameter("commentsOpened");
 	$comment_class = $comments_opened ? "" : "class='hidden'";
@@ -445,7 +467,7 @@ function edit_fields(array $fields, array $collations, $type = "TABLE", $foreign
 }
 
 /** Move fields up and down or add field
-* @param array
+* @param array[]
 * @return bool
 */
 function process_fields(&$fields) {
@@ -486,18 +508,19 @@ function process_fields(&$fields) {
 }
 
 /** Callback used in routine()
-* @param array
+* @param list<string>
 * @return string
 */
 function normalize_enum($match) {
-	return "'" . str_replace("'", "''", addcslashes(stripcslashes(str_replace($match[0][0] . $match[0][0], $match[0][0], substr($match[0], 1, -1))), '\\')) . "'";
+	$val = $match[0];
+	return "'" . str_replace("'", "''", addcslashes(stripcslashes(str_replace($val[0] . $val[0], $val[0], substr($val, 1, -1))), '\\')) . "'";
 }
 
 /**
  * Issue grant or revoke commands.
  *
- * @param bool $grant
- * @param array $privileges
+ * @param bool $grant GRANT or REVOKE
+ * @param list<string> $privileges
  * @param string $columns
  * @param string $on
  * @param string $user
@@ -532,7 +555,7 @@ function grant($grant, array $privileges, $columns, $on, $user) {
 	);
 }
 
-/** Drop old object and create a new one
+/** Drop old object and create a new one. Redirect in success.
 * @param string drop old object query
 * @param string create new object query
 * @param string drop new object query
@@ -544,9 +567,8 @@ function grant($grant, array $privileges, $columns, $on, $user) {
 * @param string
 * @param string
 * @param string
-* @return null redirect in success
 */
-function drop_create($drop, $create, $drop_created, $test, $drop_test, $location, $message_drop, $message_alter, $message_create, $old_name, $new_name) {
+function drop_create($drop, $create, $drop_created, $test, $drop_test, $location, $message_drop, $message_alter, $message_create, $old_name, $new_name): void {
 	if ($_POST["drop"]) {
 		query_redirect($drop, $location, $message_drop);
 	} elseif ($old_name == "") {
@@ -566,24 +588,26 @@ function drop_create($drop, $create, $drop_created, $test, $drop_test, $location
 	}
 }
 
-/** Generate SQL query for creating trigger
-* @param string
-* @param array result of trigger()
-* @return string
-*/
-function create_trigger($on, $row) {
-	$timing_event = " $row[Timing] $row[Event]" . (preg_match('~ OF~', $row["Event"]) ? " $row[Of]" : ""); // SQL injection
+/**
+ * Generates SQL query for creating a trigger.
+ *
+ * @param array $trigger The result of trigger().
+ */
+function create_trigger(string $on, array $trigger): string
+{
+	$timing_event = " $trigger[Timing] $trigger[Event]" . (preg_match('~ OF~', $trigger["Event"]) ? " $trigger[Of]" : ""); // SQL injection
+
 	return "CREATE TRIGGER "
-		. idf_escape($row["Trigger"])
+		. idf_escape($trigger["Trigger"])
 		. (DIALECT == "mssql" ? $on . $timing_event : $timing_event . $on)
-		. rtrim(" $row[Type]\n$row[Statement]", ";")
+		. rtrim(" $trigger[Type]\n$trigger[Statement]", ";")
 		. ";"
 	;
 }
 
 /** Generate SQL query for creating routine
-* @param string "PROCEDURE" or "FUNCTION"
-* @param array result of routine()
+* @param 'PROCEDURE'|'FUNCTION'
+* @param string[] result of routine()
 * @return string
 */
 function create_routine($routine, $row) {
@@ -717,9 +741,8 @@ function db_size($db) {
 
 /** Print SET NAMES if utf8mb4 might be needed
 * @param string
-* @return null
 */
-function set_utf8mb4($create) {
+function set_utf8mb4($create): void {
 	static $set = false;
 	if (!$set && preg_match('~\butf8mb4~i', $create)) { // possible false positive
 		$set = true;

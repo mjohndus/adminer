@@ -52,7 +52,7 @@ if (isset($_GET["mysql"])) {
 					($server . $username != "" ? $username : ini_get("mysqli.default_user")),
 					($server . $username . $password != "" ? $password : ini_get("mysqli.default_pw")),
 					$database,
-					(is_numeric($port) ? $port : ini_get("mysqli.default_port")),
+					(is_numeric($port) ? (int)$port : ini_get("mysqli.default_port")),
 					(!is_numeric($port) ? $port : $socket),
 					$flags
 				);
@@ -302,17 +302,17 @@ if (isset($_GET["mysql"])) {
 				"group_concat",
 			];
 
+			$this->insertFunctions = [
+				"char" => "md5/sha1/password/encrypt/uuid",
+				"binary" => "md5/sha1",
+				"date|time" => "now",
+			];
+
 			$this->editFunctions = [
-				[
-					"char" => "md5/sha1/password/encrypt/uuid",
-					"binary" => "md5/sha1",
-					"date|time" => "now",
-				], [
-					number_type() => "+/-",
-					"date" => "+ interval/- interval",
-					"time" => "addtime/subtime",
-					"char|text" => "concat",
-				]
+				number_type() => "+/-",
+				"date" => "+ interval/- interval",
+				"time" => "addtime/subtime",
+				"char|text" => "concat",
 			];
 
 			if ($connection->isMinVersion($maria ? "10.2" : "5.7.8")) {
@@ -322,12 +322,12 @@ if (isset($_GET["mysql"])) {
 			// UUID data type for Mariadb >= 10.7
 			if ($maria && $connection->isMinVersion("10.7")) {
 				$this->types[lang('Strings')]["uuid"] = 128;
-				$this->editFunctions[0]['uuid'] = 'uuid';
+				$this->insertFunctions['uuid'] = 'uuid';
 			}
 
 			if ($connection->isMinVersion("9")) {
 				$this->types[lang('Numbers')]["vector"] = 16383;
-				$this->editFunctions[0]['vector'] = 'string_to_vector';
+				$this->insertFunctions['vector'] = 'string_to_vector';
 			}
 
 			$this->systemDatabases = ["mysql", "information_schema", "performance_schema", "sys"];
@@ -407,7 +407,7 @@ if (isset($_GET["mysql"])) {
 			$result = $this->connection->query("SHOW WARNINGS");
 			if ($result && $result->getRowsCount()) {
 				ob_start();
-				select($result); // select() usually needs to print a big table progressively
+				print_select_result($result); // print_select_result() usually needs to print a big table progressively
 				return ob_get_clean();
 			}
 
@@ -505,33 +505,38 @@ if (isset($_GET["mysql"])) {
 		return $connection;
 	}
 
-	/** Get cached list of databases
-	* @param bool
-	* @return array
-	*/
-	function get_databases($flush) {
-		// SHOW DATABASES can take a very long time so it is cached
-		$return = get_session("dbs");
-		if ($return === null) {
-			$query = "SELECT SCHEMA_NAME FROM information_schema.SCHEMATA ORDER BY SCHEMA_NAME"; // SHOW DATABASES can be disabled by skip_show_database
-			$return = ($flush ? slow_query($query) : get_vals($query));
+	/**
+	 * Returns cached list of databases.
+	 *
+	 * @return list<string>
+	 */
+	function get_databases(bool $flush): array
+	{
+		// SHOW DATABASES can take a very long time so it is cached.
+		$databases = get_session("dbs");
+
+		if ($databases === null) {
+			// SHOW DATABASES can be disabled by skip_show_database
+			$query = "SELECT SCHEMA_NAME FROM information_schema.SCHEMATA ORDER BY SCHEMA_NAME";
+			$databases = ($flush ? slow_query($query) : get_vals($query));
 			restart_session();
-			set_session("dbs", $return);
+			set_session("dbs", $databases);
 			stop_session();
 		}
-		return $return;
+
+		return $databases;
 	}
 
 	/** Formulate SQL query with limit
 	* @param string everything after SELECT
 	* @param string including WHERE
-	* @param ?int
+	* @param int
 	* @param int
 	* @param string
 	* @return string
 	*/
-	function limit($query, $where, ?int $limit, $offset = 0, $separator = " ") {
-		return " $query$where" . ($limit !== null ? $separator . "LIMIT $limit" . ($offset ? " OFFSET $offset" : "") : "");
+	function limit($query, $where, int $limit, $offset = 0, $separator = " ") {
+		return " $query$where" . ($limit ? $separator . "LIMIT $limit" . ($offset ? " OFFSET $offset" : "") : "");
 	}
 
 	/** Formulate SQL modification query with limit 1
@@ -547,7 +552,7 @@ if (isset($_GET["mysql"])) {
 
 	/** Get database collation
 	* @param string
-	* @param array result of collations()
+	* @param string[][] result of collations()
 	* @return string
 	*/
 	function db_collation($db, $collations) {
@@ -570,15 +575,15 @@ if (isset($_GET["mysql"])) {
 	}
 
 	/** Get tables list
-	* @return array [$name => $type]
+	* @return string[] [$name => $type]
 	*/
 	function tables_list() {
 		return get_key_vals("SELECT TABLE_NAME, TABLE_TYPE FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() ORDER BY TABLE_NAME");
 	}
 
 	/** Count tables in all databases
-	* @param array
-	* @return array [$db => $tables]
+	* @param list<string>
+	* @return int[] [$db => $tables]
 	*/
 	function count_tables($databases) {
 		$return = [];
@@ -591,7 +596,7 @@ if (isset($_GET["mysql"])) {
 	/** Get table status
 	* @param string
 	* @param bool return only "Name", "Engine" and "Comment" fields
-	* @return array [$name => ["Name" => , "Engine" => , "Comment" => , "Oid" => , "Rows" => , "Collation" => , "Auto_increment" => , "Data_length" => , "Index_length" => , "Data_free" => ]] or only inner array with $name, null if table is not found
+	* @return array{Name:string, Engine?:?string, Comment?:string, Oid?:numeric-string, Rows?:numeric-string, Collation?:string, Auto_increment?:numeric-string, Data_length?:numeric-string, Index_length?:numeric-string, Data_free?:numeric-string, Create_options?:string, nspname?:string}[]
 	*/
 	function table_status($name = "", $fast = false) {
 		if ($fast) {
@@ -612,7 +617,6 @@ if (isset($_GET["mysql"])) {
 			if ($name != "") {
 				// MariaDB: Table name is returned as lowercase on macOS, so we fix it here.
 				$row["Name"] = $name;
-				return $row;
 			}
 
 			$tables[$row["Name"]] = $row;
@@ -634,13 +638,12 @@ if (isset($_GET["mysql"])) {
 	* @return bool
 	*/
 	function fk_support($table_status) {
-		return preg_match('~InnoDB|IBMDB2I~i', $table_status["Engine"])
-			|| (preg_match('~NDB~i', $table_status["Engine"]) && Connection::get()->isMinVersion("5.6"));
+		return preg_match('~InnoDB|IBMDB2I' . (Connection::get()->isMinVersion("5.6") ? '|NDB' : '') . '~i', $table_status["Engine"]);
 	}
 
 	/** Get information about fields
 	* @param string
-	* @return array [$name => ["field" => , "full_type" => , "type" => , "length" => , "unsigned" => , "default" => , "null" => , "auto_increment" => , "on_update" => , "collation" => , "privileges" => , "comment" => , "primary" => , "generated" => ]]
+	* @return array{field:string, full_type:string, type:string, length:int, unsigned:string, default:string, null:bool, auto_increment:bool, on_update:string, collation:string, privileges:int[], comment:string, primary:bool, generated:string}[]
 	*/
 	function fields($table) {
 		$maria = Connection::get()->isMariaDB();
@@ -712,7 +715,7 @@ if (isset($_GET["mysql"])) {
 	/**
 	 * Returns table indexes.
 	 *
-	 * @return array [$key_name => ["type" => , "columns" => [], "lengths" => [], "descs" => []]]
+	 * @return array{type:string, columns:list<string>, lengths:list<int>, descs:list<bool>}[]
 	 */
 	function indexes(string $table, ?Connection $connection = null): array
 	{
@@ -729,7 +732,7 @@ if (isset($_GET["mysql"])) {
 
 	/** Get foreign keys in table
 	* @param string
-	* @return array [$name => ["db" => , "ns" => , "table" => , "source" => [], "target" => [], "on_delete" => , "on_update" => ]]
+	* @return array{db:string, ns:string, table:string, source:list<string>, target:list<string>, on_delete:string, on_update:string}[]
 	*/
 	function foreign_keys($table) {
 		static $pattern = '(?:`(?:[^`]|``)+`|"(?:[^"]|"")+")';
@@ -768,14 +771,14 @@ ORDER BY ordinal_position";
 
 	/** Get view SELECT
 	* @param string
-	* @return array ["select" => ]
+	* @return array{select:string}
 	*/
 	function view($name) {
 		return ["select" => preg_replace('~^(?:[^`]|`[^`]*`)*\s+AS\s+~isU', '', Connection::get()->getValue("SHOW CREATE VIEW " . table($name), 1))];
 	}
 
 	/** Get sorted grouped list of collations
-	* @return array
+	* @return string[][]
 	*/
 	function collations() {
 		$return = [];
@@ -796,17 +799,17 @@ ORDER BY ordinal_position";
 		ksort($return);
 
 		foreach ($return as $key => $val) {
-			asort($return[$key]);
+			sort($return[$key]);
 		}
 
 		return $return;
 	}
 
-	/** Find out if database is information_schema
-	* @param string
-	* @return bool
-	*/
-	function information_schema($db) {
+	/**
+	 * Finds out if database is information_schema.
+	 */
+	function information_schema(?string $db): bool
+	{
 		return ($db == "information_schema")
 			|| (Connection::get()->isMinVersion("5.5") && $db == "performance_schema");
 	}
@@ -821,17 +824,19 @@ ORDER BY ordinal_position";
 	/** Create database
 	* @param string
 	* @param string
-	* @return string
+	* @return bool
 	*/
-	function create_database($db, $collation) {
-		return queries("CREATE DATABASE " . idf_escape($db) . ($collation ? " COLLATE " . q($collation) : ""));
+	function create_database($db, $collation): bool
+	{
+		return (bool)queries("CREATE DATABASE " . idf_escape($db) . ($collation ? " COLLATE " . q($collation) : ""));
 	}
 
 	/** Drop databases
-	* @param array
+	* @param list<string>
 	* @return bool
 	*/
-	function drop_databases($databases) {
+	function drop_databases($databases): bool
+	{
 		$return = apply_queries("DROP DATABASE", $databases, 'AdminNeo\idf_escape');
 		restart_session();
 		set_session("dbs", null);
@@ -843,7 +848,8 @@ ORDER BY ordinal_position";
 	* @param string
 	* @return bool
 	*/
-	function rename_database($name, $collation) {
+	function rename_database($name, $collation): bool
+	{
 		$return = false;
 		if (create_database($name, $collation)) {
 			$tables = [];
@@ -861,10 +867,11 @@ ORDER BY ordinal_position";
 		return $return;
 	}
 
-	/** Generate modifier for auto increment column
-	* @return string
-	*/
-	function auto_increment() {
+	/**
+	 * Generates modifier for auto increment column.
+	 */
+	function auto_increment(): string
+	{
 		$auto_increment_index = " PRIMARY KEY";
 		// don't overwrite primary key by auto_increment
 		if ($_GET["create"] != "" && $_POST["auto_increment_col"]) {
@@ -878,6 +885,7 @@ ORDER BY ordinal_position";
 				}
 			}
 		}
+
 		return " AUTO_INCREMENT$auto_increment_index";
 	}
 
@@ -885,15 +893,16 @@ ORDER BY ordinal_position";
 	* @param string "" to create
 	* @param string new name
 	* @param array of [$orig, $process_field, $after]
-	* @param array of strings
+	* @param list<string>
 	* @param string
 	* @param string
 	* @param string
-	* @param string number
+	* @param numeric-string
 	* @param string
 	* @return bool
 	*/
-	function alter_table($table, $name, $fields, $foreign, $comment, $engine, $collation, $auto_increment, $partitioning) {
+	function alter_table($table, $name, $fields, $foreign, $comment, $engine, $collation, $auto_increment, $partitioning): bool
+	{
 		$alter = [];
 		foreach ($fields as $field) {
 			if ($field[1]) {
@@ -915,7 +924,7 @@ ORDER BY ordinal_position";
 			. ($auto_increment != "" ? " AUTO_INCREMENT=$auto_increment" : "")
 		;
 		if ($table == "") {
-			return queries("CREATE TABLE " . table($name) . " (\n" . implode(",\n", $alter) . "\n)$status$partitioning");
+			return (bool)queries("CREATE TABLE " . table($name) . " (\n" . implode(",\n", $alter) . "\n)$status$partitioning");
 		}
 		if ($table != $name) {
 			$alter[] = "RENAME TO " . table($name);
@@ -923,55 +932,61 @@ ORDER BY ordinal_position";
 		if ($status) {
 			$alter[] = ltrim($status);
 		}
-		return ($alter || $partitioning ? queries("ALTER TABLE " . table($table) . "\n" . implode(",\n", $alter) . $partitioning) : true);
+		return !($alter || $partitioning) || queries("ALTER TABLE " . table($table) . "\n" . implode(",\n", $alter) . $partitioning);
 	}
 
 	/** Run commands to alter indexes
 	* @param string escaped table name
-	* @param array of ["index type", "name", ["column definition", ...]] or ["index type", "name", "DROP"]
+	* @param list<array{string, string, 'DROP'|list<string>}> of ["index type", "name", ["column definition", ...]] or ["index type", "name", "DROP"]
 	* @return bool
 	*/
-	function alter_indexes($table, $alter) {
+	function alter_indexes($table, $alter): bool
+	{
+		$changes = [];
 		foreach ($alter as $key => $val) {
-			$alter[$key] = ($val[2] == "DROP"
+			$changes[] = ($val[2] == "DROP"
 				? "\nDROP INDEX " . idf_escape($val[1])
 				: "\nADD $val[0] " . ($val[0] == "PRIMARY" ? "KEY " : "") . ($val[1] != "" ? idf_escape($val[1]) . " " : "") . "(" . implode(", ", $val[2]) . ")"
 			);
 		}
-		return queries("ALTER TABLE " . table($table) . implode(",", $alter));
+		return (bool)queries("ALTER TABLE " . table($table) . implode(",", $changes));
 	}
 
 	/** Run commands to truncate tables
-	* @param array
+	* @param list<string>
 	* @return bool
 	*/
-	function truncate_tables($tables) {
+	function truncate_tables($tables): bool
+	{
 		return apply_queries("TRUNCATE TABLE", $tables);
 	}
 
 	/** Drop views
-	* @param array
+	* @param list<string>
 	* @return bool
 	*/
-	function drop_views($views) {
-		return queries("DROP VIEW " . implode(", ", array_map('AdminNeo\table', $views)));
+	function drop_views($views): bool
+	{
+		return (bool)queries("DROP VIEW " . implode(", ", array_map('AdminNeo\table', $views)));
 	}
 
 	/** Drop tables
-	* @param array
+	* @param list<string>
 	* @return bool
 	*/
-	function drop_tables($tables) {
-		return queries("DROP TABLE " . implode(", ", array_map('AdminNeo\table', $tables)));
+	function drop_tables($tables): bool
+	{
+		return (bool)queries("DROP TABLE " . implode(", ", array_map('AdminNeo\table', $tables)));
 	}
 
 	/** Move tables to other schema
-	* @param array
-	* @param array
+	* @param list<string>
+	* @param list<string>
 	* @param string
 	* @return bool
 	*/
-	function move_tables($tables, $views, $target) {
+	function move_tables($tables, $views, $target): bool
+	{
 		$rename = [];
 		foreach ($tables as $table) {
 			$rename[] = table($table) . " TO " . idf_escape($target) . "." . table($table);
@@ -995,8 +1010,8 @@ ORDER BY ordinal_position";
 	}
 
 	/** Copy tables to other schema
-	* @param array
-	* @param array
+	* @param list<string>
+	* @param list<string>
 	* @param string
 	* @return bool
 	*/
@@ -1028,21 +1043,25 @@ ORDER BY ordinal_position";
 		return true;
 	}
 
-	/** Get information about trigger
-	* @param string trigger name
-	* @return array ["Trigger" => , "Timing" => , "Event" => , "Of" => , "Type" => , "Statement" => ]
-	*/
-	function trigger($name) {
+	/**
+	 * Returns information about a trigger.
+	 *
+	 * @return array{Trigger:string, Timing:string, Event:string, Of:string, Type:string, Statement:string}
+	 */
+	function trigger(string $name, string $table): array
+	{
 		if ($name == "") {
 			return [];
 		}
+
 		$rows = get_rows("SHOW TRIGGERS WHERE `Trigger` = " . q($name));
+
 		return reset($rows);
 	}
 
 	/** Get defined triggers
 	* @param string
-	* @return array [$name => [$timing, $event]]
+	* @return array{string, string}[]
 	*/
 	function triggers($table) {
 		$return = [];
@@ -1053,7 +1072,7 @@ ORDER BY ordinal_position";
 	}
 
 	/** Get trigger options
-	* @return array ["Timing" => [], "Event" => [], "Type" => []]
+	* @return array{Timing: list<string>, Event: list<string>, Type: list<string>}
 	*/
 	function trigger_options() {
 		return [
@@ -1067,9 +1086,9 @@ ORDER BY ordinal_position";
 	 * Gets information about stored routine.
 	 *
 	 * @param string $name
-	 * @param string $type "FUNCTION" or "PROCEDURE"
+	 * @param 'FUNCTION'|'PROCEDURE' $type
 	 *
-	 * @return array ["fields" => ["field" => , "type" => , "length" => , "unsigned" => , "inout" => , "collation" => ], "returns" => , "definition" => , "language" => ]
+	 * @return array array{fields:list<array{field:string, type:string, length:string, unsigned:string, null:bool, full_type:string, inout:string, collation:string}>, comment:string, returns:array, definition:string, language:string}
 	 */
 	function routine($name, $type) {
 		$info = get_rows("SELECT ROUTINE_BODY, ROUTINE_COMMENT FROM information_schema.ROUTINES WHERE ROUTINE_SCHEMA = DATABASE() AND ROUTINE_NAME = " . q($name))[0];
@@ -1091,7 +1110,7 @@ ORDER BY ordinal_position";
 				"type" => strtolower($param[5]),
 				"length" => preg_replace_callback("~$enumLengthPattern~s", 'AdminNeo\normalize_enum', $param[6]),
 				"unsigned" => strtolower(preg_replace('~\s+~', ' ', trim("$param[8] $param[7]"))),
-				"null" => 1,
+				"null" => true,
 				"full_type" => $param[4],
 				"inout" => strtoupper($param[1]),
 				"collation" => strtolower($param[9]),
@@ -1114,14 +1133,14 @@ ORDER BY ordinal_position";
 	}
 
 	/** Get list of routines
-	* @return array ["SPECIFIC_NAME" => , "ROUTINE_NAME" => , "ROUTINE_TYPE" => , "DTD_IDENTIFIER" => ]
+	* @return list<string[]> ["SPECIFIC_NAME" => , "ROUTINE_NAME" => , "ROUTINE_TYPE" => , "DTD_IDENTIFIER" => ]
 	*/
 	function routines() {
 		return get_rows("SELECT ROUTINE_NAME AS SPECIFIC_NAME, ROUTINE_NAME, ROUTINE_TYPE, DTD_IDENTIFIER, ROUTINE_COMMENT FROM information_schema.ROUTINES WHERE ROUTINE_SCHEMA = DATABASE()");
 	}
 
 	/** Get list of available routine languages
-	* @return array
+	* @return list<string>
 	*/
 	function routine_languages() {
 		return []; // "SQL" not required
@@ -1158,13 +1177,16 @@ ORDER BY ordinal_position";
 		return $connection->query("EXPLAIN " . (Connection::get()->isMinVersion("5.1") && !Connection::get()->isMinVersion("5.7") ? "PARTITIONS " : "") . $query);
 	}
 
-	/** Get approximate number of rows
-	* @param array
-	* @param array
-	* @return int or null if approximate number can't be retrieved
-	*/
-	function found_rows($table_status, $where) {
-		return ($where || $table_status["Engine"] != "InnoDB" ? null : $table_status["Rows"]);
+	/**
+	 * Returns approximate number of rows.
+	 *
+	 * @param list<string> $where
+	 *
+	 * @return ?int null if approximate number can't be retrieved.
+	 */
+	function found_rows(array $table_status, array $where): ?int
+	{
+		return $table_status["Engine"] == "InnoDB" && !$where ? (int)$table_status["Rows"] : null;
 	}
 
 	/** Get SQL command to create table
@@ -1197,44 +1219,49 @@ ORDER BY ordinal_position";
 		return "USE " . idf_escape($database);
 	}
 
-	/** Get SQL commands to create triggers
-	* @param string
-	* @return string
-	*/
-	function trigger_sql($table) {
-		$return = "";
+	/**
+	 * Returns SQL commands to create triggers.
+	 */
+	function trigger_sql(string $table): string
+	{
+		$sql = "";
 		foreach (get_rows("SHOW TRIGGERS LIKE " . q(addcslashes($table, "%_\\")), null, "-- ") as $row) {
-			$return .= "\nCREATE TRIGGER " . idf_escape($row["Trigger"]) . " $row[Timing] $row[Event] ON " . table($row["Table"]) . " FOR EACH ROW\n$row[Statement];;\n";
+			$sql .= "\nCREATE TRIGGER " . idf_escape($row["Trigger"]) . " $row[Timing] $row[Event] ON " . table($row["Table"]) . " FOR EACH ROW\n$row[Statement];;\n";
 		}
-		return $return;
+
+		return $sql;
 	}
 
 	/** Get server variables
-	* @return array [[$name, $value]]
+	* @return list<string[]> [[$name, $value]]
 	*/
 	function show_variables() {
 		return get_rows("SHOW VARIABLES");
 	}
 
 	/** Get status variables
-	* @return array [[$name, $value]]
+	* @return list<string[]> [[$name, $value]]
 	*/
 	function show_status() {
 		return get_rows("SHOW STATUS");
 	}
 
 	/** Get process list
-	* @return array [$row]
+	* @return list<string[]> [$row]
 	*/
 	function process_list() {
 		return get_rows("SHOW FULL PROCESSLIST");
 	}
 
-	/** Convert field in select and edit
-	* @param array one element from fields()
-	* @return string
-	*/
-	function convert_field($field) {
+	/**
+	 * Returns expression for field conversion in select and edit.
+	 *
+	 * @param array $field One element from fields().
+	 *
+	 * @return ?string Null if conversion is not necessary.
+	 */
+	function convert_field(array $field): ?string
+	{
 		if (preg_match("~binary~", $field["type"])) {
 			return "HEX(" . idf_escape($field["field"]) . ")";
 		}
@@ -1244,14 +1271,17 @@ ORDER BY ordinal_position";
 		if (preg_match("~geometry|point|linestring|polygon~", $field["type"])) {
 			return (Connection::get()->isMinVersion("8") ? "ST_" : "") . "AsWKT(" . idf_escape($field["field"]) . ")";
 		}
+
+		return null;
 	}
 
-	/** Convert value in edit after applying functions back
-	* @param array one element from fields()
-	* @param string
-	* @return string
-	*/
-	function unconvert_field(array $field, $return) {
+	/**
+	 * Converts value in edit after applying functions back.
+	 *
+	 * @param array $field One element from fields().
+	 */
+	function unconvert_field(array $field, string $return): string
+	{
 		if (preg_match("~binary~", $field["type"])) {
 			$return = "UNHEX($return)";
 		}
@@ -1275,8 +1305,8 @@ ORDER BY ordinal_position";
 	}
 
 	/** Kill a process
-	* @param int
-	* @return bool
+	* @param numeric-string
+	* @return Result|bool
 	*/
 	function kill_process($val) {
 		return queries("KILL " . number($val));
@@ -1289,10 +1319,11 @@ ORDER BY ordinal_position";
 		return "SELECT CONNECTION_ID()";
 	}
 
-	/** Get maximum number of connections
-	* @return int
-	*/
-	function max_connections() {
-		return Connection::get()->getValue("SELECT @@max_connections");
+	/**
+	 * Returns maximum number of connections.
+	 */
+	function max_connections(): int
+	{
+		return (int)Connection::get()->getValue("SELECT @@max_connections");
 	}
 }

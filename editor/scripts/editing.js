@@ -1,3 +1,4 @@
+'use strict';
 // Editor specific functions
 
 function selectFieldChange() {

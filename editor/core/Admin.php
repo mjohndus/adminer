@@ -285,7 +285,7 @@ class Admin extends Origin
 		}
 	}
 
-	public function printSelectionLimit(?int $limit): void
+	public function printSelectionLimit(int $limit): void
 	{
 		echo "<fieldset><legend>" . lang('Limit') . "</legend><div class='fieldset-content'>";
 		echo html_select("limit", ["", "20", "30", "50", "70", "100"], (string)$limit);
@@ -464,12 +464,8 @@ class Admin extends Origin
 		return $hint;
 	}
 
-	public function processFieldInput(?array $field, string $value, string $function = ""): string
+	public function processFieldInput(array $field, string $value, string $function = ""): string
 	{
-		if (!$field) {
-			return q($value);
-		}
-
 		if ($function == "now") {
 			return "$function()";
 		}
@@ -627,7 +623,7 @@ class Admin extends Origin
 		if (list($target, $id, $name) = $this->admin->getForeignColumnInfo(column_foreign_keys($table), $column)) {
 			$return = &$this->values[$target];
 			if ($return === null) {
-				$table_status = table_status($target);
+				$table_status = table_status1($target);
 				$return = ($table_status["Rows"] > 1000 ? "" : ["" => ""] + get_key_vals("SELECT $id, $name FROM " . table($target) . " ORDER BY 2"));
 			}
 			if (!$return && $value !== null) {

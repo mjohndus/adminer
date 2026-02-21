@@ -222,12 +222,12 @@ if (isset($_GET["mongo"])) {
 			$this->likeOperator = "LIKE %%"; // TODO: LIKE operator is not listed in operators.
 			$this->regexpOperator = "regex";
 
-			$this->editFunctions = [["json"]];
+			$this->insertFunctions = ["json"];
 
 			$this->systemDatabases = ["admin", "config", "local"];
 		}
 
-		public function select(string $table, array $select, array $where, array $group, array $order = [], ?int $limit = 1, int $page = 0, bool $print = false)
+		public function select(string $table, array $select, array $where, array $group, array $order = [], int $limit = 1, int $page = 0, bool $print = false)
 		{
 			$select = ($select == ["*"]
 				? []
@@ -244,7 +244,7 @@ if (isset($_GET["mongo"])) {
 				$sort[$val] = ($count ? -1 : 1);
 			}
 
-			$limit = min(200, max(1, (int) $limit));
+			$limit = min(200, max(1, $limit));
 			$skip = $page * $limit;
 
 			$query = new Query($where, ['projection' => $select, 'limit' => $limit, 'skip' => $skip, 'sort' => $sort]);
@@ -307,7 +307,8 @@ if (isset($_GET["mongo"])) {
 		return MongoDriver::create($connection, Admin::get());
 	}
 
-	function get_databases($flush) {
+	function get_databases(bool $flush): array
+	{
 		$cursor = Connection::get()->executeCommand(['listDatabases' => 1], true);
 		if (!$cursor) {
 			return [];
@@ -342,7 +343,8 @@ if (isset($_GET["mongo"])) {
 		return $collections;
 	}
 
-	function drop_databases($databases) {
+	function drop_databases($databases): bool
+	{
 		return false;
 	}
 
@@ -401,15 +403,16 @@ if (isset($_GET["mongo"])) {
 		return $fields;
 	}
 
-	function found_rows($table_status, $where) {
+	function found_rows(array $table_status, array $where): ?int
+	{
 		$where = where_to_query($where);
 
 		$cursor = Connection::get()->executeCommand(['count' => $table_status['Name'], 'query' => $where]);
 		if (!$cursor) {
-			return 0;
+			return null;
 		}
 
-		return $cursor->toArray()[0]->n;
+		return (int)$cursor->toArray()[0]->n;
 	}
 
 	function sql_query_where_parser($queryWhere) {
@@ -499,16 +502,14 @@ if (isset($_GET["mongo"])) {
 
 	function table_status($name = "", $fast = false) {
 		$return = [];
-		foreach (tables_list() as $table => $type) {
-			$return[$table] = ["Name" => $table];
-			if ($name == $table) {
-				return $return[$table];
-			}
+		foreach (($name != "" ? [$name => 1] : tables_list()) as $table => $type) {
+			$return[$table] = ["Name" => $table, "Engine" => ""];
 		}
 		return $return;
 	}
 
-	function create_database($db, $collation) {
+	function create_database($db, $collation): bool
+	{
 		return true;
 	}
 
@@ -551,7 +552,8 @@ if (isset($_GET["mongo"])) {
 		return $connection;
 	}
 
-	function alter_indexes($table, $alter) {
+	function alter_indexes($table, $alter): bool
+	{
 		foreach ($alter as $val) {
 			list($type, $name, $set) = $val;
 
@@ -591,16 +593,21 @@ if (isset($_GET["mongo"])) {
 	function db_collation($db, $collations) {
 	}
 
-	function information_schema() {
+	function information_schema(?string $db): bool
+	{
+		return false;
 	}
 
 	function is_view($table_status) {
 	}
 
-	function convert_field($field) {
+	function convert_field(array $field): ?string
+	{
+		return null;
 	}
 
-	function unconvert_field(array $field, $return) {
+	function unconvert_field(array $field, string $return): string
+	{
 		return $return;
 	}
 
@@ -616,7 +623,13 @@ if (isset($_GET["mongo"])) {
 	function fk_support($table_status) {
 	}
 
-	function alter_table($table, $name, $fields, $foreign, $comment, $engine, $collation, $auto_increment, $partitioning) {
+	function auto_increment(): string
+	{
+		return "";
+	}
+
+	function alter_table($table, $name, $fields, $foreign, $comment, $engine, $collation, $auto_increment, $partitioning): bool
+	{
 		if ($table == "") {
 			return (bool)Connection::get()->executeCommand(["create" => $name]);
 		}
@@ -624,7 +637,8 @@ if (isset($_GET["mongo"])) {
 		return false;
 	}
 
-	function drop_tables($tables) {
+	function drop_tables($tables): bool
+	{
 		foreach ($tables as $name) {
 			if (!Connection::get()->executeCommand(["drop" => $name])) {
 				return false;
@@ -634,7 +648,8 @@ if (isset($_GET["mongo"])) {
 		return true;
 	}
 
-	function truncate_tables($tables) {
+	function truncate_tables($tables): bool
+	{
 		foreach ($tables as $name) {
 			$command = [
 				"delete" => $name,

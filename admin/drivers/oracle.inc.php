@@ -149,7 +149,7 @@ if (isset($_GET["oracle"])) {
 			{
 				if (is_array($row)) {
 					foreach ($row as $key => $val) {
-						if (is_a($val, 'OCI-Lob')) {
+						if (is_a($val, 'OCILob') || is_a($val, 'OCI-Lob')) {
 							$row[$key] = $val->load();
 						}
 					}
@@ -256,15 +256,16 @@ if (isset($_GET["oracle"])) {
 				"count", "count distinct",
 			];
 
+			//! no parentheses
+			$this->insertFunctions = [
+				"date" => "current_date",
+				"timestamp" => "current_timestamp",
+			];
+
 			$this->editFunctions = [
-				[ //! no parentheses
-					"date" => "current_date",
-					"timestamp" => "current_timestamp",
-				], [
-					"number|float|double" => "+/-",
-					"date|timestamp" => "+ interval/- interval",
-					"char|clob" => "||",
-				]
+				"number|float|double" => "+/-",
+				"date|timestamp" => "+ interval/- interval",
+				"char|clob" => "||",
 			];
 		}
 
@@ -340,7 +341,8 @@ if (isset($_GET["oracle"])) {
 		return $connection;
 	}
 
-	function get_databases() {
+	function get_databases(bool $flush): array
+	{
 		return get_vals("SELECT DISTINCT tablespace_name FROM (
 SELECT tablespace_name FROM user_tablespaces
 UNION SELECT tablespace_name FROM all_tables WHERE tablespace_name IS NOT NULL
@@ -349,9 +351,9 @@ ORDER BY 1"
 		);
 	}
 
-	function limit($query, $where, ?int $limit, $offset = 0, $separator = " ") {
+	function limit($query, $where, int $limit, $offset = 0, $separator = " ") {
 		return ($offset ? " * FROM (SELECT t.*, rownum AS rnum FROM (SELECT $query$where) t WHERE rownum <= " . ($limit + $offset) . ") WHERE rnum > $offset"
-			: ($limit !== null ? " * FROM (SELECT $query$where) WHERE rownum <= " . ($limit + $offset)
+			: ($limit ? " * FROM (SELECT $query$where) WHERE rownum <= " . ($limit + $offset)
 			: " $query$where"
 		));
 	}
@@ -407,9 +409,6 @@ ORDER BY 1"
 UNION SELECT view_name, 'view', 0, 0 FROM $view" . ($name != "" ? " WHERE view_name = $search" : "") . "
 ORDER BY 1"
 		) as $row) {
-			if ($name != "") {
-				return $row;
-			}
 			$return[$row["Name"]] = $row;
 		}
 		return $return;
@@ -480,7 +479,8 @@ ORDER BY ac.constraint_type, aic.column_position", $connection) as $row) {
 		return []; //!
 	}
 
-	function information_schema($db) {
+	function information_schema(?string $db): bool
+	{
 		return get_schema() == "INFORMATION_SCHEMA";
 	}
 
@@ -495,14 +495,18 @@ ORDER BY ac.constraint_type, aic.column_position", $connection) as $row) {
 		return $connection->query("SELECT * FROM plan_table");
 	}
 
-	function found_rows($table_status, $where) {
+	function found_rows(array $table_status, array $where): ?int
+	{
+		return null;
 	}
 
-	function auto_increment() {
+	function auto_increment(): string
+	{
 		return "";
 	}
 
-	function alter_table($table, $name, $fields, $foreign, $comment, $engine, $collation, $auto_increment, $partitioning) {
+	function alter_table($table, $name, $fields, $foreign, $comment, $engine, $collation, $auto_increment, $partitioning): bool
+	{
 		$alter = $drop = [];
 		$orig_fields = ($table ? fields($table) : []);
 		foreach ($fields as $field) {
@@ -524,7 +528,7 @@ ORDER BY ac.constraint_type, aic.column_position", $connection) as $row) {
 			}
 		}
 		if ($table == "") {
-			return queries("CREATE TABLE " . table($name) . " (\n" . implode(",\n", $alter) . "\n)");
+			return (bool)queries("CREATE TABLE " . table($name) . " (\n" . implode(",\n", $alter) . "\n)");
 		}
 		return (!$alter || queries("ALTER TABLE " . table($table) . "\n" . implode("\n", $alter)))
 			&& (!$drop || queries("ALTER TABLE " . table($table) . " DROP (" . implode(", ", $drop) . ")"))
@@ -532,7 +536,8 @@ ORDER BY ac.constraint_type, aic.column_position", $connection) as $row) {
 		;
 	}
 
-	function alter_indexes($table, $alter) {
+	function alter_indexes($table, $alter): bool
+	{
 		$drop = [];
 		$queries = [];
 		foreach ($alter as $val) {
@@ -592,15 +597,18 @@ AND c_src.TABLE_NAME = " . q($table);
 		return [];
 	}
 
-	function truncate_tables($tables) {
+	function truncate_tables($tables): bool
+	{
 		return apply_queries("TRUNCATE TABLE", $tables);
 	}
 
-	function drop_views($views) {
+	function drop_views($views): bool
+	{
 		return apply_queries("DROP VIEW", $views);
 	}
 
-	function drop_tables($tables) {
+	function drop_tables($tables): bool
+	{
 		return apply_queries("DROP TABLE", $tables);
 	}
 
@@ -652,10 +660,13 @@ ORDER BY PROCESS
 ');
 	}
 
-	function convert_field($field) {
+	function convert_field(array $field): ?string
+	{
+		return null;
 	}
 
-	function unconvert_field(array $field, $return) {
+	function unconvert_field(array $field, string $return): string
+	{
 		return $return;
 	}
 

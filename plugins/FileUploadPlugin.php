@@ -65,9 +65,9 @@ class FileUploadPlugin extends Plugin
 	/**
 	 * @throws Exception
 	 */
-	public function processFieldInput(?array $field, string $value, string $function = ""): ?string
+	public function processFieldInput(array $field, string $value, string $function = ""): ?string
 	{
-		if (!$field || !($shortFieldName = $this->matchField($field))) {
+		if (!($shortFieldName = $this->matchField($field))) {
 			return null;
 		}
 

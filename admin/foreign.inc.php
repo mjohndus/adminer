@@ -29,7 +29,7 @@ if ($_POST && !$_POST["add"] && !$_POST["change"] && !$_POST["change-js"]) {
 	queries_redirect(
 		ME . "table=" . urlencode($TABLE),
 		($row["drop"] ? lang('Foreign key has been dropped.') : ($name != "" ? lang('Foreign key has been altered.') : lang('Foreign key has been created.'))),
-		$result
+		(bool)$result
 	);
 	if (!$row["drop"]) {
 		Admin::get()->addError(lang('Source and target columns must have the same data type, there must be an index on the target columns and referenced data must exist.')); //! no partitioning

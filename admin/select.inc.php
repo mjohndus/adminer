@@ -58,7 +58,7 @@ if ($_GET["val"] && is_ajax()) {
 	exit;
 }
 
-$primary = $unselected = null;
+$primary = $unselected = [];
 foreach ($indexes as $index) {
 	if ($index["type"] == "PRIMARY") {
 		$primary = array_flip($index["columns"]);
@@ -169,7 +169,7 @@ if ($_POST) {
 				$message = lang('Item%s has been inserted.', " $last_id");
 			}
 		}
-		queries_redirect(remove_from_uri($_POST["all"] && $_POST["delete"] ? "page" : ""), $message, $result);
+		queries_redirect(remove_from_uri($_POST["all"] && $_POST["delete"] ? "page" : ""), $message, (bool)$result);
 		if (!$_POST["delete"]) {
 			$post_fields = (array) $_POST["fields"];
 			edit_form($TABLE, array_intersect_key($fields, $post_fields), $post_fields, !$_POST["clone"]);
@@ -181,27 +181,27 @@ if ($_POST) {
 		if (!$_POST["val"]) {
 			Admin::get()->addError(lang('Ctrl+click on a value to modify it.'));
 		} else {
-			$result = true;
+			$success = true;
 			$affected = 0;
 			foreach ($_POST["val"] as $unique_idf => $row) {
 				$set = [];
 				foreach ($row as $key => $val) {
-					$key = bracket_escape($key, 1); // 1 - back
+					$key = bracket_escape($key, true);
 					$set[idf_escape($key)] = (preg_match('~char|text~', $fields[$key]["type"]) || $val != "" ? Admin::get()->processFieldInput($fields[$key], $val) : "NULL");
 				}
-				$result = Driver::get()->update(
+				$success = (bool)Driver::get()->update(
 					$TABLE,
 					$set,
 					" WHERE " . ($where ? implode(" AND ", $where) . " AND " : "") . where_check($unique_idf, $fields),
-					!$is_group && !$primary,
+					($is_group || $primary ? 0 : 1),
 					" "
 				);
-				if (!$result) {
+				if (!$success) {
 					break;
 				}
 				$affected += Connection::get()->getAffectedRows();
 			}
-			queries_redirect(remove_from_uri(), lang('%d item(s) have been affected.', $affected), $result);
+			queries_redirect(remove_from_uri(), lang('%d item(s) have been affected.', $affected), $success);
 		}
 
 	} elseif (!is_string($file = get_file("csv_file", true))) {
@@ -231,11 +231,11 @@ if ($_POST) {
 				$rows[] = $set;
 			}
 		}
-		$result = (!$rows || Driver::get()->insertUpdate($TABLE, $rows, $primary));
-		if ($result) {
+		$success = !$rows || Driver::get()->insertUpdate($TABLE, $rows, $primary);
+		if ($success) {
 			Driver::get()->commit();
 		}
-		queries_redirect(remove_from_uri("page"), lang('%d row(s) have been imported.', $affected), $result);
+		queries_redirect(remove_from_uri("page"), lang('%d row(s) have been imported.', $affected), $success);
 		Driver::get()->rollback(); // after queries_redirect() to not overwrite error
 	}
 }
@@ -291,7 +291,7 @@ if (!$columns && support("table")) {
 	$page = $_GET["page"] ?? null;
 	if ($page == "last") {
 		$found_rows = Connection::get()->getValue(count_rows($TABLE, $where, $is_group, $group));
-		$page = (int)floor(max(0, $found_rows - 1) / $limit);
+		$page = (int)floor(max(0, intval($found_rows) - 1) / $limit);
 	} else {
 		$found_rows = false;
 		$page = (int)$page;
@@ -339,7 +339,7 @@ if (!$columns && support("table")) {
 		}
 
 		// use count($rows) without LIMIT, COUNT(*) without grouping, FOUND_ROWS otherwise (slowest)
-		if ($_GET["page"] != "last" && $limit !== null && $group && $is_group && DIALECT == "sql") {
+		if ($_GET["page"] != "last" && $limit && $group && $is_group && DIALECT == "sql") {
 			$found_rows = Connection::get()->getValue(" SELECT FOUND_ROWS()"); // space to allow mysql.trace_mode
 		}
 
@@ -368,7 +368,8 @@ if (!$columns && support("table")) {
 			foreach ($rows[0] as $key => $val) {
 				if (!isset($unselected[$key])) {
 					$select_key = key($select);
-					$val = $_GET["columns"][$select_key] ?? null;
+					/** @var array{fun?:string, col?:string} $val */
+					$val = $_GET["columns"][$select_key] ?? [];
 					$field = $fields[$select ? ($val ? $val["col"] : current($select)) : $key];
 					$name = ($field ? Admin::get()->getFieldName($field, $rank) : (isset($val["fun"]) ? "*" : h($key)));
 					if ($name != "") {
@@ -532,9 +533,10 @@ if (!$columns && support("table")) {
 		if (!is_ajax()) {
 			if ($rows || $page) {
 				$exact_count = true;
+				$found_rows = null;
 
 				if ($_GET["page"] != "last") {
-					if ($limit == "" || (count($rows) < $limit && ($rows || !$page))) {
+					if (!$limit || (count($rows) < $limit && ($rows || !$page))) {
 						$found_rows = ($page ? $page * $limit : 0) + count($rows);
 					} elseif (DIALECT != "sql" || !$is_group) {
 						$found_rows = ($is_group ? false : found_rows($table_status, $where));
@@ -552,7 +554,7 @@ if (!$columns && support("table")) {
 					if (($found_rows === false ? count($rows) + 1 : $found_rows - $page * $limit) > $limit) {
 						echo '<p class="links">',
 							'<a href="', h(remove_from_uri("page") . "&page=" . ($page + 1)), '" class="loadmore">', icon("expand"), lang('Load more data'), '</a>',
-							script("qsl('a').onclick = partial(loadNextPage, " . (+$limit) . ", '" . lang('Loading') . "…');", "");
+							script("qsl('a').onclick = partial(loadNextPage, $limit, '" . lang('Loading') . "…');", "");
 					}
 					echo "\n";
 				}

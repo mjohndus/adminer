@@ -222,7 +222,7 @@ abstract class Origin extends Plugin
 	/**
 	 * Returns cached list of databases.
 	 *
-	 * @return string[]
+	 * @return list<string>
 	 */
 	public function getDatabases($flush = true): array
 	{
@@ -234,7 +234,7 @@ abstract class Origin extends Plugin
 	/**
 	 * Returns the list of schemas.
 	 *
-	 * @return string[]
+	 * @return list<string>
 	 */
 	public function getSchemas(): array
 	{
@@ -460,6 +460,8 @@ abstract class Origin extends Plugin
 
 	/**
 	 * Returns foreign keys for table.
+	 *
+	 * @return array[] same format as foreign_keys()
 	 */
 	public function getForeignKeys(string $table): array
 	{
@@ -469,7 +471,7 @@ abstract class Origin extends Plugin
 	/**
 	 * Returns backward keys for given table.
 	 *
-	 * @return array $return[$id]["table"] = $target_table; $return[$id]["constraints"][$key_name][$target_column] = $source_column; $return[$target_table]["name"] = $this->admin->getTableName($target_table);
+	 * @return array{schema:string, table:string, constraints:string[][], name:string}[]
 	 */
 	public function getBackwardKeys(string $table, string $tableName): array
 	{
@@ -489,7 +491,7 @@ abstract class Origin extends Plugin
 		}
 
 		foreach ($keys as $id => $key) {
-			$name = $this->admin->getTableName(table_status($key["table"], true));
+			$name = $this->admin->getTableName(table_status1($key["table"], true));
 			if ($name != "") {
 				$search = preg_quote($tableName);
 				$separator = "(:|\\s*-)?\\s+";
@@ -505,7 +507,8 @@ abstract class Origin extends Plugin
 	/**
 	 * Prints backward keys for given row.
 	 *
-	 * @param array $backwardKeys The result of getBackwardKeys().
+	 * @param array{schema:string, table:string, constraints:string[][], name:string}[] $backwardKeys The result of getBackwardKeys().
+	 * @param string[] $row
 	 */
 	public function printBackwardKeys(array $backwardKeys, array $row): void
 	{
@@ -590,7 +593,7 @@ abstract class Origin extends Plugin
 
 	public abstract function printSelectionOrder(array $order, array $columns, array $indexes): void;
 
-	public abstract function printSelectionLimit(?int $limit): void;
+	public abstract function printSelectionLimit(int $limit): void;
 
 	public abstract function printSelectionLength(?string $textLength): void;
 
@@ -608,17 +611,15 @@ abstract class Origin extends Plugin
 	public abstract function processSelectionOrder(array $fields, array $indexes): array;
 
 	/**
-	 * Processed limit box in select.
-	 *
-	 * @return ?int Expression to use in LIMIT, will be escaped.
+	 * Returns selected value of limit box.
 	 */
-	public function processSelectionLimit(): ?int
+	public function processSelectionLimit(): int
 	{
 		if (!isset($_GET["limit"])) {
 			return $this->settings->getRecordsPerPage();
 		}
 
-		return $_GET["limit"] != "" ? (int)$_GET["limit"] : null;
+		return $_GET["limit"] != "" ? (int)$_GET["limit"] : 0;
 	}
 
 	public abstract function processSelectionLength(): string;
@@ -641,7 +642,7 @@ abstract class Origin extends Plugin
 		return support("comment") ? $this->admin->formatComment($field["comment"]) : "";
 	}
 
-	public abstract function processFieldInput(?array $field, string $value, string $function = ""): string;
+	public abstract function processFieldInput(array $field, string $value, string $function = ""): string;
 
 	/**
 	 * Detect JSON field or value and optionally reformat the value.

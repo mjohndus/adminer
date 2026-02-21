@@ -8,6 +8,9 @@ AdminNeo 5.3.0
 
 - More secure randomness on PHP5 (by @pavetheway91)
 - 256 bits of entropy in all random strings
+- SystemForeignKeysPlugin: Add support for new system tables (by @vrana).
+- Add more Katalon tests for MySQL and SQLite (by @vrana).
+- Add Katalon tests for MariaDB, PostgreSQL, MS SQL and Elasticsearch (by @vrana).
 
 ### Bugfixes
 
@@ -15,6 +18,11 @@ AdminNeo 5.3.0
 - MySQL: Fix selecting routines in DB export (issue #176)
 - Fix sending DB dump in CSV format / TAR file (issue #176)
 - Fix exporting views in CSV format
+- Fix toggling comment fields (regression from 5.0.0)
+- Fix importing of tables without primary key (by @vrana, regression from 5.1.0)
+- Fix search anywhere for columns that needs value conversion (by @vrana)
+
+(Ported relevant changes from Adminer 5.1.1.)
 
 AdminNeo 5.2.1 (2025-12-07)
 ---------------------------

@@ -317,7 +317,8 @@ class Admin extends Origin
 	/**
 	 * Fills descriptions of the foreign keys for the whole selection data.
 	 *
-	 * @param array $rows All selection data to print.
+	 * @param list<string[]> $rows All selection data to print.
+	 * @param array[] $foreignKeys
 	 *
 	 * @return array Updated selection data.
 	 */
@@ -373,7 +374,7 @@ class Admin extends Origin
 	/**
 	 * Prints table structure in tabular format.
 	 *
-	 * @param array $fields Data about individual fields.
+	 * @param array[] $fields Data about individual fields.
 	 */
 	public function printTableStructure(array $fields): void
 	{
@@ -461,7 +462,7 @@ class Admin extends Origin
 	/**
 	 * Prints the list of table indexes.
 	 *
-	 * @param array $indexes Data about all indexes on a table.
+	 * @param array[] $indexes Data about all indexes on a table.
 	 */
 	public function printTableIndexes(array $indexes): void
 	{
@@ -486,8 +487,8 @@ class Admin extends Origin
 	/**
 	 * Prints columns box in selection filter.
 	 *
-	 * @param array $select The result of processSelectionColumns()[0].
-	 * @param array $columns Selectable columns.
+	 * @param list<string> $select The result of processSelectionColumns()[0].
+	 * @param string[] $columns Selectable columns.
 	 */
 	public function printSelectionColumns(array $select, array $columns): void
 	{
@@ -531,8 +532,9 @@ class Admin extends Origin
 	/**
 	 * Prints search box in selection filter.
 	 *
-	 * @param array $where The result of processSelectionSearch().
-	 * @param array $columns Selectable columns.
+	 * @param list<string> $where The result of processSelectionSearch().
+	 * @param string[] $columns Selectable columns.
+	 * @param array[] $indexes
 	 */
 	public function printSelectionSearch(array $where, array $columns, array $indexes): void
 	{
@@ -574,8 +576,9 @@ class Admin extends Origin
 	/**
 	 * Prints order box in selection filter.
 	 *
-	 * @param array $order The result of processSelectionOrder().
-	 * @param array $columns Selectable columns.
+	 * @param list<string> $order The result of processSelectionOrder().
+	 * @param string[] $columns Selectable columns.
+	 * @param array[] $indexes
 	 */
 	public function printSelectionOrder(array $order, array $columns, array $indexes): void
 	{
@@ -604,10 +607,10 @@ class Admin extends Origin
 	/**
 	 * Prints limit box in selection filter.
 	 */
-	public function printSelectionLimit(?int $limit): void
+	public function printSelectionLimit(int $limit): void
 	{
 		echo "<fieldset><legend>" . lang('Limit') . "</legend><div class='fieldset-content'>";
-		echo "<input type='number' name='limit' class='input size' value='" . h($limit) . "'>";
+		echo "<input type='number' name='limit' class='input size' value='$limit'>";
 		echo script("qsl('input').oninput = selectFieldChange;", "");
 		echo "</div></fieldset>\n";
 	}
@@ -628,6 +631,8 @@ class Admin extends Origin
 
 	/**
 	 * Prints action box in selection filter.
+	 *
+	 * @param array[] $indexes
 	 */
 	public function printSelectionAction(array $indexes): void
 	{
@@ -653,9 +658,10 @@ class Admin extends Origin
 	/**
 	 * Processes columns box in selection filter.
 	 *
-	 * @param array $columns Selectable columns.
+	 * @param string[] $columns Selectable columns.
+	 * @param array[] $indexes
 	 *
-	 * @return array [[select_expressions], [group_expressions]]
+	 * @return list<list<string>> [[select_expressions], [group_expressions]]
 	 */
 	public function processSelectionColumns(array $columns, array $indexes): array
 	{
@@ -677,7 +683,10 @@ class Admin extends Origin
 	/**
 	 * Processes search box in selection filter.
 	 *
-	 * @return array Expressions to join by AND.
+	 * @param array[] $fields
+	 * @param array[] $indexes
+	 *
+	 * @return list<string> Expressions to join by AND.
 	 */
 	public function processSelectionSearch(array $fields, array $indexes): array
 	{
@@ -695,43 +704,45 @@ class Admin extends Origin
 			$val = $where["val"];
 
 			if ("$col$val" != "" && in_array($op, $this->getOperators())) {
-				$prefix = "";
-				$cond = " $op";
+				$conditions = [];
 
-				if (preg_match('~IN$~', $op)) {
-					$in = process_length($val);
-					$cond .= " " . ($in != "" ? $in : "(NULL)");
-				} elseif ($op == "SQL") {
-					$cond = " $val"; // SQL injection
-				} elseif ($op == "LIKE %%") {
-					$cond = " LIKE " . $this->admin->processFieldInput($fields[$col] ?? null, "%$val%");
-				} elseif ($op == "ILIKE %%") {
-					$cond = " ILIKE " . $this->admin->processFieldInput($fields[$col] ?? null, "%$val%");
-				} elseif ($op == "FIND_IN_SET") {
-					$prefix = "$op(" . q($val) . ", ";
-					$cond = ")";
-				} elseif (!preg_match('~NULL$~', $op)) {
-					$cond .= " " . $this->admin->processFieldInput($fields[$col] ?? null, $val);
+				foreach (($col != "" ? [$col => $fields[$col]] : $fields) as $name => $field) {
+					$prefix = "";
+					$cond = " $op";
+
+					if (preg_match('~IN$~', $op)) {
+						$in = process_length($val);
+						$cond .= " " . ($in != "" ? $in : "(NULL)");
+					} elseif ($op == "SQL") {
+						$cond = " $val"; // SQL injection
+					} elseif (preg_match('~^(I?LIKE) %%$~', $op, $match)) {
+						$cond = " $match[1] " . $this->admin->processFieldInput($field, "%$val%");
+					} elseif ($op == "FIND_IN_SET") {
+						$prefix = "$op(" . q($val) . ", ";
+						$cond = ")";
+					} elseif (!preg_match('~NULL$~', $op)) {
+						$cond .= " " . $this->admin->processFieldInput($field, $val);
+					}
+
+					if ($col != "" || (
+						// find anywhere
+						isset($field["privileges"]["where"])
+						&& (preg_match('~^[-\d.' . (preg_match('~IN$~', $op) ? ',' : '') . ']+$~', $val) || !preg_match('~' . number_type() . '|bit~', $field["type"]))
+						&& (!preg_match("~[\x80-\xFF]~", $val) || preg_match('~char|text|enum|set~', $field["type"]))
+						&& (!preg_match('~date|timestamp~', $field["type"]) || preg_match('~^\d+-\d+-\d+~', $val))
+						&& (!preg_match('~^elastic~', DRIVER) || $field["type"] != "boolean" || preg_match('~true|false~', $val)) // Elasticsearch needs boolean value properly formatted.
+						&& (!preg_match('~^elastic~', DRIVER) || strpos($op, "regexp") === false || preg_match('~text|keyword~', $field["type"])) // Elasticsearch can use regexp only on text and keyword fields.
+					)) {
+						$conditions[] = $prefix . Driver::get()->convertSearch(idf_escape($name), $where, $field) . $cond;
+					}
 				}
 
-				if ($col != "") {
-					$search = isset($fields[$col]) ? Driver::get()->convertSearch(idf_escape($col), $where, $fields[$col]) : idf_escape($col);
-					$return[] = $prefix . $search . $cond;
+				if (count($conditions) == 1) {
+					$return[] = $conditions[0];
+				} elseif ($conditions) {
+					$return[] = "(" . implode(" OR ", $conditions) . ")";
 				} else {
-					// find anywhere
-					$cols = [];
-					foreach ($fields as $name => $field) {
-						if (isset($field["privileges"]["where"])
-							&& (preg_match('~^[-\d.' . (preg_match('~IN$~', $op) ? ',' : '') . ']+$~', $val) || !preg_match('~' . number_type() . '|bit~', $field["type"]))
-							&& (!preg_match("~[\x80-\xFF]~", $val) || preg_match('~char|text|enum|set~', $field["type"]))
-							&& (!preg_match('~date|timestamp~', $field["type"]) || preg_match('~^\d+-\d+-\d+~', $val))
-							&& (!preg_match('~^elastic~', DRIVER) || $field["type"] != "boolean" || preg_match('~true|false~', $val)) // Elasticsearch needs boolean value properly formatted.
-							&& (!preg_match('~^elastic~', DRIVER) || strpos($op, "regexp") === false || preg_match('~text|keyword~', $field["type"])) // Elasticsearch can use regexp only on text and keyword fields.
-						) {
-							$cols[] = $prefix . Driver::get()->convertSearch(idf_escape($name), $where, $field) . $cond;
-						}
-					}
-					$return[] = ($cols ? "(" . implode(" OR ", $cols) . ")" : "1 = 0");
+					$return[] = "1 = 0";
 				}
 			}
 		}
@@ -742,7 +753,10 @@ class Admin extends Origin
 	/**
 	 * Processes order box in selection filter.
 	 *
-	 * @return array Expressions to join by comma.
+	 * @param array[] $fields
+	 * @param array[] $indexes
+	 *
+	 * @return list<string> Expressions to join by comma.
 	 */
 	public function processSelectionOrder(array $fields, array $indexes): array
 	{
@@ -771,13 +785,15 @@ class Admin extends Origin
 	 * Return the list of functions displayed in edit form.
 	 *
 	 * @param array $field Single field returned from fields().
+	 *
+	 * @return list<string>
 	 */
 	public function getFieldFunctions(array $field): array
 	{
 		$return = ($field["null"] ? "NULL/" : "");
 		$update = isset($_GET["select"]) || where($_GET);
 
-		foreach (Driver::get()->getEditFunctions() as $key => $functions) {
+		foreach ([Driver::get()->getInsertFunctions(), Driver::get()->getEditFunctions()] as $key => $functions) {
 			if (!$key || (!isset($_GET["call"]) && $update)) { // relative functions
 				foreach ($functions as $pattern => $val) {
 					if (!$pattern || preg_match("~$pattern~", $field["type"])) {
@@ -786,7 +802,7 @@ class Admin extends Origin
 				}
 			}
 
-			if ($key && !preg_match('~enum|set|blob|bytea|raw|file|bool~', $field["type"])) {
+			if ($key && $functions && !preg_match('~enum|set|blob|bytea|raw|file|bool~', $field["type"])) {
 				$return .= "/SQL";
 			}
 		}
@@ -817,17 +833,14 @@ class Admin extends Origin
 	/**
 	 * Processes sent input.
 	 *
-	 * @param ?array $field Single field from fields().
+	 * @param array $field Single field from fields().
 	 *
 	 * @return string Expression to use in a query.
 	 */
-	public function processFieldInput(?array $field, string $value, string $function = ""): string
+	public function processFieldInput(array $field, string $value, string $function = ""): string
 	{
 		if ($function == "SQL") {
 			return $value; //! SQL injection
-		}
-		if (!$field) {
-			return q($value);
 		}
 
 		if (isset($field["type"])) {

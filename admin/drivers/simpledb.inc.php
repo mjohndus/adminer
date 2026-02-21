@@ -201,7 +201,7 @@ if (isset($_GET["simpledb"])) {
 				"count",
 			];
 
-			$this->editFunctions = [["json"]];
+			$this->insertFunctions = ["json"];
 		}
 
 		private function chunkRequest($ids, $action, $params, $expand = []) {
@@ -233,11 +233,12 @@ if (isset($_GET["simpledb"])) {
 			return $return;
 		}
 
-		public function select(string $table, array $select, array $where, array $group, array $order = [], ?int $limit = 1, int $page = 0, bool $print = false)
+		public function select(string $table, array $select, array $where, array $group, array $order = [], int $limit = 1, int $page = 0, bool $print = false)
 		{
 			Connection::get()->next = $_GET["next"];
 			$return = parent::select($table, $select, $where, $group, $order, $limit, $page, $print);
 			Connection::get()->next = 0;
+
 			return $return;
 		}
 
@@ -376,7 +377,8 @@ if (isset($_GET["simpledb"])) {
 		return $credentials[1];
 	}
 
-	function get_databases() {
+	function get_databases(bool $flush): array
+	{
 		return ["domain"];
 	}
 
@@ -415,9 +417,6 @@ if (isset($_GET["simpledb"])) {
 					}
 				}
 			}
-			if ($name != "") {
-				return $row;
-			}
 			$return[$table] = $row;
 		}
 		return $return;
@@ -432,7 +431,9 @@ if (isset($_GET["simpledb"])) {
 		return h(Connection::get()->getError());
 	}
 
-	function information_schema() {
+	function information_schema(?string $db): bool
+	{
+		return false;
 	}
 
 	function indexes(string $table, ?Connection $connection = null): array
@@ -463,22 +464,30 @@ if (isset($_GET["simpledb"])) {
 		return "`" . str_replace("`", "``", $idf) . "`";
 	}
 
-	function limit($query, $where, ?int $limit, $offset = 0, $separator = " ") {
-		return " $query$where" . ($limit !== null ? $separator . "LIMIT $limit" : "");
+	function limit($query, $where, int $limit, $offset = 0, $separator = " ") {
+		return " $query$where" . ($limit ? $separator . "LIMIT $limit" : "");
 	}
 
-	function unconvert_field(array $field, $return) {
+	function unconvert_field(array $field, string $return): string
+	{
 		return $return;
 	}
 
 	function fk_support($table_status) {
 	}
 
-	function alter_table($table, $name, $fields, $foreign, $comment, $engine, $collation, $auto_increment, $partitioning) {
-		return ($table == "" && sdb_request('CreateDomain', ['DomainName' => $name]));
+	function auto_increment(): string
+	{
+		return "";
 	}
 
-	function drop_tables($tables) {
+	function alter_table($table, $name, $fields, $foreign, $comment, $engine, $collation, $auto_increment, $partitioning): bool
+	{
+		return $table == "" && sdb_request('CreateDomain', ['DomainName' => $name]);
+	}
+
+	function drop_tables($tables): bool
+	{
 		foreach ($tables as $table) {
 			if (!sdb_request('DeleteDomain', ['DomainName' => $table])) {
 				return false;
@@ -493,8 +502,9 @@ if (isset($_GET["simpledb"])) {
 		}
 	}
 
-	function found_rows($table_status, $where) {
-		return ($where ? null : $table_status["Rows"]);
+	function found_rows(array $table_status, array $where): ?int
+	{
+		return !$where ? (int)$table_status["Rows"] : null;
 	}
 
 	function last_id($result)

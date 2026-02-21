@@ -1,3 +1,4 @@
+'use strict';
 
 /**
  * Returns the element found by given identifier.
@@ -802,12 +803,10 @@ function bodyKeydown(event, button) {
 	}
 	if (isCtrl(event) && (event.keyCode === 13 || event.keyCode === 10) && isTag(target, 'select|textarea|input')) { // 13|10 - Enter
 		target.blur();
-		if (button) {
+		if (target.form[button]) {
 			target.form[button].click();
 		} else {
-			if (target.form.onsubmit) {
-				target.form.onsubmit();
-			}
+			target.form.dispatchEvent(new Event('submit', {bubbles: true}));
 			target.form.submit();
 		}
 		target.focus();
