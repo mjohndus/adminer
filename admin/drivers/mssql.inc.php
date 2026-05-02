@@ -14,7 +14,7 @@ if (isset($_GET["mssql"])) {
 	define("AdminNeo\DRIVER", "mssql");
 	define("AdminNeo\DIALECT", "mssql");
 
-	if (extension_loaded("sqlsrv") && $_GET["ext"] != "pdo") {
+	if (extension_loaded("sqlsrv") && $_GET["ext"] != "pdo" && $_GET["ext"] != "dblib") {
 		define("AdminNeo\DRIVER_EXTENSION", "sqlsrv");
 
 		class MsSqlConnection extends Connection
@@ -252,7 +252,7 @@ if (isset($_GET["mssql"])) {
 			}
 		}
 
-		if (extension_loaded("pdo_sqlsrv")) {
+		if (extension_loaded("pdo_sqlsrv") && $_GET["ext"] != "dblib") {
 			define("AdminNeo\DRIVER_EXTENSION", "PDO_SQLSRV");
 
 			class MsSqlConnection extends MsSqlPdoConnection
@@ -283,7 +283,12 @@ if (isset($_GET["mssql"])) {
 			{
 				public function open(string $server, string $username, string $password): bool
 				{
-					return $this->dsn("dblib:charset=utf8;host=" . str_replace(":", ";unix_socket=", preg_replace('~:(\d)~', ';port=\1', $server)), $username, $password);
+					$result = $this->dsn("dblib:charset=utf8;host=" . str_replace(":", ";unix_socket=", preg_replace('~:(\d)~', ';port=\1', $server)), $username, $password);
+					if ($result) {
+						$this->query("SET ANSI_NULLS ON; SET ANSI_PADDING ON; SET CONCAT_NULL_YIELDS_NULL ON; SET ANSI_WARNINGS ON;");
+					}
+
+					return $result;
 				}
 			}
 		}
