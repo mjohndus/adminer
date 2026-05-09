@@ -232,34 +232,6 @@ echo optionlist(array_merge($extra_types, $structured_types), $type);
 	echo ($foreign_keys ? "<select name='" . h($key) . "[on_delete]'" . (preg_match("~`~", $type) ? "" : " class='hidden'") . "><option value=''>(" . lang('ON DELETE') . ")" . optionlist(Driver::get()->getOnActions(), $field["on_delete"] ?? null) . "</select> " : " "); // space for IE
 }
 
-/**
- * @param string $table
- * @return array{partition_by:string, partition:string, partitions:string, partition_names:list<string>, partition_values:list<string>}
- */
-function get_partitions_info($table) {
-	$from = "FROM information_schema.PARTITIONS WHERE TABLE_SCHEMA = " . q(DB) . " AND TABLE_NAME = " . q($table);
-
-	$result = Connection::get()
-		->query("SELECT PARTITION_METHOD, PARTITION_EXPRESSION, PARTITION_ORDINAL_POSITION $from ORDER BY PARTITION_ORDINAL_POSITION DESC LIMIT 1")
-		->fetchRow();
-
-	if (!$result) {
-		return [];
-	}
-
-	$info = [
-		"partition_by" => $result[0],
-		"partition" => $result[1],
-		"partitions" => $result[2],
-	];
-
-	$partitions = get_key_vals("SELECT PARTITION_NAME, PARTITION_DESCRIPTION $from AND PARTITION_NAME != '' ORDER BY PARTITION_ORDINAL_POSITION");
-	$info["partition_names"] = array_keys($partitions);
-	$info["partition_values"] = array_values($partitions);
-
-	return $info;
-}
-
 /** Filter length value including enums
 * @param string
 * @return string

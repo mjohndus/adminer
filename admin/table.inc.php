@@ -61,10 +61,10 @@ if ($inherits) {
 	tables_links($inherits);
 }
 
-if (support("partitioning") && preg_match("~partitioned~", $table_status["Create_options"])) {
+if (Driver::get()->getPartitionBy() && preg_match("~partitioned~", $table_status["Create_options"] ?? "")) {
 	echo "<h2 id='partition-by'>" . lang('Partition by') . "</h2>\n";
 
-	$partitions_info = get_partitions_info($TABLE);
+	$partitions_info = Driver::get()->getPartitionsInfo($TABLE);
 	Admin::get()->printTablePartitions($partitions_info);
 
 	echo $editLink;
