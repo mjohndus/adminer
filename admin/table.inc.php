@@ -144,9 +144,9 @@ if ($inherited) {
 
 function tables_links(array $tables): void
 {
-	echo "<ul>\n";
+	echo "<ul class='links'>\n";
 	foreach ($tables as $table) {
-		echo "<li><a href='" . h(ME . "table=" . urlencode($table)) . "'>" . h($table) . "</a>";
+		echo "<li><a href='", h(ME . "table=" . urlencode($table)), "'>", icon("structure"), h($table), "</a>";
 	}
 	echo "</ul>\n";
 }
