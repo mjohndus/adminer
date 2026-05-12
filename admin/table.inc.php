@@ -58,16 +58,23 @@ if ($info || $fields || $comment != "") {
 $inherits = Driver::get()->inheritsFrom($TABLE);
 if ($inherits) {
 	echo "<h2>" . lang('Inherited from') . "</h2>\n";
-	tables_links($inherits);
+	echo "<ul class='links'>\n";
+	foreach ($inherits as $table) {
+		echo "<li><a href='", h(ME . "table=" . urlencode($table)), "'>", icon("structure"), h($table), "</a>";
+	}
+	echo "</ul>\n";
 }
 
-if (Driver::get()->getPartitionBy() && preg_match("~partitioned~", $table_status["Create_options"] ?? "")) {
-	echo "<h2 id='partition-by'>" . lang('Partition by') . "</h2>\n";
+$inherited_tables = Driver::get()->inheritedTables($TABLE);
+if (Driver::get()->getPartitionBy() && ($inherited_tables || preg_match("~partitioned~", $table_status["Create_options"] ?? ""))) {
+	echo "<h2 id='partitions'>" . lang('Partitions') . "</h2>\n";
 
 	$partitions_info = Driver::get()->getPartitionsInfo($TABLE);
-	Admin::get()->printTablePartitions($partitions_info);
+	Admin::get()->printTablePartitions($partitions_info, $inherited_tables);
 
-	echo $editLink;
+	if (!$inherited_tables) {
+		echo $editLink;
+	}
 }
 
 if (support("indexes") && Driver::get()->supportsIndex($table_status)) {
@@ -134,23 +141,4 @@ if (support(is_view($table_status) ? "view_trigger" : "trigger")) {
 		echo "</table>\n";
 	}
 	echo '<p class="links"><a href="' . h(ME) . 'trigger=' . urlencode($TABLE) . '">' . icon("add") . lang('Add trigger') . "</a>\n";
-}
-
-$inherited = Driver::get()->inheritedTables($TABLE);
-if ($inherited) {
-	echo "<h2 id='partitions'>" . lang('Partitions') . "</h2>\n";
-	$partition = Driver::get()->getPartitionsInfo($TABLE);
-	if ($partition) {
-		echo "<p><code class='jush-" . DIALECT . "'>BY " . h("{$partition["partition_by"]}({$partition["partition"]})") . "</code>\n";
-	}
-	tables_links($inherited);
-}
-
-function tables_links(array $tables): void
-{
-	echo "<ul class='links'>\n";
-	foreach ($tables as $table) {
-		echo "<li><a href='", h(ME . "table=" . urlencode($table)), "'>", icon("structure"), h($table), "</a>";
-	}
-	echo "</ul>\n";
 }

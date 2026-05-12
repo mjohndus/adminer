@@ -436,18 +436,18 @@ class Admin extends Origin
 	/**
 	 * Prints the definition of table partitioning.
 	 */
-	public function printTablePartitions(array $partitionInfo): void
+	public function printTablePartitions(array $partitionInfo, array $inheritedTables): void
 	{
 		$showList = $partitionInfo["partition_by"] == "RANGE" || $partitionInfo["partition_by"] == "LIST";
 
 		echo "<p>";
-		echo "<code>{$partitionInfo["partition_by"]} ({$partitionInfo["partition"]})</code>";
+		echo "<code class='jush-" . DIALECT . "'>BY {$partitionInfo["partition_by"]} ({$partitionInfo["partition"]})</code>";
 		if (!$showList) {
 			echo " " . lang('Partitions') . ": " . h($partitionInfo["partitions"]);
 		}
 		echo "</p>";
 
-		if ($showList) {
+		if ($showList && isset($partitionInfo["partition_names"])) {
 			echo "<table>\n";
 			echo "<thead><tr><th>" . lang('Partition') . "</th><td>" . lang('Values') . "</td></tr></thead>\n";
 
@@ -456,6 +456,14 @@ class Admin extends Origin
 			}
 
 			echo "</table>\n";
+		}
+
+		if ($inheritedTables) {
+			echo "<ul class='links'>\n";
+			foreach ($inheritedTables as $table) {
+				echo "<li><a href='", h(ME . "table=" . urlencode($table)), "'>", icon("structure"), h($table), "</a>";
+			}
+			echo "</ul>\n";
 		}
 	}
 
