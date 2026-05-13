@@ -120,7 +120,7 @@ label input[type="checkbox"], label input[type="radio"] {
 	column-gap: 0.5rem;
 }
 
-* + .labels, *:not(label) + label {
+* + .labels, *:not(label) + label, *:not(label) + span > label:first-child {
 	margin-inline-start: 0.3rem;
 }
 

@@ -159,8 +159,12 @@ foreach ($row["indexes"] as $index) {
 				"partial(" . ($i == count($index["columns"]) ? "indexesAddColumn" : "indexesChangeColumn") . ", '" . js_escape(DIALECT == "sql" ? "" : $_GET["indexes"] . "_") . "')"
 			);
 			echo "<span class='idxopts" . ($show_options ? "" : " hidden") . "'>";
-			echo ($lengths ? "<input type='number' name='indexes[$j][lengths][$i]' class='input size' value='" . (h($index["lengths"][$key] ?? "")) . "' title='" . lang('Length') . "'>" : "");
-			echo (support("descidx") ? checkbox("indexes[$j][descs][$i]", 1, $index["descs"][$key] ?? false, lang('descending')) : "");
+			if ($lengths) {
+				echo "<input type='number' name='indexes[$j][lengths][$i]' class='input size' value='". (h($index["lengths"][$key] ?? "")), "' title='" . lang('Length'), "'>";
+			}
+			if (support("descidx")) {
+				echo checkbox("indexes[$j][descs][$i]", 1, $index["descs"][$key] ?? false, lang('descending'));
+			}
 			echo "</span> </span>";
 			$i++;
 		}
