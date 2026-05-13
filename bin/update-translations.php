@@ -61,16 +61,7 @@ if ($language) {
 $languages = [$template => true] + $languages;
 
 // Get all texts from the source code.
-$file_paths = array_merge(
-	glob(__DIR__ . "/../admin/*.php"),
-	glob(__DIR__ . "/../admin/core/*.php"),
-	glob(__DIR__ . "/../admin/include/*.php"),
-	glob(__DIR__ . "/../admin/drivers/*.php"),
-	glob(__DIR__ . "/../editor/*.php"),
-	glob(__DIR__ . "/../editor/core/*.php"),
-	glob(__DIR__ . "/../editor/include/*.php"),
-	glob(__DIR__ . "/../plugins/*.php")
-);
+$file_paths = glob(__DIR__ . "/../{admin,admin/core,admin/include,admin/drivers,editor,editor/core,editor/include,plugins}/*.php", GLOB_BRACE);
 
 $all_texts = [];
 foreach ($file_paths as $file_path) {
