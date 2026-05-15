@@ -189,7 +189,7 @@ class SystemForeignKeysPlugin extends Plugin
 			return $_GET["ns"] == "information_schema" ? $this->lowerCase($foreignKeys) : $foreignKeys;
 		} elseif (DRIVER == "pgsql" && $_GET["ns"] == "pg_catalog") {
 			$mapping = [
-				'pg_aggregate' => ['aggfnoid.proc', 'aggtransfn.proc', 'aggfinalfn.proc', 'aggcombinefn.proc', 'aggserialfn.proc', 'aggdeserialfn.proc', 'aggmtransfn.proc', 'aggminvtransfn.proc', 'aggmfinalfn.proc', 'aggsortop.operator', 'aggtranstype.type', 'aggmtranstype.type'],
+				'pg_aggregate' => ['aggtransfn.proc', 'aggfinalfn.proc', 'aggcombinefn.proc', 'aggserialfn.proc', 'aggdeserialfn.proc', 'aggmtransfn.proc', 'aggminvtransfn.proc', 'aggmfinalfn.proc', 'aggsortop.operator', 'aggtranstype.type', 'aggmtranstype.type'],
 				'pg_am' => ['amhandler.proc'],
 				'pg_amop' => ['amopfamily.opfamily', 'amoplefttype.type', 'amoprighttype.type', 'amopopr.operator', 'amopmethod.am', 'amopsortfamily.opfamily'],
 				'pg_amproc' => ['amprocfamily.opfamily', 'amproclefttype.type', 'amprocrighttype.type', 'amproc.proc'],

@@ -728,7 +728,10 @@ class Admin extends Origin
 					$prefix = "";
 					$cond = " $op";
 
-					if (preg_match('~IN$~', $op)) {
+					$oidColumn = DIALECT == "pgsql" && $op == "=" && $field["type"] == "oid";
+					if ($oidColumn) {
+						$cond .= " " . $this->admin->processFieldInput($field, $val) . "::regproc";
+					} elseif (preg_match('~IN$~', $op)) {
 						$in = process_length($val);
 						$cond .= " " . ($in != "" ? $in : "(NULL)");
 					} elseif ($op == "SQL") {
@@ -751,7 +754,11 @@ class Admin extends Origin
 						&& (!preg_match('~^elastic~', DRIVER) || $field["type"] != "boolean" || preg_match('~true|false~', $val)) // Elasticsearch needs boolean value properly formatted.
 						&& (!preg_match('~^elastic~', DRIVER) || strpos($op, "regexp") === false || preg_match('~text|keyword~', $field["type"])) // Elasticsearch can use regexp only on text and keyword fields.
 					)) {
-						$conditions[] = $prefix . Driver::get()->convertSearch(idf_escape($name), $where, $field) . $cond;
+						if ($oidColumn) {
+							$conditions[] = $prefix . idf_escape($name) . $cond;
+						} else {
+							$conditions[] = $prefix . Driver::get()->convertSearch(idf_escape($name), $where, $field) . $cond;
+						}
 					}
 				}
 
