@@ -494,6 +494,81 @@ if (isset($_GET["pgsql"])) {
 			return $c_style;
 		}
 
+		public function explodeArrayValue(string $value, string $type, ?string &$scalarType): array
+		{
+			// Vector type.
+			$vectorTypes = [
+				"oidvector" => "oid",
+				"int2vector" => "smallint",
+			];
+
+			$scalarType = $vectorTypes[$type] ?? null;
+			if ($scalarType) {
+				return explode(" ", $value);
+			}
+
+			// Array type.
+			if (preg_match('~^(.+)\[]$~', $type, $matches)) {
+				$scalarType = $matches[1];
+
+				// Trim array parenthesis.
+				$value = preg_replace('~^\{(.*)}$~', "$1", $value);
+
+				if (preg_match('~^(\{+)(.*)(}+)$~', $value, $matches)) {
+					// Explode multidimensional array.
+					$values = explode("$matches[3],$matches[1]", $matches[2]);
+					array_walk($values, function (&$v) use ($matches) {
+						$v = $matches[1] . $v . $matches[3];
+					});
+				} else {
+					// Explode values.
+					$values = explode(",", $value);
+				}
+
+				if ($values[0][0] == "{") {
+					// Multidimensional array.
+					$type = $scalarType;
+					array_walk($values, function (&$v) use ($type, &$scalarType) {
+						$v = $this->explodeArrayValue($v, $type, $scalarType);
+					});
+				} elseif (isset($this->types[lang('Strings')][$scalarType])) {
+					// Trim apostrophes from string values.
+					array_walk($values, function (&$v) {
+						$v = preg_replace('~^\'(.*)\'$~', "$1", $v);
+					});
+				}
+
+				return $values;
+			}
+
+			return [];
+		}
+
+		public function implodeArrayValues(array $values, string $type): string
+		{
+			// Vector type.
+			if ($type == "oidvector" || $type == "int2vector") {
+				return implode(" ", $values);
+			}
+
+			// Array type.
+			if (preg_match('~^([^[]+)(\[])+$~', $type, $matches)) {
+				$isString = isset($this->types[lang('Strings')][$matches[1]]);
+
+				// Add apostrophes to string values.
+				array_walk($values, function (&$v) use ($type, $isString) {
+					if (is_array($v)) {
+						$v = $this->implodeArrayValues($v, $type);
+					} elseif ($isString) {
+						$v = "'$v'";
+					}
+				});
+
+				return "{" . implode(",", $values) . "}";
+			}
+
+			return "";
+		}
 	}
 
 

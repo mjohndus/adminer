@@ -956,6 +956,16 @@ function select_value($val, $link, $field, $text_length) {
 		}
 		return "<table>$return</table>";
 	}
+
+	if ($field && $val !== null && strlen($val) <= $text_length && ($values = Driver::get()->explodeArrayValue($val, $field["full_type"], $scalar_type))) {
+		$scalar_field = $field;
+		$scalar_field["type"] = $scalar_field["full_type"] = $scalar_type;
+
+		$return = select_array_value($values, $val, $link, $scalar_field, $text_length);
+
+		return Driver::get()->implodeArrayValues($return, $field["full_type"]);
+	}
+
 	if (!$link) {
 		$link = Admin::get()->getFieldValueLink($val, $field);
 	}
@@ -969,7 +979,24 @@ function select_value($val, $link, $field, $text_length) {
 			$return = h($return);
 		}
 	}
+
 	return Admin::get()->formatSelectionValue($return, $link, $field, $val);
+}
+
+function select_array_value(array $values, string $val, string $link, array $field, int $text_length): array
+{
+	$result = [];
+
+	foreach ($values as $value) {
+		if (is_array($value)) {
+			$result[] = select_array_value($value, $val, $link, $field, $text_length);
+		} else {
+			$l = preg_replace('~(where%5B\d+%5D%5Bval%5D=)' . preg_quote(urlencode($val)) . "~", '${1}' . urlencode($value), $link);
+			$result[] = select_value($value, $l, $field, $text_length);
+		}
+	}
+
+	return $result;
 }
 
 /**

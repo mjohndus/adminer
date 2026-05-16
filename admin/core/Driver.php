@@ -450,6 +450,16 @@ abstract class Driver
 		return [];
 	}
 
+	public function explodeArrayValue(string $value, string $type, string &$scalarType): array
+	{
+		return [];
+	}
+
+	public function implodeArrayValues(array $values, string $type): string
+	{
+		return "";
+	}
+
 	/**
 	 * Returns defined check constraints.
 	 *
