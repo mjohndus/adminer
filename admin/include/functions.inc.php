@@ -942,7 +942,7 @@ function get_random_string(): string
 * @param string|string[]
 * @param string
 * @param ?array
-* @param int
+* @param ?int
 * @return string HTML
 */
 function select_value($val, $link, $field, $text_length) {
@@ -957,7 +957,11 @@ function select_value($val, $link, $field, $text_length) {
 		return "<table>$return</table>";
 	}
 
-	if ($field && $val !== null && strlen($val) <= $text_length && ($values = Driver::get()->explodeArrayValue($val, $field["full_type"], $scalar_type))) {
+	$scalar_type = "";
+	if ($field && $val !== null &&
+		($text_length === null || strlen($val) <= $text_length) &&
+		($values = Driver::get()->explodeArrayValue($val, $field["full_type"], $scalar_type))
+	) {
 		$scalar_field = $field;
 		$scalar_field["type"] = $scalar_field["full_type"] = $scalar_type;
 
@@ -983,7 +987,7 @@ function select_value($val, $link, $field, $text_length) {
 	return Admin::get()->formatSelectionValue($return, $link, $field, $val);
 }
 
-function select_array_value(array $values, string $val, string $link, array $field, int $text_length): array
+function select_array_value(array $values, string $val, string $link, array $field, ?int $text_length): array
 {
 	$result = [];
 
