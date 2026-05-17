@@ -28,9 +28,10 @@ AdminNeo is based on the [Adminer](https://www.adminer.org/) project by Jakub Vr
 Installation
 ------------
 
-Just 3 steps to start using AdminNeo:
+Just a few steps to start using AdminNeo:
 - Download the latest release from [adminneo.org/download](https://www.adminneo.org/download).
 - Upload it to your HTTP server with PHP.
+- Take the appropriate [security measures](https://www.adminneo.org/download#security).
 - Enjoy 😉
 
 AdminNeo can be also [configured](https://www.adminneo.org/configuration) and extended by
