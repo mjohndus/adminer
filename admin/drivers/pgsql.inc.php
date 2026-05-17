@@ -638,7 +638,7 @@ WHERE relkind IN ('r', 'm', 'v', 'f', 'p')
 			'timestamp without time zone' => 'timestamp',
 			'timestamp with time zone' => 'timestamptz',
 		];
-		foreach (get_rows("SELECT a.attname AS field, format_type(a.atttypid, a.atttypmod) AS full_type, pg_get_expr(d.adbin, d.adrelid) AS default, a.attnotnull::int, col_description(c.oid, a.attnum) AS comment" . (Connection::get()->isMinVersion("10") ? ", a.attidentity" . (Connection::get()->isMinVersion("12") ? ", a.attgenerated" : "") : "") . "
+		foreach (get_rows("SELECT a.attname AS field, format_type(a.atttypid, a.atttypmod) AS full_type, a.attndims, pg_get_expr(d.adbin, d.adrelid) AS default, a.attnotnull::int, col_description(c.oid, a.attnum) AS comment" . (Connection::get()->isMinVersion("10") ? ", a.attidentity" . (Connection::get()->isMinVersion("12") ? ", a.attgenerated" : "") : "") . "
 FROM pg_class c
 JOIN pg_namespace n ON c.relnamespace = n.oid
 JOIN pg_attribute a ON c.oid = a.attrelid
@@ -652,14 +652,17 @@ ORDER BY a.attnum"
 			//! collation, primary
 			preg_match('~([^([]+)(\((.*)\))?([a-z ]+)?((\[[0-9]*])*)$~', $row["full_type"], $match);
 			list(, $type, $length, $row["length"], $addon, $array) = $match;
-			$row["length"] .= $array;
 			$check_type = $type . $addon;
 			if (isset($aliases[$check_type])) {
 				$row["type"] = $aliases[$check_type];
-				$row["full_type"] = $row["type"] . $length . $array;
+				$row["full_type"] = $row["type"] . $length;
 			} else {
 				$row["type"] = $type;
-				$row["full_type"] = $row["type"] . $length . $addon . $array;
+				$row["full_type"] = $row["type"] . $length . $addon;
+			}
+			for ($i = 0; $i < $row["attndims"]; $i++) {
+				$row["length"] .= $array;
+				$row["full_type"] .= $array;
 			}
 			if (in_array($row['attidentity'], ['a', 'd'])) {
 				$row['default'] = 'GENERATED ' . ($row['attidentity'] == 'd' ? 'BY DEFAULT' : 'ALWAYS') . ' AS IDENTITY';

@@ -15,6 +15,7 @@ AdminNeo 5.4.0
 ### Bugfixes
 
 - Fix highlighting current table in menu when editing Check and View (by @vrana)
+- PostgreSQL: Fix multidimensional array types
 - PostgreSQL PDO: Fix bytea without primary key (by @vrana)
 
 (Ported relevant changes from Adminer 5.2.0-5.2.1.)
