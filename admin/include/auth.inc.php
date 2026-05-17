@@ -44,7 +44,10 @@ function validate_server_input(array &$permanent): void
 		auth_error($permanent);
 	}
 
-	// Check privileged ports.
+	// Check privileged ports. Note, that if port is not set, implicit ports 80 and 443 are not restricted.
+	// This will allow:
+	// - connecting to SimpleDB database
+	// - simplify connection to other HTTP-based drivers on a default port
 	if (isset($parts['port']) && ($parts['port'] < 1024 || $parts['port'] > 65535)) {
 		auth_error($permanent, lang('Connecting to privileged ports is not allowed.'));
 	}
