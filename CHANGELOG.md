@@ -13,6 +13,7 @@ AdminNeo 5.4.0
 - MS SQL: Limit one INSERT in export to 1000 rows (by @vrana)
 - non-MySQL: Parse '--' without trailing space as comment in SQL command (by @vrana)
 - Update Dutch translations (by @wintstar)
+- Elasticsearch, ClickHouse: Validate response origin
 
 ### Bugfixes
 

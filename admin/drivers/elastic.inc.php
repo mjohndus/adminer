@@ -48,7 +48,7 @@ if (isset($_GET["elastic"])) {
 				$isElastic = false;
 				foreach ($http_response_header as $header) {
 					// X-elastic-product is available from Elasticsearch 7.10.
-					if (strcasecmp($header, "X-elastic-product: Elasticsearch")) {
+					if (!strcasecmp($header, "X-elastic-product: Elasticsearch")) {
 						$isElastic = true;
 						break;
 					}
