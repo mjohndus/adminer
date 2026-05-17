@@ -81,6 +81,7 @@ return [
 
 	// Structure.
 	'Column' => 'Kolom',
+	'Columns' => 'Kolommen',
 	'Routine' => 'Routine',
 	'Grant' => 'Toekennen',
 	'Revoke' => 'Intrekken',
@@ -140,6 +141,7 @@ return [
 
 	// Databases.
 	'Database' => 'Database',
+	'database' => 'database',
 	'DB' => 'DB',
 	'Use' => 'Gebruik',
 	'Invalid database.' => 'Ongeldige database.',
@@ -158,6 +160,7 @@ return [
 
 	// Schemas (PostgreSQL, MS SQL).
 	'Schema' => 'Schema',
+	'schema' => 'schema',
 	'Schemas' => 'Schema\'s',
 	'No schemas.' => 'Geen schema\'s.',
 	'Show schema' => 'Schema weergeven',
