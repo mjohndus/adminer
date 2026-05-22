@@ -500,10 +500,11 @@ if (!$columns && support("table")) {
 						$posted = $_POST["val"][$unique_idf][$escaped_key] ?? null;
 						$editable = !is_array($row[$key]) && is_utf8($html) && $rows[$n][$key] == $row[$key] && !$functions[$key] && !($field["generated"] ?? false);
 						$type = ($column && preg_match('~^(AVG|MIN|MAX)\((.+)\)~', $column, $matches) ? $fields[idf_unescape($matches[2])]["type"] : ($field["type"] ?? null));
+						$money = $type == "money" || ($column && preg_match('~^SUM\((.+)\)~', $column, $matches) && $fields[idf_unescape($matches[1])]["type"]) == "money";
 						$text = $type && preg_match('~text|json|lob~', $type);
 						$numeric_type = ($type && preg_match(number_type(), $type)) ||
 							($column && preg_match('~^(CHAR_LENGTH|ROUND|FLOOR|CEIL|UNIX_TIMESTAMP|TIME_TO_SEC|COUNT|SUM)\(~', $column));
-						$class = $numeric_type && ($null_val || is_numeric(strip_tags($html)) || $type == "money") ? "class='number'" : "";
+						$class = $numeric_type && ($null_val || is_numeric(strip_tags($html)) || $money) ? "class='number'" : "";
 						echo "<td id='$id' $class";
 						if (($_GET["modify"] && $editable && !$null_val) || $posted !== null) {
 							$h_value = h($posted !== null ? $posted : $row[$key]);
