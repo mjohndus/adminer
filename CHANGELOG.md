@@ -30,7 +30,7 @@ AdminNeo 5.4.0
 - PostgreSQL: Fix multidimensional array types
 - PostgreSQL PDO: Fix bytea without primary key (by @vrana)
 
-(Ported relevant changes from Adminer 5.2.0-5.2.1.)
+(Ported relevant changes from Adminer 5.2.0-5.3.0.)
 
 AdminNeo 5.3.0 (2026-05-07)
 ---------------------------
