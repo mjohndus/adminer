@@ -247,6 +247,7 @@ return [
 	'Partitions' => 'Oddiely',
 	'Partition name' => 'Názov oddielu',
 	'Values' => 'Hodnoty',
+	'Inherited from' => 'Zdedená z',
 
 	// Indexes.
 	'Indexes' => 'Indexy',
@@ -255,6 +256,8 @@ return [
 	'Add next' => 'Pridať ďalší',
 	'Index Type' => 'Typ indexu',
 	'length' => 'dĺžka',
+	'Algorithm' => 'Algoritmus',
+	'Condition' => 'Podmienka',
 
 	// Foreign keys.
 	'Foreign keys' => 'Cudzie kľúče',

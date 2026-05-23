@@ -71,7 +71,7 @@ if (isset($_GET["function"])) {
 	}
 	echo "<th>", lang('Return type'), "</th>";
 
-	edit_type("returns", $row["returns"], $charsets, [], (DIALECT == "pgsql" ? ["void", "trigger"] : []));
+	edit_type("returns", (array) $row["returns"], $charsets, [], (DIALECT == "pgsql" ? ["void", "trigger"] : []));
 
 	echo "<td></td>";
 	echo "</tr></tbody>\n";

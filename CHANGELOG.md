@@ -8,11 +8,20 @@ AdminNeo 5.4.0
 
 - Do not edit NULL values by Modify (by @vrana)
 - Do not highlight table with name "0" as active everywhere (by @vrana)
+- Align money values right (by @vrana)
+- MySQL, PostgreSQL: Support index algorithms (by @salacr, @vrana)
 - PostgreSQL: Format array and vector values in select table
 - PostgreSQL: Support COPY FROM stdin in SQL query (by @vrana)
+- PostgreSQL: Move partitioned tables from table list to parent table (by @vrana)
+- PostgreSQL, CockroachDB: Creating partitioned tables (by @vrana)
+- PostgreSQL: Support calling functions returning table (by @vrana)
+- PostgreSQL: Add NOT ILIKE operator (by @vrana)
+- PostgreSQL: Support partial indices (by @salacr)
 - MS SQL: Limit one INSERT in export to 1000 rows (by @vrana)
 - non-MySQL: Parse '--' without trailing space as comment in SQL command (by @vrana)
+- Editor: Fix bit search and editing (by @vrana)
 - Update Dutch translations (by @wintstar)
+- Update Polish translations (by @Matthaiks)
 - Elasticsearch, ClickHouse: Validate response origin
 
 ### Bugfixes
@@ -21,7 +30,7 @@ AdminNeo 5.4.0
 - PostgreSQL: Fix multidimensional array types
 - PostgreSQL PDO: Fix bytea without primary key (by @vrana)
 
-(Ported relevant changes from Adminer 5.2.0-5.2.1.)
+(Ported relevant changes from Adminer 5.2.0-5.3.0.)
 
 AdminNeo 5.3.0 (2026-05-07)
 ---------------------------

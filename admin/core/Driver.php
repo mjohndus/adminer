@@ -42,6 +42,9 @@ abstract class Driver
 	/** @var list<string> List of actions used within the foreign keys. */
 	protected $onActions = ["RESTRICT", "CASCADE", "SET NULL", "SET DEFAULT", "NO ACTION"];
 
+	/** @var list<string> Supported partitioning types. */
+	protected $partitionBy = [];
+
 	/** @var string[] ["$type|$type2" => "$function/$function2"] Functions used in edit and insert. **/
 	protected $insertFunctions = [];
 
@@ -183,6 +186,14 @@ abstract class Driver
 	public function getOnActions(): array
 	{
 		return $this->onActions;
+	}
+
+	/**
+	 * @return list<string>
+	 */
+	public function getPartitionBy(): array
+	{
+		return $this->partitionBy;
 	}
 
 	/**
@@ -430,6 +441,46 @@ abstract class Driver
 	public function supportsIndex(array $tableStatus): bool
 	{
 		return !is_view($tableStatus);
+	}
+
+	/**
+	 * Returns list of supported index algorithms, first one is the default.
+	 *
+	 * @return list<string>
+	 */
+	public function getIndexAlgorithms(array $tableStatus): array
+	{
+		return [];
+	}
+
+	/**
+	 * Returns inherited tables.
+	 *
+	 * @return list<string>
+	 */
+	public function inheritedTables(string $table): array
+	{
+		return [];
+	}
+
+	/**
+	 * Returns tables this table inherits from.
+	 *
+	 * @return list<string>
+	 */
+	function inheritsFrom(string $table): array
+	{
+		return [];
+	}
+
+	/**
+	 * Returns partitions info.
+	 *
+	 * @return array{partition_by?:string, partition?:string, partitions?:string, partition_names?:list<string>, partition_values?:list<string>}
+	 */
+	function getPartitionsInfo(string $table): array
+	{
+		return [];
 	}
 
 	/**

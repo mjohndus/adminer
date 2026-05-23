@@ -302,6 +302,10 @@ if (isset($_GET["mysql"])) {
 				"group_concat",
 			];
 
+			if ($connection->isMinVersion("5.1")) {
+				$this->partitionBy = ["RANGE", "LIST", "HASH", "LINEAR HASH", "KEY", "LINEAR KEY"];
+			}
+
 			$this->insertFunctions = [
 				"char" => "md5/sha1/password/encrypt/uuid",
 				"binary" => "md5/sha1",
@@ -425,6 +429,36 @@ if (isset($_GET["mysql"])) {
 			}
 
             return null;
+		}
+
+		function getPartitionsInfo(string $table): array
+		{
+			$from = "FROM information_schema.PARTITIONS WHERE TABLE_SCHEMA = " . q(DB) . " AND TABLE_NAME = " . q($table);
+
+			$result = Connection::get()
+				->query("SELECT PARTITION_METHOD, PARTITION_EXPRESSION, PARTITION_ORDINAL_POSITION $from ORDER BY PARTITION_ORDINAL_POSITION DESC LIMIT 1")
+				->fetchRow();
+
+			if (!$result) {
+				return [];
+			}
+
+			$info = [
+				"partition_by" => $result[0],
+				"partition" => $result[1],
+				"partitions" => $result[2],
+			];
+
+			$partitions = get_key_vals("SELECT PARTITION_NAME, PARTITION_DESCRIPTION $from AND PARTITION_NAME != '' ORDER BY PARTITION_ORDINAL_POSITION");
+			$info["partition_names"] = array_keys($partitions);
+			$info["partition_values"] = array_values($partitions);
+
+			return $info;
+		}
+
+		function getIndexAlgorithms(array $tableStatus): array
+		{
+			return preg_match('~^(MEMORY|NDB)$~', $tableStatus["Engine"]) ? ["BTREE", "HASH"] : ["BTREE"];
 		}
 
 		public function hasCStyleEscapes(): bool
@@ -726,6 +760,7 @@ if (isset($_GET["mysql"])) {
 			$return[$name]["columns"][] = $row["Column_name"];
 			$return[$name]["lengths"][] = ($row["Index_type"] == "SPATIAL" ? null : $row["Sub_part"]);
 			$return[$name]["descs"][] = null;
+			$return[$name]["algorithm"] = $row["Index_type"];
 		}
 		return $return;
 	}
@@ -905,10 +940,10 @@ ORDER BY ordinal_position";
 	* @param string
 	* @param string
 	* @param numeric-string
-	* @param string
+	* @param ?array null means remove partitioning
 	* @return bool
 	*/
-	function alter_table($table, $name, $fields, $foreign, $comment, $engine, $collation, $auto_increment, $partitioning): bool
+	function alter_table($table, $name, $fields, $foreign, $comment, $engine, $collation, $auto_increment, ?array $partitioning): bool
 	{
 		$alter = [];
 		foreach ($fields as $field) {
@@ -930,8 +965,29 @@ ORDER BY ordinal_position";
 			. ($collation ? " COLLATE " . q($collation) : "")
 			. ($auto_increment != "" ? " AUTO_INCREMENT=$auto_increment" : "")
 		;
+
+		if ($partitioning) {
+			$partitions = [];
+			if ($partitioning["partition_by"] == 'RANGE' || $partitioning["partition_by"] == 'LIST') {
+				foreach ($partitioning["partition_names"] as $key => $val) {
+					$value = $partitioning["partition_values"][$key];
+					$partitions[] = "\n  PARTITION " . idf_escape($val) . " VALUES " . ($partitioning["partition_by"] == 'RANGE' ? "LESS THAN" : "IN") . ($value != "" ? " ($value)" : " MAXVALUE"); //! SQL injection
+				}
+			}
+
+			// $partitioning["partition"] can be expression, not only column
+			$status .= "\nPARTITION BY {$partitioning["partition_by"]}({$partitioning["partition"]})";
+			if ($partitions) {
+				$status .= " (" . implode(",", $partitions) . "\n)";
+			} elseif ($partitioning["partitions"]) {
+				$status .= " PARTITIONS " . (int)$partitioning["partitions"];
+			}
+		} elseif ($partitioning === null) {
+			$status .= "\nREMOVE PARTITIONING";
+		}
+
 		if ($table == "") {
-			return (bool)queries("CREATE TABLE " . table($name) . " (\n" . implode(",\n", $alter) . "\n)$status$partitioning");
+			return (bool)queries("CREATE TABLE " . table($name) . " (\n" . implode(",\n", $alter) . "\n)$status");
 		}
 		if ($table != $name) {
 			$alter[] = "RENAME TO " . table($name);
@@ -939,12 +995,12 @@ ORDER BY ordinal_position";
 		if ($status) {
 			$alter[] = ltrim($status);
 		}
-		return !($alter || $partitioning) || queries("ALTER TABLE " . table($table) . "\n" . implode(",\n", $alter) . $partitioning);
+		return !$alter || queries("ALTER TABLE " . table($table) . "\n" . implode(",\n", $alter));
 	}
 
 	/** Run commands to alter indexes
 	* @param string escaped table name
-	* @param list<array{string, string, 'DROP'|list<string>}> of ["index type", "name", ["column definition", ...]] or ["index type", "name", "DROP"]
+	* @param list<array{string, string, 'DROP'|list<string>, 3?: string, 4?: string}> of ["index type", "name", ["column definition", ...], "algorithm", "condition"] or ["index type", "name", "DROP"]
 	* @return bool
 	*/
 	function alter_indexes($table, $alter): bool
@@ -1321,11 +1377,18 @@ ORDER BY ordinal_position";
 	}
 
 	/** Check whether a feature is supported
-	* @param string "check", "comment", "copy", "database", "descidx", "drop_col", "dump", "event", "indexes", "kill", "materializedview", "partitioning", "privileges", "procedure", "processlist", "routine", "scheme", "sequence", "status", "table", "trigger", "type", "variables", "view", "view_trigger"
-	* @return bool
+	* @param literal-string $feature check|comment|copy|database|descidx|drop_col|dump|event|indexes|kill|materializedview|
+	* privileges|move_col|procedure|processlist|routine|scheme|sequence|status|table|trigger|type|variables|view|view_trigger
 	*/
 	function support($feature) {
-		return !preg_match("~scheme|sequence|type|view_trigger|materializedview" . (Connection::get()->isMinVersion("8") ? "" : "|descidx" . (Connection::get()->isMinVersion("5.1") ? "" : "|event|partitioning")) . (Connection::get()->isMinVersion(Connection::get()->isMariaDB() ? "10.2.1" : "8.0.16") ? "" : "|check") . "~", $feature);
+		return preg_match(
+			'~^(comment|columns|copy|database|drop_col|dump|indexes|kill|privileges|move_col|procedure|processlist|routine|sql|status|table|trigger|variables|view'
+			. (Connection::get()->isMinVersion("5.1") ? '|event' : '')
+			. (Connection::get()->isMinVersion("8") ? '|descidx' : '')
+			. (Connection::get()->isMinVersion(Connection::get()->isMariaDB() ? "10.2.1" : "8.0.16") ? '|check' : '')
+			. ')$~',
+			$feature
+		);
 	}
 
 	/** Kill a process

@@ -227,6 +227,7 @@ return [
 	'Partitions' => 'Xx',
 	'Partition name' => 'Xx',
 	'Values' => 'Xx',
+	'Inherited from' => 'Xx',
 
 	// Indexes.
 	'Indexes' => 'Xx',
@@ -235,6 +236,8 @@ return [
 	'Add next' => 'Xx',
 	'Index Type' => 'Xx',
 	'length' => 'xx',
+	'Algorithm' => 'Xx',
+	'Condition' => 'Xx',
 
 	// Foreign keys.
 	'Foreign keys' => 'Xx',

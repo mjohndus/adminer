@@ -164,6 +164,7 @@ class Admin extends Origin
 			$links["select"] = [lang('Select data'), "data"];
 		}
 
+		$table = $tableStatus["Name"];
 		$is_view = false;
 		if (support("table")) {
 			$is_view = is_view($tableStatus);
@@ -178,7 +179,6 @@ class Admin extends Origin
 			$links["edit"] = [lang('New item'), "item-add"];
 		}
 
-		$table = $tableStatus["Name"];
 		foreach ($links as $key => $val) {
 			echo " <a href='", h(ME), "$key=", urlencode($table), ($key == "edit" ? $set : ""), "'", bold(isset($_GET[$key])), ">", icon($val[1]), "$val[0]</a>";
 		}
@@ -436,18 +436,18 @@ class Admin extends Origin
 	/**
 	 * Prints the definition of table partitioning.
 	 */
-	public function printTablePartitions(array $partitionInfo): void
+	public function printTablePartitions(array $partitionInfo, array $inheritedTables): void
 	{
 		$showList = $partitionInfo["partition_by"] == "RANGE" || $partitionInfo["partition_by"] == "LIST";
 
 		echo "<p>";
-		echo "<code>{$partitionInfo["partition_by"]} ({$partitionInfo["partition"]})</code>";
+		echo "<code class='jush-" . DIALECT . "'>BY {$partitionInfo["partition_by"]} ({$partitionInfo["partition"]})</code>";
 		if (!$showList) {
 			echo " " . lang('Partitions') . ": " . h($partitionInfo["partitions"]);
 		}
 		echo "</p>";
 
-		if ($showList) {
+		if ($showList && isset($partitionInfo["partition_names"])) {
 			echo "<table>\n";
 			echo "<thead><tr><th>" . lang('Partition') . "</th><td>" . lang('Values') . "</td></tr></thead>\n";
 
@@ -457,6 +457,14 @@ class Admin extends Origin
 
 			echo "</table>\n";
 		}
+
+		if ($inheritedTables) {
+			echo "<ul class='links'>\n";
+			foreach ($inheritedTables as $table) {
+				echo "<li><a href='", h(ME . "table=" . urlencode($table)), "'>", icon("structure"), h($table), "</a>";
+			}
+			echo "</ul>\n";
+		}
 	}
 
 	/**
@@ -464,10 +472,26 @@ class Admin extends Origin
 	 *
 	 * @param array[] $indexes Data about all indexes on a table.
 	 */
-	public function printTableIndexes(array $indexes): void
+	public function printTableIndexes(array $indexes, array $tableStatus): void
 	{
+		$defaultAlgorithm = first(Driver::get()->getIndexAlgorithms($tableStatus));
+
+		$partial = false;
+		foreach ($indexes as $index) {
+			if ($index["partial"] ?? false) {
+				$partial = true;
+				break;
+			}
+		}
+
 		echo "<table>\n";
-		echo "<thead><tr><th>" . lang('Type') . "</th><td>" . lang('Columns') . " (" . lang('length') . ")</td></tr></thead>\n";
+		echo "<thead><tr>";
+		echo "<th>", lang('Type'), "</th>";
+		echo "<td>", lang('Columns'), " (", lang('length'), ")</td>";
+		if ($partial) {
+			echo "<td>", lang('Condition'), "</td>";
+		}
+		echo "</tr></thead>\n";
 
 		foreach ($indexes as $name => $index) {
 			ksort($index["columns"]); // enforce correct columns order
@@ -478,7 +502,24 @@ class Admin extends Origin
 					. ($index["lengths"][$key] ? "(" . $index["lengths"][$key] . ")" : "")
 					. ($index["descs"][$key] ? " DESC" : "");
 			}
-			echo "<tr title='" . h($name) . "'><th>$index[type]<td>" . implode(", ", $print) . "\n";
+
+			echo "<tr title='", h($name), "'>";
+			echo "<th>", $index["type"];
+			if (isset($index['algorithm']) && $index['algorithm'] != $defaultAlgorithm) {
+				 echo " ({$index["algorithm"]})";
+			}
+			echo "</th>";
+			echo "<td>", implode(", ", $print), "</td>";
+
+			if ($partial) {
+				echo "<td>";
+				if ($index['partial']) {
+					echo "<code class='jush-", DIALECT, "'>WHERE ", h($index['partial']), "</code>";
+				}
+				echo "</td>";
+			}
+
+			echo "</tr>\n";
 		}
 
 		echo "</table>\n";
@@ -710,7 +751,10 @@ class Admin extends Origin
 					$prefix = "";
 					$cond = " $op";
 
-					if (preg_match('~IN$~', $op)) {
+					$oidColumn = DIALECT == "pgsql" && $op == "=" && $field["type"] == "oid";
+					if ($oidColumn) {
+						$cond .= " " . $this->admin->processFieldInput($field, $val) . "::regproc";
+					} elseif (preg_match('~IN$~', $op)) {
 						$in = process_length($val);
 						$cond .= " " . ($in != "" ? $in : "(NULL)");
 					} elseif ($op == "SQL") {
@@ -733,7 +777,11 @@ class Admin extends Origin
 						&& (!preg_match('~^elastic~', DRIVER) || $field["type"] != "boolean" || preg_match('~true|false~', $val)) // Elasticsearch needs boolean value properly formatted.
 						&& (!preg_match('~^elastic~', DRIVER) || strpos($op, "regexp") === false || preg_match('~text|keyword~', $field["type"])) // Elasticsearch can use regexp only on text and keyword fields.
 					)) {
-						$conditions[] = $prefix . Driver::get()->convertSearch(idf_escape($name), $where, $field) . $cond;
+						if ($oidColumn) {
+							$conditions[] = $prefix . idf_escape($name) . $cond;
+						} else {
+							$conditions[] = $prefix . Driver::get()->convertSearch(idf_escape($name), $where, $field) . $cond;
+						}
 					}
 				}
 
@@ -1280,7 +1328,7 @@ class Admin extends Origin
 		foreach ($tables as $table => $status) {
 			$table = "$table"; // do not highlight "0" as active everywhere
 			$name = $this->admin->getTableName($status);
-			if ($name == "") {
+			if ($name == "" || ($status["Inherited"] ?? false)) {
 				continue;
 			}
 

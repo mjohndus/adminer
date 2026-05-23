@@ -55,20 +55,33 @@ if ($info || $fields || $comment != "") {
 	echo $editLink;
 }
 
-if (support("partitioning") && preg_match("~partitioned~", $table_status["Create_options"])) {
-	echo "<h2 id='partition-by'>" . lang('Partition by') . "</h2>\n";
+$inherits = Driver::get()->inheritsFrom($TABLE);
+if ($inherits) {
+	echo "<h2>" . lang('Inherited from') . "</h2>\n";
+	echo "<ul class='links'>\n";
+	foreach ($inherits as $table) {
+		echo "<li><a href='", h(ME . "table=" . urlencode($table)), "'>", icon("structure"), h($table), "</a>";
+	}
+	echo "</ul>\n";
+}
 
-	$partitions_info = get_partitions_info($TABLE);
-	Admin::get()->printTablePartitions($partitions_info);
+$inherited_tables = Driver::get()->inheritedTables($TABLE);
+if (Driver::get()->getPartitionBy() && ($inherited_tables || preg_match("~partitioned~", $table_status["Create_options"] ?? ""))) {
+	echo "<h2 id='partitions'>" . lang('Partitions') . "</h2>\n";
 
-	echo $editLink;
+	$partitions_info = Driver::get()->getPartitionsInfo($TABLE);
+	Admin::get()->printTablePartitions($partitions_info, $inherited_tables);
+
+	if (!$inherited_tables) {
+		echo $editLink;
+	}
 }
 
 if (support("indexes") && Driver::get()->supportsIndex($table_status)) {
 	echo "<h2 id='indexes'>" . lang('Indexes') . "</h2>\n";
 	$indexes = indexes($TABLE);
 	if ($indexes) {
-		Admin::get()->printTableIndexes($indexes);
+		Admin::get()->printTableIndexes($indexes, $table_status);
 	}
 	echo '<p class="links"><a href="' . h(ME) . 'indexes=' . urlencode($TABLE) . '">' . icon("edit") . lang('Alter indexes') . "</a>\n";
 }
