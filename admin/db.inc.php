@@ -95,15 +95,11 @@ if ($_GET["ns"] === "") {
 			echo "<input type='search' class='input' name='query' value='" . h($_POST["query"]) . "'>";
 			echo script("qsl('input').onkeydown = partialArg(bodyKeydown, 'search');", "");
 			echo " <input type='submit' class='button' name='search' value='" . lang('Search') . "'>\n";
-			if (Admin::get()->getRegexpOperator()) {
-				echo "<p><label><input type='checkbox' name='regexp' value='1'" . (empty($_POST['regexp']) ? '' : ' checked') . '>' . lang('as a regular expression') . '</label>';
-				echo doc_link(['sql' => 'regexp.html', 'pgsql' => 'functions-matching.html#FUNCTIONS-POSIX-REGEXP', 'elastic' => "regexp-syntax.html"]) . "</p>\n";
-			}
 			echo "</div></fieldset>\n";
 			echo "</div>\n";
 
 			if ($_POST["search"] && $_POST["query"] != "") {
-				$_GET["where"][0]["op"] = Admin::get()->getRegexpOperator() && !empty($_POST['regexp']) ? Admin::get()->getRegexpOperator() : Admin::get()->getLikeOperator();
+				$_GET["where"][0]["op"] = Admin::get()->getLikeOperator();
 				search_tables();
 			}
 		}

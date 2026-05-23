@@ -327,7 +327,6 @@ return [
 	'Full table scan' => 'テーブルを全スキャン',
 	'Unable to select the table' => 'テーブルを選択できません',
 	'Search data in tables' => 'データを検索する',
-	'as a regular expression' => '正規表現として',
 	'No rows.' => '行がありません。',
 	'%d / ' => '%d / ',
 	'%d row(s)' => '%d 行',

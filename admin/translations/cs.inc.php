@@ -357,7 +357,6 @@ return [
 	'Full table scan' => 'Průchod celé tabulky',
 	'Unable to select the table' => 'Nepodařilo se vypsat tabulku',
 	'Search data in tables' => 'Vyhledat data v tabulkách',
-	'as a regular expression' => 'jako regulární výraz',
 	'No rows.' => 'Žádné řádky.',
 	'%d / ' => '%d / ',
 	'%d row(s)' => [

@@ -287,7 +287,6 @@ if (isset($_GET["mysql"])) {
 			];
 
 			$this->likeOperator = "LIKE %%";
-			$this->regexpOperator = "REGEXP";
 
 			$this->functions = [
 				"char_length", "lower", "upper",

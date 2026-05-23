@@ -348,7 +348,6 @@ return [
 	'Full table scan' => 'Full table scan',
 	'Unable to select the table' => 'Onmogelijk tabel te selecteren',
 	'Search data in tables' => 'Zoeken in database',
-	'as a regular expression' => 'als een regular expression',
 	'No rows.' => 'Geen rijen.',
 	'%d / ' => '%d / ',
 	'%d row(s)' => [

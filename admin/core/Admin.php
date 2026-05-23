@@ -16,11 +16,6 @@ class Admin extends Origin
 		return Driver::get()->getLikeOperator();
 	}
 
-	public function getRegexpOperator(): ?string
-	{
-		return Driver::get()->getRegexpOperator();
-	}
-
 	/**
 	 * Returns HTML code for the service title.
 	 */

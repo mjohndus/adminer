@@ -348,7 +348,6 @@ return [
 	'Full table scan' => 'Vollständige Überprüfung der Tabelle',
 	'Unable to select the table' => 'Auswahl der Tabelle fehlgeschlagen',
 	'Search data in tables' => 'Suche in Tabellen',
-	'as a regular expression' => 'als regulärer Ausdruck',
 	'No rows.' => 'Keine Datensätze.',
 	'%d / ' => '%d / ',
 	'%d row(s)' => [

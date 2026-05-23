@@ -198,7 +198,6 @@ if (isset($_GET["elastic"])) {
 			];
 
 			$this->likeOperator = "should(match)";
-			$this->regexpOperator = "should(regexp)";
 
 			$this->insertFunctions = ["json"];
 		}

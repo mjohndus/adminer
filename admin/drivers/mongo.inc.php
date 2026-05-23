@@ -220,7 +220,6 @@ if (isset($_GET["mongo"])) {
 			];
 
 			$this->likeOperator = "LIKE %%"; // TODO: LIKE operator is not listed in operators.
-			$this->regexpOperator = "regex";
 
 			$this->insertFunctions = ["json"];
 

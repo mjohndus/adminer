@@ -27,9 +27,6 @@ abstract class Driver
 	/** @var ?String Operator for LIKE condition. */
 	protected $likeOperator = null;
 
-	/** @var ?String Operator for regular expression condition. */
-	protected $regexpOperator = null;
-
 	/** @var list<string> Functions used in select. */
 	protected $functions = [];
 
@@ -149,11 +146,6 @@ abstract class Driver
 	public function getLikeOperator(): ?string
 	{
 		return $this->likeOperator;
-	}
-
-	public function getRegexpOperator(): ?string
-	{
-		return $this->regexpOperator;
 	}
 
 	/**

@@ -381,7 +381,6 @@ if (isset($_GET["pgsql"])) {
 			];
 
 			$this->likeOperator = "LIKE %%";
-			$this->regexpOperator = "~*";
 
 			$this->functions = [
 				"char_length", "lower", "upper",

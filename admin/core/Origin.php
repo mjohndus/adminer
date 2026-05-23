@@ -99,8 +99,6 @@ abstract class Origin extends Plugin
 
 	public abstract function getLikeOperator(): ?string;
 
-	public abstract function getRegexpOperator(): ?string;
-
 	/**
 	 * Initializes the Admin.
 	 *
