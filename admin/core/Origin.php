@@ -97,7 +97,13 @@ abstract class Origin extends Plugin
 
 	public abstract function getOperators(): array;
 
-	public abstract function getLikeOperator(): ?string;
+	/**
+	 * @deprecated
+	 */
+	public function getLikeOperator(): ?string
+	{
+		return Driver::get()->getLikeOperator();
+	}
 
 	/**
 	 * Initializes the Admin.

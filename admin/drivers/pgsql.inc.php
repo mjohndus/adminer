@@ -380,8 +380,6 @@ if (isset($_GET["pgsql"])) {
 				"IS NULL", "IS NOT NULL",
 			];
 
-			$this->likeOperator = "LIKE %%";
-
 			$this->functions = [
 				"char_length", "lower", "upper",
 				"round",

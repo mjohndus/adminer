@@ -92,7 +92,7 @@ if ($_GET["ns"] === "") {
 		if (support("table")) {
 			echo "<div class='field-sets'>\n";
 			echo "<fieldset><legend>" . lang('Search data in tables') . " <span id='selected2'></span></legend><div class='fieldset-content'>";
-			echo html_select("op", Admin::get()->getOperators(), $_POST["op"] ?? Admin::get()->getLikeOperator());
+			echo html_select("op", Admin::get()->getOperators(), $_POST["op"] ?? Driver::get()->getLikeOperator());
 			echo "<input type='search' class='input' name='query' value='" . h($_POST["query"]) . "'>";
 			echo script("qsl('input').onkeydown = partialArg(bodyKeydown, 'search');", "");
 			echo " <input type='submit' class='button' name='search' value='" . lang('Search') . "'>\n";

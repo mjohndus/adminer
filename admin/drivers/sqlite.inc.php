@@ -183,8 +183,6 @@ if (isset($_GET["sqlite"])) {
 				"SQL",
 			];
 
-			$this->likeOperator = "LIKE %%";
-
 			$this->functions = [
 				"length", "lower", "upper",
 				"round",

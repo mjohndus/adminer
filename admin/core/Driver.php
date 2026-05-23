@@ -24,8 +24,8 @@ abstract class Driver
 	/** @var list<string> Operators used in select. */
 	protected $operators = [];
 
-	/** @var ?String Operator for LIKE condition. */
-	protected $likeOperator = null;
+	/** @var String Operator for LIKE condition. */
+	protected $likeOperator = "LIKE %%";
 
 	/** @var list<string> Functions used in select. */
 	protected $functions = [];
