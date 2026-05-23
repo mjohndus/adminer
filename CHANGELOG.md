@@ -30,6 +30,7 @@ AdminNeo 5.4.0
 - PostgreSQL: Fix multidimensional array types
 - PostgreSQL PDO: Fix bytea without primary key (by @vrana)
 - FileUploadPlugin: Fix searching in *_path columns
+  Editor: Fix missing token in search anywhere form
 
 (Ported relevant changes from Adminer 5.2.0-5.3.0.)
 
