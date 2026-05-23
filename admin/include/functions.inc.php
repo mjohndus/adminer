@@ -844,7 +844,7 @@ function open_file_with_lock($filename)
 		return null;
 	}
 
-	$file = fopen($filename, "c+");
+	$file = @fopen($filename, "c+"); // @ - may not be writable
 	if (!$file) {
 		return null;
 	}
