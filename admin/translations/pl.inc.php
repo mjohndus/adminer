@@ -356,7 +356,6 @@ return [
 	'Full table scan' => 'Wymaga pełnego przeskanowania tabeli',
 	'Unable to select the table' => 'Nie udało się pobrać danych z tabeli',
 	'Search data in tables' => 'Wyszukaj we wszystkich tabelach',
-	'as a regular expression' => 'jako wyrażenie regularne',
 	'No rows.' => 'Brak rekordów.',
 	'%d / ' => '%d / ',
 	'%d row(s)' => [

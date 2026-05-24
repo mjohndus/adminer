@@ -380,9 +380,6 @@ if (isset($_GET["pgsql"])) {
 				"IS NULL", "IS NOT NULL",
 			];
 
-			$this->likeOperator = "LIKE %%";
-			$this->regexpOperator = "~*";
-
 			$this->functions = [
 				"char_length", "lower", "upper",
 				"round",
@@ -502,6 +499,10 @@ if (isset($_GET["pgsql"])) {
 
 		function getPartitionsInfo(string $table): array
 		{
+			if (!$this->connection->isMinVersion("10")) {
+				return [];
+			}
+
 			$row = $this->connection->query("SELECT * FROM pg_partitioned_table WHERE partrelid = " . $this->tableOid($table))->fetchAssoc();
 			if (!$row) {
 				return [];
@@ -525,7 +526,7 @@ if (isset($_GET["pgsql"])) {
 			static $methods = [];
 
 			if (!$methods) {
-				$methods = get_vals("SELECT amname FROM pg_am" . ($this->connection->isMinVersion("9.6") ? " WHERE amtype = 'i'" : "") . " ORDER BY amname = 'btree' DESC, amname");
+				$methods = get_vals("SELECT amname FROM pg_am" . ($this->connection->isMinVersion("9.6") ? " WHERE amtype = 'i'" : "") . " ORDER BY amname = '" . ($this->connection->isCockroachDB() ? "prefix" : "btree") . "' DESC, amname");
 			}
 
 			return $methods;
@@ -734,15 +735,14 @@ ORDER BY 1";
 			get_rows("SELECT
 	relname AS \"Name\",
 	CASE relkind WHEN 'v' THEN 'view' WHEN 'm' THEN 'materialized view' ELSE 'table' END AS \"Engine\"" . ($has_size ? ",
-	pg_table_size(oid) AS \"Data_length\",
-	pg_indexes_size(oid) AS \"Index_length\"" : "") . ",
-	obj_description(oid, 'pg_class') AS \"Comment\",
+	pg_table_size(c.oid) AS \"Data_length\",
+	pg_indexes_size(c.oid) AS \"Index_length\"" : "") . ",
+	obj_description(c.oid, 'pg_class') AS \"Comment\",
 	" . (Connection::get()->isMinVersion("12") ? "''" : "CASE WHEN relhasoids THEN 'oid' ELSE '' END") . " AS \"Oid\",
-	reltuples as \"Rows\",
-	inhparent AS \"Inherited\",
+	reltuples AS \"Rows\",
+	" . (Connection::get()->isMinVersion("10") ? "relispartition::int AS \"Partition\"," : "") . "
 	current_schema() AS nspname
-FROM pg_class
-LEFT JOIN pg_inherits ON inhrelid = oid
+FROM pg_class c
 WHERE relkind IN ('r', 'm', 'v', 'f', 'p')
 AND relnamespace = " . Driver::get()->getNsOidSql() . "
 " . ($name != "" ? "AND relname = " . q($name) : "ORDER BY relname")
@@ -1147,15 +1147,15 @@ ORDER BY s.ordinal_position";
 
 	function routine($name, $type) {
 		$info = get_rows('SELECT routine_definition, LOWER(external_language) AS language, type_udt_name
-			FROM information_schema.routines
-			WHERE routine_schema = current_schema() AND specific_name = ' . q($name));
+FROM information_schema.routines
+WHERE routine_schema = current_schema() AND specific_name = ' . q($name));
 
 		$info = $info[0] ?? [];
 
-		$fields = get_rows('SELECT parameter_name AS field, data_type AS type, character_maximum_length AS length, parameter_mode AS inout
-			FROM information_schema.parameters
-			WHERE specific_schema = current_schema() AND specific_name = ' . q($name) . '
-			ORDER BY ordinal_position');
+		$fields = get_rows('SELECT COALESCE(parameter_name, ordinal_position::text) AS field, data_type AS type, character_maximum_length AS length, parameter_mode AS inout
+FROM information_schema.parameters
+WHERE specific_schema = current_schema() AND specific_name = ' . q($name) . '
+ORDER BY ordinal_position');
 
 		return [
 			"fields" => $fields,
@@ -1168,9 +1168,9 @@ ORDER BY s.ordinal_position";
 
 	function routines() {
 		return get_rows('SELECT specific_name AS "SPECIFIC_NAME", routine_name AS "ROUTINE_NAME", routine_type AS "ROUTINE_TYPE", type_udt_name AS "DTD_IDENTIFIER", null AS ROUTINE_COMMENT
-			FROM information_schema.routines
-			WHERE routine_schema = current_schema()
-			ORDER BY SPECIFIC_NAME');
+FROM information_schema.routines
+WHERE routine_schema = current_schema()
+ORDER BY SPECIFIC_NAME');
 	}
 
 	function routine_languages() {

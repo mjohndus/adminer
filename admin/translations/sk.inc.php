@@ -247,6 +247,7 @@ return [
 	'Partitions' => 'Oddiely',
 	'Partition name' => 'Názov oddielu',
 	'Values' => 'Hodnoty',
+	'Inherited tables' => 'Zdedené tabuľky',
 	'Inherited from' => 'Zdedená z',
 
 	// Indexes.
@@ -357,7 +358,6 @@ return [
 	'Full table scan' => 'Prechod celej tabuľky',
 	'Unable to select the table' => 'Tabuľku sa nepodarilo vypísať',
 	'Search data in tables' => 'Vyhľadať dáta v tabuľkách',
-	'as a regular expression' => 'ako regulárny výraz',
 	'No rows.' => 'Žiadne riadky.',
 	'%d / ' => '%d / ',
 	'%d row(s)' => [

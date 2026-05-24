@@ -231,8 +231,6 @@ if (isset($_GET["clickhouse"])) {
 				"SQL",
 			];
 
-			$this->likeOperator = "LIKE %%";
-
 			$this->grouping = [
 				"sum", "min", "max", "avg",
 				"count", "count distinct",

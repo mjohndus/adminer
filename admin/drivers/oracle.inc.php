@@ -244,8 +244,6 @@ if (isset($_GET["oracle"])) {
 				"SQL",
 			];
 
-			$this->likeOperator = "LIKE %%";
-
 			$this->functions = [
 				"length", "lower", "upper",
 				"round",

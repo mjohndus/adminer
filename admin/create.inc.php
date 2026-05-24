@@ -4,7 +4,7 @@ namespace AdminNeo;
 
 $TABLE = $_GET["create"];
 $partition_by = Driver::get()->getPartitionBy();
-$partitions_info = Driver::get()->getPartitionsInfo($TABLE);
+$partitions_info = $partition_by ? Driver::get()->getPartitionsInfo($TABLE) : [];
 
 $referencable_primary = referencable_primary($TABLE);
 $foreign_keys = [];

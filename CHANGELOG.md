@@ -9,6 +9,7 @@ AdminNeo 5.4.0
 - Do not edit NULL values by Modify (by @vrana)
 - Do not highlight table with name "0" as active everywhere (by @vrana)
 - Align money values right (by @vrana)
+- Allow specifying operator in search anywhere (by @vrana)
 - MySQL, PostgreSQL: Support index algorithms (by @salacr, @vrana)
 - PostgreSQL: Format array and vector values in select table
 - PostgreSQL: Support COPY FROM stdin in SQL query (by @vrana)
@@ -28,11 +29,13 @@ AdminNeo 5.4.0
 
 - Fix highlighting current table in menu when editing Check and View (by @vrana)
 - PostgreSQL: Fix multidimensional array types
+- PostgreSQL: Fix calling functions with name-less parameters (by @vrana)
+- PostgreSQL: Fix calling functions returning table (by @vrana)
 - PostgreSQL PDO: Fix bytea without primary key (by @vrana)
 - FileUploadPlugin: Fix searching in *_path columns
   Editor: Fix missing token in search anywhere form
 
-(Ported relevant changes from Adminer 5.2.0-5.3.0.)
+(Ported relevant changes from Adminer 5.2.0-5.3.0 and several fixes from 5.4.0.)
 
 AdminNeo 5.3.0 (2026-05-07)
 ---------------------------

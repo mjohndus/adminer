@@ -247,9 +247,8 @@ return [
 	'Partitions' => 'Oddíly',
 	'Partition name' => 'Název oddílu',
 	'Values' => 'Hodnoty',
+	'Inherited tables' => 'Zděděné tabulky',
 	'Inherited from' => 'Zděděná z',
-	'Algorithm' => 'Algoritmus',
-	'Condition' => 'Podmínka',
 
 	// Indexes.
 	'Indexes' => 'Indexy',
@@ -258,6 +257,8 @@ return [
 	'Add next' => 'Přidat další',
 	'Index Type' => 'Typ indexu',
 	'length' => 'délka',
+	'Algorithm' => 'Algoritmus',
+	'Condition' => 'Podmínka',
 
 	// Foreign keys.
 	'Foreign keys' => 'Cizí klíče',
@@ -357,7 +358,6 @@ return [
 	'Full table scan' => 'Průchod celé tabulky',
 	'Unable to select the table' => 'Nepodařilo se vypsat tabulku',
 	'Search data in tables' => 'Vyhledat data v tabulkách',
-	'as a regular expression' => 'jako regulární výraz',
 	'No rows.' => 'Žádné řádky.',
 	'%d / ' => '%d / ',
 	'%d row(s)' => [

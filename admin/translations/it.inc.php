@@ -329,7 +329,6 @@ return [
 	'Full table scan' => 'Analizza intera tabella',
 	'Unable to select the table' => 'Selezione della tabella non riuscita',
 	'Search data in tables' => 'Cerca nelle tabelle',
-	'as a regular expression' => 'come espressione regolare',
 	'No rows.' => 'Nessuna riga.',
 	'%d / ' => [
 		'%d / ',

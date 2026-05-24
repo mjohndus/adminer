@@ -97,9 +97,13 @@ abstract class Origin extends Plugin
 
 	public abstract function getOperators(): array;
 
-	public abstract function getLikeOperator(): ?string;
-
-	public abstract function getRegexpOperator(): ?string;
+	/**
+	 * @deprecated
+	 */
+	public function getLikeOperator(): ?string
+	{
+		return Driver::get()->getLikeOperator();
+	}
 
 	/**
 	 * Initializes the Admin.
@@ -583,7 +587,9 @@ abstract class Origin extends Plugin
 
 	public abstract function printTableStructure(array $fields): void;
 
-	public abstract function printTablePartitions(array $partitionInfo, array $inheritedTables): void;
+	public abstract function printTablePartitions(array $partitionInfo): void;
+
+	public abstract function printInheritedTables(array $inheritedTables): void;
 
 	public abstract function printTableIndexes(array $indexes, array $tableStatus): void;
 

@@ -11,16 +11,6 @@ class Admin extends Origin
 		return Driver::get()->getOperators();
 	}
 
-	public function getLikeOperator(): ?string
-	{
-		return Driver::get()->getLikeOperator();
-	}
-
-	public function getRegexpOperator(): ?string
-	{
-		return Driver::get()->getRegexpOperator();
-	}
-
 	/**
 	 * Returns HTML code for the service title.
 	 */
@@ -436,18 +426,18 @@ class Admin extends Origin
 	/**
 	 * Prints the definition of table partitioning.
 	 */
-	public function printTablePartitions(array $partitionInfo, array $inheritedTables): void
+	public function printTablePartitions(array $partitionInfo): void
 	{
-		$showList = $partitionInfo["partition_by"] == "RANGE" || $partitionInfo["partition_by"] == "LIST";
+		$showList = isset($partitionInfo["partition_names"]);
 
 		echo "<p>";
 		echo "<code class='jush-" . DIALECT . "'>BY {$partitionInfo["partition_by"]} ({$partitionInfo["partition"]})</code>";
-		if (!$showList) {
+		if (!$showList && isset($partitionInfo["partitions"])) {
 			echo " " . lang('Partitions') . ": " . h($partitionInfo["partitions"]);
 		}
 		echo "</p>";
 
-		if ($showList && isset($partitionInfo["partition_names"])) {
+		if ($showList) {
 			echo "<table>\n";
 			echo "<thead><tr><th>" . lang('Partition') . "</th><td>" . lang('Values') . "</td></tr></thead>\n";
 
@@ -457,14 +447,17 @@ class Admin extends Origin
 
 			echo "</table>\n";
 		}
+	}
 
-		if ($inheritedTables) {
-			echo "<ul class='links'>\n";
-			foreach ($inheritedTables as $table) {
-				echo "<li><a href='", h(ME . "table=" . urlencode($table)), "'>", icon("structure"), h($table), "</a>";
-			}
-			echo "</ul>\n";
+	public function printInheritedTables(array $inheritedTables): void
+	{
+		echo "<ul class='links'>\n";
+
+		foreach ($inheritedTables as $table) {
+			echo "<li><a href='", h(ME . "table=" . urlencode($table)), "'>", icon("structure"), h($table), "</a>";
 		}
+
+		echo "</ul>\n";
 	}
 
 	/**
@@ -1328,7 +1321,7 @@ class Admin extends Origin
 		foreach ($tables as $table => $status) {
 			$table = "$table"; // do not highlight "0" as active everywhere
 			$name = $this->admin->getTableName($status);
-			if ($name == "" || ($status["Inherited"] ?? false)) {
+			if ($name == "" || ($status["Partition"] ?? false)) {
 				continue;
 			}
 

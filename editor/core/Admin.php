@@ -11,16 +11,6 @@ class Admin extends Origin
 		return ["<=", ">="];
 	}
 
-	public function getLikeOperator(): ?string
-	{
-		return null;
-	}
-
-	public function getRegexpOperator(): ?string
-	{
-		return null;
-	}
-
 	public function getServiceTitle(): string
 	{
 		return "<a href='" . h(HOME_URL) . "'><svg role='img' class='logo' width='130' height='28'><desc>EditorNeo</desc><use href='" . link_files("logo.svg", ["images/logo.svg"]) . "#logo'/></svg></a>";
@@ -186,7 +176,12 @@ class Admin extends Origin
 		//
 	}
 
-	public function printTablePartitions(array $partitionInfo, array $inheritedTables): void
+	public function printTablePartitions(array $partitionInfo): void
+	{
+		//
+	}
+
+	public function printInheritedTables(array $inheritedTables): void
 	{
 		//
 	}
@@ -587,7 +582,7 @@ class Admin extends Origin
 		foreach ($tables as $status) {
 			// Skip views and tables without a name.
 			$name = $this->admin->getTableName($status);
-			if ($name == "" || ($status["Inherited"] ?? false)) {
+			if ($name == "" || ($status["Partition"] ?? false)) {
 				continue;
 			}
 

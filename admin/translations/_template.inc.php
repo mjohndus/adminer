@@ -227,6 +227,7 @@ return [
 	'Partitions' => 'Xx',
 	'Partition name' => 'Xx',
 	'Values' => 'Xx',
+	'Inherited tables' => 'Xx',
 	'Inherited from' => 'Xx',
 
 	// Indexes.
@@ -333,7 +334,6 @@ return [
 	'Full table scan' => 'Xx',
 	'Unable to select the table' => 'Xx',
 	'Search data in tables' => 'Xx',
-	'as a regular expression' => 'xx',
 	'No rows.' => 'Xx.',
 	'%d / ' => '%d / ',
 	'%d row(s)' => ['%d xx', '%d xx'],

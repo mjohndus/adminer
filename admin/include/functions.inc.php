@@ -844,12 +844,12 @@ function open_file_with_lock($filename)
 		return null;
 	}
 
-	$file = fopen($filename, "c+");
+	$file = @fopen($filename, "c+"); // @ - may not be writable
 	if (!$file) {
 		return null;
 	}
 
-	chmod($filename, 0660);
+	@chmod($filename, 0660); // @ - may not be permitted
 
 	if (!flock($file, LOCK_EX)) {
 		fclose($file);
