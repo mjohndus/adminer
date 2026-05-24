@@ -247,6 +247,7 @@ return [
 	'Partitions' => 'Oddiely',
 	'Partition name' => 'Názov oddielu',
 	'Values' => 'Hodnoty',
+	'Inherited tables' => 'Zdedené tabuľky',
 	'Inherited from' => 'Zdedená z',
 
 	// Indexes.

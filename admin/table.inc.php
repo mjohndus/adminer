@@ -70,11 +70,16 @@ if (Driver::get()->getPartitionBy() && ($inherited_tables || preg_match("~partit
 	echo "<h2 id='partitions'>" . lang('Partitions') . "</h2>\n";
 
 	$partitions_info = Driver::get()->getPartitionsInfo($TABLE);
-	Admin::get()->printTablePartitions($partitions_info, $inherited_tables);
+	Admin::get()->printTablePartitions($partitions_info);
 
 	if (!$inherited_tables) {
 		echo $editLink;
 	}
+}
+
+if ($inherited_tables) {
+	echo "<h2 id='inherited-by'>" . lang('Inherited tables') . "</h2>\n";
+	Admin::get()->printInheritedTables($inherited_tables);
 }
 
 if (support("indexes") && Driver::get()->supportsIndex($table_status)) {

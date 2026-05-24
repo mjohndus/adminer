@@ -176,7 +176,12 @@ class Admin extends Origin
 		//
 	}
 
-	public function printTablePartitions(array $partitionInfo, array $inheritedTables): void
+	public function printTablePartitions(array $partitionInfo): void
+	{
+		//
+	}
+
+	public function printInheritedTables(array $inheritedTables): void
 	{
 		//
 	}

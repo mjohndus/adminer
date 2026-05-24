@@ -247,9 +247,8 @@ return [
 	'Partitions' => 'Oddíly',
 	'Partition name' => 'Název oddílu',
 	'Values' => 'Hodnoty',
+	'Inherited tables' => 'Zděděné tabulky',
 	'Inherited from' => 'Zděděná z',
-	'Algorithm' => 'Algoritmus',
-	'Condition' => 'Podmínka',
 
 	// Indexes.
 	'Indexes' => 'Indexy',
@@ -258,6 +257,8 @@ return [
 	'Add next' => 'Přidat další',
 	'Index Type' => 'Typ indexu',
 	'length' => 'délka',
+	'Algorithm' => 'Algoritmus',
+	'Condition' => 'Podmínka',
 
 	// Foreign keys.
 	'Foreign keys' => 'Cizí klíče',
