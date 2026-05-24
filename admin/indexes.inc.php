@@ -33,7 +33,7 @@ if ($_POST && !$_POST["add"] && !$_POST["drop_col"]) {
 			$columns = [];
 			$lengths = [];
 			$descs = [];
-			$index_algorithm = (in_array($index["algorithm"], $index_algorithms) ? $index["algorithm"] : "");
+			$index_algorithm = $index_algorithms ? (in_array($index["algorithm"], $index_algorithms) ? $index["algorithm"] : first($index_algorithms)) : "";
 			$index_condition = (support("partial_indexes") ? $index["partial"] : "");
 			$set = [];
 			ksort($index["columns"]);
@@ -57,7 +57,7 @@ if ($_POST && !$_POST["add"] && !$_POST["drop_col"]) {
 					&& array_values($existing["columns"]) === $columns
 					&& (!$existing["lengths"] || array_values($existing["lengths"]) === $lengths)
 					&& array_values($existing["descs"]) === $descs
-					&& $existing["algorithm"] === $index_algorithm
+					&& (!$index_algorithms || $existing["algorithm"] === $index_algorithm)
 					&& $existing["partial"] == $index_condition
 				) {
 					// skip existing index
