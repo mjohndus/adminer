@@ -1147,15 +1147,15 @@ ORDER BY s.ordinal_position";
 
 	function routine($name, $type) {
 		$info = get_rows('SELECT routine_definition, LOWER(external_language) AS language, type_udt_name
-			FROM information_schema.routines
-			WHERE routine_schema = current_schema() AND specific_name = ' . q($name));
+FROM information_schema.routines
+WHERE routine_schema = current_schema() AND specific_name = ' . q($name));
 
 		$info = $info[0] ?? [];
 
 		$fields = get_rows('SELECT COALESCE(parameter_name, ordinal_position::text) AS field, data_type AS type, character_maximum_length AS length, parameter_mode AS inout
-			FROM information_schema.parameters
-			WHERE specific_schema = current_schema() AND specific_name = ' . q($name) . '
-			ORDER BY ordinal_position');
+FROM information_schema.parameters
+WHERE specific_schema = current_schema() AND specific_name = ' . q($name) . '
+ORDER BY ordinal_position');
 
 		return [
 			"fields" => $fields,
@@ -1168,9 +1168,9 @@ ORDER BY s.ordinal_position";
 
 	function routines() {
 		return get_rows('SELECT specific_name AS "SPECIFIC_NAME", routine_name AS "ROUTINE_NAME", routine_type AS "ROUTINE_TYPE", type_udt_name AS "DTD_IDENTIFIER", null AS ROUTINE_COMMENT
-			FROM information_schema.routines
-			WHERE routine_schema = current_schema()
-			ORDER BY SPECIFIC_NAME');
+FROM information_schema.routines
+WHERE routine_schema = current_schema()
+ORDER BY SPECIFIC_NAME');
 	}
 
 	function routine_languages() {
