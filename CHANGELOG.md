@@ -35,7 +35,7 @@ AdminNeo 5.4.0
 - FileUploadPlugin: Fix searching in *_path columns
   Editor: Fix missing token in search anywhere form
 
-(Ported relevant changes from Adminer 5.2.0-5.3.0.)
+(Ported relevant changes from Adminer 5.2.0-5.3.0 and several fixes from 5.4.0.)
 
 AdminNeo 5.3.0 (2026-05-07)
 ---------------------------
