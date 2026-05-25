@@ -15,7 +15,7 @@
 	--php-sql-bg-color: #ffbbb0;
 }
 
-.jush { color: var(--text-color); }
+.jush { color: var(--text-color); white-space: pre; }
 .jush-htm_com, .jush-com, .jush-com_code, .jush-one, .jush-php_doc, .jush-php_com, .jush-php_one, .jush-js_one, .jush-js_doc { color: gray; }
 .jush-php, .jush-php_new, .jush-php_fun { color: var(--php-color); background-color: var(--php-bg-color); }
 .jush-php_quo, .jush-php_eot, .jush-js_bac { color: var(--string-color); }
@@ -41,7 +41,7 @@
 
 .jush a { color: var(--keyword-color); }
 .jush a.jush-help { cursor: help; }
-.jush-sql a, .jush-sql_code a, .jush-sqlite a, .jush-pgsql a, .jush-mssql a, .jush-oracle a, .jush-simpledb a { font-weight: bold; }
+.jush-sql a, .jush-sql_code a, .jush-sqlite a, .jush-pgsql a, .jush-mssql a, .jush-oracle a, .jush-simpledb a, .jush-igdb a { font-weight: bold; }
 .jush-php_sql .jush-php_quo a, .jush-php_sql .jush-php_apo a { font-weight: normal; }
 .jush-tag a, .jush-att a, .jush-apo a, .jush-quo a, .jush-php_apo a, .jush-php_quo a, .jush-php_eot2 a { color: inherit; }
 a.jush-custom:link, a.jush-custom:visited { font-weight: normal; color: inherit; }

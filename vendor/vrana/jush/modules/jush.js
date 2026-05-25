@@ -44,7 +44,7 @@ var jush = {
 	highlight: function (language, text) {
 		this.last_tag = '';
 		this.last_class = '';
-		return this.highlight_states([ language ], text.replace(/\r\n?/g, '\n'), !/^(htm|tag|xml|txt)$/.test(language))[0];
+		return '<span class="jush">' + this.highlight_states([ language ], text.replace(/\r\n?/g, '\n'), !/^(htm|tag|xml|txt)$/.test(language))[0] + '</span>';
 	},
 
 	/** Highlight html
@@ -54,7 +54,7 @@ var jush = {
 	*/
 	highlight_html: function (language, html) {
 		var original = html.replace(/<br(\s+[^>]*)?>/gi, '\n');
-		var highlighted = jush.highlight(language, jush.html_entity_decode(original.replace(/<[^>]*>/g, ''))).replace(/(^|\n| ) /g, '$1&nbsp;');
+		var highlighted = jush.highlight(language, jush.html_entity_decode(original.replace(/<[^>]*>/g, '')));
 
 		var inject = { };
 		var pos = 0;
@@ -98,12 +98,7 @@ var jush = {
 				var match = /(^|\s)(?:jush|language(?=-\S))($|\s|-(\S+))/.exec(pre[i].className); // https://www.w3.org/TR/html5/text-level-semantics.html#the-code-element
 				if (match) {
 					var language = match[3] ? match[3] : 'htm';
-					var s = '<span class="jush"><span class="jush-' + language + '">' + jush.highlight_html(language, pre[i].innerHTML.replace(/\t/g, tab.length ? tab : '\t')) + '</span></span>'; // span - enable style for class="language-"
-					if (pre[i].outerHTML && /^pre$/i.test(pre[i].tagName)) {
-						pre[i].outerHTML = pre[i].outerHTML.match(/[^>]+>/)[0] + s + '</' + pre[i].tagName + '>';
-					} else {
-						pre[i].innerHTML = s.replace(/\n/g, '<br />');
-					}
+					pre[i].innerHTML = '<span class="jush"><span class="jush-' + language + '">' + jush.highlight_html(language, pre[i].innerHTML.replace(/\t/g, tab.length ? tab : '\t')) + '</span></span>'; // span - enable style for class="language-"
 				}
 				i++;
 				if (jush.timeout && window.setTimeout && (new Date() - start) > jush.timeout) {
@@ -191,7 +186,7 @@ var jush = {
 			for (var url in this.custom_links[state]) {
 				s = s.replace(this.custom_links[state][url], function (str) {
 					var offset = arguments[arguments.length - 2];
-					if (/<[^>]*$/.test(s.substr(0, offset))) {
+					if (/<[^>]*$/.test(s.substr(0, offset)) || /^[^<]*<\/a>/.test(s.substr(offset))) {
 						return str; // don't create links inside tags
 					}
 					return '<a href="' + jush.htmlspecialchars_quo(url.replace('$&', encodeURIComponent(str))) + '" class="jush-custom">' + str + '</a>' // not create_link() - ignores create_links
