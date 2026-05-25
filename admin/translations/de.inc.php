@@ -242,6 +242,8 @@ return [
 	'Partitions' => 'Partitionen',
 	'Partition name' => 'Name der Partition',
 	'Values' => 'Werte',
+	'Inherited tables' => 'Vererbte Tabellen',
+	'Inherited from' => 'Vererbt von',
 
 	// Indexes.
 	'Indexes' => 'Indizes',
@@ -250,6 +252,8 @@ return [
 	'Add next' => 'Hinzufügen',
 	'Index Type' => 'Index-Typ',
 	'length' => 'Länge',
+	'Algorithm' => 'Algorithmus',
+	'Condition' => 'Bedingung',
 
 	// Foreign keys.
 	'Foreign keys' => 'Fremdschlüssel',

@@ -21,8 +21,8 @@ AdminNeo 5.4.0
 - MS SQL: Limit one INSERT in export to 1000 rows (by @vrana)
 - non-MySQL: Parse '--' without trailing space as comment in SQL command (by @vrana)
 - Editor: Fix bit search and editing (by @vrana)
-- Update Dutch translations (by @wintstar)
-- Update Polish translations (by @Matthaiks)
+- Update German and Dutch translations (by @wintstar)
+- Update Polish translation (by @Matthaiks)
 - Elasticsearch, ClickHouse: Validate response origin
 
 ### Bugfixes

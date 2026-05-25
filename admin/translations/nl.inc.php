@@ -242,6 +242,8 @@ return [
 	'Partitions' => 'Partities',
 	'Partition name' => 'Partitie naam',
 	'Values' => 'Waarden',
+	'Inherited tables' => 'Erfelijke tabellen',
+	'Inherited from' => 'Erfelijk van',
 
 	// Indexes.
 	'Indexes' => 'Indexen',
@@ -250,6 +252,8 @@ return [
 	'Add next' => 'Volgende toevoegen',
 	'Index Type' => 'Index type',
 	'length' => 'lengte',
+	'Algorithm' => 'Algoritme',
+	'Condition' => 'Conditie',
 
 	// Foreign keys.
 	'Foreign keys' => 'Foreign keys',
