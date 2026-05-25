@@ -37,7 +37,7 @@ if (DIALECT != "sqlite") {
 }
 echo doc_link([
 	'sql' => "create-table-check-constraints.html",
-	'mariadb' => "constraint/",
+	'mariadb' => "reference/sql-statements/data-definition/constraint",
 	'pgsql' => "ddl-constraints.html#DDL-CONSTRAINTS-CHECK-CONSTRAINTS",
 	'mssql' => "relational-databases/tables/create-check-constraints",
 	'sqlite' => "lang_createtable.html#check_constraints",

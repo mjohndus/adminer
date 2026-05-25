@@ -117,7 +117,7 @@ if (count($index_algorithms) > 1) {
 	echo "<th id='label-method' $options_class>", lang('Algorithm');
 	echo doc_link([
 		'sql' => 'create-index.html#create-index-storage-engine-index-types',
-		'mariadb' => 'storage-engine-index-types/',
+		'mariadb' => 'ha-and-performance/optimization-and-tuning/optimization-and-indexes/storage-engine-index-types',
 		'pgsql' => 'indexes-types.html',
 	]);
 	echo "</th>";

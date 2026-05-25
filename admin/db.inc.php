@@ -109,17 +109,22 @@ if ($_GET["ns"] === "") {
 		echo "<table class='nowrap checkable'>\n";
 		echo script("mixin(qsl('table'), {onclick: tableClick, ondblclick: partialArg(tableClick, true)});");
 
+		$table_status_links = [
+			'sql' => 'show-table-status.html',
+			'mariadb' => 'reference/sql-statements/administrative-sql-statements/show/show-table-status'
+		];
+
 		echo '<thead><tr class="wrap">';
 		echo '<td class="actions"><input id="check-all" type="checkbox" class="input jsonly">' . script("gid('check-all').onclick = partial(formCheck, /^(tables|views)\[/);", "");
 		echo '<th>' . lang('Table');
-		echo '<td>' . lang('Engine') . doc_link(['sql' => 'storage-engines.html']);
-		echo '<td>' . lang('Collation') . doc_link(['sql' => 'charset-charsets.html', 'mariadb' => 'supported-character-sets-and-collations/']);
-		echo '<td>' . lang('Data Length') . doc_link(['sql' => 'show-table-status.html', 'pgsql' => 'functions-admin.html#FUNCTIONS-ADMIN-DBOBJECT', 'oracle' => 'REFRN20286']);
-		echo '<td>' . lang('Index Length') . doc_link(['sql' => 'show-table-status.html', 'pgsql' => 'functions-admin.html#FUNCTIONS-ADMIN-DBOBJECT']);
-		echo '<td>' . lang('Data Free') . doc_link(['sql' => 'show-table-status.html']);
-		echo '<td>' . lang('Auto Increment') . doc_link(['sql' => 'example-auto-increment.html', 'mariadb' => 'auto_increment/']);
-		echo '<td>' . lang('Rows') . doc_link(['sql' => 'show-table-status.html', 'pgsql' => 'catalog-pg-class.html#CATALOG-PG-CLASS', 'oracle' => 'REFRN20286']);
-		echo (support("comment") ? '<td>' . lang('Comment') . doc_link(['sql' => 'show-table-status.html', 'pgsql' => 'functions-info.html#FUNCTIONS-INFO-COMMENT-TABLE']) : '');
+		echo '<td>' . lang('Engine') . doc_link(['sql' => 'storage-engines.html', 'mariadb' => 'server-usage/storage-engines']);
+		echo '<td>' . lang('Collation') . doc_link(['sql' => 'charset-charsets.html', 'mariadb' => 'reference/data-types/string-data-types/character-sets/supported-character-sets-and-collations']);
+		echo '<td>' . lang('Data Length') . doc_link($table_status_links + ['pgsql' => 'functions-admin.html#FUNCTIONS-ADMIN-DBOBJECT', 'oracle' => 'REFRN20286']);
+		echo '<td>' . lang('Index Length') . doc_link($table_status_links + ['pgsql' => 'functions-admin.html#FUNCTIONS-ADMIN-DBOBJECT']);
+		echo '<td>' . lang('Data Free') . doc_link($table_status_links);
+		echo '<td>' . lang('Auto Increment') . doc_link(['sql' => 'example-auto-increment.html', 'mariadb' => 'reference/data-types/auto_increment']);
+		echo '<td>' . lang('Rows') . doc_link($table_status_links + ['pgsql' => 'catalog-pg-class.html#CATALOG-PG-CLASS', 'oracle' => 'REFRN20286']);
+		echo (support("comment") ? '<td>' . lang('Comment') . doc_link($table_status_links + ['pgsql' => 'functions-info.html#FUNCTIONS-INFO-COMMENT-TABLE']) : '');
 		echo "</thead>\n";
 
 		$tables = 0;

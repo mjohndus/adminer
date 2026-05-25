@@ -112,7 +112,7 @@ echo "<span id='label-delete'>" . lang('ON DELETE'), ":</span> ", html_select("o
 echo "<span id='label-update'>" . lang('ON UPDATE'), ":</span> ", html_select("on_update", [-1 => ""] + Driver::get()->getOnActions(), $row["on_update"], "", "label-update");
 echo doc_link([
 	'sql' => "innodb-foreign-key-constraints.html",
-	'mariadb' => "foreign-keys/",
+	'mariadb' => "architecture/server-constraints/foreign-key-constraints",
 	'pgsql' => "sql-createtable.html#SQL-CREATETABLE-REFERENCES",
 	'mssql' => "t-sql/statements/create-table-transact-sql",
 	'oracle' => "SQLRF01111",

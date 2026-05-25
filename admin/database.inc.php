@@ -75,7 +75,7 @@ if ($collations) {
 	echo html_select("collation", ["" => "(" . lang('collation') . ")"] + $collations, $row["collation"]);
 	echo doc_link([
 		'sql' => "charset-charsets.html",
-		'mariadb' => "supported-character-sets-and-collations/",
+		'mariadb' => "reference/data-types/string-data-types/character-sets/supported-character-sets-and-collations",
 		'mssql' => "relational-databases/system-functions/sys-fn-helpcollations-transact-sql",
 	]);
 	echo "\n";

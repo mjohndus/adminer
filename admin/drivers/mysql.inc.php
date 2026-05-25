@@ -344,7 +344,7 @@ if (isset($_GET["mysql"])) {
 			if (preg_match("~binary~", $field["type"])) {
 				return "<code class='jush-sql'>UNHEX</code>";
 			} elseif ($field["type"] == "bit") {
-				return doc_link(array('sql' => 'bit-value-literals.html'), "<code>b''</code>");
+				return doc_link(['sql' => 'bit-value-literals.html', 'mariadb' => "reference/sql-structure/sql-language-structure/binary-literals"], "<code>b''</code>");
 			} elseif (preg_match("~geometry|point|linestring|polygon~", $field["type"])) {
 				return "<code class='jush-sql'>GeomFromText</code>";
 			} else {
@@ -418,11 +418,22 @@ if (isset($_GET["mysql"])) {
 		public function tableHelp(string $name, bool $isView = false): ?string
         {
 			$maria = $this->connection->isMariaDB();
-			if (information_schema(DB)) {
-				return strtolower("information-schema-" . ($maria ? "$name-table/" : str_replace("_", "-", $name) . "-table.html"));
+			if (DB == "information_schema") {
+				$name = strtolower($name);
+
+				return $maria ?
+					"reference/system-tables/information-schema/information-schema-tables/" . (str_starts_with($name, "innodb_") ? "information-schema-innodb-tables/" : "") . "information-schema-$name-table" :
+					"information-schema-" . str_replace("_", "-", $name). "-table.html";
 			}
+	        if (DB == "performance_schema") {
+		        return $maria ?
+			        "reference/system-tables/performance-schema/performance-schema-tables/performance-schema-$name-table" :
+			        "performance-schema-" . str_replace("_", "-", $name). "-table.html";
+	        }
 			if (DB == "mysql") {
-				return ($maria ? "mysql$name-table/" : "system-schema.html"); //! more precise link
+				return $maria ?
+					"reference/system-tables/the-mysql-database-tables/mysql-$name" . str_starts_with($name, "innodb_") ? "" : "-table" :
+					"system-schema.html"; //! more precise link
 			}
 
             return null;

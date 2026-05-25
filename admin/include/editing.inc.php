@@ -71,7 +71,7 @@ function print_select_result(Result $result, ?Connection $connection = null, arr
 				echo "<th" . ($orgtable != "" || $field->name != $orgname ? " title='" . h(($orgtable != "" ? "$orgtable." : "") . $orgname) . "'" : "") . ">" . h($name)
 					. ($orgtables ? doc_link([
 						'sql' => "explain-output.html#explain_" . strtolower($name),
-						'mariadb' => "explain/#the-columns-in-explain-select",
+						'mariadb' => "reference/sql-statements/administrative-sql-statements/analyze-and-explain-statements/explain#columns-in-explain-...-select",
 					]) : "")
 				;
 			}
@@ -364,7 +364,7 @@ function edit_fields(array $fields, array $collations, $type = "TABLE", $foreign
 		echo "<td><input type='radio' name='auto_increment_col' value=''><abbr id='label-ai' title='", lang('Auto Increment'), "'>AI</abbr>";
 		echo doc_link([
 			'sql' => "example-auto-increment.html",
-			'mariadb' => "auto_increment/",
+			'mariadb' => "reference/data-types/auto_increment",
 			'sqlite' => "autoinc.html",
 			'pgsql' => "datatype-numeric.html#DATATYPE-SERIAL",
 			'mssql' => "t-sql/statements/create-table-transact-sql-identity-property",
@@ -697,8 +697,8 @@ function doc_link(array $paths, string $text = "<sup>?</sup>"): string
 	];
 
 	if (Connection::get()->isMariaDB()) {
-		$urls['sql'] = "https://mariadb.com/kb/en/";
-		$paths['sql'] = $paths['mariadb'] ?? str_replace(".html", "/", $paths['sql']);
+		$urls['sql'] = "https://mariadb.com/docs/server/";
+		$paths['sql'] = $paths['mariadb'] ?? str_replace(".html", "", $paths['sql']);
 	}
 
 	return "<a href='" . h($urls[DIALECT] . $paths[DIALECT] . (DIALECT == 'mssql' ? "?view=sql-server-ver$version" : "")) . "'" . target_blank() . ">$text</a>";
