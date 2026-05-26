@@ -489,7 +489,9 @@ if (isset($_GET["pgsql"])) {
 
 		public function getInheritedTables(string $table): array
 		{
-			return get_vals("SELECT relname FROM pg_inherits JOIN pg_class ON inhrelid = oid WHERE inhparent = " . $this->tableOid($table) . " ORDER BY 1");
+			return get_vals("SELECT relname FROM pg_inherits JOIN pg_class ON inhrelid = oid WHERE inhparent = " . $this->tableOid($table) .
+				(Connection::get()->isMinVersion("10") ? " AND relispartition::int = 0" : "") . // do not return partitions
+				" ORDER BY 1");
 		}
 
 		public function getParentTables(string $table): array
@@ -516,10 +518,17 @@ if (isset($_GET["pgsql"])) {
 
 			$attrs = get_vals("SELECT attname FROM pg_attribute WHERE attrelid = {$row["partrelid"]} AND attnum IN (" . str_replace(" ", ", ", $row["partattrs"]) . ")"); //! ordering
 			$by = ['h' => 'HASH', 'l' => 'LIST', 'r' => 'RANGE'];
-			return [
+
+			$info = [
 				"partition_by" => $by[$row["partstrat"]],
 				"partition" => implode(", ", array_map('AdminNeo\idf_escape', $attrs)),
 			];
+
+			$partitions = get_key_vals("SELECT relname, pg_get_expr(c.relpartbound, c.oid) AS bound FROM pg_inherits JOIN pg_class c ON inhrelid = oid WHERE inhparent = " . $this->tableOid($table) . " ORDER BY 1");
+			$info["partition_names"] = array_keys($partitions);
+			$info["partition_values"] = array_map(function ($value) { return str_replace("FOR VALUES ", "", $value); }, array_values($partitions));
+
+			return $info;
 		}
 
 		function tableOid(string $table): string
@@ -740,7 +749,8 @@ ORDER BY 1";
 		foreach (
 			get_rows("SELECT
 	relname AS \"Name\",
-	CASE relkind WHEN 'v' THEN 'view' WHEN 'm' THEN 'materialized view' ELSE 'table' END AS \"Engine\"" . ($has_size ? ",
+	CASE relkind WHEN 'v' THEN 'view' WHEN 'm' THEN 'materialized view' ELSE 'table' END AS \"Engine\",
+	CASE relkind WHEN 'p' THEN 'partitioned' ELSE '' END AS \"Create_options\"" . ($has_size ? ",
 	pg_table_size(c.oid) AS \"Data_length\",
 	pg_indexes_size(c.oid) AS \"Index_length\"" : "") . ",
 	obj_description(c.oid, 'pg_class') AS \"Comment\",

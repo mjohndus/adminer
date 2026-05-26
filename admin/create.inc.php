@@ -100,7 +100,7 @@ if ($_POST && !process_fields($row["fields"]) && !Admin::get()->getErrors()) {
 			if ($partitioning == $partitions_info) {
 				$partitioning = [];
 			}
-		} elseif (preg_match("~partitioned~", $table_status["Create_options"])) {
+		} elseif (str_contains($table_status["Create_options"] ?? "", "partitioned")) {
 			$partitioning = null;
 		}
 

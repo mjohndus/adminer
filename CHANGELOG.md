@@ -13,7 +13,8 @@ AdminNeo 5.4.0
 - MySQL, PostgreSQL: Support index algorithms (by @salacr, @vrana)
 - PostgreSQL: Format array and vector values in select table
 - PostgreSQL: Support COPY FROM stdin in SQL query (by @vrana)
-- PostgreSQL: Move partitioned tables from table list to parent table (by @vrana)
+- PostgreSQL: Show inherited tables in parent table (by @vrana)
+- PostgreSQL: Show partitions definition in table structure
 - PostgreSQL, CockroachDB: Creating partitioned tables (by @vrana)
 - PostgreSQL: Support calling functions returning table (by @vrana)
 - PostgreSQL: Add NOT ILIKE operator (by @vrana)

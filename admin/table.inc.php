@@ -65,20 +65,20 @@ if ($parent_tables) {
 	echo "</ul>\n";
 }
 
-$inherited_tables = Driver::get()->getInheritedTables($TABLE);
-if (Driver::get()->getPartitionBy() && ($inherited_tables || preg_match("~partitioned~", $table_status["Create_options"] ?? ""))) {
+if (Driver::get()->getPartitionBy() && str_contains($table_status["Create_options"] ?? "", "partitioned")) {
 	$partitions_info = Driver::get()->getPartitionsInfo($TABLE);
 
 	if ($partitions_info) {
 		echo "<h2 id='partitions'>" . lang('Partitions') . "</h2>\n";
 		Admin::get()->printTablePartitions($partitions_info);
 
-		if (!$inherited_tables) {
+		if (DIALECT != "pgsql") {
 			echo $editLink;
 		}
 	}
 }
 
+$inherited_tables = Driver::get()->getInheritedTables($TABLE);
 if ($inherited_tables) {
 	echo "<h2 id='inherited-by'>" . lang('Inherited tables') . "</h2>\n";
 	Admin::get()->printInheritedTables($inherited_tables);

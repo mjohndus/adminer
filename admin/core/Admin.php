@@ -442,7 +442,15 @@ class Admin extends Origin
 			echo "<thead><tr><th>" . lang('Partition') . "</th><td>" . lang('Values') . "</td></tr></thead>\n";
 
 			foreach ($partitionInfo["partition_names"] as $key => $name) {
-				echo "<tr><th>" . h($name) . "</th><td>" . h($partitionInfo["partition_values"][$key]) . "\n";
+				echo "<tr><th>";
+				if (DIALECT == "pgsql") {
+					echo "<a href='", h(ME . "table=" . urlencode($name)), "'>";
+				}
+				echo h($name);
+				if (DIALECT == "pgsql") {
+					echo "</a>";
+				}
+				echo "</th><td>" . h($partitionInfo["partition_values"][$key]) . "\n";
 			}
 
 			echo "</table>\n";
