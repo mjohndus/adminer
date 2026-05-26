@@ -202,7 +202,7 @@ if (support("columns") || $TABLE == "") {
 	echo "</p>";
 }
 
-if (support("columns")) {
+if (support("columns") && ($TABLE == "" || !Driver::get()->isPartition($TABLE))) {
 	echo "<div class='scrollable'>\n";
 	echo "<table id='edit-fields' class='nowrap'>\n";
 	edit_fields($row["fields"], $collations, "TABLE", $foreign_keys);

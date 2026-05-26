@@ -466,6 +466,14 @@ abstract class Driver
 	}
 
 	/**
+	 * Returns whether this table is a partition.
+	 */
+	public function isPartition(string $table): bool
+	{
+		return false;
+	}
+
+	/**
 	 * Returns partitions info.
 	 *
 	 * @return array{partition_by?:string, partition?:string, partitions?:string, partition_names?:list<string>, partition_values?:list<string>}

@@ -497,6 +497,12 @@ if (isset($_GET["pgsql"])) {
 			return get_vals("SELECT relname FROM pg_class JOIN pg_inherits ON inhparent = oid WHERE inhrelid = " . $this->tableOid($table) . " ORDER BY 1");
 		}
 
+		public function isPartition(string $table): bool
+		{
+			return Connection::get()->isMinVersion("10") &&
+				$this->connection->getValue("SELECT relispartition::int FROM pg_class WHERE oid = " .  $this->tableOid($table));
+		}
+
 		function getPartitionsInfo(string $table): array
 		{
 			if (!$this->connection->isMinVersion("10")) {
