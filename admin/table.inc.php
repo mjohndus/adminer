@@ -67,13 +67,15 @@ if ($inherits) {
 
 $inherited_tables = Driver::get()->inheritedTables($TABLE);
 if (Driver::get()->getPartitionBy() && ($inherited_tables || preg_match("~partitioned~", $table_status["Create_options"] ?? ""))) {
-	echo "<h2 id='partitions'>" . lang('Partitions') . "</h2>\n";
-
 	$partitions_info = Driver::get()->getPartitionsInfo($TABLE);
-	Admin::get()->printTablePartitions($partitions_info);
 
-	if (!$inherited_tables) {
-		echo $editLink;
+	if ($partitions_info) {
+		echo "<h2 id='partitions'>" . lang('Partitions') . "</h2>\n";
+		Admin::get()->printTablePartitions($partitions_info);
+
+		if (!$inherited_tables) {
+			echo $editLink;
+		}
 	}
 }
 
