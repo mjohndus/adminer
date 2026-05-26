@@ -55,17 +55,17 @@ if ($info || $fields || $comment != "") {
 	echo $editLink;
 }
 
-$inherits = Driver::get()->inheritsFrom($TABLE);
-if ($inherits) {
+$parent_tables = Driver::get()->getParentTables($TABLE);
+if ($parent_tables) {
 	echo "<h2>" . lang('Inherited from') . "</h2>\n";
 	echo "<ul class='links'>\n";
-	foreach ($inherits as $table) {
+	foreach ($parent_tables as $table) {
 		echo "<li><a href='", h(ME . "table=" . urlencode($table)), "'>", icon("structure"), h($table), "</a>";
 	}
 	echo "</ul>\n";
 }
 
-$inherited_tables = Driver::get()->inheritedTables($TABLE);
+$inherited_tables = Driver::get()->getInheritedTables($TABLE);
 if (Driver::get()->getPartitionBy() && ($inherited_tables || preg_match("~partitioned~", $table_status["Create_options"] ?? ""))) {
 	$partitions_info = Driver::get()->getPartitionsInfo($TABLE);
 

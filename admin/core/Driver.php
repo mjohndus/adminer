@@ -450,7 +450,7 @@ abstract class Driver
 	 *
 	 * @return list<string>
 	 */
-	public function inheritedTables(string $table): array
+	public function getInheritedTables(string $table): array
 	{
 		return [];
 	}
@@ -460,7 +460,7 @@ abstract class Driver
 	 *
 	 * @return list<string>
 	 */
-	function inheritsFrom(string $table): array
+	public function getParentTables(string $table): array
 	{
 		return [];
 	}
@@ -478,7 +478,7 @@ abstract class Driver
 	 *
 	 * @return array{partition_by?:string, partition?:string, partitions?:string, partition_names?:list<string>, partition_values?:list<string>}
 	 */
-	function getPartitionsInfo(string $table): array
+	public function getPartitionsInfo(string $table): array
 	{
 		return [];
 	}

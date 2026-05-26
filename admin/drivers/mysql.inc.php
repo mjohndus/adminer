@@ -439,7 +439,7 @@ if (isset($_GET["mysql"])) {
             return null;
 		}
 
-		function getPartitionsInfo(string $table): array
+		public function getPartitionsInfo(string $table): array
 		{
 			$from = "FROM information_schema.PARTITIONS WHERE TABLE_SCHEMA = " . q(DB) . " AND TABLE_NAME = " . q($table);
 
@@ -464,7 +464,7 @@ if (isset($_GET["mysql"])) {
 			return $info;
 		}
 
-		function getIndexAlgorithms(array $tableStatus): array
+		public function getIndexAlgorithms(array $tableStatus): array
 		{
 			return preg_match('~^(MEMORY|NDB)$~', $tableStatus["Engine"]) ? ["BTREE", "HASH"] : ["BTREE"];
 		}

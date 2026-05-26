@@ -487,12 +487,12 @@ if (isset($_GET["pgsql"])) {
 			return null;
 		}
 
-		function inheritedTables(string $table): array
+		public function getInheritedTables(string $table): array
 		{
 			return get_vals("SELECT relname FROM pg_inherits JOIN pg_class ON inhrelid = oid WHERE inhparent = " . $this->tableOid($table) . " ORDER BY 1");
 		}
 
-		function inheritsFrom(string $table): array
+		public function getParentTables(string $table): array
 		{
 			return get_vals("SELECT relname FROM pg_class JOIN pg_inherits ON inhparent = oid WHERE inhrelid = " . $this->tableOid($table) . " ORDER BY 1");
 		}
@@ -503,7 +503,7 @@ if (isset($_GET["pgsql"])) {
 				$this->connection->getValue("SELECT relispartition::int FROM pg_class WHERE oid = " .  $this->tableOid($table));
 		}
 
-		function getPartitionsInfo(string $table): array
+		public function getPartitionsInfo(string $table): array
 		{
 			if (!$this->connection->isMinVersion("10")) {
 				return [];
