@@ -2,4 +2,4 @@
 
 namespace AdminNeo;
 
-const VERSION = "5.4.0";
+const VERSION = "5.4.1-dev";
