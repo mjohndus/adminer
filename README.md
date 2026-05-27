@@ -6,9 +6,9 @@ to the target server. As a companion, **EditorNeo** offers data manipulation for
 
 AdminNeo is based on the [Adminer](https://www.adminer.org/) project by Jakub Vrána.
 
-| <img src="/docs/images/screenshot-select.webp?raw=true" alt="Screenshot - Select data"/> | <img src="/docs/images/screenshot-structure.webp?raw=true" alt="Screenshot - Table structure"/> |
-|------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------|
-| <img src="/docs/images/screenshot-alter.webp?raw=true" alt="Screenshot - Alter table"/>  | <img src="/docs/images/screenshot-database.webp?raw=true" alt="Screenshot - Database"/>         |
+| <img src="https://raw.githubusercontent.com/adminneo-org/adminneo/refs/heads/main/docs/images/screenshot-select.webp" alt="Screenshot - Select data"/> | <img src="https://raw.githubusercontent.com/adminneo-org/adminneo/refs/heads/main/docs/images/screenshot-structure.webp" alt="Screenshot - Table structure"/> |
+|--------------------------------------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| <img src="https://raw.githubusercontent.com/adminneo-org/adminneo/refs/heads/main/docs/images/screenshot-alter.webp" alt="Screenshot - Alter table"/>  | <img src="https://raw.githubusercontent.com/adminneo-org/adminneo/refs/heads/main/docs/images/screenshot-database.webp" alt="Screenshot - Database"/>         |
 
 ### Key features
 - Clean modern user interface
