@@ -1,6 +1,13 @@
 Changelog
 =========
 
+AdminNeo 5.4.1
+--------------
+
+### Changes
+
+- Complete the full Polish translation (by @Matthaiks)
+
 AdminNeo 5.4.0 (2026-05-27)
 ---------------------------
 
