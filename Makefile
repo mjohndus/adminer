@@ -21,7 +21,7 @@ server:
 
 .PHONY: clean
 clean:
-	rm -rf $(ROOT_DIRECTORY)/compiled/
+	rm -f $(ROOT_DIRECTORY)/compiled/admin*.php $(ROOT_DIRECTORY)/compiled/editor*.php
 
 .PHONY: clean.all
 clean.all: clean
