@@ -18,13 +18,13 @@ AdminNeo 5.4.0 (2026-05-27)
 - PostgreSQL, CockroachDB: Creating partitioned tables (by @vrana)
 - PostgreSQL: Support calling functions returning table (by @vrana)
 - PostgreSQL: Add NOT ILIKE operator (by @vrana)
-- PostgreSQL: Support partial indices (by @salacr)
+- PostgreSQL: Support partial indexes (by @salacr)
 - MS SQL: Limit one INSERT in export to 1000 rows (by @vrana)
+- Elasticsearch, ClickHouse: Validate response origin
 - non-MySQL: Parse '--' without trailing space as comment in SQL command (by @vrana)
 - Editor: Fix bit search and editing (by @vrana)
 - Update German and Dutch translations (by @wintstar)
 - Update Polish translation (by @Matthaiks)
-- Elasticsearch, ClickHouse: Validate response origin
 
 ### Bugfixes
 
