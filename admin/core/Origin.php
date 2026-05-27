@@ -106,6 +106,14 @@ abstract class Origin extends Plugin
 	}
 
 	/**
+	 * @deprecated
+	 */
+	public function getRegexpOperator(): ?string
+	{
+		return null;
+	}
+
+	/**
 	 * Initializes the Admin.
 	 *
 	 * This method is called right before the authentication process.
