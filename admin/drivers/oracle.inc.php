@@ -244,8 +244,6 @@ if (isset($_GET["oracle"])) {
 				"SQL",
 			];
 
-			$this->likeOperator = "LIKE %%";
-
 			$this->functions = [
 				"length", "lower", "upper",
 				"round",
@@ -542,7 +540,6 @@ ORDER BY ac.constraint_type, aic.column_position", $connection) as $row) {
 		$queries = [];
 		foreach ($alter as $val) {
 			if ($val[0] != "INDEX") {
-				//! descending UNIQUE indexes results in syntax error
 				$val[2] = preg_replace('~ DESC$~', '', $val[2]);
 				$create = ($val[2] == "DROP"
 					? "\nDROP CONSTRAINT " . idf_escape($val[1])

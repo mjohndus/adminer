@@ -97,9 +97,21 @@ abstract class Origin extends Plugin
 
 	public abstract function getOperators(): array;
 
-	public abstract function getLikeOperator(): ?string;
+	/**
+	 * @deprecated
+	 */
+	public function getLikeOperator(): ?string
+	{
+		return Driver::get()->getLikeOperator();
+	}
 
-	public abstract function getRegexpOperator(): ?string;
+	/**
+	 * @deprecated
+	 */
+	public function getRegexpOperator(): ?string
+	{
+		return null;
+	}
 
 	/**
 	 * Initializes the Admin.
@@ -585,7 +597,9 @@ abstract class Origin extends Plugin
 
 	public abstract function printTablePartitions(array $partitionInfo): void;
 
-	public abstract function printTableIndexes(array $indexes): void;
+	public abstract function printInheritedTables(array $inheritedTables): void;
+
+	public abstract function printTableIndexes(array $indexes, array $tableStatus): void;
 
 	public abstract function printSelectionColumns(array $select, array $columns): void;
 
@@ -769,9 +783,9 @@ abstract class Origin extends Plugin
 			// Language.
 			$options = get_language_options();
 			if ($options) {
-				$settings["lang"] = "<tr><th>" . lang('Language') . "</th>" .
+				$settings["lang"] = "<tr><th id='label-language'>" . lang('Language') . "</th>" .
 					"<td>" .
-					html_select("lang", get_language_options(), Locale::get()->getLanguage()) .
+					html_select("lang", get_language_options(), Locale::get()->getLanguage(), "", "label-language") .
 					"</td></tr>\n";
 			}
 
@@ -813,9 +827,9 @@ abstract class Origin extends Plugin
 				"100",
 			];
 
-			$settings["recordsPerPage"] = "<tr><th>" . lang('Records per page') . "</th>" .
+			$settings["recordsPerPage"] = "<tr><th id='label-records'>" . lang('Records per page') . "</th>" .
 				"<td>" .
-				html_select("recordsPerPage", $options, $this->settings->getParameter("recordsPerPage") ?? "") .
+				html_select("recordsPerPage", $options, $this->settings->getParameter("recordsPerPage") ?? "", "", "label-records") .
 				"<span class='input-hint'>" . lang('Default number of records displayed in data table.') . "</span>" .
 				"</td></tr>\n";
 
@@ -831,9 +845,9 @@ abstract class Origin extends Plugin
 				20 => lang('More values than %d', 20),
 			];
 
-			$settings["enumAsSelectThreshold"] = "<tr><th>" . lang('Enum as select') . "</th>" .
+			$settings["enumAsSelectThreshold"] = "<tr><th id='label-enum'>" . lang('Enum as select') . "</th>" .
 				"<td>" .
-				html_select("enumAsSelectThreshold", $options, $this->settings->getParameter("enumAsSelectThreshold") ?? "", "", "", true) .
+				html_select("enumAsSelectThreshold", $options, $this->settings->getParameter("enumAsSelectThreshold") ?? "", "", "label-enum", true) .
 				"<span class='input-hint'>" . lang('Threshold for displaying a selection menu for enum fields.') . "</span>" .
 				"</td></tr>\n";
 			}

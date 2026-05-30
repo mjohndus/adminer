@@ -11,16 +11,6 @@ class Admin extends Origin
 		return Driver::get()->getOperators();
 	}
 
-	public function getLikeOperator(): ?string
-	{
-		return Driver::get()->getLikeOperator();
-	}
-
-	public function getRegexpOperator(): ?string
-	{
-		return Driver::get()->getRegexpOperator();
-	}
-
 	/**
 	 * Returns HTML code for the service title.
 	 */
@@ -164,6 +154,7 @@ class Admin extends Origin
 			$links["select"] = [lang('Select data'), "data"];
 		}
 
+		$table = $tableStatus["Name"];
 		$is_view = false;
 		if (support("table")) {
 			$is_view = is_view($tableStatus);
@@ -178,7 +169,6 @@ class Admin extends Origin
 			$links["edit"] = [lang('New item'), "item-add"];
 		}
 
-		$table = $tableStatus["Name"];
 		foreach ($links as $key => $val) {
 			echo " <a href='", h(ME), "$key=", urlencode($table), ($key == "edit" ? $set : ""), "'", bold(isset($_GET[$key])), ">", icon($val[1]), "$val[0]</a>";
 		}
@@ -438,11 +428,11 @@ class Admin extends Origin
 	 */
 	public function printTablePartitions(array $partitionInfo): void
 	{
-		$showList = $partitionInfo["partition_by"] == "RANGE" || $partitionInfo["partition_by"] == "LIST";
+		$showList = isset($partitionInfo["partition_names"]);
 
 		echo "<p>";
-		echo "<code>{$partitionInfo["partition_by"]} ({$partitionInfo["partition"]})</code>";
-		if (!$showList) {
+		echo "<code class='jush-" . DIALECT . "'>BY {$partitionInfo["partition_by"]} ({$partitionInfo["partition"]})</code>";
+		if (!$showList && isset($partitionInfo["partitions"])) {
 			echo " " . lang('Partitions') . ": " . h($partitionInfo["partitions"]);
 		}
 		echo "</p>";
@@ -452,11 +442,30 @@ class Admin extends Origin
 			echo "<thead><tr><th>" . lang('Partition') . "</th><td>" . lang('Values') . "</td></tr></thead>\n";
 
 			foreach ($partitionInfo["partition_names"] as $key => $name) {
-				echo "<tr><th>" . h($name) . "</th><td>" . h($partitionInfo["partition_values"][$key]) . "\n";
+				echo "<tr><th>";
+				if (DIALECT == "pgsql") {
+					echo "<a href='", h(ME . "table=" . urlencode($name)), "'>";
+				}
+				echo h($name);
+				if (DIALECT == "pgsql") {
+					echo "</a>";
+				}
+				echo "</th><td>" . h($partitionInfo["partition_values"][$key]) . "\n";
 			}
 
 			echo "</table>\n";
 		}
+	}
+
+	public function printInheritedTables(array $inheritedTables): void
+	{
+		echo "<ul class='links'>\n";
+
+		foreach ($inheritedTables as $table) {
+			echo "<li><a href='", h(ME . "table=" . urlencode($table)), "'>", icon("structure"), h($table), "</a>";
+		}
+
+		echo "</ul>\n";
 	}
 
 	/**
@@ -464,10 +473,26 @@ class Admin extends Origin
 	 *
 	 * @param array[] $indexes Data about all indexes on a table.
 	 */
-	public function printTableIndexes(array $indexes): void
+	public function printTableIndexes(array $indexes, array $tableStatus): void
 	{
+		$defaultAlgorithm = first(Driver::get()->getIndexAlgorithms($tableStatus));
+
+		$partial = false;
+		foreach ($indexes as $index) {
+			if ($index["partial"] ?? false) {
+				$partial = true;
+				break;
+			}
+		}
+
 		echo "<table>\n";
-		echo "<thead><tr><th>" . lang('Type') . "</th><td>" . lang('Column') . " (" . lang('length') . ")</td></tr></thead>\n";
+		echo "<thead><tr>";
+		echo "<th>", lang('Type'), "</th>";
+		echo "<td>", lang('Columns'), " (", lang('length'), ")</td>";
+		if ($partial) {
+			echo "<td>", lang('Condition'), "</td>";
+		}
+		echo "</tr></thead>\n";
 
 		foreach ($indexes as $name => $index) {
 			ksort($index["columns"]); // enforce correct columns order
@@ -478,7 +503,24 @@ class Admin extends Origin
 					. ($index["lengths"][$key] ? "(" . $index["lengths"][$key] . ")" : "")
 					. ($index["descs"][$key] ? " DESC" : "");
 			}
-			echo "<tr title='" . h($name) . "'><th>$index[type]<td>" . implode(", ", $print) . "\n";
+
+			echo "<tr title='", h($name), "'>";
+			echo "<th>", $index["type"];
+			if (isset($index['algorithm']) && $index['algorithm'] != $defaultAlgorithm) {
+				 echo " ({$index["algorithm"]})";
+			}
+			echo "</th>";
+			echo "<td>", implode(", ", $print), "</td>";
+
+			if ($partial) {
+				echo "<td>";
+				if ($index['partial']) {
+					echo "<code class='jush-", DIALECT, "'>WHERE ", h($index['partial']), "</code>";
+				}
+				echo "</td>";
+			}
+
+			echo "</tr>\n";
 		}
 
 		echo "</table>\n";
@@ -710,7 +752,10 @@ class Admin extends Origin
 					$prefix = "";
 					$cond = " $op";
 
-					if (preg_match('~IN$~', $op)) {
+					$oidColumn = DIALECT == "pgsql" && $op == "=" && $field["type"] == "oid";
+					if ($oidColumn) {
+						$cond .= " " . $this->admin->processFieldInput($field, $val) . "::regproc";
+					} elseif (preg_match('~IN$~', $op)) {
 						$in = process_length($val);
 						$cond .= " " . ($in != "" ? $in : "(NULL)");
 					} elseif ($op == "SQL") {
@@ -733,7 +778,11 @@ class Admin extends Origin
 						&& (!preg_match('~^elastic~', DRIVER) || $field["type"] != "boolean" || preg_match('~true|false~', $val)) // Elasticsearch needs boolean value properly formatted.
 						&& (!preg_match('~^elastic~', DRIVER) || strpos($op, "regexp") === false || preg_match('~text|keyword~', $field["type"])) // Elasticsearch can use regexp only on text and keyword fields.
 					)) {
-						$conditions[] = $prefix . Driver::get()->convertSearch(idf_escape($name), $where, $field) . $cond;
+						if ($oidColumn) {
+							$conditions[] = $prefix . idf_escape($name) . $cond;
+						} else {
+							$conditions[] = $prefix . Driver::get()->convertSearch(idf_escape($name), $where, $field) . $cond;
+						}
 					}
 				}
 
@@ -1000,6 +1049,7 @@ class Admin extends Origin
 				$keys = [];
 				$generatedKeys = [];
 				$suffix = "";
+				$count = 0;
 
 				while ($row = ($table != '' ? $result->fetchAssoc() : $result->fetchRow())) {
 					if (!$keys) {
@@ -1048,13 +1098,19 @@ class Admin extends Origin
 
 						if (!$buffer) {
 							$buffer = $insert . $s;
-						} elseif (strlen($buffer) + 4 + strlen($s) + strlen($suffix) < $max_packet) { // 4 - length specification
+						} elseif (
+							DIALECT == "mssql" ?
+							$count % 1000 != 0 : // https://learn.microsoft.com/en-us/sql/t-sql/queries/table-value-constructor-transact-sql#limitations-and-restrictions
+							strlen($buffer) + 4 + strlen($s) + strlen($suffix) < $max_packet // 4 - length specification
+						) {
 							$buffer .= ",$s";
 						} else {
 							echo $buffer . $suffix;
 							$buffer = $insert . $s;
 						}
 					}
+
+					$count++;
 				}
 				if ($buffer) {
 					echo $buffer . $suffix;
@@ -1230,17 +1286,17 @@ class Admin extends Origin
 
 		echo "<div>";
 		if ($databases) {
-			echo "<select id='database-select' name='db'>" . optionlist(["" => lang('Database')] + $databases, DB) . "</select>"
+			echo "<select id='database-select' name='db' title='", lang('Database'), "'>" . optionlist(["" => "(" . lang('database') . ")"] + $databases, DB) . "</select>"
 				. script("mixin(gid('database-select'), {onmousedown: dbMouseDown, onchange: dbChange});");
 		} else {
-			echo "<input id='database-select' class='input' name='db' value='" . h(DB) . "' autocapitalize='off'>\n";
+			echo "<input id='database-select' class='input' name='db' value='" . h(DB) . "' title='", lang('Database'), "' autocapitalize='off'>\n";
 		}
 		echo "<input type='submit' value='" . lang('Use') . "' class='button " . ($databases ? "hidden" : "") . "'>\n";
 		echo "</div>";
 
 		if (support("scheme") && $missing != "db" && DB != "" && Connection::get()->selectDatabase(DB)) {
 			echo "<div>";
-			echo "<select id='scheme-select' name='ns'>" . optionlist(["" => lang('Schema')] + $this->admin->getSchemas(), $_GET["ns"]) . "</select>"
+			echo "<select id='scheme-select' name='ns' title='", lang('Schema'), "'>" . optionlist(["" => "(" . lang('schema') . ")"] + $this->admin->getSchemas(), $_GET["ns"]) . "</select>"
 				. script("mixin(gid('scheme-select'), {onmousedown: dbMouseDown, onchange: dbChange});");
 			echo "</div>";
 
@@ -1271,14 +1327,15 @@ class Admin extends Origin
 		echo "<nav id='tables'><menu $menuClass>";
 
 		foreach ($tables as $table => $status) {
+			$table = "$table"; // do not highlight "0" as active everywhere
 			$name = $this->admin->getTableName($status);
-			if ($name == "") {
+			if ($name == "" || ($status["Partition"] ?? false)) {
 				continue;
 			}
 
 			echo "<li>";
 
-			$active = in_array($table, [$_GET["table"], $_GET["select"], $_GET["create"], $_GET["indexes"], $_GET["foreign"], $_GET["trigger"]]);
+			$active = in_array($table, [$_GET["table"], $_GET["select"], $_GET["create"], $_GET["indexes"], $_GET["foreign"], $_GET["trigger"], $_GET["check"], $_GET["view"]]);
 			$class = "primary" . (is_view($status) ? " view" : "");
 			$supportStructure = support("table") || support("indexes");
 			$selectUrl = h(ME) . "select=" . urlencode($table);
@@ -1346,9 +1403,9 @@ class Admin extends Origin
 			$default = $options[$this->config->isSelectionPreferred() ? 1 : 0];
 			$options[""] .= " ($default)";
 
-			$settings["preferSelection"] = "<tr><th>" . lang('Table links') . "</th>" .
+			$settings["preferSelection"] = "<tr><th id='label-links'>" . lang('Table links') . "</th>" .
 				"<td>" .
-				html_select("preferSelection", $options, $this->settings->getParameter("preferSelection") ?? "", "", "", true) .
+				html_select("preferSelection", $options, $this->settings->getParameter("preferSelection") ?? "", "", "label-links", true) .
 				"<span class='input-hint'>" . lang('Primary action for all table links.') . "</span>" .
 				"</td></tr>\n";
 		}

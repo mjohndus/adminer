@@ -25,6 +25,7 @@ include "../admin/core/Origin.php";
 include "../admin/core/Pluginer.php";
 include "core/Admin.php";
 
+include "include/editing.inc.php";
 include "../admin/include/bootstrap.inc.php";
 include "include/connect.inc.php";
 

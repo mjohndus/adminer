@@ -423,10 +423,12 @@ if (!$columns && support("table")) {
 				$unique_array = unique_array($rows[$n], $indexes);
 				if (!$unique_array) {
 					$unique_array = [];
+					reset($select);
 					foreach ($rows[$n] as $key => $val) {
-						if (!preg_match('~^(COUNT\((\*|(DISTINCT )?`(?:[^`]|``)+`)\)|(AVG|GROUP_CONCAT|MAX|MIN|SUM)\(`(?:[^`]|``)+`\))$~', $key)) { //! columns looking like functions
+						if (!preg_match('~^(COUNT|AVG|GROUP_CONCAT|MAX|MIN|SUM)\(~', current($select))) {
 							$unique_array[$key] = $val;
 						}
+						next($select);
 					}
 				}
 				$unique_idf = "";
@@ -450,8 +452,10 @@ if (!$columns && support("table")) {
 					}
 				}
 
+				reset($select);
 				foreach ($row as $key => $val) {
 					if (isset($names[$key])) {
+						$column = current($select);
 						$field = $fields[$key] ?? null;
 						$val = $field ? Connection::get()->formatValue($val, $field) : $val;
 
@@ -476,7 +480,7 @@ if (!$columns && support("table")) {
 								}
 							}
 						}
-						if ($key == "COUNT(*)") { //! columns looking like functions
+						if ($column == "COUNT(*)") {
 							$link = ME . "select=" . urlencode($TABLE);
 							$i = 0;
 							foreach ((array) $_GET["where"] as $v) {
@@ -490,27 +494,30 @@ if (!$columns && support("table")) {
 						}
 
 						$null_val = $val === null;
-						$val = select_value($val, $link, $field, $text_length);
+						$html = select_value($val, $link, $field, $text_length);
 						$escaped_key = bracket_escape($key);
 						$id = h("val[$unique_idf][$escaped_key]");
-						$value = $_POST["val"][$unique_idf][$escaped_key] ?? null;
-						$editable = !is_array($row[$key]) && is_utf8($val) && $rows[$n][$key] == $row[$key] && !$functions[$key] && !($field["generated"] ?? false);
-						$text = $field && preg_match('~text|json|lob~', $field["type"]);
-						$numeric_type = ($field && preg_match(number_type(), $field["type"])) ||
-							(!$field && preg_match('~^ROUND|CHAR_LENGTH|FLOOR|CEIL|UNIX_TIMESTAMP|TIME_TO_SEC|SUM|MIN|MAX|AVG|COUNT\(~', $key));
-						$class = $numeric_type && ($null_val || is_numeric(strip_tags($val))) ? "class='number'" : "";
+						$posted = $_POST["val"][$unique_idf][$escaped_key] ?? null;
+						$editable = !is_array($row[$key]) && is_utf8($html) && $rows[$n][$key] == $row[$key] && !$functions[$key] && !($field["generated"] ?? false);
+						$type = ($column && preg_match('~^(AVG|MIN|MAX)\((.+)\)~', $column, $matches) ? $fields[idf_unescape($matches[2])]["type"] : ($field["type"] ?? null));
+						$money = $type == "money" || ($column && preg_match('~^SUM\((.+)\)~', $column, $matches) && $fields[idf_unescape($matches[1])]["type"]) == "money";
+						$text = $type && preg_match('~text|json|lob~', $type);
+						$numeric_type = ($type && preg_match(number_type(), $type)) ||
+							($column && preg_match('~^(CHAR_LENGTH|ROUND|FLOOR|CEIL|UNIX_TIMESTAMP|TIME_TO_SEC|COUNT|SUM)\(~', $column));
+						$class = $numeric_type && ($null_val || is_numeric(strip_tags($html)) || $money) ? "class='number'" : "";
 						echo "<td id='$id' $class";
-						if (($_GET["modify"] && $editable) || $value !== null) {
-							$h_value = h($value !== null ? $value : $row[$key]);
+						if (($_GET["modify"] && $editable && !$null_val) || $posted !== null) {
+							$h_value = h($posted !== null ? $posted : $row[$key]);
 							echo ">" . ($text ? "<textarea name='$id' cols='30' rows='" . (substr_count($row[$key], "\n") + 1) . "'>$h_value</textarea>" : "<input class='input' name='$id' value='$h_value' size='$lengths[$key]'>");
 						} else {
-							$long = strpos($val, "<i>…</i>");
+							$long = strpos($html, "<i>…</i>");
 							echo " data-text='" . ($long ? 2 : ($text ? 1 : 0)) . "'"
 								. ($editable ? "" : " data-warning='" . h(lang('Use edit link to modify this value.')) . "'")
-								. ">$val"
+								. ">$html"
 							;
 						}
 					}
+					next($select);
 				}
 
 				if ($backward_keys) {

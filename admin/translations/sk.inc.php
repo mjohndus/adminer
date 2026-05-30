@@ -83,6 +83,7 @@ return [
 
 	// Structure.
 	'Column' => 'Stĺpec',
+	'Columns' => 'Stĺpce',
 	'Routine' => 'Procedúra',
 	'Grant' => 'Povoliť',
 	'Revoke' => 'Zakázať',
@@ -145,6 +146,7 @@ return [
 
 	// Databases.
 	'Database' => 'Databáza',
+	'database' => 'databáza',
 	'DB' => 'DB',
 	'Use' => 'Vybrať',
 	'Invalid database.' => 'Nesprávna databáza.',
@@ -163,6 +165,7 @@ return [
 
 	// Schemas (PostgreSQL, MS SQL).
 	'Schema' => 'Schéma',
+	'schema' => 'schéma',
 	'Schemas' => 'Schémy',
 	'No schemas.' => 'Žiadne schémy.',
 	'Show schema' => 'Zobraziť schému',
@@ -244,6 +247,8 @@ return [
 	'Partitions' => 'Oddiely',
 	'Partition name' => 'Názov oddielu',
 	'Values' => 'Hodnoty',
+	'Inherited tables' => 'Zdedené tabuľky',
+	'Inherited from' => 'Zdedená z',
 
 	// Indexes.
 	'Indexes' => 'Indexy',
@@ -252,6 +257,8 @@ return [
 	'Add next' => 'Pridať ďalší',
 	'Index Type' => 'Typ indexu',
 	'length' => 'dĺžka',
+	'Algorithm' => 'Algoritmus',
+	'Condition' => 'Podmienka',
 
 	// Foreign keys.
 	'Foreign keys' => 'Cudzie kľúče',
@@ -351,7 +358,6 @@ return [
 	'Full table scan' => 'Prechod celej tabuľky',
 	'Unable to select the table' => 'Tabuľku sa nepodarilo vypísať',
 	'Search data in tables' => 'Vyhľadať dáta v tabuľkách',
-	'as a regular expression' => 'ako regulárny výraz',
 	'No rows.' => 'Žiadne riadky.',
 	'%d / ' => '%d / ',
 	'%d row(s)' => [
@@ -445,6 +451,6 @@ return [
 	'Data table' => 'Dátová tabuľka',
 	'Edit form' => 'Editační formulář',
 	// Use the phrases from https://gemini.google.com/
-	'Ask Gemini' => 'Opýtajte sa Gemini',
+	'Ask %s' => 'Opýtajte sa %s',
 	'Just a sec...' => 'Moment...',
 ];

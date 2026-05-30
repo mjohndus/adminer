@@ -75,6 +75,9 @@ class FileUploadPlugin extends Plugin
 		$tableName = ($_GET["edit"] != "" ? $_GET["edit"] : $_GET["select"]);
 		$fieldName = $field["field"];
 		$files = $_FILES["fields"];
+		if (!$files) {
+			return null;
+		}
 
 		// Check upload error and file extension.
 		if ($files["error"][$fieldName] || !preg_match('~\.(' . $this->extensions . ')$~', $files["name"][$fieldName], $matches)) {

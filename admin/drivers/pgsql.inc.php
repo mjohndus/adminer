@@ -11,7 +11,7 @@ if (isset($_GET["pgsql"])) {
 	if (extension_loaded("pgsql") && $_GET["ext"] != "pdo") {
 		define("AdminNeo\DRIVER_EXTENSION", "PgSQL");
 
-		class PgSqlConnection extends Connection
+		class PgSqlConnectionBase extends Connection
 		{
 			/** @var int */
 			public $timeout = 0;
@@ -144,6 +144,25 @@ if (isset($_GET["pgsql"])) {
 
 				return $result ? h($result) : null;
 			}
+
+			/**
+			 * Copies data from array into a table.
+			 *
+			 * @param list<string> $rows
+			 */
+			public function copyFrom(string $table, array $rows): bool
+			{
+				$this->error = "";
+				set_error_handler(function ($errno, $error) {
+					$this->error = ini_bool("html_errors") ? html_entity_decode($error) : $error;
+				});
+
+				$result = pg_copy_from($this->connection, $table, $rows);
+
+				restore_error_handler();
+
+				return $result;
+			}
 		}
 
 		class PgSqlResult extends Result
@@ -201,7 +220,7 @@ if (isset($_GET["pgsql"])) {
 					return false;
 				}
 
-				$type = pg_field_type($this->resource, $column);  //! map to MySQL numbers
+				$type = pg_field_type($this->resource, $column);
 				if ($type === false) {
 					return false;
 				}
@@ -209,7 +228,7 @@ if (isset($_GET["pgsql"])) {
 				return (object) [
 					'orgtable' => $orgtable,
 					'name' => $name,
-					'type' => $type,
+					'type' => (preg_match(number_type(), $type) ? 0 : 15),
 					'charsetnr' => ($type == "bytea" ? 63 : 0), // 63 - binary
 				];
 			}
@@ -218,7 +237,7 @@ if (isset($_GET["pgsql"])) {
 	} elseif (extension_loaded("pdo_pgsql")) {
 		define("AdminNeo\DRIVER_EXTENSION", "PDO_PgSQL");
 
-		class PgSqlConnection extends PdoConnection
+		class PgSqlConnectionBase extends PdoConnection
 		{
 			public $timeout = 0;
 
@@ -267,9 +286,35 @@ if (isset($_GET["pgsql"])) {
 				return null;
 			}
 
+			public function copyFrom(string $table, array $rows): bool
+			{
+				$result = $this->pdo->pgsqlCopyFromArray($table, $rows);
+				$this->error = $this->pdo->errorInfo()[2] ?? "";
+
+				return $result;
+			}
+
 			public function close(): void
 			{
 				//
+			}
+		}
+	}
+
+	if (class_exists('AdminNeo\PgSqlConnectionBase')) {
+		class PgSqlConnection extends PgSqlConnectionBase
+		{
+			public function multiQuery(string $query): bool
+			{
+				// no ^ to allow leading comments
+				if (preg_match('~\bCOPY\s+(.+?)\s+FROM\s+stdin;\n?(.*)\n\\\\\.$~is', str_replace("\r\n", "\n", $query), $matches)) {
+					$rows = explode("\n", $matches[2]);
+					$this->affectedRows = count($rows);
+
+					return $this->copyFrom($matches[1], $rows);
+				}
+
+				return parent::multiQuery($query);
 			}
 		}
 	}
@@ -329,13 +374,11 @@ if (isset($_GET["pgsql"])) {
 			$this->operators = [
 				"=", "<", ">", "<=", ">=", "!=",
 				"~", "~*", "!~", "!~*",
-				"LIKE", "LIKE %%", "ILIKE", "ILIKE %%", "NOT LIKE",
+				"LIKE", "LIKE %%", "NOT LIKE",
+				"ILIKE", "ILIKE %%", "NOT ILIKE",
 				"IN", "NOT IN",
 				"IS NULL", "IS NOT NULL",
 			];
-
-			$this->likeOperator = "LIKE %%";
-			$this->regexpOperator = "~*";
 
 			$this->functions = [
 				"char_length", "lower", "upper",
@@ -347,6 +390,11 @@ if (isset($_GET["pgsql"])) {
 				"sum", "min", "max", "avg",
 				"count", "count distinct",
 			];
+
+			$this->partitionBy = ["RANGE", "LIST"];
+			if (!$connection->isCockroachDB()) {
+				$this->partitionBy[] = "HASH";
+			}
 
 			$this->insertFunctions = [
 				"char" => "md5",
@@ -361,6 +409,11 @@ if (isset($_GET["pgsql"])) {
 
 			$this->systemDatabases = ["template1"];
 			$this->systemSchemas = ["information_schema", "pg_catalog", "pg_toast", "pg_temp_*", "pg_toast_temp_*"];
+		}
+
+		public function getNsOidSql(): string
+		{
+			return "(SELECT oid FROM pg_namespace WHERE nspname = current_schema())";
 		}
 
 		public function getInsertReturningSql(string $table): string
@@ -434,6 +487,66 @@ if (isset($_GET["pgsql"])) {
 			return null;
 		}
 
+		public function getInheritedTables(string $table): array
+		{
+			return get_vals("SELECT relname FROM pg_inherits JOIN pg_class ON inhrelid = oid WHERE inhparent = " . $this->tableOid($table) .
+				(Connection::get()->isMinVersion("10") ? " AND relispartition::int = 0" : "") . // do not return partitions
+				" ORDER BY 1");
+		}
+
+		public function getParentTables(string $table): array
+		{
+			return get_vals("SELECT relname FROM pg_class JOIN pg_inherits ON inhparent = oid WHERE inhrelid = " . $this->tableOid($table) . " ORDER BY 1");
+		}
+
+		public function isPartition(string $table): bool
+		{
+			return Connection::get()->isMinVersion("10") &&
+				$this->connection->getValue("SELECT relispartition::int FROM pg_class WHERE oid = " .  $this->tableOid($table));
+		}
+
+		public function getPartitionsInfo(string $table): array
+		{
+			if (!$this->connection->isMinVersion("10")) {
+				return [];
+			}
+
+			$row = $this->connection->query("SELECT * FROM pg_partitioned_table WHERE partrelid = " . $this->tableOid($table))->fetchAssoc();
+			if (!$row) {
+				return [];
+			}
+
+			$attrs = get_vals("SELECT attname FROM pg_attribute WHERE attrelid = {$row["partrelid"]} AND attnum IN (" . str_replace(" ", ", ", $row["partattrs"]) . ")"); //! ordering
+			$by = ['h' => 'HASH', 'l' => 'LIST', 'r' => 'RANGE'];
+
+			$info = [
+				"partition_by" => $by[$row["partstrat"]],
+				"partition" => implode(", ", array_map('AdminNeo\idf_escape', $attrs)),
+			];
+
+			$partitions = get_key_vals("SELECT relname, pg_get_expr(c.relpartbound, c.oid) AS bound FROM pg_inherits JOIN pg_class c ON inhrelid = oid WHERE inhparent = " . $this->tableOid($table) . " ORDER BY 1");
+			$info["partition_names"] = array_keys($partitions);
+			$info["partition_values"] = array_map(function ($value) { return str_replace("FOR VALUES ", "", $value); }, array_values($partitions));
+
+			return $info;
+		}
+
+		function tableOid(string $table): string
+		{
+			return "(SELECT oid FROM pg_class WHERE relnamespace = " . $this->getNsOidSql() . " AND relname = " . q($table) . " AND relkind IN ('r', 'm', 'v', 'f', 'p'))";
+		}
+
+		public function getIndexAlgorithms(array $tableStatus): array
+		{
+			static $methods = [];
+
+			if (!$methods) {
+				$methods = get_vals("SELECT amname FROM pg_am" . ($this->connection->isMinVersion("9.6") ? " WHERE amtype = 'i'" : "") . " ORDER BY amname = '" . ($this->connection->isCockroachDB() ? "prefix" : "btree") . "' DESC, amname");
+			}
+
+			return $methods;
+		}
+
 		public function supportsIndex(array $tableStatus): bool
 		{
 			// Returns true for "materialized view".
@@ -449,6 +562,81 @@ if (isset($_GET["pgsql"])) {
 			return $c_style;
 		}
 
+		public function explodeArrayValue(string $value, string $type, ?string &$scalarType): array
+		{
+			// Vector type.
+			$vectorTypes = [
+				"oidvector" => "oid",
+				"int2vector" => "smallint",
+			];
+
+			$scalarType = $vectorTypes[$type] ?? null;
+			if ($scalarType) {
+				return explode(" ", $value);
+			}
+
+			// Array type.
+			if (preg_match('~^(.+)\[]$~', $type, $matches)) {
+				$scalarType = $matches[1];
+
+				// Trim array parenthesis.
+				$value = preg_replace('~^\{(.*)}$~', "$1", $value);
+
+				if (preg_match('~^(\{+)(.*)(}+)$~', $value, $matches)) {
+					// Explode multidimensional array.
+					$values = explode("$matches[3],$matches[1]", $matches[2]);
+					array_walk($values, function (&$v) use ($matches) {
+						$v = $matches[1] . $v . $matches[3];
+					});
+				} else {
+					// Explode values.
+					$values = explode(",", $value);
+				}
+
+				if ($values[0][0] == "{") {
+					// Multidimensional array.
+					$type = $scalarType;
+					array_walk($values, function (&$v) use ($type, &$scalarType) {
+						$v = $this->explodeArrayValue($v, $type, $scalarType);
+					});
+				} elseif (isset($this->types[lang('Strings')][$scalarType])) {
+					// Trim apostrophes from string values.
+					array_walk($values, function (&$v) {
+						$v = preg_replace('~^\'(.*)\'$~', "$1", $v);
+					});
+				}
+
+				return $values;
+			}
+
+			return [];
+		}
+
+		public function implodeArrayValues(array $values, string $type): string
+		{
+			// Vector type.
+			if ($type == "oidvector" || $type == "int2vector") {
+				return implode(" ", $values);
+			}
+
+			// Array type.
+			if (preg_match('~^([^[]+)(\[])+$~', $type, $matches)) {
+				$isString = isset($this->types[lang('Strings')][$matches[1]]);
+
+				// Add apostrophes to string values.
+				array_walk($values, function (&$v) use ($type, $isString) {
+					if (is_array($v)) {
+						$v = $this->implodeArrayValues($v, $type);
+					} elseif ($isString) {
+						$v = "'$v'";
+					}
+				});
+
+				return "{" . implode(",", $values) . "}";
+			}
+
+			return "";
+		}
 	}
 
 
@@ -560,19 +748,21 @@ ORDER BY 1";
 		$return = [];
 		foreach (
 			get_rows("SELECT
-	c.relname AS \"Name\",
-	CASE c.relkind WHEN 'r' THEN 'table' WHEN 'm' THEN 'materialized view' ELSE 'view' END AS \"Engine\"" . ($has_size ? ",
+	relname AS \"Name\",
+	CASE relkind WHEN 'v' THEN 'view' WHEN 'm' THEN 'materialized view' ELSE 'table' END AS \"Engine\",
+	CASE relkind WHEN 'p' THEN 'partitioned' ELSE '' END AS \"Create_options\"" . ($has_size ? ",
 	pg_table_size(c.oid) AS \"Data_length\",
 	pg_indexes_size(c.oid) AS \"Index_length\"" : "") . ",
 	obj_description(c.oid, 'pg_class') AS \"Comment\",
-	" . (Connection::get()->isMinVersion("12") ? "''" : "CASE WHEN c.relhasoids THEN 'oid' ELSE '' END") . " AS \"Oid\",
-	c.reltuples as \"Rows\",
-	n.nspname
+	" . (Connection::get()->isMinVersion("12") ? "''" : "CASE WHEN relhasoids THEN 'oid' ELSE '' END") . " AS \"Oid\",
+	reltuples AS \"Rows\",
+	" . (Connection::get()->isMinVersion("10") ? "relispartition::int AS \"Partition\"," : "") . "
+	current_schema() AS nspname
 FROM pg_class c
-JOIN pg_namespace n ON(n.nspname = current_schema() AND n.oid = c.relnamespace)
 WHERE relkind IN ('r', 'm', 'v', 'f', 'p')
+AND relnamespace = " . Driver::get()->getNsOidSql() . "
 " . ($name != "" ? "AND relname = " . q($name) : "ORDER BY relname")
-		) as $row) { //! Index_length, Auto_increment
+		) as $row) { //! Auto_increment
 			$return[$row["Name"]] = $row;
 		}
 
@@ -593,13 +783,17 @@ WHERE relkind IN ('r', 'm', 'v', 'f', 'p')
 			'timestamp without time zone' => 'timestamp',
 			'timestamp with time zone' => 'timestamptz',
 		];
-		foreach (get_rows("SELECT a.attname AS field, format_type(a.atttypid, a.atttypmod) AS full_type, pg_get_expr(d.adbin, d.adrelid) AS default, a.attnotnull::int, col_description(c.oid, a.attnum) AS comment" . (Connection::get()->isMinVersion("10") ? ", a.attidentity" . (Connection::get()->isMinVersion("12") ? ", a.attgenerated" : "") : "") . "
-FROM pg_class c
-JOIN pg_namespace n ON c.relnamespace = n.oid
-JOIN pg_attribute a ON c.oid = a.attrelid
-LEFT JOIN pg_attrdef d ON c.oid = d.adrelid AND a.attnum = d.adnum
-WHERE c.relname = " . q($table) . "
-AND n.nspname = current_schema()
+		foreach (get_rows("SELECT
+	a.attname AS field,
+	format_type(a.atttypid, a.atttypmod) AS full_type,
+	a.attndims, pg_get_expr(d.adbin, d.adrelid) AS default,
+	a.attnotnull::int,
+	col_description(a.attrelid, a.attnum) AS comment" . (Connection::get()->isMinVersion("10") ? ",
+	a.attidentity" . (Connection::get()->isMinVersion("12") ? ",
+	a.attgenerated" : "") : "") . "
+FROM pg_attribute a
+LEFT JOIN pg_attrdef d ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+WHERE a.attrelid = " . Driver::get()->tableOid($table) . "
 AND NOT a.attisdropped
 AND a.attnum > 0
 ORDER BY a.attnum"
@@ -607,14 +801,17 @@ ORDER BY a.attnum"
 			//! collation, primary
 			preg_match('~([^([]+)(\((.*)\))?([a-z ]+)?((\[[0-9]*])*)$~', $row["full_type"], $match);
 			list(, $type, $length, $row["length"], $addon, $array) = $match;
-			$row["length"] .= $array;
 			$check_type = $type . $addon;
 			if (isset($aliases[$check_type])) {
 				$row["type"] = $aliases[$check_type];
-				$row["full_type"] = $row["type"] . $length . $array;
+				$row["full_type"] = $row["type"] . $length;
 			} else {
 				$row["type"] = $type;
-				$row["full_type"] = $row["type"] . $length . $addon . $array;
+				$row["full_type"] = $row["type"] . $length . $addon;
+			}
+			for ($i = 0; $i < $row["attndims"]; $i++) {
+				$row["length"] .= $array;
+				$row["full_type"] .= $array;
 			}
 			if (in_array($row['attidentity'], ['a', 'd'])) {
 				$row['default'] = 'GENERATED ' . ($row['attidentity'] == 'd' ? 'BY DEFAULT' : 'ALWAYS') . ' AS IDENTITY';
@@ -638,13 +835,21 @@ ORDER BY a.attnum"
 			$connection = Connection::get();
 		}
 		$return = [];
-		$table_oid = $connection->getValue("SELECT oid FROM pg_class WHERE relnamespace = (SELECT oid FROM pg_namespace WHERE nspname = current_schema()) AND relname = " . q($table));
+		$table_oid = Driver::get()->tableOid($table);
 		$columns = get_key_vals("SELECT attnum, attname FROM pg_attribute WHERE attrelid = $table_oid AND attnum > 0", $connection);
-		foreach (get_rows("SELECT relname, indisunique::int, indisprimary::int, indkey, indoption, (indpred IS NOT NULL)::int as indispartial FROM pg_index i, pg_class ci WHERE i.indrelid = $table_oid AND ci.oid = i.indexrelid ORDER BY indisprimary DESC, indisunique DESC", $connection) as $row) {
+		foreach (get_rows("SELECT relname, indisunique::int, indisprimary::int, indkey, indoption, (indpred IS NOT NULL)::int as indispartial, pg_am.amname as algorithm, pg_get_expr(pg_index.indpred, pg_index.indrelid, true) AS partial
+FROM pg_index
+JOIN pg_class ON indexrelid = oid
+JOIN pg_am ON pg_am.oid = pg_class.relam
+WHERE indrelid = $table_oid
+ORDER BY indisprimary DESC, indisunique DESC", $connection
+         ) as $row) {
 			$relname = $row["relname"];
 			$return[$relname]["type"] = ($row["indispartial"] ? "INDEX" : ($row["indisprimary"] ? "PRIMARY" : ($row["indisunique"] ? "UNIQUE" : "INDEX")));
 			$return[$relname]["columns"] = [];
 			$return[$relname]["descs"] = [];
+			$return[$relname]["algorithm"] = $row["algorithm"];
+			$return[$relname]["partial"] = $row["partial"];
 			if ($row["indkey"]) {
 				foreach (explode(" ", $row["indkey"]) as $indkey) {
 					$return[$relname]["columns"][] = $columns[$indkey];
@@ -664,7 +869,7 @@ ORDER BY a.attnum"
 		$return = [];
 		foreach (get_rows("SELECT conname, condeferrable::int AS deferrable, pg_get_constraintdef(oid) AS definition
 FROM pg_constraint
-WHERE conrelid = (SELECT pc.oid FROM pg_class AS pc INNER JOIN pg_namespace AS pn ON (pn.oid = pc.relnamespace) WHERE pc.relname = " . q($table) . " AND pn.nspname = current_schema())
+WHERE conrelid = " . Driver::get()->tableOid($table) . "
 AND contype = 'f'::char
 ORDER BY conkey, conname") as $row) {
 			if (preg_match('~FOREIGN KEY\s*\((.+)\)\s*REFERENCES (.+)\((.+)\)(.*)$~iA', $row['definition'], $match)) {
@@ -700,7 +905,7 @@ ORDER BY s.ordinal_position";
 	}
 
 	function view($name) {
-		return ["select" => trim(Connection::get()->getValue("SELECT pg_get_viewdef(" . Connection::get()->getValue("SELECT oid FROM pg_class WHERE relnamespace = (SELECT oid FROM pg_namespace WHERE nspname = current_schema()) AND relname = " . q($name)) . ")"))];
+		return ["select" => trim(Connection::get()->getValue("SELECT pg_get_viewdef(" . Driver::get()->tableOid($name) . ")"))];
 	}
 
 	function collations() {
@@ -791,7 +996,37 @@ ORDER BY s.ordinal_position";
 		}
 		$alter = array_merge($alter, $foreign);
 		if ($table == "") {
-			array_unshift($queries, "CREATE TABLE " . table($name) . " (\n" . implode(",\n", $alter) . "\n)");
+			$status = "";
+			if ($partitioning) {
+				$status = " PARTITION BY {$partitioning["partition_by"]}({$partitioning["partition"]})";
+
+				if ($partitioning["partition_by"] == 'HASH') {
+					$partitions = (int)$partitioning["partitions"];
+					for ($i = 0; $i < $partitions; $i++) {
+						$queries[] = "CREATE TABLE " . idf_escape($name . "_$i") . " PARTITION OF " . idf_escape($name) . " FOR VALUES WITH (MODULUS $partitions, REMAINDER $i)";
+					}
+				} else {
+					$cockroach = Connection::get()->isCockroachDB();
+					$prev = "MINVALUE";
+
+					foreach ($partitioning["partition_names"] as $i => $val) {
+						$value = $partitioning["partition_values"][$i];
+						$partition = " VALUES " . ($partitioning["partition_by"] == 'LIST' ? "IN ($value)" : "FROM ($prev) TO ($value)");
+
+						if ($cockroach) {
+							$status .= ($i ? "," : " (") . "\n  PARTITION " . (preg_match('~^DEFAULT$~i', $val) ? $val : idf_escape($val)) . $partition;
+						} else {
+							$queries[] = "CREATE TABLE " . idf_escape($name . "_$val") . " PARTITION OF " . idf_escape($name) . " FOR$partition";
+						}
+
+						$prev = $value;
+					}
+
+					$status .= $cockroach ? "\n)" : "";
+				}
+			}
+
+			array_unshift($queries, "CREATE TABLE " . table($name) . " (\n" . implode(",\n", $alter) . "\n)$status");
 		} elseif ($alter) {
 			array_unshift($queries, "ALTER TABLE " . table($table) . "\n" . implode(",\n", $alter));
 		}
@@ -819,7 +1054,7 @@ ORDER BY s.ordinal_position";
 		$queries = [];
 		foreach ($alter as $val) {
 			if ($val[0] != "INDEX") {
-				//! descending UNIQUE indexes results in syntax error
+				//! descending UNIQUE indexes result in syntax error
 				$create[] = ($val[2] == "DROP"
 					? "\nDROP CONSTRAINT " . idf_escape($val[1])
 					: "\nADD" . ($val[1] != "" ? " CONSTRAINT " . idf_escape($val[1]) : "") . " $val[0] " . ($val[0] == "PRIMARY" ? "KEY " : "") . "(" . implode(", ", $val[2]) . ")"
@@ -827,7 +1062,12 @@ ORDER BY s.ordinal_position";
 			} elseif ($val[2] == "DROP") {
 				$drop[] = idf_escape($val[1]);
 			} else {
-				$queries[] = "CREATE INDEX " . idf_escape($val[1] != "" ? $val[1] : uniqid($table . "_")) . " ON " . table($table) . " (" . implode(", ", $val[2]) . ")";
+				$queries[] = "CREATE INDEX " . idf_escape($val[1] != "" ? $val[1] : uniqid($table . "_"))
+					. " ON " . table($table)
+					. ($val[3] ? " USING $val[3]" : "")
+					. " (" . implode(", ", $val[2]) . ")"
+					. ($val[4] ? " WHERE $val[4]" : "")
+				;
 			}
 		}
 		if ($create) {
@@ -923,15 +1163,15 @@ ORDER BY s.ordinal_position";
 
 	function routine($name, $type) {
 		$info = get_rows('SELECT routine_definition, LOWER(external_language) AS language, type_udt_name
-			FROM information_schema.routines
-			WHERE routine_schema = current_schema() AND specific_name = ' . q($name));
+FROM information_schema.routines
+WHERE routine_schema = current_schema() AND specific_name = ' . q($name));
 
 		$info = $info[0] ?? [];
 
-		$fields = get_rows('SELECT parameter_name AS field, data_type AS type, character_maximum_length AS length, parameter_mode AS inout
-			FROM information_schema.parameters
-			WHERE specific_schema = current_schema() AND specific_name = ' . q($name) . '
-			ORDER BY ordinal_position');
+		$fields = get_rows('SELECT COALESCE(parameter_name, ordinal_position::text) AS field, data_type AS type, character_maximum_length AS length, parameter_mode AS inout
+FROM information_schema.parameters
+WHERE specific_schema = current_schema() AND specific_name = ' . q($name) . '
+ORDER BY ordinal_position');
 
 		return [
 			"fields" => $fields,
@@ -944,9 +1184,9 @@ ORDER BY s.ordinal_position";
 
 	function routines() {
 		return get_rows('SELECT specific_name AS "SPECIFIC_NAME", routine_name AS "ROUTINE_NAME", routine_type AS "ROUTINE_TYPE", type_udt_name AS "DTD_IDENTIFIER", null AS ROUTINE_COMMENT
-			FROM information_schema.routines
-			WHERE routine_schema = current_schema()
-			ORDER BY SPECIFIC_NAME');
+FROM information_schema.routines
+WHERE routine_schema = current_schema()
+ORDER BY SPECIFIC_NAME');
 	}
 
 	function routine_languages() {
@@ -996,7 +1236,7 @@ ORDER BY s.ordinal_position";
 	{
 		return get_key_vals("SELECT oid, typname
 FROM pg_type
-WHERE typnamespace = (SELECT oid FROM pg_namespace WHERE nspname = current_schema())
+WHERE typnamespace = " . Driver::get()->getNsOidSql() . "
 AND typtype IN ('b','d','e')
 AND typelem = 0"
 		);
@@ -1110,7 +1350,15 @@ AND typelem = 0"
 			$return_parts[] = "CONSTRAINT " . idf_escape($conname) . " CHECK $consrc";
 		}
 
-		$return .= implode(",\n    ", $return_parts) . "\n) WITH (oids = " . ($status['Oid'] ? 'true' : 'false') . ");";
+		$return .= implode(",\n    ", $return_parts) . "\n)";
+
+		$partition = Driver::get()->getPartitionsInfo($status['Name']);
+		if ($partition) {
+			$return .= "\nPARTITION BY {$partition["partition_by"]}({$partition["partition"]})";
+		}
+		//! parse pg_class.relpartbound to create PARTITION OF
+
+		$return .= "\nWITH (oids = " . ($status['Oid'] ? 'true' : 'false') . ");";
 
 		// comments for table & fields
 		if ($status['Comment']) {
@@ -1180,7 +1428,7 @@ AND typelem = 0"
 			return Connection::get()->isMinVersion("11");
 		}
 
-		return preg_match('~^(check|database|table|columns|sql|indexes|descidx|comment|view|scheme|routine|sequence|trigger|type|variables|drop_col|kill|dump)$~', $feature);
+		return preg_match('~^(check|columns|comment|database|drop_col|dump|descidx|indexes|kill|partial_indexes|routine|scheme|sequence|sql|table|trigger|type|variables|view)$~', $feature);
 	}
 
 	function kill_process($val) {

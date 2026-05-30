@@ -337,7 +337,6 @@ return [
 	'Full table scan' => 'Анализ полной таблицы',
 	'Unable to select the table' => 'Не удалось получить данные из таблицы',
 	'Search data in tables' => 'Поиск в таблицах',
-	'as a regular expression' => 'как регулярное выражение',
 	'No rows.' => 'Нет записей.',
 	'%d / ' => '%d / ',
 	'%d row(s)' => [

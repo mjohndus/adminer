@@ -81,6 +81,7 @@ return [
 
 	// Structure.
 	'Column' => 'Columna',
+	'Columns' => 'Columnas',
 	'Routine' => 'Rutina',
 	'Grant' => 'Conceder',
 	'Revoke' => 'Impedir',
@@ -140,6 +141,7 @@ return [
 
 	// Databases.
 	'Database' => 'Base de datos',
+	'database' => 'base de datos',
 	'DB' => 'BD',
 	'Use' => 'Usar',
 	'Invalid database.' => 'Base de datos incorrecta.',
@@ -158,6 +160,7 @@ return [
 
 	// Schemas (PostgreSQL, MS SQL).
 	'Schema' => 'Esquema',
+	'schema' => 'esquema',
 	'Schemas' => 'Esquemas',
 	'No schemas.' => 'Sin esquemas.',
 	'Show schema' => 'Mostrar esquema',
@@ -345,7 +348,6 @@ return [
 	'Full table scan' => 'Escaneo total de la tabla',
 	'Unable to select the table' => 'No es posible seleccionar la tabla',
 	'Search data in tables' => 'Buscar datos en tablas',
-	'as a regular expression' => 'como una expresión regular',
 	'No rows.' => 'No existen registros.',
 	'%d / ' => '%d / ',
 	'%d row(s)' => [
@@ -440,6 +442,6 @@ return [
 	'Data table' => 'Tabla',
 	'Edit form' => 'Editar formulario',
 	// Use the phrases from https://gemini.google.com/
-	'Ask Gemini' => 'Preguntar a Gemini',
+	'Ask %s' => 'Preguntar a %s',
 	'Just a sec...' => 'Un segundo...',
 ];

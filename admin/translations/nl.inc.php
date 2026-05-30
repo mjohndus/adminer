@@ -81,6 +81,7 @@ return [
 
 	// Structure.
 	'Column' => 'Kolom',
+	'Columns' => 'Kolommen',
 	'Routine' => 'Routine',
 	'Grant' => 'Toekennen',
 	'Revoke' => 'Intrekken',
@@ -140,6 +141,7 @@ return [
 
 	// Databases.
 	'Database' => 'Database',
+	'database' => 'database',
 	'DB' => 'DB',
 	'Use' => 'Gebruik',
 	'Invalid database.' => 'Ongeldige database.',
@@ -158,6 +160,7 @@ return [
 
 	// Schemas (PostgreSQL, MS SQL).
 	'Schema' => 'Schema',
+	'schema' => 'schema',
 	'Schemas' => 'Schema\'s',
 	'No schemas.' => 'Geen schema\'s.',
 	'Show schema' => 'Schema weergeven',
@@ -239,6 +242,8 @@ return [
 	'Partitions' => 'Partities',
 	'Partition name' => 'Partitie naam',
 	'Values' => 'Waarden',
+	'Inherited tables' => 'Erfelijke tabellen',
+	'Inherited from' => 'Erfelijk van',
 
 	// Indexes.
 	'Indexes' => 'Indexen',
@@ -247,6 +252,8 @@ return [
 	'Add next' => 'Volgende toevoegen',
 	'Index Type' => 'Index type',
 	'length' => 'lengte',
+	'Algorithm' => 'Algoritme',
+	'Condition' => 'Conditie',
 
 	// Foreign keys.
 	'Foreign keys' => 'Foreign keys',
@@ -345,7 +352,6 @@ return [
 	'Full table scan' => 'Full table scan',
 	'Unable to select the table' => 'Onmogelijk tabel te selecteren',
 	'Search data in tables' => 'Zoeken in database',
-	'as a regular expression' => 'als een regular expression',
 	'No rows.' => 'Geen rijen.',
 	'%d / ' => '%d / ',
 	'%d row(s)' => [
@@ -440,6 +446,6 @@ return [
 	'Data table' => 'Gegevenstabel',
 	'Edit form' => 'Formulier bewerken',
 	// Use the phrases from https://gemini.google.com/
-	'Ask Gemini' => 'Vraag het aan Gemini',
+	'Ask %s' => 'Vraag het aan %s',
 	'Just a sec...' => 'Een momentje.',
 ];

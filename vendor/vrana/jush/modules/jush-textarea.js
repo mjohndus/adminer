@@ -23,9 +23,6 @@ jush.textarea = (function () {
 			}
 			pos.pos += child.textContent.length;
 		} else if (child == container) {
-			if (/^div$/i.test(child.tagName)) {
-				pos.pos++;
-			}
 			for (var i = 0; i < offset; i++) {
 				findPositionRecurse(child.childNodes[i], container, offset, pos);
 			}
@@ -253,8 +250,8 @@ jush.textarea = (function () {
 			const offset = +acEl.options[acEl.selectedIndex].value;
 			forceNewUndo = true;
 			pre.lastPos = findSelPos(pre);
-			if (range.startOffset) {
-				const start = findOffset(pre, pre.lastPos - offset);
+			const start = findOffset(pre, pre.lastPos - offset);
+			if (start) {
 				range.setStart(start.container, start.offset);
 
 				// Workaround for https://bugzilla.mozilla.org/show_bug.cgi?id=1985649

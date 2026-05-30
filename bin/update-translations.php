@@ -61,16 +61,7 @@ if ($language) {
 $languages = [$template => true] + $languages;
 
 // Get all texts from the source code.
-$file_paths = array_merge(
-	glob(__DIR__ . "/../admin/*.php"),
-	glob(__DIR__ . "/../admin/core/*.php"),
-	glob(__DIR__ . "/../admin/include/*.php"),
-	glob(__DIR__ . "/../admin/drivers/*.php"),
-	glob(__DIR__ . "/../editor/*.php"),
-	glob(__DIR__ . "/../editor/core/*.php"),
-	glob(__DIR__ . "/../editor/include/*.php"),
-	glob(__DIR__ . "/../plugins/*.php")
-);
+$file_paths = glob(__DIR__ . "/../{admin,admin/core,admin/include,admin/drivers,editor,editor/core,editor/include,plugins}/*.php", GLOB_BRACE);
 
 $all_texts = [];
 foreach ($file_paths as $file_path) {
@@ -115,13 +106,24 @@ foreach ($languages as $language => $dummy) {
 			$variants = is_string($translation) ? [$translation] : $translation;
 
 			foreach ($variants as $variant) {
+				$endWithPeriod = substr($en, -1, 1) == ".";
+
+				// Ignore periods in DB abbreviation.
+				if (!$endWithPeriod) {
+					$variant = preg_replace('~Β.Δ.$~', "ΒΔ", $variant);
+				}
+
 				// Check forbidden periods.
 				if (!$period && preg_match("~\.$~", $variant)) {
 					print_warning($filename, $term, "Period is forbidden");
 				}
 
-				// Check mismatched periods. Period is optional in 'ja'.
-				if ($period && $language != "ja" && ((substr($en, -1, 1) == ".") xor preg_match("~$period$~", $variant))) {
+				// Check mismatched periods. Period is optional in 'ja' and can mismatch in date/time formatting.
+				if ($period &&
+					$language != "ja" &&
+					!preg_match('~^[0-9.$YMD\-]+$~', $en) &&
+					($endWithPeriod xor preg_match("~$period$~", $variant)))
+				{
 					print_warning($filename, $term, "Not matching period");
 				}
 

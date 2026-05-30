@@ -75,6 +75,7 @@ return [
 
 	// Structure.
 	'Column' => 'カラム',
+	'Columns' => 'カラム',
 	'Routine' => 'ルーチン',
 	'Grant' => '権限を付与',
 	'Revoke' => '権限を取り消す',
@@ -125,6 +126,7 @@ return [
 
 	// Databases.
 	'Database' => 'データベース',
+	'database' => 'データベース',
 	'DB' => 'DB',
 	'Use' => '使用',
 	'Invalid database.' => '不正なデータベースです。',
@@ -143,6 +145,7 @@ return [
 
 	// Schemas (PostgreSQL, MS SQL).
 	'Schema' => 'スキーマ',
+	'schema' => 'スキーマ',
 	'Schemas' => 'スキーマ一覧',
 	'No schemas.' => 'スキーマがありません。',
 	'Show schema' => 'スキーマを表示',
@@ -232,6 +235,8 @@ return [
 	'Add next' => '追加',
 	'Index Type' => 'インデックスの型',
 	'length' => '長さ',
+	'Algorithm' => 'アルゴリズム',
+	'Condition' => '条件',
 
 	// Foreign keys.
 	'Foreign keys' => '外部キー',
@@ -327,7 +332,6 @@ return [
 	'Full table scan' => 'テーブルを全スキャン',
 	'Unable to select the table' => 'テーブルを選択できません',
 	'Search data in tables' => 'データを検索する',
-	'as a regular expression' => '正規表現として',
 	'No rows.' => '行がありません。',
 	'%d / ' => '%d / ',
 	'%d row(s)' => '%d 行',
@@ -385,6 +389,6 @@ return [
 	'Invalid OTP code.' => '無効なOTPコードです。',
 	'Access denied.' => 'アクセスが拒否されました。',
 	// Use the phrases from https://gemini.google.com/
-	'Ask Gemini' => 'Gemini に聞く',
+	'Ask %s' => '%s に聞く',
 	'Just a sec...' => 'しばらくお待ち下さい...',
 ];

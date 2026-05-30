@@ -3,10 +3,8 @@
 namespace AdminNeo;
 
 $TABLE = $_GET["create"];
-$partition_by = [];
-foreach (['HASH', 'LINEAR HASH', 'KEY', 'LINEAR KEY', 'RANGE', 'LIST'] as $key) {
-	$partition_by[$key] = $key;
-}
+$partition_by = Driver::get()->getPartitionBy();
+$partitions_info = $partition_by ? Driver::get()->getPartitionsInfo($TABLE) : [];
 
 $referencable_primary = referencable_primary($TABLE);
 $foreign_keys = [];
@@ -81,43 +79,29 @@ if ($_POST && !process_fields($row["fields"]) && !Admin::get()->getErrors()) {
 			}
 		}
 
-		$partitioning = "";
-		if (support("partitioning")) {
-			if (isset($partition_by[$row["partition_by"]])) {
-				$params = [];
-				foreach ($row as $key => $val) {
-					if (preg_match('~^partition~', $key)) {
-						$params[$key] = $val;
-					}
+		$partitioning = [];
+		if (in_array($row["partition_by"], $partition_by)) {
+			foreach ($row as $key => $val) {
+				if (preg_match('~^partition~', $key)) {
+					$partitioning[$key] = $val;
 				}
-
-				foreach ($params["partition_names"] as $key => $name) {
-					if ($name === "") {
-						unset($params["partition_names"][$key]);
-						unset($params["partition_values"][$key]);
-					}
-				}
-
-				if ($params != get_partitions_info($TABLE)) {
-					$partitions = [];
-					if ($params["partition_by"] == 'RANGE' || $params["partition_by"] == 'LIST') {
-						foreach ($params["partition_names"] as $key => $name) {
-							$value = $params["partition_values"][$key];
-							$partitions[] = "\n  PARTITION " . idf_escape($name) . " VALUES " . ($params["partition_by"] == 'RANGE' ? "LESS THAN" : "IN") . ($value != "" ? " ($value)" : " MAXVALUE"); //! SQL injection
-						}
-					}
-
-					// $params["partition"] can be expression, not only column
-					$partitioning .= "\nPARTITION BY {$params["partition_by"]}({$params["partition"]})";
-					if ($partitions) {
-						$partitioning .= " (" . implode(",", $partitions) . "\n)";
-					} elseif ($params["partitions"]) {
-						$partitioning .= " PARTITIONS " . (int)$params["partitions"];
-					}
-				}
-			} elseif (preg_match("~partitioned~", $table_status["Create_options"])) {
-				$partitioning .= "\nREMOVE PARTITIONING";
 			}
+
+			foreach ($partitioning["partition_names"] as $key => $name) {
+				if ($name === "") {
+					unset($partitioning["partition_names"][$key]);
+					unset($partitioning["partition_values"][$key]);
+				}
+			}
+
+			$partitioning["partition_names"] = array_values($partitioning["partition_names"]);
+			$partitioning["partition_values"] = array_values($partitioning["partition_values"]);
+
+			if ($partitioning == $partitions_info) {
+				$partitioning = [];
+			}
+		} elseif (str_contains($table_status["Create_options"] ?? "", "partitioned")) {
+			$partitioning = null;
 		}
 
 		$message = lang('Table has been altered.');
@@ -168,8 +152,8 @@ if (!$_POST) {
 			$row["fields"][] = $field;
 		}
 
-		if (support("partitioning")) {
-			$row += get_partitions_info($TABLE);
+		if ($partition_by) {
+			$row += $partitions_info;
 			$row["partition_names"][] = "";
 			$row["partition_values"][] = "";
 		}
@@ -218,7 +202,7 @@ if (support("columns") || $TABLE == "") {
 	echo "</p>";
 }
 
-if (support("columns")) {
+if (support("columns") && ($TABLE == "" || !Driver::get()->isPartition($TABLE))) {
 	echo "<div class='scrollable'>\n";
 	echo "<table id='edit-fields' class='nowrap'>\n";
 	edit_fields($row["fields"], $collations, "TABLE", $foreign_keys);
@@ -258,13 +242,13 @@ if ($TABLE != "") {
 	echo "</p>\n";
 }
 
-if (support("partitioning")) {
+if ($partition_by && (DIALECT == "sql" || $TABLE == "")) {
 	echo "<div class='field-sets'>\n";
 	$partition_table = preg_match('~RANGE|LIST~', $row["partition_by"]);
 	print_fieldset_start("partition", lang('Partition by'), "split", (bool)$row["partition_by"]);
 
 	echo "<p>";
-	echo html_select("partition_by", ["" => ""] + $partition_by, $row["partition_by"]);
+	echo html_select("partition_by", array_merge([""], $partition_by), $row["partition_by"]);
 	echo help_script_command("value.replace(/./, 'PARTITION BY \$&')", true);
 	echo script("qsl('select').onchange = partitionByChange;");
 

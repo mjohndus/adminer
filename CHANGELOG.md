@@ -1,17 +1,64 @@
 Changelog
 =========
 
-AdminNeo 5.3.0
+AdminNeo 5.4.1
 --------------
 
 ### Changes
 
+- Complete the full Polish translation (by @Matthaiks)
+
+AdminNeo 5.4.0 (2026-05-27)
+---------------------------
+
+### Changes
+
+- Do not edit NULL values by Modify (by @vrana)
+- Do not highlight table with name "0" as active everywhere (by @vrana)
+- Align money values right (by @vrana)
+- Allow specifying operator in search anywhere (by @vrana)
+- MySQL, PostgreSQL: Support index algorithms (by @salacr, @vrana)
+- PostgreSQL: Format array and vector values in select table
+- PostgreSQL: Support COPY FROM stdin in SQL query (by @vrana)
+- PostgreSQL: Show inherited tables in parent table (by @vrana)
+- PostgreSQL: Show partitions definition in table structure
+- PostgreSQL, CockroachDB: Creating partitioned tables (by @vrana)
+- PostgreSQL: Support calling functions returning table (by @vrana)
+- PostgreSQL: Add NOT ILIKE operator (by @vrana)
+- PostgreSQL: Support partial indexes (by @salacr)
+- MS SQL: Limit one INSERT in export to 1000 rows (by @vrana)
+- Elasticsearch, ClickHouse: Validate response origin
+- non-MySQL: Parse '--' without trailing space as comment in SQL command (by @vrana)
+- Editor: Fix bit search and editing (by @vrana)
+- Update German and Dutch translations (by @wintstar)
+- Update Polish translation (by @Matthaiks)
+
+### Bugfixes
+
+- Fix highlighting current table in menu when editing Check and View (by @vrana)
+- Fix most URLs to MariaDB documentation
+- PostgreSQL: Fix multidimensional array types
+- PostgreSQL: Fix calling functions with name-less parameters (by @vrana)
+- PostgreSQL: Fix calling functions returning table (by @vrana)
+- PostgreSQL PDO: Fix bytea without primary key (by @vrana)
+- FileUploadPlugin: Fix searching in *_path columns
+- Editor: Fix missing token in search anywhere form
+
+(Ported relevant changes from Adminer 5.2.0-5.3.0 and several fixes from 5.4.0.)
+
+AdminNeo 5.3.0 (2026-05-07)
+---------------------------
+
+### Changes
+
+- Add OpenWebUiPlugin - AI prompt in SQL command generating the queries with Open WebUI (by @brammeleman)
 - More secure randomness on PHP5 (by @pavetheway91)
 - 256 bits of entropy in all random strings
-- SystemForeignKeysPlugin: Add support for new system tables (by @vrana).
-- Add more Katalon tests for MySQL and SQLite (by @vrana).
-- Add Katalon tests for MariaDB, PostgreSQL, MS SQL and Elasticsearch (by @vrana).
-- Declare compatibility with PHP 8.5 (by @vitaliytv).
+- SystemForeignKeysPlugin: Add support for new system tables (by @vrana)
+- Add more Katalon tests for MySQL and SQLite (by @vrana)
+- Add Katalon tests for MariaDB, PostgreSQL, MS SQL and Elasticsearch (by @vrana)
+- Declare compatibility with PHP 8.5 (by @vitaliytv)
+- MySQL: Format view definition query (issue #180)
 
 ### Bugfixes
 

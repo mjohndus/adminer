@@ -286,9 +286,6 @@ if (isset($_GET["mysql"])) {
 				"SQL",
 			];
 
-			$this->likeOperator = "LIKE %%";
-			$this->regexpOperator = "REGEXP";
-
 			$this->functions = [
 				"char_length", "lower", "upper",
 				"round", "floor", "ceil",
@@ -301,6 +298,10 @@ if (isset($_GET["mysql"])) {
 				"count", "count distinct",
 				"group_concat",
 			];
+
+			if ($connection->isMinVersion("5.1")) {
+				$this->partitionBy = ["RANGE", "LIST", "HASH", "LINEAR HASH", "KEY", "LINEAR KEY"];
+			}
 
 			$this->insertFunctions = [
 				"char" => "md5/sha1/password/encrypt/uuid",
@@ -343,7 +344,7 @@ if (isset($_GET["mysql"])) {
 			if (preg_match("~binary~", $field["type"])) {
 				return "<code class='jush-sql'>UNHEX</code>";
 			} elseif ($field["type"] == "bit") {
-				return doc_link(array('sql' => 'bit-value-literals.html'), "<code>b''</code>");
+				return doc_link(['sql' => 'bit-value-literals.html', 'mariadb' => "reference/sql-structure/sql-language-structure/binary-literals"], "<code>b''</code>");
 			} elseif (preg_match("~geometry|point|linestring|polygon~", $field["type"])) {
 				return "<code class='jush-sql'>GeomFromText</code>";
 			} else {
@@ -417,14 +418,55 @@ if (isset($_GET["mysql"])) {
 		public function tableHelp(string $name, bool $isView = false): ?string
         {
 			$maria = $this->connection->isMariaDB();
-			if (information_schema(DB)) {
-				return strtolower("information-schema-" . ($maria ? "$name-table/" : str_replace("_", "-", $name) . "-table.html"));
+			if (DB == "information_schema") {
+				$name = strtolower($name);
+
+				return $maria ?
+					"reference/system-tables/information-schema/information-schema-tables/" . (str_starts_with($name, "innodb_") ? "information-schema-innodb-tables/" : "") . "information-schema-$name-table" :
+					"information-schema-" . str_replace("_", "-", $name). "-table.html";
 			}
+	        if (DB == "performance_schema") {
+		        return $maria ?
+			        "reference/system-tables/performance-schema/performance-schema-tables/performance-schema-$name-table" :
+			        "performance-schema-" . str_replace("_", "-", $name). "-table.html";
+	        }
 			if (DB == "mysql") {
-				return ($maria ? "mysql$name-table/" : "system-schema.html"); //! more precise link
+				return $maria ?
+					"reference/system-tables/the-mysql-database-tables/mysql-$name" . str_starts_with($name, "innodb_") ? "" : "-table" :
+					"system-schema.html"; //! more precise link
 			}
 
             return null;
+		}
+
+		public function getPartitionsInfo(string $table): array
+		{
+			$from = "FROM information_schema.PARTITIONS WHERE TABLE_SCHEMA = " . q(DB) . " AND TABLE_NAME = " . q($table);
+
+			$result = Connection::get()
+				->query("SELECT PARTITION_METHOD, PARTITION_EXPRESSION, PARTITION_ORDINAL_POSITION $from ORDER BY PARTITION_ORDINAL_POSITION DESC LIMIT 1")
+				->fetchRow();
+
+			if (!$result) {
+				return [];
+			}
+
+			$info = [
+				"partition_by" => $result[0],
+				"partition" => $result[1],
+				"partitions" => $result[2],
+			];
+
+			$partitions = get_key_vals("SELECT PARTITION_NAME, PARTITION_DESCRIPTION $from AND PARTITION_NAME != '' ORDER BY PARTITION_ORDINAL_POSITION");
+			$info["partition_names"] = array_keys($partitions);
+			$info["partition_values"] = array_values($partitions);
+
+			return $info;
+		}
+
+		public function getIndexAlgorithms(array $tableStatus): array
+		{
+			return preg_match('~^(MEMORY|NDB)$~', $tableStatus["Engine"]) ? ["BTREE", "HASH"] : ["BTREE"];
 		}
 
 		public function hasCStyleEscapes(): bool
@@ -726,6 +768,7 @@ if (isset($_GET["mysql"])) {
 			$return[$name]["columns"][] = $row["Column_name"];
 			$return[$name]["lengths"][] = ($row["Index_type"] == "SPATIAL" ? null : $row["Sub_part"]);
 			$return[$name]["descs"][] = null;
+			$return[$name]["algorithm"] = $row["Index_type"];
 		}
 		return $return;
 	}
@@ -774,7 +817,14 @@ ORDER BY ordinal_position";
 	* @return array{select:string}
 	*/
 	function view($name) {
-		return ["select" => preg_replace('~^(?:[^`]|`[^`]*`)*\s+AS\s+~isU', '', Connection::get()->getValue("SHOW CREATE VIEW " . table($name), 1))];
+		$select = Connection::get()->getValue("SHOW CREATE VIEW " . table($name), 1);
+
+		// Extract definition query.
+		$literals = '(?:[^`\']|`[^`]*`|\'[^\']*\')*';
+		$select = preg_replace("~^$literals\\s+AS\\s+~isU", "", $select);
+
+		// MySQL/MariaDB does not keep formatting, so we improve readability by adding new lines and indents.
+		return ["select" => format_sql($select)];
 	}
 
 	/** Get sorted grouped list of collations
@@ -898,10 +948,10 @@ ORDER BY ordinal_position";
 	* @param string
 	* @param string
 	* @param numeric-string
-	* @param string
+	* @param ?array null means remove partitioning
 	* @return bool
 	*/
-	function alter_table($table, $name, $fields, $foreign, $comment, $engine, $collation, $auto_increment, $partitioning): bool
+	function alter_table($table, $name, $fields, $foreign, $comment, $engine, $collation, $auto_increment, ?array $partitioning): bool
 	{
 		$alter = [];
 		foreach ($fields as $field) {
@@ -923,8 +973,29 @@ ORDER BY ordinal_position";
 			. ($collation ? " COLLATE " . q($collation) : "")
 			. ($auto_increment != "" ? " AUTO_INCREMENT=$auto_increment" : "")
 		;
+
+		if ($partitioning) {
+			$partitions = [];
+			if ($partitioning["partition_by"] == 'RANGE' || $partitioning["partition_by"] == 'LIST') {
+				foreach ($partitioning["partition_names"] as $key => $val) {
+					$value = $partitioning["partition_values"][$key];
+					$partitions[] = "\n  PARTITION " . idf_escape($val) . " VALUES " . ($partitioning["partition_by"] == 'RANGE' ? "LESS THAN" : "IN") . ($value != "" ? " ($value)" : " MAXVALUE"); //! SQL injection
+				}
+			}
+
+			// $partitioning["partition"] can be expression, not only column
+			$status .= "\nPARTITION BY {$partitioning["partition_by"]}({$partitioning["partition"]})";
+			if ($partitions) {
+				$status .= " (" . implode(",", $partitions) . "\n)";
+			} elseif ($partitioning["partitions"]) {
+				$status .= " PARTITIONS " . (int)$partitioning["partitions"];
+			}
+		} elseif ($partitioning === null) {
+			$status .= "\nREMOVE PARTITIONING";
+		}
+
 		if ($table == "") {
-			return (bool)queries("CREATE TABLE " . table($name) . " (\n" . implode(",\n", $alter) . "\n)$status$partitioning");
+			return (bool)queries("CREATE TABLE " . table($name) . " (\n" . implode(",\n", $alter) . "\n)$status");
 		}
 		if ($table != $name) {
 			$alter[] = "RENAME TO " . table($name);
@@ -932,12 +1003,12 @@ ORDER BY ordinal_position";
 		if ($status) {
 			$alter[] = ltrim($status);
 		}
-		return !($alter || $partitioning) || queries("ALTER TABLE " . table($table) . "\n" . implode(",\n", $alter) . $partitioning);
+		return !$alter || queries("ALTER TABLE " . table($table) . "\n" . implode(",\n", $alter));
 	}
 
 	/** Run commands to alter indexes
 	* @param string escaped table name
-	* @param list<array{string, string, 'DROP'|list<string>}> of ["index type", "name", ["column definition", ...]] or ["index type", "name", "DROP"]
+	* @param list<array{string, string, 'DROP'|list<string>, 3?: string, 4?: string}> of ["index type", "name", ["column definition", ...], "algorithm", "condition"] or ["index type", "name", "DROP"]
 	* @return bool
 	*/
 	function alter_indexes($table, $alter): bool
@@ -1193,6 +1264,18 @@ ORDER BY ordinal_position";
 		return $table_status["Engine"] == "InnoDB" && !$where ? (int)$table_status["Rows"] : null;
 	}
 
+	function format_sql(string $query): string
+	{
+		$literals = '(?:[^`\']|`[^`]*`|\'[^\']*\')*';
+		$keywords = 'FROM|WHERE|HAVING|GROUP\s+BY|ORDER\s+BY|(NATURAL\s+)?((LEFT|RIGHT)\s+)?((INNER|OUTER|CROSS)\s+)?JOIN';
+
+		$query = preg_replace("~($literals)\\s+(AS\\s+SELECT)~isU", "$1 AS\nSELECT", $query);
+		$query = preg_replace("~($literals)\\s+($keywords)~isU", "$1\n$2", $query);
+		$query = preg_replace("~($literals),~isU", "$1,\n  ", $query);
+
+		return $query;
+	}
+
 	/** Get SQL command to create table
 	* @param string
 	* @param bool
@@ -1200,11 +1283,12 @@ ORDER BY ordinal_position";
 	* @return string
 	*/
 	function create_sql($table, $auto_increment, $style) {
-		$return = Connection::get()->getValue("SHOW CREATE TABLE " . table($table), 1);
+		$query = Connection::get()->getValue("SHOW CREATE TABLE " . table($table), 1);
 		if (!$auto_increment) {
-			$return = preg_replace('~ AUTO_INCREMENT=\d+~', '', $return); //! skip comments
+			$query = preg_replace('~ AUTO_INCREMENT=\d+~', '', $query); //! skip comments
 		}
-		return $return;
+
+		return !str_contains($query, "\n") ? format_sql($query) : $query;
 	}
 
 	/** Get SQL command to truncate table
@@ -1301,11 +1385,18 @@ ORDER BY ordinal_position";
 	}
 
 	/** Check whether a feature is supported
-	* @param string "check", "comment", "copy", "database", "descidx", "drop_col", "dump", "event", "indexes", "kill", "materializedview", "partitioning", "privileges", "procedure", "processlist", "routine", "scheme", "sequence", "status", "table", "trigger", "type", "variables", "view", "view_trigger"
-	* @return bool
+	* @param literal-string $feature check|comment|copy|database|descidx|drop_col|dump|event|indexes|kill|materializedview|
+	* privileges|move_col|procedure|processlist|routine|scheme|sequence|status|table|trigger|type|variables|view|view_trigger
 	*/
 	function support($feature) {
-		return !preg_match("~scheme|sequence|type|view_trigger|materializedview" . (Connection::get()->isMinVersion("8") ? "" : "|descidx" . (Connection::get()->isMinVersion("5.1") ? "" : "|event|partitioning")) . (Connection::get()->isMinVersion(Connection::get()->isMariaDB() ? "10.2.1" : "8.0.16") ? "" : "|check") . "~", $feature);
+		return preg_match(
+			'~^(comment|columns|copy|database|drop_col|dump|indexes|kill|privileges|move_col|procedure|processlist|routine|sql|status|table|trigger|variables|view'
+			. (Connection::get()->isMinVersion("5.1") ? '|event' : '')
+			. (Connection::get()->isMinVersion("8") ? '|descidx' : '')
+			. (Connection::get()->isMinVersion(Connection::get()->isMariaDB() ? "10.2.1" : "8.0.16") ? '|check' : '')
+			. ')$~',
+			$feature
+		);
 	}
 
 	/** Kill a process

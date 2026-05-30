@@ -167,7 +167,7 @@ echo "</table>\n";
 //! MAX_* limits, REQUIRE
 echo "<div class='scrollable'><table class='checkable'>\n";
 
-echo "<thead><tr><th colspan='2'>" . lang('Privileges') . doc_link(['sql' => "grant.html#priv_level"]) . "</th>";
+echo "<thead><tr><th colspan='2'>" . lang('Privileges') . doc_link(['sql' => "grant.html#priv_level", "mariadb" => "reference/sql-statements/account-management-sql-statements/grant#privilege-levels"]) . "</th>";
 $i = 0;
 foreach ($grants as $object => $grant) {
 	echo "<th>";

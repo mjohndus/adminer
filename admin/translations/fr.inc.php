@@ -81,6 +81,7 @@ return [
 
 	// Structure.
 	'Column' => 'Colonne',
+	'Columns' => 'Colonnes',
 	'Routine' => 'Routine',
 	'Grant' => 'Grant',
 	'Revoke' => 'Revoke',
@@ -140,6 +141,7 @@ return [
 
 	// Databases.
 	'Database' => 'Base de données',
+	'database' => 'base de données',
 	'DB' => 'BD',
 	'Use' => 'Utiliser',
 	'Invalid database.' => 'Base de données invalide.',
@@ -158,6 +160,7 @@ return [
 
 	// Schemas (PostgreSQL, MS SQL).
 	'Schema' => 'Schéma',
+	'schema' => 'schéma',
 	'Schemas' => 'Schémas',
 	'No schemas.' => 'Aucun schéma.',
 	'Show schema' => 'Afficher le schéma',
@@ -345,7 +348,6 @@ return [
 	'Full table scan' => 'Scan de toute la table',
 	'Unable to select the table' => 'Impossible de sélectionner la table',
 	'Search data in tables' => 'Rechercher dans les tables',
-	'as a regular expression' => 'sous forme d\'expression régulière',
 	'No rows.' => 'Aucun résultat.',
 	'%d / ' => '%d / ',
 	'%d row(s)' => [

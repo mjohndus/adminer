@@ -342,8 +342,6 @@ if (isset($_GET["mssql"])) {
 				"IS NULL", "IS NOT NULL",
 			];
 
-			$this->likeOperator = "LIKE %%";
-
 			$this->functions = [
 				"len", "lower", "upper",
 				"round",

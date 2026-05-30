@@ -1,5 +1,4 @@
 <?php
-// This file is not used in Editor.
 
 namespace AdminNeo;
 
@@ -72,7 +71,7 @@ function print_select_result(Result $result, ?Connection $connection = null, arr
 				echo "<th" . ($orgtable != "" || $field->name != $orgname ? " title='" . h(($orgtable != "" ? "$orgtable." : "") . $orgname) . "'" : "") . ">" . h($name)
 					. ($orgtables ? doc_link([
 						'sql' => "explain-output.html#explain_" . strtolower($name),
-						'mariadb' => "explain/#the-columns-in-explain-select",
+						'mariadb' => "reference/sql-statements/administrative-sql-statements/analyze-and-explain-statements/explain#columns-in-explain-...-select",
 					]) : "")
 				;
 			}
@@ -232,34 +231,6 @@ echo optionlist(array_merge($extra_types, $structured_types), $type);
 	echo ($foreign_keys ? "<select name='" . h($key) . "[on_delete]'" . (preg_match("~`~", $type) ? "" : " class='hidden'") . "><option value=''>(" . lang('ON DELETE') . ")" . optionlist(Driver::get()->getOnActions(), $field["on_delete"] ?? null) . "</select> " : " "); // space for IE
 }
 
-/**
- * @param string $table
- * @return array{partition_by:string, partition:string, partitions:string, partition_names:list<string>, partition_values:list<string>}
- */
-function get_partitions_info($table) {
-	$from = "FROM information_schema.PARTITIONS WHERE TABLE_SCHEMA = " . q(DB) . " AND TABLE_NAME = " . q($table);
-
-	$result = Connection::get()
-		->query("SELECT PARTITION_METHOD, PARTITION_EXPRESSION, PARTITION_ORDINAL_POSITION $from ORDER BY PARTITION_ORDINAL_POSITION DESC LIMIT 1")
-		->fetchRow();
-
-	if (!$result) {
-		return [];
-	}
-
-	$info = [
-		"partition_by" => $result[0],
-		"partition" => $result[1],
-		"partitions" => $result[2],
-	];
-
-	$partitions = get_key_vals("SELECT PARTITION_NAME, PARTITION_DESCRIPTION $from AND PARTITION_NAME != '' ORDER BY PARTITION_ORDINAL_POSITION");
-	$info["partition_names"] = array_keys($partitions);
-	$info["partition_values"] = array_values($partitions);
-
-	return $info;
-}
-
 /** Filter length value including enums
 * @param string
 * @return string
@@ -393,7 +364,7 @@ function edit_fields(array $fields, array $collations, $type = "TABLE", $foreign
 		echo "<td><input type='radio' name='auto_increment_col' value=''><abbr id='label-ai' title='", lang('Auto Increment'), "'>AI</abbr>";
 		echo doc_link([
 			'sql' => "example-auto-increment.html",
-			'mariadb' => "auto_increment/",
+			'mariadb' => "reference/data-types/auto_increment",
 			'sqlite' => "autoinc.html",
 			'pgsql' => "datatype-numeric.html#DATATYPE-SERIAL",
 			'mssql' => "t-sql/statements/create-table-transact-sql-identity-property",
@@ -726,8 +697,8 @@ function doc_link(array $paths, string $text = "<sup>?</sup>"): string
 	];
 
 	if (Connection::get()->isMariaDB()) {
-		$urls['sql'] = "https://mariadb.com/kb/en/";
-		$paths['sql'] = $paths['mariadb'] ?? str_replace(".html", "/", $paths['sql']);
+		$urls['sql'] = "https://mariadb.com/docs/server/";
+		$paths['sql'] = $paths['mariadb'] ?? str_replace(".html", "", $paths['sql']);
 	}
 
 	return "<a href='" . h($urls[DIALECT] . $paths[DIALECT] . (DIALECT == 'mssql' ? "?view=sql-server-ver$version" : "")) . "'" . target_blank() . ">$text</a>";

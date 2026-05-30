@@ -9,7 +9,7 @@ $routine = routine($_GET["call"], (isset($_GET["callf"]) ? "FUNCTION" : "PROCEDU
 $in = [];
 $out = [];
 foreach ($routine["fields"] as $i => $field) {
-	if (substr($field["inout"], -3) == "OUT") {
+	if (substr($field["inout"], -3) == "OUT" && DIALECT == 'sql') {
 		$out[$i] = "@" . idf_escape($field["field"]) . " AS " . idf_escape($field["field"]);
 	}
 	if (!$field["inout"] || substr($field["inout"], 0, 2) == "IN") {
@@ -30,10 +30,14 @@ if ($_POST) {
 				Connection::get()->query("SET @" . idf_escape($field["field"]) . " = $val");
 			}
 		}
-		$call[] = (isset($out[$key]) ? "@" . idf_escape($field["field"]) : $val);
+		if (isset($out[$key])) {
+			$call[] = "@" . idf_escape($field["field"]);
+		} elseif (in_array($key, $in)) {
+			$call[] = $val;
+		}
 	}
 
-	$query = (isset($_GET["callf"]) ? "SELECT" : "CALL") . " " . table($PROCEDURE) . "(" . implode(", ", $call) . ")";
+	$query = (isset($_GET["callf"]) ? "SELECT " : "CALL ") . ($routine["returns"]["type"] == "record" ? "* FROM " : "") . table($PROCEDURE) . "(" . implode(", ", $call) . ")";
 	$start = microtime(true);
 	$result = Connection::get()->multiQuery($query);
 	$affected = Connection::get()->getAffectedRows(); // getting warnings overwrites this

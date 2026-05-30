@@ -92,18 +92,15 @@ if ($_GET["ns"] === "") {
 		if (support("table")) {
 			echo "<div class='field-sets'>\n";
 			echo "<fieldset><legend>" . lang('Search data in tables') . " <span id='selected2'></span></legend><div class='fieldset-content'>";
+			echo html_select("op", Admin::get()->getOperators(), $_POST["op"] ?? Driver::get()->getLikeOperator());
 			echo "<input type='search' class='input' name='query' value='" . h($_POST["query"]) . "'>";
 			echo script("qsl('input').onkeydown = partialArg(bodyKeydown, 'search');", "");
 			echo " <input type='submit' class='button' name='search' value='" . lang('Search') . "'>\n";
-			if (Admin::get()->getRegexpOperator()) {
-				echo "<p><label><input type='checkbox' name='regexp' value='1'" . (empty($_POST['regexp']) ? '' : ' checked') . '>' . lang('as a regular expression') . '</label>';
-				echo doc_link(['sql' => 'regexp.html', 'pgsql' => 'functions-matching.html#FUNCTIONS-POSIX-REGEXP', 'elastic' => "regexp-syntax.html"]) . "</p>\n";
-			}
 			echo "</div></fieldset>\n";
 			echo "</div>\n";
 
 			if ($_POST["search"] && $_POST["query"] != "") {
-				$_GET["where"][0]["op"] = Admin::get()->getRegexpOperator() && !empty($_POST['regexp']) ? Admin::get()->getRegexpOperator() : Admin::get()->getLikeOperator();
+				$_GET["where"][0]["op"] = $_POST["op"];
 				search_tables();
 			}
 		}
@@ -112,17 +109,22 @@ if ($_GET["ns"] === "") {
 		echo "<table class='nowrap checkable'>\n";
 		echo script("mixin(qsl('table'), {onclick: tableClick, ondblclick: partialArg(tableClick, true)});");
 
+		$table_status_links = [
+			'sql' => 'show-table-status.html',
+			'mariadb' => 'reference/sql-statements/administrative-sql-statements/show/show-table-status'
+		];
+
 		echo '<thead><tr class="wrap">';
 		echo '<td class="actions"><input id="check-all" type="checkbox" class="input jsonly">' . script("gid('check-all').onclick = partial(formCheck, /^(tables|views)\[/);", "");
 		echo '<th>' . lang('Table');
-		echo '<td>' . lang('Engine') . doc_link(['sql' => 'storage-engines.html']);
-		echo '<td>' . lang('Collation') . doc_link(['sql' => 'charset-charsets.html', 'mariadb' => 'supported-character-sets-and-collations/']);
-		echo '<td>' . lang('Data Length') . doc_link(['sql' => 'show-table-status.html', 'pgsql' => 'functions-admin.html#FUNCTIONS-ADMIN-DBOBJECT', 'oracle' => 'REFRN20286']);
-		echo '<td>' . lang('Index Length') . doc_link(['sql' => 'show-table-status.html', 'pgsql' => 'functions-admin.html#FUNCTIONS-ADMIN-DBOBJECT']);
-		echo '<td>' . lang('Data Free') . doc_link(['sql' => 'show-table-status.html']);
-		echo '<td>' . lang('Auto Increment') . doc_link(['sql' => 'example-auto-increment.html', 'mariadb' => 'auto_increment/']);
-		echo '<td>' . lang('Rows') . doc_link(['sql' => 'show-table-status.html', 'pgsql' => 'catalog-pg-class.html#CATALOG-PG-CLASS', 'oracle' => 'REFRN20286']);
-		echo (support("comment") ? '<td>' . lang('Comment') . doc_link(['sql' => 'show-table-status.html', 'pgsql' => 'functions-info.html#FUNCTIONS-INFO-COMMENT-TABLE']) : '');
+		echo '<td>' . lang('Engine') . doc_link(['sql' => 'storage-engines.html', 'mariadb' => 'server-usage/storage-engines']);
+		echo '<td>' . lang('Collation') . doc_link(['sql' => 'charset-charsets.html', 'mariadb' => 'reference/data-types/string-data-types/character-sets/supported-character-sets-and-collations']);
+		echo '<td>' . lang('Data Length') . doc_link($table_status_links + ['pgsql' => 'functions-admin.html#FUNCTIONS-ADMIN-DBOBJECT', 'oracle' => 'REFRN20286']);
+		echo '<td>' . lang('Index Length') . doc_link($table_status_links + ['pgsql' => 'functions-admin.html#FUNCTIONS-ADMIN-DBOBJECT']);
+		echo '<td>' . lang('Data Free') . doc_link($table_status_links);
+		echo '<td>' . lang('Auto Increment') . doc_link(['sql' => 'example-auto-increment.html', 'mariadb' => 'reference/data-types/auto_increment']);
+		echo '<td>' . lang('Rows') . doc_link($table_status_links + ['pgsql' => 'catalog-pg-class.html#CATALOG-PG-CLASS', 'oracle' => 'REFRN20286']);
+		echo (support("comment") ? '<td>' . lang('Comment') . doc_link($table_status_links + ['pgsql' => 'functions-info.html#FUNCTIONS-INFO-COMMENT-TABLE']) : '');
 		echo "</thead>\n";
 
 		$tables = 0;
@@ -197,8 +199,8 @@ if ($_GET["ns"] === "") {
 			$databases = (support("scheme") ? Admin::get()->getSchemas() : Admin::get()->getDatabases());
 			if (count($databases) != 1 && DIALECT != "sqlite") {
 				$db = (isset($_POST["target"]) ? $_POST["target"] : (support("scheme") ? $_GET["ns"] : DB));
-				echo "<p>" . lang('Move to other database') . ": ";
-				echo ($databases ? html_select("target", $databases, $db) : '<input class="input" name="target" value="' . h($db) . '" autocapitalize="off">');
+				echo "<p><span id='label-move'>" . lang('Move to other database') . ":</span> ";
+				echo ($databases ? html_select("target", $databases, $db, "", "label-move") : '<input class="input" name="target" value="' . h($db) . '" autocapitalize="off">');
 				echo " <input type='submit' class='button' name='move' value='" . lang('Move') . "'>";
 				echo (support("copy") ? " <input type='submit' class='button' name='copy' value='" . lang('Copy') . "'> " . checkbox("overwrite", 1, $_POST["overwrite"], lang('overwrite')) : "");
 				echo "\n";

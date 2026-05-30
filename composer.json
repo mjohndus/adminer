@@ -28,7 +28,7 @@
         "ext-json": "*"
     },
     "require-dev": {
-        "vrana/jush": "@dev",
+        "vrana/jush": "dev-all-fixes",
         "vrana/jsshrink": "@dev",
         "vrana/phpshrink": "@dev"
     },

@@ -75,6 +75,7 @@ return [
 
 	// Structure.
 	'Column' => 'Xx',
+	'Columns' => 'Xx',
 	'Routine' => 'Xx',
 	'Grant' => 'Xx',
 	'Revoke' => 'Xx',
@@ -125,6 +126,7 @@ return [
 
 	// Databases.
 	'Database' => 'Xx',
+	'database' => 'xx',
 	'DB' => 'XX',
 	'Use' => 'Xx',
 	'Invalid database.' => 'Xx.',
@@ -143,6 +145,7 @@ return [
 
 	// Schemas (PostgreSQL, MS SQL).
 	'Schema' => 'Xx',
+	'schema' => 'xx',
 	'Schemas' => 'Xx',
 	'No schemas.' => 'Xx.',
 	'Show schema' => 'Xx',
@@ -224,6 +227,8 @@ return [
 	'Partitions' => 'Xx',
 	'Partition name' => 'Xx',
 	'Values' => 'Xx',
+	'Inherited tables' => 'Xx',
+	'Inherited from' => 'Xx',
 
 	// Indexes.
 	'Indexes' => 'Xx',
@@ -232,6 +237,8 @@ return [
 	'Add next' => 'Xx',
 	'Index Type' => 'Xx',
 	'length' => 'xx',
+	'Algorithm' => 'Xx',
+	'Condition' => 'Xx',
 
 	// Foreign keys.
 	'Foreign keys' => 'Xx',
@@ -327,7 +334,6 @@ return [
 	'Full table scan' => 'Xx',
 	'Unable to select the table' => 'Xx',
 	'Search data in tables' => 'Xx',
-	'as a regular expression' => 'xx',
 	'No rows.' => 'Xx.',
 	'%d / ' => '%d / ',
 	'%d row(s)' => ['%d xx', '%d xx'],
@@ -413,6 +419,6 @@ return [
 	'Data table' => 'Xx',
 	'Edit form' => 'Xx',
 	// Use the phrases from https://gemini.google.com/
-	'Ask Gemini' => 'Xx',
+	'Ask %s' => 'Xx %s',
 	'Just a sec...' => 'Xx...',
 ];

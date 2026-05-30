@@ -5,6 +5,7 @@ namespace AdminNeo;
 $TABLE = $_GET["indexes"];
 $index_types = ["PRIMARY", "UNIQUE", "INDEX"];
 $table_status = table_status1($TABLE, true);
+$index_algorithms = Driver::get()->getIndexAlgorithms($table_status);
 $connection = Connection::get();
 $maria = $connection->isMariaDB();
 if (preg_match('~MyISAM|M?aria' . ($connection->isMinVersion($maria ? "10.0.5" : "5.6") ? '|InnoDB' : '') . '~i', $table_status["Engine"])) {
@@ -32,6 +33,8 @@ if ($_POST && !$_POST["add"] && !$_POST["drop_col"]) {
 			$columns = [];
 			$lengths = [];
 			$descs = [];
+			$index_algorithm = $index_algorithms ? (in_array($index["algorithm"], $index_algorithms) ? $index["algorithm"] : first($index_algorithms)) : "";
+			$index_condition = (support("partial_indexes") ? $index["partial"] : "");
 			$set = [];
 			ksort($index["columns"]);
 			foreach ($index["columns"] as $key => $column) {
@@ -54,6 +57,8 @@ if ($_POST && !$_POST["add"] && !$_POST["drop_col"]) {
 					&& array_values($existing["columns"]) === $columns
 					&& (!$existing["lengths"] || array_values($existing["lengths"]) === $lengths)
 					&& array_values($existing["descs"]) === $descs
+					&& (!$index_algorithms || $existing["algorithm"] === $index_algorithm)
+					&& $existing["partial"] == $index_condition
 				) {
 					// skip existing index
 					unset($indexes[$name]);
@@ -61,7 +66,7 @@ if ($_POST && !$_POST["add"] && !$_POST["drop_col"]) {
 				}
 			}
 			if ($columns) {
-				$alter[] = [$index["type"], $name, $set];
+				$alter[] = [$index["type"], $name, $set, $index_algorithm, $index_condition];
 			}
 		}
 	}
@@ -107,15 +112,28 @@ echo "<div class='scrollable'>\n";
 echo "<table class='nowrap'>\n";
 echo "<thead><tr>";
 echo "<th id='label-type'>", lang('Index Type'), "</th>";
+$options_class = "class='idxopts" . ($show_options ? "" : " hidden") . "'";
+if (count($index_algorithms) > 1) {
+	echo "<th id='label-method' $options_class>", lang('Algorithm');
+	echo doc_link([
+		'sql' => 'create-index.html#create-index-storage-engine-index-types',
+		'mariadb' => 'ha-and-performance/optimization-and-tuning/optimization-and-indexes/storage-engine-index-types',
+		'pgsql' => 'indexes-types.html',
+	]);
+	echo "</th>";
+}
 
 echo "<th><input type='submit' class='button invisible'>";
-echo lang('Column') . ($lengths ? "<span class='idxopts" . ($show_options ? "" : " hidden") . "'> (" . lang('length') . ")</span>" : "");
+echo lang('Columns') . ($lengths ? "<span $options_class> (" . lang('length') . ")</span>" : "");
 if ($lengths || support("descidx")) {
 	echo checkbox("options", 1, $show_options, lang('Options'), "indexOptionsShow(this.checked)", "jsonly") . "\n";
 }
 echo "</th>";
 
 echo "<th id='label-name'>", lang('Name'), "</th>";
+if (support("partial_indexes")) {
+	echo "<th id='label-condition' $options_class>", lang('Condition'), "</th>";
+}
 echo "<th>";
 echo "<button name='add[0]' value='1' title='", lang('Add next'), "' class='button light hidden'>", icon_solo("add"), "</button>";
 echo "</th>";
@@ -124,7 +142,7 @@ echo "</tr></thead>\n";
 
 if ($primary) {
 	echo "<tr><td>PRIMARY<td>";
-	foreach ($primary["columns"] as $key => $column) {
+	foreach ($primary["columns"] as $column) {
 		echo select_input(" disabled", $fields, $column);
 		echo "<label><input type='checkbox' disabled>" . lang('descending') . "</label> ";
 	}
@@ -137,6 +155,12 @@ foreach ($row["indexes"] as $index) {
 			html_select("indexes[$j][type]", [-1 => ""] + $index_types, $index["type"], ($j == count($row["indexes"]) ? "indexesAddRow.call(this);" : ""), "label-type"),
 			"</td>";
 
+		if (count($index_algorithms) > 1) {
+			echo "<td $options_class>",
+				html_select("indexes[$j][algorithm]", array_merge([""], $index_algorithms), $index['algorithm'], "label-method"),
+				"</td>";
+		}
+
 		echo "<td>";
 		ksort($index["columns"]);
 		$i = 1;
@@ -147,16 +171,23 @@ foreach ($row["indexes"] as $index) {
 				$column,
 				"partial(" . ($i == count($index["columns"]) ? "indexesAddColumn" : "indexesChangeColumn") . ", '" . js_escape(DIALECT == "sql" ? "" : $_GET["indexes"] . "_") . "')"
 			);
-			echo "<span class='idxopts" . ($show_options ? "" : " hidden") . "'>";
-			echo ($lengths ? "<input type='number' name='indexes[$j][lengths][$i]' class='input size' value='" . (h($index["lengths"][$key] ?? "")) . "' title='" . lang('Length') . "'>" : "");
-			echo (support("descidx") ? checkbox("indexes[$j][descs][$i]", 1, $index["descs"][$key] ?? false, lang('descending')) : "");
+			echo "<span $options_class>";
+			if ($lengths) {
+				echo "<input type='number' name='indexes[$j][lengths][$i]' class='input size' value='". (h($index["lengths"][$key] ?? "")), "' title='" . lang('Length'), "'>";
+			}
+			if (support("descidx")) {
+				echo checkbox("indexes[$j][descs][$i]", 1, $index["descs"][$key] ?? false, lang('descending'));
+			}
 			echo "</span> </span>";
 			$i++;
 		}
 		echo "</td>";
 
-		echo "<td><input name='indexes[$j][name]' value='", h($index["name"]), "' class='input' autocapitalize='off' aria-labelledby='label-name'></td>\n",
-			"<td>",
+		echo "<td><input name='indexes[$j][name]' value='", h($index["name"]), "' class='input' autocapitalize='off' aria-labelledby='label-name'></td>\n";
+		if (support("partial_indexes")) {
+			echo "<td $options_class><input name='indexes[$j][partial]' value='" . h($index["partial"]) . "' autocapitalize='off' aria-labelledby='label-condition'>\n";
+		}
+		echo "<td>",
 			"<button name='drop_col[$j]' value='1' title='", h(lang('Remove')), "' class='button light'>", icon_solo("remove"), "</button>",
 			script("qsl('button').onclick = onRemoveIndexRowClick;"),
 			"</td>\n";

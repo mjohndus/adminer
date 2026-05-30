@@ -81,6 +81,7 @@ return [
 
 	// Structure.
 	'Column' => 'Spalte',
+	'Columns' => 'Spalten',
 	'Routine' => 'Routine',
 	'Grant' => 'Erlauben',
 	'Revoke' => 'Widerrufen',
@@ -140,6 +141,7 @@ return [
 
 	// Databases.
 	'Database' => 'Datenbank',
+	'database' => 'Datenbank',
 	'DB' => 'DB',
 	'Use' => 'Auswählen',
 	'Invalid database.' => 'Datenbank ungültig.',
@@ -158,6 +160,7 @@ return [
 
 	// Schemas (PostgreSQL, MS SQL).
 	'Schema' => 'Schema',
+	'schema' => 'Schema',
 	'Schemas' => 'Schemata',
 	'No schemas.' => 'Keine Schemata.',
 	'Show schema' => 'Zeige Schemata',
@@ -239,6 +242,8 @@ return [
 	'Partitions' => 'Partitionen',
 	'Partition name' => 'Name der Partition',
 	'Values' => 'Werte',
+	'Inherited tables' => 'Vererbte Tabellen',
+	'Inherited from' => 'Vererbt von',
 
 	// Indexes.
 	'Indexes' => 'Indizes',
@@ -247,6 +252,8 @@ return [
 	'Add next' => 'Hinzufügen',
 	'Index Type' => 'Index-Typ',
 	'length' => 'Länge',
+	'Algorithm' => 'Algorithmus',
+	'Condition' => 'Bedingung',
 
 	// Foreign keys.
 	'Foreign keys' => 'Fremdschlüssel',
@@ -345,7 +352,6 @@ return [
 	'Full table scan' => 'Vollständige Überprüfung der Tabelle',
 	'Unable to select the table' => 'Auswahl der Tabelle fehlgeschlagen',
 	'Search data in tables' => 'Suche in Tabellen',
-	'as a regular expression' => 'als regulärer Ausdruck',
 	'No rows.' => 'Keine Datensätze.',
 	'%d / ' => '%d / ',
 	'%d row(s)' => [
@@ -437,6 +443,6 @@ return [
 	'Data table' => 'Datentabelle',
 	'Edit form' => 'Formular bearbeiten',
 	// Use the phrases from https://gemini.google.com/
-	'Ask Gemini' => 'Gemini fragen',
+	'Ask %s' => '%s fragen',
 	'Just a sec...' => 'Einen Moment...',
 ];

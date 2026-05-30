@@ -8,6 +8,7 @@ Admin::get()->printDatabaseMenu();
 
 echo "<form action='' method='post'>\n";
 echo "<p>" . lang('Search data in tables') . ": <input type='search' class='input' name='query' value='" . h($_POST["query"]) . "'> <input type='submit' class='button' value='" . lang('Search') . "'>\n";
+echo input_token();
 if ($_POST["query"] != "") {
 	search_tables();
 }

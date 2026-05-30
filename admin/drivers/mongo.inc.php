@@ -219,8 +219,7 @@ if (isset($_GET["mongo"])) {
 				"(date)>", "(date)<", "(date)>=", "(date)<=",
 			];
 
-			$this->likeOperator = "LIKE %%"; // TODO: LIKE operator is not listed in operators.
-			$this->regexpOperator = "regex";
+			$this->likeOperator = "=";
 
 			$this->insertFunctions = ["json"];
 

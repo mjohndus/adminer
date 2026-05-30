@@ -30,6 +30,7 @@ foreach (process_list() as $i => $row) {
 		foreach ($row as $key => $val) {
 			echo "<th>$key" . doc_link([
 				'sql' => "show-processlist.html#processlist_" . strtolower($key),
+				'mariadb' => "reference/sql-statements/administrative-sql-statements/show/show-processlist",
 				'pgsql' => "monitoring-stats.html#PG-STAT-ACTIVITY-VIEW",
 				'oracle' => "REFRN30223",
 			]);

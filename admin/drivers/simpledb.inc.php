@@ -195,8 +195,6 @@ if (isset($_GET["simpledb"])) {
 				"IS NULL", "IS NOT NULL",
 			];
 
-			$this->likeOperator = "LIKE %%";
-
 			$this->grouping = [
 				"count",
 			];

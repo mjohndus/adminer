@@ -24,11 +24,8 @@ abstract class Driver
 	/** @var list<string> Operators used in select. */
 	protected $operators = [];
 
-	/** @var ?String Operator for LIKE condition. */
-	protected $likeOperator = null;
-
-	/** @var ?String Operator for regular expression condition. */
-	protected $regexpOperator = null;
+	/** @var String Operator for LIKE condition. */
+	protected $likeOperator = "LIKE %%";
 
 	/** @var list<string> Functions used in select. */
 	protected $functions = [];
@@ -41,6 +38,9 @@ abstract class Driver
 
 	/** @var list<string> List of actions used within the foreign keys. */
 	protected $onActions = ["RESTRICT", "CASCADE", "SET NULL", "SET DEFAULT", "NO ACTION"];
+
+	/** @var list<string> Supported partitioning types. */
+	protected $partitionBy = [];
 
 	/** @var string[] ["$type|$type2" => "$function/$function2"] Functions used in edit and insert. **/
 	protected $insertFunctions = [];
@@ -148,11 +148,6 @@ abstract class Driver
 		return $this->likeOperator;
 	}
 
-	public function getRegexpOperator(): ?string
-	{
-		return $this->regexpOperator;
-	}
-
 	/**
 	 * @return string[]
 	 */
@@ -183,6 +178,14 @@ abstract class Driver
 	public function getOnActions(): array
 	{
 		return $this->onActions;
+	}
+
+	/**
+	 * @return list<string>
+	 */
+	public function getPartitionBy(): array
+	{
+		return $this->partitionBy;
 	}
 
 	/**
@@ -433,6 +436,54 @@ abstract class Driver
 	}
 
 	/**
+	 * Returns list of supported index algorithms, first one is the default.
+	 *
+	 * @return list<string>
+	 */
+	public function getIndexAlgorithms(array $tableStatus): array
+	{
+		return [];
+	}
+
+	/**
+	 * Returns inherited tables.
+	 *
+	 * @return list<string>
+	 */
+	public function getInheritedTables(string $table): array
+	{
+		return [];
+	}
+
+	/**
+	 * Returns tables this table inherits from.
+	 *
+	 * @return list<string>
+	 */
+	public function getParentTables(string $table): array
+	{
+		return [];
+	}
+
+	/**
+	 * Returns whether this table is a partition.
+	 */
+	public function isPartition(string $table): bool
+	{
+		return false;
+	}
+
+	/**
+	 * Returns partitions info.
+	 *
+	 * @return array{partition_by?:string, partition?:string, partitions?:string, partition_names?:list<string>, partition_values?:list<string>}
+	 */
+	public function getPartitionsInfo(string $table): array
+	{
+		return [];
+	}
+
+	/**
 	 * Checks if C-style escapes are supported.
 	 */
 	public function hasCStyleEscapes(): bool
@@ -448,6 +499,16 @@ abstract class Driver
 	public function engines(): array
 	{
 		return [];
+	}
+
+	public function explodeArrayValue(string $value, string $type, string &$scalarType): array
+	{
+		return [];
+	}
+
+	public function implodeArrayValues(array $values, string $type): string
+	{
+		return "";
 	}
 
 	/**

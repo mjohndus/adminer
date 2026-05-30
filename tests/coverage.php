@@ -118,15 +118,7 @@ if (!extension_loaded("xdebug")) {
 
 function get_files(): array
 {
-	return array_merge(
-		glob("../admin/*.php"),
-		glob("../admin/core/*.php"),
-		glob("../admin/include/*.php"),
-		glob("../admin/drivers/*.php"),
-		glob("../editor/*.php"),
-		glob("../editor/core/*.php"),
-		glob("../editor/include/*.php")
-	);
+	return glob("../{admin,admin/core,admin/include,admin/drivers,editor,editor/core,editor/include}/*.php", GLOB_BRACE);
 }
 
 function print_file_list(array $coverage): void
