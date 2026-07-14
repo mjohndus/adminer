@@ -63,12 +63,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/peterpp/jush.git",
-                "reference": "d07d20c830f259e943936f63407df327f0c396d0"
+                "reference": "c539a370770d39653a938e2c7b47cfb01bfffe7a"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/peterpp/jush/zipball/d07d20c830f259e943936f63407df327f0c396d0",
-                "reference": "d07d20c830f259e943936f63407df327f0c396d0",
+                "url": "https://api.github.com/repos/peterpp/jush/zipball/c539a370770d39653a938e2c7b47cfb01bfffe7a",
+                "reference": "c539a370770d39653a938e2c7b47cfb01bfffe7a",
                 "shasum": ""
             },
             "type": "library",
@@ -91,7 +91,7 @@
             "support": {
                 "source": "https://github.com/vrana/jush/"
             },
-            "time": "2026-05-25T20:42:14+00:00"
+            "time": "2026-06-10T21:37:44+00:00"
         },
         {
             "name": "vrana/phpshrink",

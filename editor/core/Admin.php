@@ -139,7 +139,7 @@ class Admin extends Origin
 			$text = "";
 		} elseif (!$field) {
 			$text = $val;
-		} elseif (preg_match('~blob|bytea~', $field["type"]) && !is_utf8($val)) {
+		} elseif (is_blob($field) && !is_utf8($val)) {
 			$text = lang('%d byte(s)', strlen($original));
 			if (preg_match("~^(GIF|\xFF\xD8\xFF|\x89PNG\x0D\x0A\x1A\x0A)~", $original)) { // GIF|JPG|PNG, getimagetype() works with filename
 				$text = "<img src='$link' alt='$text'>";
@@ -181,7 +181,7 @@ class Admin extends Origin
 		//
 	}
 
-	public function printInheritedTables(array $inheritedTables): void
+	public function printRelatedTables(array $tables): void
 	{
 		//
 	}
@@ -460,7 +460,7 @@ class Admin extends Origin
 		return $hint;
 	}
 
-	public function processFieldInput(array $field, string $value, string $function = ""): string
+	public function processFieldInput(array $field, string $value, string $function = "")
 	{
 		if ($function == "now") {
 			return "$function()";

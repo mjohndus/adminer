@@ -130,6 +130,22 @@ function ini_bool(string $option): bool
 	return preg_match('~^(on|true|yes)$~i', $val) || (int) $val;
 }
 
+/**
+ * Returns INI bytes value.
+ */
+function ini_bytes(string $ini): int
+{
+	$val = ini_get($ini);
+
+	switch (strtolower(substr($val, -1))) {
+		case 'g': $val = (int)$val * 1024; // no break
+		case 'm': $val = (int)$val * 1024; // no break
+		case 'k': $val = (int)$val * 1024;
+	}
+
+	return $val;
+}
+
 /** Check if SID is necessary
 * @return bool
 */
@@ -159,31 +175,42 @@ function get_driver_name(string $driver, ?string $server = null): string
 	return $_SESSION["drivers"][$driver][$server] ?? Drivers::get($driver);
 }
 
-/** Set password to session
-* @param string
-* @param string
-* @param string
-* @param ?string
-*/
-function set_password($vendor, $server, $username, $password): void {
-	$_SESSION["pwds"][$vendor][$server][$username] = ($_COOKIE["neo_key"] && is_string($password)
-		? [encrypt_string($password, $_COOKIE["neo_key"])]
-		: $password
-	);
+/**
+ * Saves login into the session.
+ *
+ * @param string|false $password False in case of an encryption error.
+ */
+function save_login(string $driver, string $server, string $username, $password, string $db = ""): void
+{
+	$key = $_COOKIE["neo_key"] ?? null;
+	$_SESSION["pwds"][$driver][$server][$username] = $key ? [encrypt_string($password, $key)] : $password;
+
+	$_SESSION["db"][$driver][$server][$username][$db] = true;
 }
 
-/** Get password from session
-* @return string|false|null null for missing password or false for expired password
-*/
-function get_password() {
-	$return = get_session("pwds");
-	if (is_array($return)) {
-		$return = ($_COOKIE["neo_key"]
-			? decrypt_string($return[0], $_COOKIE["neo_key"])
-			: false
-		);
+/**
+ * Deletes saved login in session.
+ */
+function delete_login(string $driver, string $server, string $username): void
+{
+	unset($_SESSION["pwds"][$driver][$server][$username]);
+	unset($_SESSION["db"][$driver][$server][$username]);
+}
+
+/**
+ * Returns password from session
+ *
+ * @return string|false|null null for missing password or false for expired password.
+ */
+function get_password()
+{
+	$password = get_session("pwds");
+
+	if (is_array($password)) {
+		return $_COOKIE["neo_key"] ? decrypt_string($password[0], $_COOKIE["neo_key"]) : false;
 	}
-	return $return;
+
+	return $password;
 }
 
 /** Get list of values from database
@@ -263,7 +290,7 @@ function get_rows($query, ?Connection $connection = null, $error = "<p class='er
 function unique_array(array $row, array $indexes): ?array
 {
 	foreach ($indexes as $index) {
-		if (!preg_match("~PRIMARY|UNIQUE~", $index["type"])) {
+		if (!preg_match("~PRIMARY|UNIQUE~", $index["type"]) && !$index["partial"]) {
 			continue;
 		}
 
@@ -307,6 +334,8 @@ function where($where, $fields = []) {
 
 		if (DIALECT == "sql" && $field_type == "json") {
 			$conditions[] = "$column = CAST(" . q($val) . " AS JSON)";
+		} elseif (DIALECT == "pgsql" && preg_match('~^json~', $field_type)) {
+			$conditions[] = "::jsonb = " . q($val) . "::jsonb";
 		} elseif (DIALECT == "sql" && is_numeric($val) && strpos($val, ".") !== false) {
 			// LIKE because of floats but slow with ints.
 			$conditions[] = "$column LIKE " . q($val);
@@ -763,6 +792,8 @@ function fields_from_edit() {
 		$name = bracket_escape($key, true);
 		$return[$name] = [
 			"field" => $name,
+			"full_type" => "varchar",
+			"type" => "varchar",
 			"privileges" => ["insert" => 1, "update" => 1, "where" => 1, "order" => 1],
 			"null" => true,
 			"auto_increment" => ($key == Driver::get()->primary),
@@ -801,12 +832,13 @@ function dump_headers(string $identifier, bool $multi_table = false): string
 * @param string[]
 */
 function dump_csv($row): void {
+	$tsv = $_POST["format"] == "tsv";
 	foreach ($row as $key => $val) {
-		if (preg_match('~["\n,;\t]|^0|\.\d*0$~', $val) || $val === "") {
+		if (preg_match('~["\n]|^0[^.]|\.\d*0$|' . ($tsv ? '\t' : '[,;]|^$') . '~', $val)) {
 			$row[$key] = '"' . str_replace('"', '""', $val) . '"';
 		}
 	}
-	echo implode(($_POST["format"] == "csv" ? "," : ($_POST["format"] == "tsv" ? "\t" : ";")), $row) . "\r\n";
+	echo implode(($_POST["format"] == "csv" ? "," : ($tsv ? "\t" : ";")), $row) . "\r\n";
 }
 
 /** Apply SQL function
@@ -939,7 +971,7 @@ function get_random_string(): string
 }
 
 /** Format value to use in select
-* @param string|string[]
+* @param string|string[]|list<string[]>
 * @param string
 * @param ?array
 * @param ?int
@@ -948,11 +980,26 @@ function get_random_string(): string
 function select_value($val, $link, $field, $text_length) {
 	if (is_array($val)) {
 		$return = "";
-		foreach ($val as $k => $v) {
-			$return .= "<tr>"
-				. ($val != array_values($val) ? "<th>" . h($k) : "")
-				. "<td>" . select_value($v, $link, $field, $text_length)
-			;
+		if (array_filter($val, 'is_array') == array_values($val)) { // list of arrays
+			$keys = [];
+			foreach ($val as $v) {
+				$keys += array_fill_keys(array_keys($v), null);
+			}
+			foreach (array_keys($keys) as $k) {
+				$return .= "<th>" . h($k);
+			}
+			foreach ($val as $v) {
+				$return .= "<tr>";
+				foreach (array_merge($keys, $v) as $v2) {
+					$return .= "<td>" . select_value($v2, $link, $field, $text_length);
+				}
+			}
+		} else {
+			foreach ($val as $k => $v) {
+				$return .= "<tr>"
+					. ($val != array_values($val) ? "<th>" . h($k) : "")
+					. "<td>" . select_value($v, $link, $field, $text_length);
+			}
 		}
 		return "<table>$return</table>";
 	}
@@ -973,7 +1020,7 @@ function select_value($val, $link, $field, $text_length) {
 	if (!$link) {
 		$link = Admin::get()->getFieldValueLink($val, $field);
 	}
-	$return = $field ? Admin::get()->formatFieldValue($val, $field) : $val;
+	$return = $field ? Admin::get()->formatFieldValue(Connection::get()->formatValue($val, $field), $field) : $val;
 	if ($return !== null) {
 		if (!is_utf8($return)) {
 			$return = "\0"; // htmlspecialchars of binary data returns an empty string
@@ -1004,6 +1051,19 @@ function select_array_value(array $values, string $val, string $link, array $fie
 }
 
 /**
+ * Checks whether the field type is blob or equivalent.
+ *
+ * @param ?array $field Single field returned from fields().
+ */
+function is_blob(array $field): bool
+{
+	$types = Driver::get()->getStructuredTypes();
+	$type = lang('User types');
+
+	return preg_match('~blob|bytea|raw|file~', $field["type"]) && !in_array($field["type"], $types[$type] ?? []);
+}
+
+/**
  * Checks whether the string is e-mail address.
  *
  * @param mixed $value
@@ -1013,26 +1073,37 @@ function is_mail($value): bool
 	return is_string($value) && filter_var($value, FILTER_VALIDATE_EMAIL);
 }
 
-/** Check whether the string is web URL address
-* @param string
-* @return bool
-*/
-function is_web_url($value) {
-	if (!is_string($value) || !preg_match('~^https?://~i', $value)) {
+/**
+ * Check whether the value is web URL address.
+ */
+function is_web_url($value): bool
+{
+	if (!is_string($value) || !preg_match('~^(https?:)?//~i', $value)) {
 		return false;
 	}
 
 	$components = parse_url($value);
-    if (!$components) {
-        return false;
-    }
+	if (!$components) {
+		return false;
+	}
 
-    // Encode URL path. If path was encoded already, it will be encoded twice, but we are OK with that.
-	$encodedParts = array_map('urlencode', explode('/', $components['path']));
-	$url = str_replace($components['path'], implode('/', $encodedParts), $value);
+	$url = $value;
 
-	parse_str($components['query'], $params);
-	$url = str_replace($components['query'], http_build_query($params), $url);
+	// Encode URL path. If path was encoded already, it will be encoded twice, but we are OK with that.
+	if (isset($components['path'])) {
+		$encodedParts = array_map('urlencode', explode('/', $components['path']));
+		$url = str_replace($components['path'], implode('/', $encodedParts), $url);
+	}
+
+	if (isset($components['query'])) {
+		parse_str($components['query'], $params);
+		$url = str_replace($components['query'], http_build_query($params), $url);
+	}
+
+	// FILTER_VALIDATE_URL requires a scheme, add a dummy one for //domain.tld values.
+	if (!isset($components['scheme'])) {
+		$url = "https:$url";
+	}
 
 	return (bool)filter_var($url, FILTER_VALIDATE_URL);
 }
@@ -1042,7 +1113,17 @@ function is_web_url($value) {
  */
 function is_shortable(?array $field): bool
 {
-	return $field ? preg_match('~char|text|json|lob|geometry|point|linestring|polygon|string|bytea~', $field["type"]) : false;
+	return $field && !preg_match('~' . number_type() . '|date|time|year~', $field["type"]);
+}
+
+/** Split server into host and (port or socket)
+ * @return array{0: string, 1: string}
+ */
+function host_port(string $server) {
+	return (preg_match('~^(\[(.+)]|([^:]+)):([^:]+)$~', $server, $match) // [a:b] - IPv6
+		? [$match[2] . $match[3], $match[4]]
+		: [$server, '']
+	);
 }
 
 /** Get query to compute number of found rows

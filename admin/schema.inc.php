@@ -20,6 +20,7 @@ $base_left = -1;
 /** @var array{fields:array[], pos:array{float, float}, references:string[][][]}[] $schema */
 $schema = []; // table => array("fields" => array(name => field), "pos" => array(top, left), "references" => array(table => array(left => array(source, target))))
 $referenced = []; // target_table => array(table => array(left => target_column))
+/** @var array<numeric-string, bool> $lefts */
 $lefts = []; // float => bool
 $all_fields = Driver::get()->getAllFields();
 foreach (table_status('', true) as $table => $table_status) {
@@ -28,7 +29,7 @@ foreach (table_status('', true) as $table => $table_status) {
 	}
 	$pos = 0;
 	$schema[$table]["fields"] = [];
-	foreach ($all_fields[$table] as $field) {
+	foreach ($all_fields[$table] ?? [] as $field) {
 		$pos += 1.25;
 		$field["pos"] = $pos;
 		$schema[$table]["fields"][$field["field"]] = $field;
@@ -107,16 +108,18 @@ foreach ($schema as $name => $table) {
 
 foreach ($schema as $table) {
 	foreach ((array) $table["references"] as $target_name => $refs) {
-		foreach ($refs as $left => $ref) {
-			$min_pos = $top;
-			$max_pos = -10;
-			foreach ($ref[0] as $key => $source) {
-				$pos1 = $table["pos"][0] + $table["fields"][$source]["pos"];
-				$pos2 = $schema[$target_name]["pos"][0] + $schema[$target_name]["fields"][$ref[1][$key]]["pos"];
-				$min_pos = min($min_pos, $pos1, $pos2);
-				$max_pos = max($max_pos, $pos1, $pos2);
+		if ($schema[$target_name]) { // otherwise table in another schema
+			foreach ($refs as $left => $ref) {
+				$min_pos = $top;
+				$max_pos = -10;
+				foreach ($ref[0] as $key => $source) {
+					$pos1 = $table["pos"][0] + $table["fields"][$source]["pos"];
+					$pos2 = $schema[$target_name]["pos"][0] + $schema[$target_name]["fields"][$ref[1][$key]]["pos"];
+					$min_pos = min($min_pos, $pos1, $pos2);
+					$max_pos = max($max_pos, $pos1, $pos2);
+				}
+				echo "<div class='references' id='refl$left' style='left: $left" . "em; top: $min_pos" . "em; padding: .5em 0;'><div style='border-right: 1px solid Gray; margin-top: 1px; height: " . ($max_pos - $min_pos) . "em;'></div></div>\n";
 			}
-			echo "<div class='references' id='refl$left' style='left: $left" . "em; top: $min_pos" . "em; padding: .5em 0;'><div style='border-right: 1px solid Gray; margin-top: 1px; height: " . ($max_pos - $min_pos) . "em;'></div></div>\n";
 		}
 	}
 }

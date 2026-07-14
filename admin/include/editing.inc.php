@@ -92,24 +92,15 @@ function print_select_result(Result $result, ?Connection $connection = null, arr
 						$link .= "&where" . urlencode("[" . bracket_escape($col) . "]") . "=" . urlencode($row[$j]);
 					}
 				}
-			} elseif (is_web_url($val)) {
-				$link = $val;
 			}
 
-			if ($val === null) {
-				$val = "<i>NULL</i>";
-			} elseif ($blobs[$key] && !is_utf8($val)) {
-				$val = "<i>" . lang('%d byte(s)', strlen($val)) . "</i>"; //! link to download
-			} else {
-				$val = h($val);
-				if ($types[$key] == 254) { // 254 - char
-					$val = "<code>$val</code>";
-				}
-			}
+			$type = ($blobs[$key] ? 'blob' : ($types[$key] == 254 ? 'char' : ''));
+			$field = [
+				'full_type' => $type,
+				'type' => $type,
+			];
 
-			if ($link) {
-				$val = "<a href='" . h($link) . "'" . (is_web_url($link) ? target_blank() : '') . ">$val</a>";
-			}
+			$val = select_value($val, $link, $field, null);
 
 			// https://dev.mysql.com/doc/dev/mysql-server/latest/field__types_8h.html
 			$class = $types[$key] <= 9 || $types[$key] == 246 ? "class='number'" : "";
@@ -402,7 +393,7 @@ function edit_fields(array $fields, array $collations, $type = "TABLE", $foreign
 
 		echo "<th>";
 		if ($display) {
-			echo "<input class='input' name='fields[$i][field]' value='", h($field["field"]), "' data-maxlength='64' autocapitalize='off' aria-labelledby='label-name'>";
+			echo "<input class='input' name='fields[$i][field]' value='", h($field["field"]), "' data-maxlength='64' autocapitalize='off' aria-labelledby='label-name' " . (isset($_POST["add"][$i-1]) ? "autofocus" : "") . ">";
 		}
 		echo input_hidden("fields[$i][orig]", $orig);
 		edit_type("fields[$i]", $field, $collations, $foreign_keys);
@@ -634,6 +625,7 @@ function format_foreign_key($foreign_key) {
 		. " (" . implode(", ", array_map('AdminNeo\idf_escape', $foreign_key["target"])) . ")" //! reuse $name - check in older MySQL versions
 		. (preg_match("~^($onActions)\$~", $foreign_key["on_delete"]) ? " ON DELETE $foreign_key[on_delete]" : "")
 		. (preg_match("~^($onActions)\$~", $foreign_key["on_update"]) ? " ON UPDATE $foreign_key[on_update]" : "")
+		. (isset($foreign_key["deferrable"]) ? " $foreign_key[deferrable]" : "")
 	;
 }
 
@@ -655,20 +647,6 @@ function tar_file(string $filename, TmpFile $tmp_file): void
 
 	$tmp_file->send();
 	echo str_repeat("\0", 511 - ($tmp_file->getSize() + 511) % 512);
-}
-
-/** Get INI bytes value
-* @param string
-* @return int
-*/
-function ini_bytes($ini) {
-	$val = ini_get($ini);
-	switch (strtolower(substr($val, -1))) {
-		case 'g': $val = (int)$val * 1024; // no break
-		case 'm': $val = (int)$val * 1024; // no break
-		case 'k': $val = (int)$val * 1024;
-	}
-	return $val;
 }
 
 /**

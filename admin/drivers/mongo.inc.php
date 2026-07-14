@@ -28,7 +28,7 @@ if (isset($_GET["mongo"])) {
 			/** @var string */
 			private $dbName;
 
-			public function open(string $server, string $username, string $password, ?string $dbName = null, ?string $authSource = null): bool
+			public function open(string $server, string $username, string $password, string $dbName = "", string $authSource = ""): bool
 			{
 				$this->version = MONGODB_VERSION;
 
@@ -38,11 +38,11 @@ if (isset($_GET["mongo"])) {
 					$options["password"] = $password;
 				}
 
-				if ($dbName) {
+				if ($dbName != "") {
 					$options["db"] = $dbName;
 				}
 
-				if ($authSource) {
+				if ($authSource != "") {
 					$options["authSource"] = $authSource;
 				}
 
@@ -203,6 +203,7 @@ if (isset($_GET["mongo"])) {
 
 	class MongoDriver extends Driver
 	{
+		public const NULL = "\0";
 		public $primary = "_id";
 
 		protected function __construct(Connection $connection, $admin)
@@ -228,6 +229,8 @@ if (isset($_GET["mongo"])) {
 
 		public function select(string $table, array $select, array $where, array $group, array $order = [], int $limit = 1, int $page = 0, bool $print = false)
 		{
+			$filter = where_to_query($where);
+
 			$select = ($select == ["*"]
 				? []
 				: array_fill_keys($select, 1)
@@ -236,54 +239,79 @@ if (isset($_GET["mongo"])) {
 				$select['_id'] = 0;
 			}
 
-			$where = where_to_query($where);
+			$options = $select ? ['projection' => $select] : [];
+
 			$sort = [];
 			foreach ($order as $val) {
 				$val = preg_replace('~ DESC$~', '', $val, 1, $count);
 				$sort[$val] = ($count ? -1 : 1);
 			}
+			if ($sort) {
+				$options['sort'] = $sort;
+			}
 
 			$limit = min(200, max(1, $limit));
 			$skip = $page * $limit;
+			$options += ['limit' => $limit, 'skip' => $skip];
 
-			$query = new Query($where, ['projection' => $select, 'limit' => $limit, 'skip' => $skip, 'sort' => $sort]);
+			$query = new Query($filter, $options);
 
+			$start = microtime(true);
 			try {
-				return new MongoResult(Connection::get()->executeQuery(Connection::get()->getDbName() . ".$table", $query));
+				$result = new MongoResult(Connection::get()->executeQuery(Connection::get()->getDbName() . ".$table", $query));
 			} catch (Exception $e) {
 				Connection::get()->setError($e->getMessage());
-				return false;
+				$result = false;
 			}
+
+			if ($print) {
+				echo $this->admin->formatSelectQuery('find(' . json_encode(($filter ? ["filter" => $filter] : []) + $options) . ")", $start, !$result);
+			}
+
+			return $result;
 		}
 
 		public function update(string $table, array $record, string $queryWhere, int $limit = 0, string $separator = "\n")
 		{
-			$db = Connection::get()->getDbName();
-			$where = sql_query_where_parser($queryWhere);
-			$bulk = new BulkWrite([]);
+			$filter = sql_query_where_parser($queryWhere);
+
 			if (isset($record['_id'])) {
 				unset($record['_id']);
 			}
 			$removeFields = [];
 			foreach ($record as $key => $value) {
-				if ($value == 'NULL') {
+				if ($value == self::NULL) {
 					$removeFields[$key] = 1;
 					unset($record[$key]);
 				}
 			}
-			$update = ['$set' => $record];
-			if (count($removeFields)) {
-				$update['$unset'] = $removeFields;
-			}
-			$bulk->update($where, $update, ['upsert' => false]);
 
-			return Connection::get()->executeBulkWrite("$db.$table", $bulk, 'getModifiedCount');
+			$object = ['$set' => $record];
+			if (count($removeFields)) {
+				$object['$unset'] = $removeFields;
+			}
+
+			$options = ['upsert' => false];
+
+			// Save the query for later use in a flesh message. TODO: This is so ugly.
+			queries('update(' . json_encode(($filter ? ["filter" => $filter] : []) + $object + $options) . ")");
+
+			$bulk = new BulkWrite();
+			$bulk->update($filter, $object, $options);
+
+			return Connection::get()->executeBulkWrite(Connection::get()->getDbName() . ".$table", $bulk, 'getModifiedCount');
 		}
 
 		public function delete(string $table, string $queryWhere, int $limit = 0)
 		{
-			$bulk = new BulkWrite([]);
-			$bulk->delete(sql_query_where_parser($queryWhere), ['limit' => $limit]);
+			$filter = sql_query_where_parser($queryWhere);
+			$options = $limit ? ['limit' => $limit] : [];
+
+			// Save the query for later use in a flesh message. TODO: This is so ugly.
+			queries('delete(' . json_encode(($filter ? ["filter" => $filter] : []) + $options) . ")");
+
+			$bulk = new BulkWrite();
+			$bulk->delete($filter, $options);
 
 			return Connection::get()->executeBulkWrite(Connection::get()->getDbName() . ".$table", $bulk, 'getDeletedCount');
 		}
@@ -294,10 +322,24 @@ if (isset($_GET["mongo"])) {
 				unset($record['_id']);
 			}
 
-			$bulk = new BulkWrite([]);
+			foreach ($record as $key => $value) {
+				if ($value == self::NULL) {
+					unset($record[$key]);
+				}
+			}
+
+			// Save the query for later use in a flesh message. TODO: This is so ugly.
+			queries('insert(' . json_encode($record) . ")");
+
+			$bulk = new BulkWrite();
 			$bulk->insert($record);
 
 			return Connection::get()->executeBulkWrite(Connection::get()->getDbName() . ".$table", $bulk, 'getInsertedCount');
+		}
+
+		public function getNull(): string
+		{
+			return self::NULL;
 		}
 	}
 
@@ -384,7 +426,8 @@ if (isset($_GET["mongo"])) {
 						$row[$key] = null;
 						$fields[$key] = [
 							"field" => $key,
-							"type" => "string",
+							"full_type" => "varchar",
+							"type" => "varchar",
 							"null" => ($key != Driver::get()->primary),
 							"auto_increment" => ($key == Driver::get()->primary),
 							"privileges" => [
@@ -535,13 +578,14 @@ if (isset($_GET["mongo"])) {
 		$connection = $primary ? MongoConnection::create() : MongoConnection::createSecondary();
 
 		list($server, $username, $password) = Admin::get()->getCredentials();
+		$loginDbs = $_SESSION["db"][DRIVER][SERVER][$username];
 
 		if ($server == "") {
 			$server = "localhost:27017";
 		}
 
 		$dbName = Admin::get()->getDatabase();
-		$authSource = getenv("MONGO_AUTH_SOURCE") ?: null;
+		$authSource = getenv("MONGO_AUTH_SOURCE") ?: key($loginDbs);
 
 		if (!$connection->open("mongodb://$server", $username, $password, $dbName, $authSource)) {
 			$error = $connection->getError();

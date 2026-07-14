@@ -30,10 +30,10 @@ if (isset($_GET["mysql"])) {
 			}
 
 			/** @see https://php.net/mysqli.construct */
-			public function open(string $server, string $username, string $password, $database = null, $port = null, $socket = null): bool
+			public function open(string $server, string $username, string $password): bool
 			{
 				mysqli_report(MYSQLI_REPORT_OFF);
-				list($host, $port) = explode(":", $server, 2); // part after : is used for port or socket
+				list($host, $port) = host_port($server);
 
 				$key = Admin::get()->getConfig()->getSslKey();
 				$certificate = Admin::get()->getConfig()->getSslCertificate();
@@ -51,9 +51,9 @@ if (isset($_GET["mysql"])) {
 					($server != "" ? $host : ini_get("mysqli.default_host")),
 					($server . $username != "" ? $username : ini_get("mysqli.default_user")),
 					($server . $username . $password != "" ? $password : ini_get("mysqli.default_pw")),
-					$database,
+					null,
 					(is_numeric($port) ? (int)$port : ini_get("mysqli.default_port")),
-					(!is_numeric($port) ? $port : $socket),
+					(!is_numeric($port) ? $port : null),
 					$flags
 				);
 
@@ -182,7 +182,8 @@ if (isset($_GET["mysql"])) {
 		{
 			public function open(string $server, string $username, string $password): bool
 			{
-				$dsn = "mysql:charset=utf8;host=" . str_replace(":", ";unix_socket=", preg_replace('~:(\d)~', ';port=\1', $server));
+				list($host, $port) = host_port($server);
+				$dsn = "mysql:charset=utf8;host=$host" . ($port ? (is_numeric($port) ? ";port=" : ";unix_socket=") . $port : "");
 
 				$options = [PDO::MYSQL_ATTR_LOCAL_INFILE => false];
 
@@ -947,7 +948,7 @@ ORDER BY ordinal_position";
 	* @param string
 	* @param string
 	* @param string
-	* @param numeric-string
+	* @param numeric-string|''
 	* @param ?array null means remove partitioning
 	* @return bool
 	*/
@@ -1166,52 +1167,36 @@ ORDER BY ordinal_position";
 			return [];
 		}
 
-		$info = get_rows("SELECT ROUTINE_BODY, ROUTINE_COMMENT FROM information_schema.ROUTINES WHERE ROUTINE_SCHEMA = DATABASE() AND ROUTINE_NAME = " . q($name))[0];
+		$fields = get_rows("SELECT
+	PARAMETER_NAME field,
+	DATA_TYPE type,
+	CHARACTER_MAXIMUM_LENGTH length,
+	REGEXP_REPLACE(DTD_IDENTIFIER, '^[^ ]+ ', '') `unsigned`,
+	1 `null`,
+	DTD_IDENTIFIER full_type,
+	PARAMETER_MODE `inout`,
+	CHARACTER_SET_NAME collation
+FROM information_schema.PARAMETERS
+WHERE SPECIFIC_SCHEMA = DATABASE() AND ROUTINE_TYPE = '$type' AND SPECIFIC_NAME = " . q($name) . "
+ORDER BY ORDINAL_POSITION");
 
-		$aliases = ["bool", "boolean", "integer", "double precision", "real", "dec", "numeric", "fixed", "national char", "national varchar"];
-		$space = "(?:\\s|/\\*[\s\S]*?\\*/|(?:#|-- )[^\n]*\n?|--\r?\n)";
-		$enumLengthPattern = Driver::EnumLengthPattern;
-		$type_pattern = "((" . implode("|", array_merge(array_keys(Driver::get()->getTypes()), $aliases)) . ")\\b(?:\\s*\\(((?:[^'\")]|$enumLengthPattern)++)\\))?\\s*(zerofill\\s*)?(unsigned(?:\\s+zerofill)?)?)(?:\\s*(?:CHARSET|CHARACTER\\s+SET)\\s*['\"]?([^'\"\\s,]+)['\"]?)?";
-		$inOut = implode("|", Driver::get()->getInOut());
-		$pattern = "$space*(" . ($type == "FUNCTION" ? "" : $inOut) . ")?\\s*(?:`((?:[^`]|``)*)`\\s*|\\b(\\S+)\\s+)$type_pattern";
-		$create = Connection::get()->getValue("SHOW CREATE $type " . idf_escape($name), 2);
-		preg_match("~\\(((?:$pattern\\s*,?)*)\\)\\s*" . ($type == "FUNCTION" ? "RETURNS\\s+$type_pattern\\s+" : "") . "(.*)~is", $create, $match);
-		$fields = [];
-		preg_match_all("~$pattern\\s*,?~is", $match[1], $matches, PREG_SET_ORDER);
+		$return = Connection::get()->query("SELECT ROUTINE_COMMENT comment, ROUTINE_DEFINITION definition, 'SQL' language
+FROM information_schema.ROUTINES
+WHERE ROUTINE_SCHEMA = DATABASE() AND ROUTINE_TYPE = '$type' AND ROUTINE_NAME = " . q($name))->fetchAssoc();
 
-		foreach ($matches as $param) {
-			$fields[] = [
-				"field" => str_replace("``", "`", $param[2]) . $param[3],
-				"type" => strtolower($param[5]),
-				"length" => preg_replace_callback("~$enumLengthPattern~s", 'AdminNeo\normalize_enum', $param[6]),
-				"unsigned" => strtolower(preg_replace('~\s+~', ' ', trim("$param[8] $param[7]"))),
-				"null" => true,
-				"full_type" => $param[4],
-				"inout" => strtoupper($param[1]),
-				"collation" => strtolower($param[9]),
-			];
+		if ($fields && $fields[0]['field'] == '') {
+			$return['returns'] = array_shift($fields);
 		}
+		$return['fields'] = $fields;
 
-		return $type == "FUNCTION" ? [
-			"fields" => $fields,
-			"returns" => ["type" => $match[12], "length" => $match[13], "unsigned" => $match[15], "collation" => $match[16]],
-			"definition" => $match[17],
-			"language" => $info["ROUTINE_BODY"],
-			"comment" => $info["ROUTINE_COMMENT"],
-		] : [
-			"fields" => $fields,
-			"returns" => null,
-			"definition" => $match[11],
-			"language" => $info["ROUTINE_BODY"],
-			"comment" => $info["ROUTINE_COMMENT"],
-		];
+		return $return;
 	}
 
 	/** Get list of routines
 	* @return list<string[]> ["SPECIFIC_NAME" => , "ROUTINE_NAME" => , "ROUTINE_TYPE" => , "DTD_IDENTIFIER" => ]
 	*/
 	function routines() {
-		return get_rows("SELECT ROUTINE_NAME AS SPECIFIC_NAME, ROUTINE_NAME, ROUTINE_TYPE, DTD_IDENTIFIER, ROUTINE_COMMENT FROM information_schema.ROUTINES WHERE ROUTINE_SCHEMA = DATABASE()");
+		return get_rows("SELECT SPECIFIC_NAME, ROUTINE_NAME, ROUTINE_TYPE, DTD_IDENTIFIER, ROUTINE_COMMENT FROM information_schema.ROUTINES WHERE ROUTINE_SCHEMA = DATABASE()");
 	}
 
 	/** Get list of available routine languages
@@ -1299,12 +1284,31 @@ ORDER BY ordinal_position";
 		return "TRUNCATE " . table($table);
 	}
 
-	/** Get SQL command to change database
-	* @param string
-	* @return string
-	*/
-	function use_sql($database) {
-		return "USE " . idf_escape($database);
+	/**
+	 * Returns SQL command to create database.
+	 */
+	function create_database_sql(string $database, string $style = ""): string
+	{
+		$name = idf_escape($database);
+
+		$command = "";
+		if (str_contains($style, "CREATE") && ($create = Connection::get()->getValue("SHOW CREATE DATABASE $name", 1))) {
+			set_utf8mb4($create);
+			if ($style == "DROP+CREATE") {
+				$command = "DROP DATABASE IF EXISTS $name;\n";
+			}
+			$command .= "$create;\n";
+		}
+
+		return $command;
+	}
+
+	/**
+	 * Returns SQL command to change database.
+	 */
+	function use_sql(string $database, string $style = ""): string
+	{
+		return "USE " . idf_escape($database) . ";\n";
 	}
 
 	/**

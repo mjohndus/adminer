@@ -266,7 +266,7 @@ Admin::get()->printTableMenu($table_status, $set);
 if (!$columns && support("table")) {
 	echo "<p class='error'>" . lang('Unable to select the table') . ($fields ? "." : ": " . error()) . "\n";
 } else {
-	echo "<form action='' id='form'>\n";
+	echo "<form id='form' action=''>\n";
 	echo "<div style='display: none;'>";
 	hidden_fields_get();
 	// Not used in Editor.
@@ -328,7 +328,7 @@ if (!$columns && support("table")) {
 		if (DIALECT == "mssql" && $page) {
 			$result->seek($limit * $page);
 		}
-		echo "<form action='' method='post' enctype='multipart/form-data'>\n";
+		echo "<form id='selection_form' action='' method='post' enctype='multipart/form-data'>\n";
 		echo "<div class='table-footer-parent'>\n";
 		$rows = [];
 		while ($row = $result->fetchAssoc()) {
@@ -380,9 +380,9 @@ if (!$columns && support("table")) {
 						$desc = "&desc%5B0%5D=1";
 						echo "<th id='th[" . h(bracket_escape($key)) . "]'>" . script("mixin(qsl('th'), {onmouseover: partial(columnMouse), onmouseout: partial(columnMouse, ' hidden')});", "");
 						$fun = apply_sql_function($val["fun"] ?? null, $name); //! columns looking like functions
-						$sortable = isset($field["privileges"]["order"]) || $fun;
+						$sortable = isset($field["privileges"]["order"]) || ($val["fun"] ?? null);
 						if ($sortable) {
-							echo '<a href="', h($href . ($order[0] == $column || $order[0] == $key || (!$order && $is_group && $group[0] == $column) ? $desc : '')), '">', "$fun</a>"; // $order[0] == $key - COUNT(*)
+							echo '<a href="', h($href . ($order[0] == $column || $order[0] == $key ? $desc : '')), '">', "$fun</a>"; // $order[0] == $key - COUNT(*)
 						} else {
 							echo $fun;
 						}
@@ -457,10 +457,9 @@ if (!$columns && support("table")) {
 					if (isset($names[$key])) {
 						$column = current($select);
 						$field = $fields[$key] ?? null;
-						$val = $field ? Connection::get()->formatValue($val, $field) : $val;
 
 						$link = "";
-						if ($field && preg_match('~blob|bytea|raw|file~', $field["type"]) && $val != "") {
+						if ($field && is_blob($field) && $val != "") {
 							$link = ME . 'download=' . urlencode($TABLE) . '&field=' . urlencode($key) . $unique_idf;
 						}
 						if (!$link && $val !== null) { // link related items
@@ -498,6 +497,7 @@ if (!$columns && support("table")) {
 						$escaped_key = bracket_escape($key);
 						$id = h("val[$unique_idf][$escaped_key]");
 						$posted = $_POST["val"][$unique_idf][$escaped_key] ?? null;
+						$update = $field["privileges"]["update"] ?? false;
 						$editable = !is_array($row[$key]) && is_utf8($html) && $rows[$n][$key] == $row[$key] && !$functions[$key] && !($field["generated"] ?? false);
 						$type = ($column && preg_match('~^(AVG|MIN|MAX)\((.+)\)~', $column, $matches) ? $fields[idf_unescape($matches[2])]["type"] : ($field["type"] ?? null));
 						$money = $type == "money" || ($column && preg_match('~^SUM\((.+)\)~', $column, $matches) && $fields[idf_unescape($matches[1])]["type"]) == "money";
@@ -511,10 +511,11 @@ if (!$columns && support("table")) {
 							echo ">" . ($text ? "<textarea name='$id' cols='30' rows='" . (substr_count($row[$key], "\n") + 1) . "'>$h_value</textarea>" : "<input class='input' name='$id' value='$h_value' size='$lengths[$key]'>");
 						} else {
 							$long = strpos($html, "<i>…</i>");
-							echo " data-text='" . ($long ? 2 : ($text ? 1 : 0)) . "'"
-								. ($editable ? "" : " data-warning='" . h(lang('Use edit link to modify this value.')) . "'")
-								. ">$html"
-							;
+							if ($update) {
+								echo " data-text='" . ($long ? 2 : ($text ? 1 : 0)) . "'"
+									. ($editable ? "" : " data-warning='" . h(lang('Use edit link to modify this value.')) . "'");
+							}
+							echo ">$html";
 						}
 					}
 					next($select);
@@ -549,7 +550,7 @@ if (!$columns && support("table")) {
 						if ($found_rows < max(1e4, 2 * ($page + 1) * $limit)) {
 							// slow with big tables
 							$found_rows = first(slow_query(count_rows($TABLE, $where, $is_group, $group)));
-						} else {
+						} elseif (DIALECT == 'sql' || DIALECT == 'pgsql') {
 							$exact_count = false;
 						}
 					}
@@ -674,13 +675,19 @@ if (!$columns && support("table")) {
 
 			if (Admin::get()->isDataEditAllowed()) {
 				echo "<p>";
-				echo "<a href='#import'>", icon("import"), lang('Import') . "</a>";
+				echo "<a href='#import'>", icon("import"), lang('Import'), "</a>";
 				echo script("qsl('a').onclick = partial(toggle, 'import');", "");
 				echo "</p>";
-				echo "<p id='import'" . ($_POST["import"] ? "" : " class='hidden'") . ">";
-				echo "<input type='file' name='csv_file'> ";
-				echo html_select("import_format", ["csv" => "CSV,", "csv;" => "CSV;", "tsv" => "TSV"], $settings->getParameter("exportFormat"));
-				echo " <input type='submit' class='button default' name='import' value='" . lang('Import') . "'>";
+
+				echo "<p id='import'", ($_POST["import"] ? "" : " class='hidden'"), ">";
+				if (ini_bool("file_uploads")) {
+					echo "<input type='file' name='csv_file'> ";
+					echo html_select("import_format", ["csv" => "CSV,", "csv;" => "CSV;", "tsv" => "TSV"], $settings->getParameter("exportFormat"));
+					echo " <input type='submit' class='button default' name='import' value='" . lang('Import') . "'>";
+					echo file_upload_form_script("selection_form", "csv_file");
+				} else {
+					echo lang('File uploads are disabled.');
+				}
 				echo "</p>";
 			}
 

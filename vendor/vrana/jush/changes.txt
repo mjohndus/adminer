@@ -1,3 +1,6 @@
+Add JSON highlighting
+JavaScript: Highlight true, false and null
+
 JUSH 2.2.0:
 Add textarea autocomplete
 Add autocomplete for SQL

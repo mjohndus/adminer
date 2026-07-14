@@ -113,11 +113,7 @@ function verifyVersion(baseUrl, token) {
 			const matches = response.tag_name.match(/^v(\d{1,2}\.\d{1,2}\.\d{1,2}(-(alpha|beta|rc)\d?)?)$/);
 			if (!matches) return;
 
-			const version = matches[1];
-			cookie('neo_version=' + version, 1);
-
-			const data = 'version=' + version + '&token=' + token;
-			ajax(baseUrl + 'script=version', null, data);
+			cookie('neo_version=' + matches[1], 1);
 		}, null, null, true);
 	});
 }
@@ -177,7 +173,7 @@ function trCheck(el) {
 function selectCount(id, count) {
 	const zero = count === 0 || count === '0' || count === '';
 
-	setHtml(id, (zero ? '' : '(' + (count + '').replace(/\B(?=(\d{3})+$)/g, thousandsSeparator) + ')'));
+	setHtml(id, '(' + (count + '').replace(/\B(?=(\d{3})+$)/g, thousandsSeparator) + ')');
 
 	const el = gid(id);
 	if (!el) return;
@@ -248,8 +244,8 @@ function formChecked(input, name) {
 function tableClick(event, click, canEdit = true) {
 	const td = parentTag(event.target, 'td');
 	let text;
-	if (canEdit && td && (text = td.getAttribute('data-text'))) {
-		if (selectClick.call(td, event, +text, td.getAttribute('data-warning'))) {
+	if (canEdit && td && (text = td.dataset.text)) {
+		if (selectClick.call(td, event, +text, td.dataset.warning)) {
 			return;
 		}
 	}
@@ -981,8 +977,8 @@ function fieldChange() {
 		input.value = '';
 	}
 	// keep value in <select> (function)
-	parentTag(this, 'table').appendChild(row);
-	this.oninput = () => { };
+	parentTag(this, 'tbody').appendChild(row);
+	this.oninput = null;
 }
 
 
@@ -1291,7 +1287,7 @@ function getOffsetLeft(element) {
 
 oninput = event => {
 	const target = event.target;
-	const maxLength = target.getAttribute('data-maxlength');
+	const maxLength = target.dataset.maxlength;
 
 	// maxLength could be 0
 	target.classList.toggle('maxlength', target.value && maxLength != null && target.value.length > maxLength);

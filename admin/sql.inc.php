@@ -79,7 +79,7 @@ if ($_POST) {
 
 		$commands = 0;
 		$errors = [];
-		$parse = '[\'"' . (DIALECT == "sql" ? '`#' : (DIALECT == "sqlite" ? '`[' : (DIALECT == "mssql" ? '[' : ''))) . ']|/\*|' . $line_comment . '|$' . (DIALECT == "pgsql" ? '|\$[^$]*\$' : '');
+		$parse = '[\'"' . (DIALECT == "sql" ? '`#' : (DIALECT == "sqlite" ? '`[' : (DIALECT == "mssql" ? '[' : ''))) . ']|/\*|' . $line_comment . '|$' . (DIALECT == "pgsql" ? '|\$([a-zA-Z]\w*)?\$' : '');
 		$total_start = microtime(true);
 		$dump_format = Admin::get()->getDumpFormats();
 		unset($dump_format["sql"]);
@@ -275,7 +275,8 @@ if ($_POST) {
 		if ($empty) {
 			echo "<p class='message'>" . lang('No commands to execute.') . "\n";
 		} elseif ($_POST["only_errors"]) {
-			echo "<p class='message'>" . lang('%d query(s) executed OK.', $commands - count($errors));
+			$ok_count = $commands - count($errors);
+			echo "<p class='" . ($ok_count ? "message" : "error") . "'>" . lang('%d query(s) executed OK.', $commands - count($errors));
 			echo " <span class='time'>(" . format_time($total_start) . ")</span>\n";
 		} elseif ($errors && $commands > 1) {
 			echo "<p class='error'>" . lang('Error in query') . ": " . implode("", $errors) . "\n";
@@ -314,6 +315,7 @@ if (!isset($_GET["import"])) {
 		// Ignore post_max_size because it is for all form fields together and bytes computing would be necessary.
 		echo "SQL$gz (&lt; " . ini_get("upload_max_filesize") . "B): <input type='file' name='sql_file[]' multiple>";
 		echo "<input type='submit' class='button default' value='" . lang('Execute') . "'>";
+		echo file_upload_form_script("form", "sql_file[]");
 	} else {
 		echo lang('File uploads are disabled.');
 	}

@@ -262,6 +262,14 @@ function js_escape($string) {
 }
 
 /**
+ * Escapes string to be used as object key in JavaScript.
+ */
+function js_escape_key($string): string
+{
+	return '"' . addcslashes($string, "\r\n\t\"\\/") . '"';
+}
+
+/**
  * Generates page number for pagination.
  */
 function pagination(int $page, int $current): string
@@ -394,8 +402,7 @@ function input($field, $value, $function, $autofocus = false): void {
 	}
 
 	// Attributes.
-	$disabled = stripos($field["default"], "GENERATED ALWAYS AS ") === 0 ? " disabled=''" : "";
-	$attrs = " name='fields[$name]' $disabled" . ($autofocus ? " autofocus" : "");
+	$attrs = " name='fields[$name]' " . ($autofocus ? " autofocus" : "");
 
 	// Function list.
 	$functions = (isset($_GET["select"]) || $reset ? ["orig" => lang('original')] : []) + Admin::get()->getFieldFunctions($field);
@@ -406,7 +413,7 @@ function input($field, $value, $function, $autofocus = false): void {
 
 	if (count($functions) > 1) {
 		$selected = $function === null || $has_function ? $function : "";
-		echo "<select name='function[$name]' $disabled>" . optionlist($functions, $selected) . "</select>";
+		echo "<select name='function[$name]'>" . optionlist($functions, $selected) . "</select>";
 
 		echo help_script_command("value.replace(/^SQL\$/, '')", true);
 		echo script("qsl('select').onchange = functionChange;", "");
@@ -441,10 +448,10 @@ function input($field, $value, $function, $autofocus = false): void {
 		}
 
 		echo "</span>";
-	} elseif (preg_match('~blob|bytea|raw|file~', $field["type"]) && ini_bool("file_uploads")) {
+	} elseif (is_blob($field) && ini_bool("file_uploads")) {
 		echo "<input type='file' name='fields-$name'>";
 	} elseif ($json_type) {
-		echo "<textarea$attrs cols='50' rows='12' class='jush-js'>" . h($value) . '</textarea>';
+		echo "<textarea$attrs cols='50' rows='12' class='jush-json'>" . h($value) . '</textarea>';
 	} elseif (($text = preg_match('~text|lob|memo~i', $field["type"])) || preg_match("~\n~", $value)) {
 		if ($text && DIALECT != "sqlite") {
 			$attrs .= " cols='50' rows='12'";
@@ -496,14 +503,12 @@ function input($field, $value, $function, $autofocus = false): void {
  * @return string|array|false|null False to leave the original value (copy original while cloning), null to skip the column
  */
 function process_input($field) {
-	if (stripos($field["default"], "GENERATED ALWAYS AS ") === 0) {
-		return null;
-	}
-
 	$idf = bracket_escape($field["field"]);
 	$function = $_POST["function"][$idf] ?? "";
-	// Value can miss if strict mode is turned off and enum field has no value.
-	$value = $_POST["fields"][$idf] ?? "";
+	$value = $_POST["fields"][$idf] ?? ($_FILES["fields"]["name"][$idf] ?? null);
+	if ($value === null) {
+		return false;
+	}
 
 	if ($field["auto_increment"] && $value == "") {
 		return null;
@@ -512,7 +517,7 @@ function process_input($field) {
 		return (preg_match('~^CURRENT_TIMESTAMP~i', $field["on_update"]) ? idf_escape($field["field"]) : false);
 	}
 	if ($function == "NULL") {
-		return "NULL";
+		return Driver::get()->getNull();
 	}
 	if ($field["type"] == "set") {
 		$value = implode(",", (array) $value);
@@ -524,7 +529,7 @@ function process_input($field) {
 		}
 		return $value;
 	}
-	if (preg_match('~blob|bytea|raw|file~', $field["type"]) && ini_bool("file_uploads")) {
+	if (is_blob($field) && ini_bool("file_uploads")) {
 		$file = get_file("fields-$idf");
 		if (!is_string($file)) {
 			return false; //! report errors
@@ -616,6 +621,7 @@ function edit_form($table, $fields, $row, $update): void {
 	}
 
 	echo "<form action='' method='post' enctype='multipart/form-data' id='form'>\n";
+	$editable = false;
 
 	if (!$fields) {
 		echo "<p class='error'>" . lang('You have no privileges to update this table.') . "\n";
@@ -650,30 +656,41 @@ function edit_form($table, $fields, $row, $update): void {
 			if (!$_POST["save"] && is_string($value)) {
 				$value = Admin::get()->formatFieldValue($value, $field);
 			}
-			$function = ($_POST["save"]
-				? $_POST["function"][$name] ?? ""
-				: ($update && preg_match('~^CURRENT_TIMESTAMP~i', $field["on_update"])
-					? "now"
-					: ($value === false ? null : ($value !== null ? '' : 'NULL'))
-				)
-			);
-			if (!$_POST && !$update && $value == $field["default"] && preg_match('~^[\w.]+\(~', $value)) {
-				$function = "SQL";
-			}
-			if (preg_match("~time~", $field["type"]) && preg_match('~^CURRENT_TIMESTAMP~i', $value)) {
-				$value = "";
-				$function = "now";
-			}
-			if ($field["type"] == "uuid" && $value == "uuid()") {
-				$value = "";
-				$function = "uuid";
-			}
-			if ($autofocus !== false) {
-				$autofocus = ($field["auto_increment"] || $function == "now" || $function == "uuid" ? null : true); // null - don't autofocus this input but check the next one
-			}
-			input($field, $value, $function, $autofocus);
-			if ($autofocus) {
-				$autofocus = false;
+			if (($update && !isset($field["privileges"]["update"])) || $field["generated"]) {
+				echo "<td class='function'></td><td>";
+				if ($update || !$field["generated"]) {
+					echo select_value($value, '', $field, null);
+				} else {
+					echo "<code class='jush-" . DIALECT . "'>", h($value), "</code>";
+				}
+				echo "</td>";
+			} else {
+				$editable = true;
+				$function = ($_POST["save"]
+					? $_POST["function"][$name] ?? ""
+					: ($update && preg_match('~^CURRENT_TIMESTAMP~i', $field["on_update"])
+						? "now"
+						: ($value === false ? null : ($value !== null ? '' : 'NULL'))
+					)
+				);
+				if (!$_POST && !$update && $value == $field["default"] && preg_match('~^[\w.]+\(~', $value)) {
+					$function = "SQL";
+				}
+				if (preg_match("~time~", $field["type"]) && preg_match('~^CURRENT_TIMESTAMP~i', $value)) {
+					$value = "";
+					$function = "now";
+				}
+				if ($field["type"] == "uuid" && $value == "uuid()") {
+					$value = "";
+					$function = "uuid";
+				}
+				if ($autofocus !== false) {
+					$autofocus = ($field["auto_increment"] || $function == "now" || $function == "uuid" ? null : true); // null - don't autofocus this input but check the next one
+				}
+				input($field, $value, $function, $autofocus);
+				if ($autofocus) {
+					$autofocus = false;
+				}
 			}
 			echo "\n";
 		}
@@ -691,7 +708,7 @@ function edit_form($table, $fields, $row, $update): void {
 	}
 
 	echo "<p>";
-	if ($fields) {
+	if ($editable) {
 		echo "<input type='submit' class='button default' value='" . lang('Save') . "'>\n";
 		if (!isset($_GET["select"])) {
 			echo "<input type='submit' class='button' name='insert' value='" . ($update
@@ -711,4 +728,15 @@ function edit_form($table, $fields, $row, $update): void {
 	echo input_token();
 
 	echo "</form>\n";
+}
+
+function file_upload_form_script(string $formId, string $inputName): string
+{
+	$max_count = ini_get("max_file_uploads");
+	$max_size = ini_get("upload_max_filesize");
+	$max_size_bytes = ini_bytes("upload_max_filesize");
+
+	return script("initFilesUploadForm('" . js_escape($formId) . "', '" . js_escape($inputName) . "', " .
+		"$max_count, '" . lang('The maximum number of files is %d. Select fewer files or increase the %s configuration directive.', $max_count, "\'max_file_uploads\'") . "', " .
+		"$max_size_bytes, '" . lang('The maximum total size of files is %s. Select smaller files or increase the %s configuration directive.', $max_size, "\'upload_max_filesize\'") . "')");
 }

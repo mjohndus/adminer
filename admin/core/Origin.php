@@ -236,7 +236,7 @@ abstract class Origin extends Plugin
 	 *
 	 * @return list<string>
 	 */
-	public function getDatabases($flush = true): array
+	public function getDatabases(bool $flush = true): array
 	{
 		return $this->filterListWithWildcards(
 			get_databases($flush), $this->config->getHiddenDatabases(), false, Driver::get()->getSystemDatabases()
@@ -597,7 +597,7 @@ abstract class Origin extends Plugin
 
 	public abstract function printTablePartitions(array $partitionInfo): void;
 
-	public abstract function printInheritedTables(array $inheritedTables): void;
+	public abstract function printRelatedTables(array $tables): void;
 
 	public abstract function printTableIndexes(array $indexes, array $tableStatus): void;
 
@@ -656,7 +656,7 @@ abstract class Origin extends Plugin
 		return support("comment") ? $this->admin->formatComment($field["comment"]) : "";
 	}
 
-	public abstract function processFieldInput(array $field, string $value, string $function = ""): string;
+	public abstract function processFieldInput(array $field, string $value, string $function = "");
 
 	/**
 	 * Detect JSON field or value and optionally reformat the value.
@@ -691,7 +691,7 @@ abstract class Origin extends Plugin
 		}
 
 		if (
-			$value != "" &&
+			is_string($value) && $value != "" &&
 			preg_match('~varchar|text|character varying|String|keyword~', $fieldType) &&
 			($value[0] == "{" || $value[0] == "[") &&
 			($json = json_decode($value))
@@ -704,6 +704,26 @@ abstract class Origin extends Plugin
 		}
 
 		return false;
+	}
+
+	/**
+	 * Returns server variables.
+	 *
+	 * @return list<string[]> [[$name, $value]]
+	 */
+	function getServerVariables(): array
+	{
+		return show_variables();
+	}
+
+	/**
+	 * Returns status variables.
+	 *
+	 * @return list<string[]> [[$name, $value]]
+	 */
+	function getStatusVariables(): array
+	{
+		return show_status();
 	}
 
 	public abstract function getDumpOutputs(): array;
@@ -738,11 +758,11 @@ abstract class Origin extends Plugin
 		if ($missing != "auth") {
 			echo "<span class='version'>";
 			echo h(preg_replace('~\\.0(-|$)~', '$1', VERSION));
-			echo "<a id='version' class='version-badge' href='https://www.adminneo.org/download' " . target_blank() . " title='" . h($last_version) . "'>";
 			if ($this->config->isVersionVerificationEnabled() && $last_version && version_compare(VERSION, $last_version) < 0) {
+				echo "<a id='version' class='version-badge' href='https://www.adminneo.org/download' " . target_blank() . " title='" . h($last_version) . "'>";
 				echo icon_solo("asterisk");
+				echo "</a>";
 			}
-			echo "</a>";
 			echo "</span>\n";
 
 			if ($this->config->isVersionVerificationEnabled() && !$last_version) {

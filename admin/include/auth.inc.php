@@ -21,7 +21,18 @@ function validate_server_input(array &$permanent): void
 		return;
 	}
 
-	$parts = parse_url(SERVER);
+	// Add brackets around single IPv6 for correct parsing.
+	$server = SERVER;
+	if (function_exists("filter_var") && filter_var($server,  FILTER_VALIDATE_IP, FILTER_FLAG_IPV6)) {
+		$server = "[$server]";
+	}
+
+	// Add dummy https scheme for correct parsing.
+	if (!preg_match('~^[^:]+://~', $server)) {
+		$server = "https://$server";
+	}
+
+	$parts = parse_url($server);
 	if (!$parts) {
 		auth_error($permanent);
 	}
@@ -36,10 +47,8 @@ function validate_server_input(array &$permanent): void
 		auth_error($permanent);
 	}
 
-	// Note that "localhost" and IP address without a scheme is parsed as a path.
-	$hostPath = ($parts['host'] ?? '') . ($parts['path'] ?? '');
-
 	// Validate host.
+	$hostPath = $parts['host'] . ($parts['path'] ?? '');
 	if (!is_server_host_valid($hostPath)) {
 		auth_error($permanent);
 	}
@@ -55,10 +64,12 @@ function validate_server_input(array &$permanent): void
 
 if (!function_exists('AdminNeo\is_server_host_valid')) {
 	/**
-	 * @param string $hostPath
-	 * @return bool
+	 * Validates server host+path.
+	 *
+	 * Every driver can validate URL host and path by its own rules. Path is forbidden by default, HTTP-based drivers
+	 * allow only '/' as path and Oracle driver validates path according to the EasyConnect URL format.
 	 */
-	function is_server_host_valid($hostPath)
+	function is_server_host_valid(string $hostPath): bool
 	{
 		return strpos($hostPath, '/') === false;
 	}
@@ -248,15 +259,6 @@ if ($auth) {
 	}
 }
 
-/**
- * @param string|false $password False in case of an encryption error.
- */
-function save_login(string $driver, string $server, string $username, $password, string $db = ""): void
-{
-	set_password($driver, $server, $username, $password);
-	$_SESSION["db"][$driver][$server][$username][$db] = true;
-}
-
 function unset_permanent(array &$permanent): void
 {
 	foreach ($permanent as $key => $val) {
@@ -295,7 +297,7 @@ function auth_error(array &$permanent, ?string $error = null): void
 				if ($password === false) {
 					$error = lang('Invalid permanent login, please login again.');
 				}
-				set_password(DRIVER, SERVER, $_GET["username"], null);
+				delete_login(DRIVER, SERVER, $_GET["username"]);
 			}
 
 			unset_permanent($permanent);

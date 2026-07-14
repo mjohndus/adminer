@@ -705,20 +705,45 @@ function indexesAddColumn(prefix) {
 	field.onchange();
 }
 
+/**
+ * Setup validation of files upload form.
+ *
+ * @param {string} formId
+ * @param {string} inputName
+ * @param {number} maxCount
+ * @param {string} countErrorMessage
+ * @param {number} maxSize
+ * @param {string} sizeErrorMessage
+ */
+function initFilesUploadForm(formId, inputName, maxCount, countErrorMessage, maxSize, sizeErrorMessage) {
+	const form = gid(formId);
 
+	form.addEventListener("submit", event => {
+		const files = form.elements[inputName].files;
+
+		if (files.length > maxCount) {
+			alert(countErrorMessage);
+			event.preventDefault();
+		} else if (Array.from(files).reduce((sum, file) => sum + file.size, 0) > maxSize) {
+			alert(sizeErrorMessage);
+			event.preventDefault();
+		}
+	});
+}
 
 /** Updates the form action
 * @param HTMLFormElement
 * @param string
 */
 function sqlSubmit(form, root) {
-	if (encodeURIComponent(form['query'].value).length < 500) {
-		form.action = root
-			+ '&sql=' + encodeURIComponent(form['query'].value)
-			+ (form['limit'].value ? '&limit=' + +form['limit'].value : '')
-			+ (form['error_stops'].checked ? '&error_stops=1' : '')
-			+ (form['only_errors'].checked ? '&only_errors=1' : '')
-		;
+	const action = root
+		+ '&sql=' + encodeURIComponent(form['query'].value)
+		+ (form['limit'].value ? '&limit=' + +form['limit'].value : '')
+		+ (form['error_stops'].checked ? '&error_stops=1' : '')
+		+ (form['only_errors'].checked ? '&only_errors=1' : '')
+	;
+	if ((document.location.origin + document.location.pathname + action).length < 2000) { // reasonable minimum is 2048
+		form.action = action;
 	}
 }
 

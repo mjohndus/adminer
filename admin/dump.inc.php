@@ -9,12 +9,12 @@ if ($_POST) {
 	$settings->updateParameters([
 		"dumpFormat" => $_POST["format"],
 		"dumpDbStyle" => $_POST["db_style"],
-		"dumpTypes" => $_POST["types"] ?? null,
-		"dumpRoutines" => $_POST["routines"] ?? null,
-		"dumpEvents" => $_POST["events"] ?? null,
+		"dumpTypes" => $_POST["types"] ?? (support("type") ? "" : null),
+		"dumpRoutines" => $_POST["routines"] ?? (support("routine") ? "" : null),
+		"dumpEvents" => $_POST["events"] ?? (support("event") ? "" : null),
 		"dumpTableStyle" => $_POST["table_style"],
-		"dumpAutoIncrement" => $_POST["auto_increment"] ?? null,
-		"dumpTriggers" => $_POST["triggers"] ?? null,
+		"dumpAutoIncrement" => $_POST["auto_increment"] ?? "",
+		"dumpTriggers" => $_POST["triggers"] ?? (support("trigger") ? "" : null),
 		"dumpDataStyle" => $_POST["data_style"],
 		"dumpOutput" => $_POST["output"],
 	]);
@@ -22,13 +22,13 @@ if ($_POST) {
 	$subjects = array_flip($_POST["databases"] ?? []) + array_flip($_POST["tables"] ?? []) + array_flip($_POST["data"] ?? []);
 	if (count($subjects) == 1) {
 		$identifier = key($subjects);
-	} elseif (DB !== null) {
+	} elseif (DB != "") {
 		$identifier = DB;
 	} else {
 		$identifier = SERVER != "" ? Admin::get()->getServerName(SERVER) : "localhost";
 	}
 
-	$ext = dump_headers($identifier, DB == null || count($subjects) > 1);
+	$ext = dump_headers($identifier, DB == "" || count($subjects) > 1);
 
 	$is_sql = preg_match('~sql~', $_POST["format"]);
 	if ($is_sql) {
@@ -46,27 +46,23 @@ SET foreign_key_checks = 0;
 	}
 
 	$style = $_POST["db_style"];
-	$databases = [DB];
-	if (DB == "") {
-		$databases = $_POST["databases"];
+
+	if (DB != "") {
+		$databases = [DB];
+	} else {
+		$databases = $_POST["databases"] ?? [];
 		if (is_string($databases)) {
 			$databases = explode("\n", rtrim(str_replace("\r", "", $databases), "\n"));
 		}
 	}
 
-	foreach ((array) $databases as $db) {
+	foreach ($databases as $db) {
 		Admin::get()->dumpDatabase($db);
 		if (Connection::get()->selectDatabase($db)) {
-			if ($is_sql && preg_match('~CREATE~', $style) && ($create = Connection::get()->getValue("SHOW CREATE DATABASE " . idf_escape($db), 1))) {
-				set_utf8mb4($create);
-				if ($style == "DROP+CREATE") {
-					echo "DROP DATABASE IF EXISTS " . idf_escape($db) . ";\n";
-				}
-				echo "$create;\n";
-			}
 			if ($is_sql) {
 				if ($style) {
-					echo use_sql($db) . ";\n\n";
+					echo create_database_sql($db, $style);
+					echo use_sql($db, $style) . "\n";
 				}
 				$out = "";
 
@@ -162,7 +158,7 @@ SET foreign_key_checks = 0;
 	exit;
 }
 
-$name = DB !== null ? h(DB) : (SERVER != "" ? h(Admin::get()->getServerName(SERVER)) : lang('Server'));
+$name = DB != "" ? h(DB) : (SERVER != "" ? h(Admin::get()->getServerName(SERVER)) : lang('Server'));
 page_header(lang('Export') . ": $name", ($_GET["export"] != "" ? ["table" => $_GET["export"]] : [lang('Export')]));
 
 echo "<form action='' method='post'>\n";

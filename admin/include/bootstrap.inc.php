@@ -41,17 +41,6 @@ include __DIR__ . "/compile.inc.php";
 // Compiled files loading.
 include __DIR__ . "/../file.inc.php";
 
-if ($_GET["script"] == "version") {
-	$filename = get_temp_dir() . "/adminneo.version";
-	@unlink($filename); // It may not be writable by us, @ - it may not exist.
-
-	$file = open_file_with_lock($filename);
-	if ($file) {
-		write_and_unlock_file($file, serialize(["version" => $_POST["version"]]));
-	}
-	exit;
-}
-
 if (!$_SERVER["REQUEST_URI"]) { // IIS 5 compatibility
 	$_SERVER["REQUEST_URI"] = $_SERVER["ORIG_PATH_INFO"];
 }
@@ -99,6 +88,9 @@ if (isset($_COOKIE["neo_import"])) {
 	unset($_COOKIE["neo_import"]);
 	cookie("neo_import", "", -3600);
 }
+
+// Remove unused file.
+@unlink(get_temp_dir() . "/adminneo.version");
 
 include __DIR__ . "/../core/Locale.php";
 include __DIR__ . "/lang.inc.php";
@@ -164,7 +156,7 @@ if (!defined("AdminNeo\DRIVER")) {
 }
 
 define("AdminNeo\SERVER", DRIVER ? $_GET[DRIVER] : null); // read from pgsql=localhost
-define("AdminNeo\DB", $_GET["db"] != "" ? $_GET["db"] : null); // for the sake of speed and size
+define("AdminNeo\DB", $_GET["db"] ?? ""); // for the sake of speed and size
 define("AdminNeo\BASE_URL", preg_replace('~\?.*~', '', relative_uri()));
 define("AdminNeo\ME", BASE_URL . '?'
 	. (sid() ? session_name() . "=" . urlencode(session_id()) . '&' : '')

@@ -31,7 +31,7 @@ function adminneo_instance()
 
 	$config = [
 		"colorVariant" => "green",
-		"navigationMode" => "dual",
+//		"navigationMode" => "dual",
 		"preferSelection" => true,
 		"jsonValuesDetection" => true,
 		"jsonValuesAutoFormat" => true,
@@ -53,7 +53,7 @@ function adminneo_instance()
 		new XmlDumpPlugin(),
 		// new SqlLogPlugin(),
 		// new TinyMcePlugin("../externals/tinymce/tinymce.min.js"),
-		new FileUploadPlugin("../export/upload"),
+		new FileUploadPlugin("../compiled/upload"),
 		new JsonPreviewPlugin(true, false),
 		new SystemForeignKeysPlugin(),
 		new ForeignEditPlugin(),

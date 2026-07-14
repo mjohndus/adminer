@@ -1,12 +1,104 @@
 Changelog
 =========
 
-AdminNeo 5.4.1
+AdminNeo 5.5.1
 --------------
+
+### Bugfixes
+
+- Fix processing of file input fields (regression from 5.5.0)
+- ForeignEditPlugin: Fix escaping tables in MS SQL
+
+AdminNeo 5.5.0 (2026-06-21)
+---------------------------
 
 ### Changes
 
-- Complete the full Polish translation (by @Matthaiks)
+- Check max_file_uploads in SQL import form
+- Check upload_max_filesize in import forms
+- Do not order descending in GROUP BY select (by @vrana)
+- Hide view links without view support (by @vrana)
+- Display data length and index length for materialized views (by @vrana)
+- Link routines from syntax highlighting (by @vrana)
+- Do not quote 0 in CSV export (by @vrana)
+- Add getServerVariables() and getStatusVariables() customization methods
+- Link //domain.tld values
+- Display uneditable fields in edit form (by @vrana)
+- Improve print of nested tables (by @vrana)
+- Shorten all but numeric and date types in select (by @vrana)
+- Select: Disable Ctrl+click inline edit without UPDATE privilege (by @vrana)
+- Select: Display NULL in column title (by @vrana)
+- Foreign key: Display new field in case of an error (by @vrana)
+- PostgreSQL: Add SQL operator to select (by @vrana)
+- PostgreSQL: Display index expressions (by @vrana)
+- PostgreSQL: Shorten values in hstore columns (by @vrana)
+- PostgreSQL: Offer foreign keys in create table (by @vrana)
+- PostgreSQL: Allow creating NOT DEFERRABLE foreign keys (by @vrana)
+- PostgreSQL: Display all SQL command warnings at once (by @vrana)
+- PostgreSQL: Export serial as serial, not nextval() (by @vrana)
+- PostgreSQL: Export schema in nextval() (by @vrana)
+- PostgreSQL: Export schema in REFERENCES (by @vrana)
+- Elasticsearch: Support dropping aliases (by @vrana)
+- Update German and Dutch translations (by @wintstar)
+- Update Polish translation (by @Matthaiks)
+- Update Vietnamese translation (by @chuongminhofficial)
+- Add partial Croatian translation (by Nikola)
+
+### Bugfixes
+
+- Avoid denial-of-service via version check (GHSA-jm85-8cpp-9cjc)
+- Fix hiding sort links on unsupported columns (regression from 5.1.0)
+- Autofocus the first added field in alter table (by @vrana)
+- Fix validating IPv6 host
+- Allow connecting to IPv6 (by @vrana)
+- Don't quote comma in TSV export (by @vrana)
+- Export: Remember unchecked parameters (regression from 5.1.0)
+- Fix PHP 5 compatibility (regression from 5.4.0)
+- MySQL: Use information_schema to get routine definition (by @vrana)
+- MariaDB: Parse COLLATE in routine definition (by @vrana)
+- MariaDB: Don't display checks with the same name from another table (by @vrana)
+- PostgreSQL: Allow comparing json columns (by @vrana)
+- PostgreSQL: Link only tables in the same schema in backward keys (by @vrana)
+- PostgreSQL: Quote edit value with interval operator (by @vrana)
+- PostgreSQL: Don't treat user types containing 'file' as blobs (by @vrana)
+- PostgreSQL: Export DROP and CREATE DATABASE (by @vrana)
+- PostgreSQL: Mark unique partial indexes as unique (by @vrana)
+- PostgreSQL: Add missing parentheses to CHECK export (by @vrana)
+- PostgreSQL: Remove duplicate DEFERRABLE in foreign key export (by @vrana)
+- PostgreSQL: Add schema to sequence and view export (by @vrana)
+- PostgreSQL: Fix definition of complex generated columns (by @vrana)
+- PostgreSQL: Fix namespace in inheritance links (by @professor93)
+- non-PostgreSQL: display NOT NULL checks (by @vrana)
+- MS SQL: Fix hiding system schemas (regression from 5.1.0)
+- ClickHouse: Fix list of tables (by @Marcus-Nightingale)
+- ClickHouse: Fix offset (by @Marcus-Nightingale)
+- ClickHouse: Set default format, support Common Table Expressions (by @polonskiy)
+- ClickHouse: Fix nullable columns
+- ClickHouse: Fix default values
+
+(Ported relevant changes from Adminer 5.4.0-5.4.2 and several changes from dev version.)
+
+AdminNeo 5.4.1 (2026-06-07)
+---------------------------
+
+### Changes
+
+- MongoDB: Print executed queries
+- Update Polish translation (by @Matthaiks)
+- Update Vietnamese translation (by @chuongminhofficial)
+- Update Spanish translation (by @rexwithluv)
+- Add Katalon tests for MongoDB
+- Update JUSH library
+
+### Bugfixes
+
+- Fix links to tables in syntax highlighting (regression from 5.2.0)
+- PostgreSQL: Fix exporting whole databases (regression from 5.1.0)
+- MongoDB: Fix displaying selection table (regression from 5.4.0)
+  MongoDB: Fix edit form when inserting the first record (regression from 5.0.0)
+- MongoDB: Fix authenticating user restricted to one database (fix #177)
+- MongoDB: Fix detecting of JSON values
+- MongoDB: Fix saving NULL and "NULL" values
 
 AdminNeo 5.4.0 (2026-05-27)
 ---------------------------

@@ -67,7 +67,7 @@ class Admin extends Origin
 			"../vendor/vrana/jush/modules/jush-sqlite.js",
 			"../vendor/vrana/jush/modules/jush-oracle.js",
 			"../vendor/vrana/jush/modules/jush-simpledb.js",
-			"../vendor/vrana/jush/modules/jush-js.js",
+			"../vendor/vrana/jush/modules/jush-json.js",
 		]), true);
 	}
 
@@ -92,7 +92,7 @@ class Admin extends Origin
 				echo $this->admin->getLoginFormRow('driver', '', input_hidden("auth[driver]", $driver));
 			}
 
-			echo $this->admin->getLoginFormRow('server', lang('Server'), '<input class="input" name="auth[server]" value="' . h($server) . '" title="hostname[:port]" placeholder="localhost" autocapitalize="off">');
+			echo $this->admin->getLoginFormRow('server', lang('Server'), '<input class="input" name="auth[server]" value="' . h($server) . '" title="' . lang('hostname[:port] or :socket') . '" placeholder="localhost" autocapitalize="off">');
 		}
 
 		echo $this->admin->getLoginFormRow('username', lang('Username'), '<input class="input" name="auth[username]" id="username" value="' . h($_GET["username"]) . '" autocomplete="username" autocapitalize="off">');
@@ -120,7 +120,7 @@ class Admin extends Origin
 	 */
 	public function getFieldName(array $field, int $order = 0): string
 	{
-		$type = $field["full_type"];
+		$type = $field["full_type"] . ($field["null"] ? " NULL" : "");
 		$comment = $field["comment"];
 		$separator = $type && $comment != "" ? ": " : "";
 
@@ -158,10 +158,10 @@ class Admin extends Origin
 		$is_view = false;
 		if (support("table")) {
 			$is_view = is_view($tableStatus);
-			if ($is_view) {
-				$links["view"] = [lang('Alter view'), "edit"];
-			} else {
+			if (!$is_view) {
 				$links["create"] = [lang('Alter table'), "edit"];
+			} elseif (support("view")) {
+				$links["view"] = [lang('Alter view'), "edit"];
 			}
 		}
 
@@ -197,7 +197,7 @@ class Admin extends Origin
 			$query .= ";";
 		}
 
-		$syntax = DIALECT == "elastic" ? "js" : DIALECT;
+		$syntax = DIALECT == "elastic" || DIALECT == "mongo" ? "json" : DIALECT;
 		$return = "<pre><code class='jush-$syntax'>" . h(str_replace("\n", " ", $query)) . "</code></pre>\n";
 
 		$return .= "<p class='links'>";
@@ -262,7 +262,7 @@ class Admin extends Origin
 		}
 
 		$return .= "<div id='$sqlId' class='hidden'>\n";
-		$syntax = DIALECT == "elastic" ? "js" : DIALECT;
+		$syntax = DIALECT == "elastic" || DIALECT == "mongo" ? "json" : DIALECT;
 		$return .= "<pre><code class='jush-$syntax'>" . truncate_utf8($query, 1000) . "</code></pre>\n";
 
 		$return .= "<p class='links'>";
@@ -333,10 +333,10 @@ class Admin extends Origin
 			$text = $val;
 		} elseif (preg_match("~char|binary|boolean~", $field["type"]) && !preg_match("~var~", $field["type"])) {
 			$text = "<code>$val</code>";
-		} elseif (preg_match('~blob|bytea|raw|file~', $field["type"]) && !is_utf8($val)) {
+		} elseif (is_blob($field) && !is_utf8($val)) {
 			$text = "<i>" . lang('%d byte(s)', strlen($original)) . "</i>";
 		} elseif ($this->admin->detectJson($field["type"], $original)) {
-			$text = "<code class='jush-js'>$val</code>";
+			$text = "<code class='jush-json'>$val</code>";
 		} else {
 			$text = $val;
 		}
@@ -457,12 +457,18 @@ class Admin extends Origin
 		}
 	}
 
-	public function printInheritedTables(array $inheritedTables): void
+	public function printRelatedTables(array $tables): void
 	{
 		echo "<ul class='links'>\n";
 
-		foreach ($inheritedTables as $table) {
-			echo "<li><a href='", h(ME . "table=" . urlencode($table)), "'>", icon("structure"), h($table), "</a>";
+		foreach ($tables as $row) {
+			$link = preg_replace('~ns=[^&]*~', "ns=" . urlencode($row["ns"]), ME);
+			echo "<li><a href='", h($link . "table=" . urlencode($row["table"])), "'>", icon("structure");
+			if ($row["ns"] != $_GET["ns"]) {
+				echo "<b>" . h($row["ns"]) . "</b>.";
+			}
+			echo h($row["table"]);
+			echo "</a>";
 		}
 
 		echo "</ul>\n";
@@ -587,7 +593,9 @@ class Admin extends Origin
 				echo "<div>(<i>" . implode("</i>, <i>", array_map('AdminNeo\h', $index["columns"])) . "</i>) AGAINST";
 				echo "<input type='text' class='input' name='fulltext[$i]' value='" . h($_GET["fulltext"][$i] ?? null) . "'>";
 				echo script("qsl('input').oninput = selectFieldChange;", "");
-				echo checkbox("boolean[$i]", 1, isset($_GET["boolean"][$i]), "BOOL");
+				if (DIALECT == 'sql') {
+					echo checkbox("boolean[$i]", 1, isset($_GET["boolean"][$i]), "BOOL");
+				}
 				echo "</div>\n";
 			}
 		}
@@ -851,7 +859,7 @@ class Admin extends Origin
 				}
 			}
 
-			if ($key && $functions && !preg_match('~enum|set|blob|bytea|raw|file|bool~', $field["type"])) {
+			if ($key && $functions && !preg_match('~enum|set|bool~', $field["type"]) && !is_blob($field)) {
 				$return .= "/SQL";
 			}
 		}
@@ -884,9 +892,9 @@ class Admin extends Origin
 	 *
 	 * @param array $field Single field from fields().
 	 *
-	 * @return string Expression to use in a query.
+	 * @return string|false Expression to use in a query or false to skip the input.
 	 */
-	public function processFieldInput(array $field, string $value, string $function = ""): string
+	public function processFieldInput(array $field, string $value, string $function = "")
 	{
 		if ($function == "SQL") {
 			return $value; //! SQL injection
@@ -905,7 +913,7 @@ class Admin extends Origin
 		} elseif (preg_match('~^([+-]|\|\|)$~', $function)) {
 			$return = idf_escape($name) . " $function $return";
 		} elseif (preg_match('~^[+-] interval$~', $function)) {
-			$return = idf_escape($name) . " $function " . (preg_match("~^(\\d+|'[0-9.: -]') [A-Z_]+\$~i", $value) ? $value : $return);
+			$return = idf_escape($name) . " $function " . (preg_match("~^(\\d+|'[0-9.: -]') [A-Z_]+\$~i", $value) && DIALECT != "pgsql" ? $value : $return);
 		} elseif (preg_match('~^(addtime|subtime|concat)$~', $function)) {
 			$return = "$function(" . idf_escape($name) . ", $return)";
 		} elseif (preg_match('~^(md5|sha1|password|encrypt)$~', $function)) {
@@ -1042,7 +1050,7 @@ class Admin extends Origin
 				}
 			}
 
-			$result = Connection::get()->query($query, 1); // 1 - MYSQLI_USE_RESULT //! enum and set as numbers
+			$result = Connection::get()->query($query, 1); // 1 - MYSQLI_USE_RESULT
 			if ($result) {
 				$insert = "";
 				$buffer = "";
@@ -1198,20 +1206,20 @@ class Admin extends Origin
 			$this->admin->printDatabaseSwitcher($missing);
 
 			$actions = [];
-			if (DB == null || !$missing) {
+			if (DB == "" || !$missing) {
 				if (support("sql")) {
 					$actions[] = "<a href='" . h(ME) . "sql='" . bold(isset($_GET["sql"]) && !isset($_GET["import"])) . ">" . icon("command") . lang('SQL command') . "</a>";
 					$actions[] = "<a href='" . h(ME) . "import='" . bold(isset($_GET["import"])) . ">" . icon("import") . lang('Import') . "</a>";
 				}
 				$actions[] = "<a href='" . h(ME) . "dump=" . urlencode($_GET["table"] ?? $_GET["select"]) . "' id='dump'" . bold(isset($_GET["dump"])) . ">" . icon("export") . lang('Export') . "</a>";
 			}
-			if (DB == null) {
+			if (DB == "") {
 				$actions[] = '<a href="' . h(ME) . 'database="' . bold($_GET["database"] === "") . ">" . icon("database-add") . lang('Create database') . "</a>\n";
 			}
-			if (DB != null && $_GET["ns"] === "" && !$missing) {
+			if (DB != "" && $_GET["ns"] === "" && !$missing) {
 				$actions[] = '<a href="' . h(ME) . 'scheme="' . bold($_GET["scheme"] === "") . ">" . icon("database-add") . lang('Create schema') . "</a>\n";
 			}
-			if (DB != null && $_GET["ns"] !== "" && !$missing) {
+			if (DB != "" && $_GET["ns"] !== "" && !$missing) {
 				$actions[] = '<a href="' . h(ME) . 'create="' . bold($_GET["create"] === "") . ">" . icon("table-add") . lang('Create table') . "</a>\n";
 			}
 			if ($actions) {
@@ -1235,21 +1243,29 @@ class Admin extends Origin
 			}
 
 			// Syntax highlighting.
-			if (support("sql") || DIALECT == "elastic") {
+			if (support("sql") || DIALECT == "elastic" || DIALECT == "mongo") {
 				echo "<script" . nonce() . ">\n";
 				if (support("sql") && $tables) {
 					$links = [];
 					foreach ($tables as $table => $type) {
 						$links[] = preg_quote($table, '/');
 					}
-					echo "const jushLinks = { " . DIALECT . ": [ '" . js_escape(ME) . (support("table") ? "table=" : "select=") . "\$&', /\\b(" . implode("|", $links) . ")\\b/g ] };\n";
+					$tableParam = support("table") && !$this->config->isSelectionPreferred() ? "table" : "select";
+					echo "window.jushLinks = { " . DIALECT . ": {\n";
+					echo js_escape_key(ME . $tableParam . '=$&'), ': /\b(' . implode('|', $links) . ')\b/g';
+					if (support('routine')) {
+						foreach (routines() as $row) {
+							echo ",\n", js_escape_key(ME . 'function=' . urlencode($row["SPECIFIC_NAME"]) . '&name=$&'), ': /\b' . preg_quote($row["ROUTINE_NAME"], '/') . '(?=["`]?\()/g';
+						}
+					}
+					echo "\n}};\n";
 					foreach (["bac", "bra", "sqlite_quo", "mssql_bra"] as $val) {
 						echo "jushLinks.$val = jushLinks." . DIALECT . ";\n";
 					}
 				}
 
 				if (
-					DIALECT != "elastic" &&
+					DIALECT != "elastic" && DIALECT != "mongo" &&
 					$this->getConfig()->isSqlAutocompletionEnabled() &&
 					(isset($_GET["sql"]) || isset($_GET["trigger"]) || isset($_GET["check"]))
 				) {
