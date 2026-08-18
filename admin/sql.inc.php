@@ -48,8 +48,8 @@ if ($_POST) {
 	}
 
 	if (is_string($query)) { // get_file() returns error as number, fread() as false
-		if (function_exists('memory_get_usage') && ($memory_limit = ini_bytes("memory_limit")) != "-1") {
-			@ini_set("memory_limit", max($memory_limit, strval(2 * strlen($query) + memory_get_usage() + 8e6))); // @ - may be disabled, 2 - substr and trim, 8e6 - other variables
+		if (($memory_limit = ini_bytes("memory_limit")) != "-1") {
+			ini_set("memory_limit", max($memory_limit, strval(2 * strlen($query) + memory_get_usage() + 8e6))); // 2 - substr and trim, 8e6 - other variables
 		}
 
 		if ($query != "" && strlen($query) < 1e6) { // don't add big queries
@@ -143,10 +143,10 @@ if ($_POST) {
 						$q = substr($query, 0, $pos + $delimiter_length);
 						$commands++;
 						$print = "<pre id='sql-$commands'><code class='jush-" . DIALECT . "'>" . Admin::get()->formatSqlCommandQuery(trim($q)) . "</code></pre>\n";
-						if (DIALECT == "sqlite" && preg_match("~^$space*+ATTACH\\b~i", $q, $match)) {
+						if (DIALECT == "sqlite" && preg_match("~^$space*+(ATTACH|VACUUM\\b.*\\bINTO)\\b~is", $q, $match) !== 0) {
 							// PHP doesn't support setting SQLITE_LIMIT_ATTACHED
 							echo $print;
-							echo "<p class='error'>" . lang('ATTACH queries are not supported.') . "\n";
+							echo "<p class='error'>" . lang('%s queries are not supported.', preg_match('~ATTACH~i', $match[1]) ? 'ATTACH' : 'VACUUM INTO') . "\n";
 							$errors[] = " <a href='#sql-$commands'>$commands</a>";
 							if ($_POST["error_stops"]) {
 								break;

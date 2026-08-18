@@ -19,7 +19,6 @@ page_header(lang('Process list'), [lang('Process list')]);
 echo "<form action='' method='post'>\n";
 echo "<div class='scrollable'>\n";
 echo "<table class='nowrap checkable'>\n";
-echo script("mixin(qsl('table'), {onclick: tableClick, ondblclick: partialArg(tableClick, true)});");
 
 // HTML valid because there is always at least one process
 $i = -1;
@@ -36,18 +35,24 @@ foreach (process_list() as $i => $row) {
 			]);
 		}
 		echo "</thead>\n";
+		echo "<tbody>\n";
 	}
 	echo "<tr>" . (support("kill") ? "<td>" . checkbox("kill[]", $row[DIALECT == "sql" ? "Id" : "pid"], 0) : "");
 	foreach ($row as $key => $val) {
-		echo "<td>" . (
-			(DIALECT == "sql" && $key == "Info" && preg_match("~Query|Killed~", $row["Command"]) && $val != "") ||
-			(DIALECT == "pgsql" && $key == "current_query" && $val != "<IDLE>") ||
-			(DIALECT == "oracle" && $key == "sql_text" && $val != "")
+		echo "<td>" . ($val != "" && (
+			(DIALECT == "sql" && $key == "Info" && preg_match("~Query|Killed~", $row["Command"])) ||
+			(DIALECT == "pgsql" && $key == "query") ||
+			(DIALECT == "oracle" && $key == "sql_text"))
 			? "<code class='jush-" . DIALECT . "'>" . truncate_utf8($val, 100) . '</code> <a href="' . h(ME . ($row["db"] != "" ? "db=" . urlencode($row["db"]) . "&" : "") . "sql=" . urlencode($val)) . '">' . icon("edit") . lang('Clone') . '</a>'
 			: h($val)
 		);
 	}
 	echo "\n";
+}
+
+if ($i >= 0) {
+	echo "</tbody>\n";
+	echo script("mixin(qsl('tbody'), {onclick: tableClick, ondblclick: partialArg(tableClick, true)});");
 }
 
 echo "</table>\n";

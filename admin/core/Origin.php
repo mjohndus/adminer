@@ -216,17 +216,25 @@ abstract class Origin extends Plugin
 	}
 
 	/**
-	 * Returns server name displayed in breadcrumbs. Can be empty string.
+	 * Returns server name displayed in breadcrumbs.
 	 */
-	public function getServerName(string $server): string
+	public function getServerName(string $server, bool $resolveDefault = true, ?string $fallback = null): string
 	{
 		if ($server == "") {
-			return "";
+			if (!$resolveDefault) {
+				return "";
+			}
+
+			$server = Connection::exists() ? Connection::get()->getDefaultServerName() : "";
+			if ($server == "") {
+				return $fallback !== null ? $fallback : lang('Server');
+			}
+			$serverObj = null;
+		} else {
+			$serverObj = $this->config->getServer($server);
 		}
 
-		$serverObj = $this->config->getServer($server);
-
-		return $serverObj ? $serverObj->getName() : $server;
+		return $serverObj ? $serverObj->getName() : preg_replace('~^https?://~', "", $server);
 	}
 
 	public abstract function getDatabase(): ?string;
@@ -248,10 +256,15 @@ abstract class Origin extends Plugin
 	 *
 	 * @return list<string>
 	 */
-	public function getSchemas(): array
+	public function getSchemas(bool $noSystem = false): array
 	{
+		$hiddenSchemas = $this->config->getHiddenSchemas();
+		if ($noSystem && !in_array("__system", $hiddenSchemas)) {
+			$hiddenSchemas[] = "__system";
+		}
+
 		return $this->filterListWithWildcards(
-			schemas(), $this->config->getHiddenSchemas(), false, Driver::get()->getSystemSchemas()
+			schemas(), $hiddenSchemas, false, Driver::get()->getSystemSchemas()
 		);
 	}
 
@@ -468,7 +481,7 @@ abstract class Origin extends Plugin
 		return h($comment);
 	}
 
-	public abstract function printTableMenu(array $tableStatus, ?string $set = ""): void;
+	public abstract function printTableMenu(array $tableStatus, ?array $insertParams): void;
 
 	/**
 	 * Returns foreign keys for table.
@@ -545,7 +558,7 @@ abstract class Origin extends Plugin
 
 				$link = $me . 'edit=' . urlencode($key["table"]);
 				foreach ($constraint as $column => $val) {
-					$link .= "&set" . urlencode("[" . bracket_escape($column) . "]") . "=" . urlencode($row[$val]);
+					$link .= "&preset" . urlencode("[" . bracket_escape($column) . "]") . "=" . urlencode($row[$val]);
 				}
 
 				echo "<a href='" . h($link) . "' title='" . lang('New item') . "'>", icon_solo("add"), "</a> ";
@@ -678,8 +691,8 @@ abstract class Origin extends Plugin
 
 		$flags = JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | ($pretty ? JSON_PRETTY_PRINT : 0);
 
-		if (str_contains($fieldType, "json")) {
-			if ($pretty !== null && $this->config->isJsonValuesAutoFormat()) {
+		if (preg_match('~^jsonb?$~', $fieldType)) {
+			if ($value != null && $pretty !== null && $this->config->isJsonValuesAutoFormat()) {
 				$value = json_encode(json_decode($value), $flags);
 			}
 

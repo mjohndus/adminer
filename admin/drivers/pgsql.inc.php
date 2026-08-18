@@ -37,8 +37,8 @@ if (isset($_GET["pgsql"])) {
 					$this->error = $error;
 				});
 
-				list($host, $port) = host_port(addcslashes($server, "'\\"));
-				$this->connectionString = "host='$host'" . ($port ? " port='$port'" : "") . " user='" . addcslashes($username, "'\\") . "' password='" . addcslashes($password, "'\\") . "'";
+				list($host, $port) = host_port($server);
+				$this->connectionString = ($host != "" ? "host=$host " : "") . ($port ? "port=$port " : "") . "user='" . addcslashes($username, "'\\") . "' password='" . addcslashes($password, "'\\") . "'";
 
 				$ssl_mode = Admin::get()->getConfig()->getSslMode();
 				if ($ssl_mode) {
@@ -197,11 +197,6 @@ if (isset($_GET["pgsql"])) {
 				$this->resource = $resource;
 			}
 
-			public function __destruct()
-			{
-				pg_free_result($this->resource);
-			}
-
 			public function fetchAssoc()
 			{
 				return pg_fetch_assoc($this->resource);
@@ -259,9 +254,9 @@ if (isset($_GET["pgsql"])) {
 			{
 				$db = Admin::get()->getDatabase();
 
-				list($host, $port) = host_port(addcslashes($server, "'\\"));
+				list($host, $port) = host_port($server);
 				//! client_encoding is supported since 9.1, but we can't yet use minVersion() here
-				$dsn = "pgsql:host='$host'" . ($port ? " port='$port'" : "") . " client_encoding=utf8 dbname='" . ($db != "" ? addcslashes($db, "'\\") : "postgres") . "'";
+				$dsn = "pgsql:" . ($host != "" ? "host=$host " : "") . ($port ? "port=$port " : "") . "client_encoding=utf8 dbname='" . ($db != "" ? addcslashes($db, "'\\") : "postgres") . "'";
 
 				$ssl_mode = Admin::get()->getConfig()->getSslMode();
 				if ($ssl_mode) {
@@ -320,6 +315,23 @@ if (isset($_GET["pgsql"])) {
 	if (class_exists('AdminNeo\PgSqlConnectionBase')) {
 		class PgSqlConnection extends PgSqlConnectionBase
 		{
+			/** @var bool */
+			private $localhostServer = false;
+
+			public function open(string $server, string $username, string $password): bool
+			{
+				if ($server == "localhost") {
+					$this->localhostServer = true;
+				}
+
+				return parent::open($server, $username, $password);
+			}
+
+			public function getDefaultServerName(): string
+			{
+				return $this->localhostServer ? "localhost" : "";
+			}
+
 			public function multiQuery(string $query): bool
 			{
 				// no ^ to allow leading comments
@@ -383,7 +395,10 @@ if (isset($_GET["pgsql"])) {
 			}
 
 			if ($connection->isMinVersion("12")) {
-				$this->generated = ["STORED"];
+				$this->generated[] = "STORED";
+				if ($connection->isMinVersion("18")) {
+					$this->generated[] = "VIRTUAL";
+				}
 			}
 
 			// No "SQL" to avoid CSRF.
@@ -599,7 +614,13 @@ if (isset($_GET["pgsql"])) {
 				// Trim array parenthesis.
 				$value = preg_replace('~^\{(.*)}$~', "$1", $value);
 
-				if (preg_match('~^(\{+)(.*)(}+)$~', $value, $matches)) {
+				$isJson = str_contains($scalarType, "json");
+				if ($isJson) {
+					$values = explode('","', trim($value, '"'));
+					array_walk($values, function (&$v) {
+						$v = str_replace('\"', '"', $v);
+					});
+				} elseif (preg_match('~^(\{+)(.*)(}+)$~', $value, $matches)) {
 					// Explode multidimensional array.
 					$values = explode("$matches[3],$matches[1]", $matches[2]);
 					array_walk($values, function (&$v) use ($matches) {
@@ -610,13 +631,13 @@ if (isset($_GET["pgsql"])) {
 					$values = explode(",", $value);
 				}
 
-				if ($values[0][0] == "{") {
+				if (!$isJson && $values[0][0] == "{") {
 					// Multidimensional array.
 					$type = $scalarType;
 					array_walk($values, function (&$v) use ($type, &$scalarType) {
 						$v = $this->explodeArrayValue($v, $type, $scalarType);
 					});
-				} elseif (isset($this->types[lang('Strings')][$scalarType])) {
+				} elseif (!$isJson && isset($this->types[lang('Strings')][$scalarType])) {
 					// Trim apostrophes from string values.
 					array_walk($values, function (&$v) {
 						$v = preg_replace('~^\'(.*)\'$~', "$1", $v);
@@ -639,11 +660,13 @@ if (isset($_GET["pgsql"])) {
 			// Array type.
 			if (preg_match('~^([^[]+)(\[])+$~', $type, $matches)) {
 				$isString = isset($this->types[lang('Strings')][$matches[1]]);
+				$isJson = str_contains($type, "json");
 
-				// Add apostrophes to string values.
-				array_walk($values, function (&$v) use ($type, $isString) {
+				array_walk($values, function (&$v) use ($type, $isString, $isJson) {
 					if (is_array($v)) {
 						$v = $this->implodeArrayValues($v, $type);
+					} elseif ($isJson) {
+						$v = "\"$v\"";
 					} elseif ($isString) {
 						$v = "'$v'";
 					}
@@ -786,7 +809,8 @@ AND relnamespace = " . Driver::get()->getNsOidSql() . "
 		return $return;
 	}
 
-	function is_view($table_status) {
+	function is_view(array $table_status):bool
+	{
 		return in_array($table_status["Engine"], ["view", "materialized view"]);
 	}
 
@@ -835,7 +859,8 @@ ORDER BY a.attnum"
 			if (in_array($row['attidentity'], ['a', 'd'])) {
 				$row['default'] = 'GENERATED ' . ($row['attidentity'] == 'd' ? 'BY DEFAULT' : 'ALWAYS') . ' AS IDENTITY';
 			}
-			$row["generated"] = ($row["attgenerated"] == "s" ? "STORED" : "");
+			$options = ["s" => "STORED", "v" => "VIRTUAL"];
+			$row["generated"] = ($options[$row["attgenerated"]] ?? "");
 			$row["null"] = !$row["attnotnull"];
 			$row["auto_increment"] = $row['attidentity'] || preg_match('~^nextval\(~i', $row["default"])
 				|| preg_match('~^unique_rowid\(~', $row["default"]); // CockroachDB
@@ -1002,7 +1027,7 @@ ORDER BY s.ordinal_position";
 					}
 					$alter[] = "ALTER $column TYPE$val[1]";
 					$sequence_name = $table . "_" . idf_unescape($val[0]) . "_seq";
-					$alter[] = "ALTER $column " . ($val[3] ? "SET" . preg_replace('~GENERATED ALWAYS(.*) STORED~', 'EXPRESSION\1', $val[3])
+					$alter[] = "ALTER $column " . ($val[3] ? "SET" . preg_replace('~GENERATED ALWAYS(.*) (STORED|VIRTUAL)~', 'EXPRESSION\1', $val[3])
 						: (isset($val[6]) ? "SET DEFAULT nextval(" . q($sequence_name) . ")"
 						: "DROP DEFAULT" //! change to DROP EXPRESSION with generated columns
 					));
@@ -1317,6 +1342,33 @@ AND typelem = 0"
 		return ($return ? "$return\n" : $return);
 	}
 
+	// PostgreSQL cannot disable only the foreign key checks - session_replication_role disables all triggers
+	// and rules and requires superuser privileges, so use it only if the tables cannot be ordered by their dependencies
+	function foreign_key_checks_sql($enabled) {
+		return "SET session_replication_role = " . ($enabled ? "DEFAULT" : "replica") . ";\n";
+	}
+
+	// inserting explicit values does not advance the sequence, so set it to the highest imported value,
+	// otherwise the next insert would fail on a duplicate key
+	function restart_sequences_sql($table) {
+		$return = "";
+
+		foreach (fields($table) as $field) {
+			// CockroachDB generates the values by unique_rowid(), there is no sequence to restart
+			if (!$field["auto_increment"] || preg_match('~^unique_rowid\(~', $field["default"])) {
+				continue;
+			}
+
+			// pg_get_serial_sequence() takes the table as a quoted identifier but the column as a plain name
+			$sequence = "pg_get_serial_sequence(" . q(table($table)) . ", " . q($field["field"]) . ")";
+			$column = idf_escape($field["field"]);
+
+			$return .= "SELECT setval($sequence, MAX($column)) FROM " . table($table) . " HAVING MAX($column) IS NOT NULL;\n";
+		}
+
+		return $return;
+	}
+
 	function create_sql($table, $auto_increment, $style) {
 		$return_parts = [];
 		$sequences = [];
@@ -1350,15 +1402,20 @@ AND typelem = 0"
 			// sequences for fields
 			if (preg_match('~nextval\(\'([^\']+)\'\)~', $field['default'], $matches)) {
 				$sequence_name = $matches[1];
-				$sq = first(get_rows((Connection::get()->isMinVersion("10")
+				$rows = get_rows((Connection::get()->isMinVersion("10")
 					? "SELECT *, cache_size AS cache_value FROM pg_sequences WHERE schemaname = current_schema() AND sequencename = " . q(idf_unescape($sequence_name))
 					: "SELECT * FROM $sequence_name"
-				), null, "-- "));
+				), null, "-- ");
 
-				$sequences[] = ($style == "DROP+CREATE" ? "DROP SEQUENCE IF EXISTS $ns.$sequence_name;\n" : "") .
-					"CREATE SEQUENCE $ns.$sequence_name INCREMENT $sq[increment_by] MINVALUE $sq[min_value] MAXVALUE $sq[max_value]" .
-					($auto_increment && $sq['last_value'] ? " START " . ($sq["last_value"] + 1) : "") .
-					" CACHE $sq[cache_value];";
+				// Handle possible error or sequence defined in different schema.
+				if ($rows) {
+					$sq = first($rows);
+
+					$sequences[] = ($style == "DROP+CREATE" ? "DROP SEQUENCE IF EXISTS $ns.$sequence_name;\n" : "") .
+						"CREATE SEQUENCE $ns.$sequence_name INCREMENT $sq[increment_by] MINVALUE $sq[min_value] MAXVALUE $sq[max_value]" .
+						($auto_increment && $sq['last_value'] ? " START " . ($sq["last_value"] + 1) : "") .
+						" CACHE $sq[cache_value];";
+				}
 			}
 		}
 

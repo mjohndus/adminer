@@ -19,18 +19,37 @@ if ($_POST) {
 		"dumpOutput" => $_POST["output"],
 	]);
 
-	$subjects = array_flip($_POST["databases"] ?? []) + array_flip($_POST["tables"] ?? []) + array_flip($_POST["data"] ?? []);
-	if (count($subjects) == 1) {
-		$identifier = key($subjects);
-	} elseif (DB != "") {
-		$identifier = DB;
+	if (DB != "") {
+		$databases = [DB];
 	} else {
-		$identifier = SERVER != "" ? Admin::get()->getServerName(SERVER) : "localhost";
+		$databases = $_POST["databases"] ?? [];
+		if (is_string($databases)) {
+			$databases = explode("\n", rtrim(str_replace("\r", "", $databases), "\n"));
+		}
 	}
 
-	$ext = dump_headers($identifier, DB == "" || count($subjects) > 1);
+	$schemas = $_POST["schemas"] ?? [];
+	$tables = array_flip($_POST["tables"] ?? []) + array_flip($_POST["data"] ?? []);
+
+	if (count($tables) == 1) {
+		$identifier = key($tables);
+	} elseif (count($schemas) == 1) {
+		$identifier = $schemas[0];
+	} elseif (count($databases) == 1) {
+		$identifier = $databases[0];
+	} else {
+		$identifier = Admin::get()->getServerName(SERVER, true, "server");
+	}
+
+	$ext = dump_headers($identifier, DB == "" || $_GET["ns"] === "" || count($tables) > 1);
 
 	$is_sql = preg_match('~sql~', $_POST["format"]);
+
+	// In a data-only export the foreign keys already exist in the target database, unlike in a full dump where they are
+	// added after inserting all data. So the tables must be inserted in an order respecting their dependencies.
+	// MySQL does not need it, it disables the foreign key checks for the whole dump.
+	$data_only = $is_sql && $_POST["data_style"] && !$_POST["table_style"] && DIALECT != "sql";
+
 	if ($is_sql) {
 		echo "-- AdminNeo " . VERSION . " " . Drivers::get(DRIVER) . " " . Connection::get()->getVersion() . " dump\n\n";
 		if (DIALECT == "sql") {
@@ -46,15 +65,6 @@ SET foreign_key_checks = 0;
 	}
 
 	$style = $_POST["db_style"];
-
-	if (DB != "") {
-		$databases = [DB];
-	} else {
-		$databases = $_POST["databases"] ?? [];
-		if (is_string($databases)) {
-			$databases = explode("\n", rtrim(str_replace("\r", "", $databases), "\n"));
-		}
-	}
 
 	foreach ($databases as $db) {
 		Admin::get()->dumpDatabase($db);
@@ -100,53 +110,98 @@ SET foreign_key_checks = 0;
 			}
 
 			if ($_POST["table_style"] || $_POST["data_style"]) {
-				$views = [];
-				foreach (table_status('', true) as $name => $table_status) {
-					$table = (DB == "" || in_array($name, (array) $_POST["tables"]));
-					$data = (DB == "" || in_array($name, (array) $_POST["data"]));
-					if ($table || $data) {
-						$tmp_file = null;
-						if ($ext == "tar") {
-							$tmp_file = new TmpFile();
-							ob_start([$tmp_file, 'write'], 1e5);
+				foreach (($_GET["ns"] === "" ? (array) $_POST["schemas"] : (DB != "" || !support("scheme") ? [""] : Admin::get()->getSchemas(true))) as $schema) {
+					if ($schema != "") {
+						set_schema($schema);
+					}
+
+					$tables_status = table_status('', true);
+					$table_names = array_keys($tables_status);
+					$disable_foreign_keys = false;
+
+					if ($data_only && $table_names) {
+						$references = [];
+						foreach ($table_names as $name) {
+							if (!is_view($tables_status[$name]) && (DB == "" || $_GET["ns"] === "" || in_array($name, (array) $_POST["data"]))) {
+								foreach (foreign_keys($name) as $foreign_key) {
+									$references[$name][] = $foreign_key["table"];
+								}
+							}
 						}
 
-						Admin::get()->dumpTable($name, ($table ? $_POST["table_style"] : ""), (is_view($table_status) ? 2 : 0));
-						if (is_view($table_status) && $ext != "tar") {
-							$views[] = $name;
-						} elseif ($data) {
-							$fields = fields($name);
-							Admin::get()->dumpData($name, $_POST["data_style"], "SELECT *" . convert_fields($fields, $fields) . " FROM " . table($name));
-						}
-						if ($is_sql && $_POST["triggers"] && $table && ($triggers = trigger_sql($name))) {
-							echo "\nDELIMITER ;;\n$triggers\nDELIMITER ;\n";
-						}
-
-						if ($ext == "tar") {
-							ob_end_flush();
-							tar_file((DB != "" ? "" : "$db/") . "$name.csv", $tmp_file);
-						} elseif ($is_sql) {
-							echo "\n";
+						$ordered_names = dump_table_order($table_names, $references);
+						if ($ordered_names) {
+							$table_names = $ordered_names;
+						} else {
+							// Cyclic reference, the tables cannot be ordered - disable the foreign key checks if the driver is able to.
+							$disable_foreign_keys = function_exists('AdminNeo\foreign_key_checks_sql');
 						}
 					}
-				}
 
-				// add FKs after creating tables (except in MySQL which uses SET FOREIGN_KEY_CHECKS=0)
-				if (function_exists('AdminNeo\foreign_keys_sql')) {
-					foreach (table_status('', true) as $name => $table_status) {
-						$table = (DB == "" || in_array($name, (array) $_POST["tables"]));
-						if ($table && !is_view($table_status)) {
-							echo foreign_keys_sql($name);
+					if ($disable_foreign_keys) {
+						echo foreign_key_checks_sql(false) . "\n";
+					}
+
+					$views = [];
+					foreach ($table_names as $name) {
+						$table_status = $tables_status[$name];
+						$table = (DB == "" || $_GET["ns"] === "" || in_array($name, (array) $_POST["tables"]));
+						$data = (DB == "" || $_GET["ns"] === "" || in_array($name, (array) $_POST["data"]));
+						if ($table || $data) {
+							$tmp_file = null;
+							if ($ext == "tar") {
+								$tmp_file = new TmpFile();
+								ob_start([$tmp_file, 'write'], 1e5);
+							}
+
+							$create_style = ($table ? $_POST["table_style"] : "");
+
+							Admin::get()->dumpTable($name, $create_style, (is_view($table_status) ? 2 : 0));
+							if (is_view($table_status) && $ext != "tar") {
+								$views[] = $name;
+							} elseif ($data) {
+								$fields = fields($name);
+								Admin::get()->dumpData($name, $_POST["data_style"], "SELECT *" . convert_fields($fields, $fields) . " FROM " . table($name));
+
+								// the sequences are not created by this dump, so sync them to the imported data
+								if ($is_sql && !$create_style && $_POST["auto_increment"] && function_exists('AdminNeo\restart_sequences_sql')) {
+									echo "\n" . restart_sequences_sql($name);
+								}
+							}
+							if ($is_sql && $_POST["triggers"] && $table && ($triggers = trigger_sql($name))) {
+								echo "\nDELIMITER ;;\n$triggers\nDELIMITER ;\n";
+							}
+
+							if ($ext == "tar") {
+								ob_end_flush();
+								tar_file((DB != "" ? "" : "$db/") . "$name.csv", $tmp_file);
+							} elseif ($is_sql) {
+								echo "\n";
+							}
 						}
 					}
-				}
 
-				foreach ($views as $view) {
-					Admin::get()->dumpTable($view, $_POST["table_style"], 1);
-				}
+					if ($disable_foreign_keys) {
+						echo foreign_key_checks_sql(true) . "\n";
+					}
 
-				if ($ext == "tar") {
-					echo pack("x512");
+					// add FKs after creating tables (except in MySQL which uses SET FOREIGN_KEY_CHECKS=0)
+					if ($_POST["table_style"] && function_exists('AdminNeo\foreign_keys_sql')) {
+						foreach ($tables_status as $name => $table_status) {
+							$table = (DB == "" || $_GET["ns"] === "" || in_array($name, (array) $_POST["tables"]));
+							if ($table && !is_view($table_status)) {
+								echo foreign_keys_sql($name);
+							}
+						}
+					}
+
+					foreach ($views as $view) {
+						Admin::get()->dumpTable($view, $_POST["table_style"], 1);
+					}
+
+					if ($ext == "tar") {
+						echo pack("x512");
+					}
 				}
 			}
 		}
@@ -158,7 +213,7 @@ SET foreign_key_checks = 0;
 	exit;
 }
 
-$name = DB != "" ? h(DB) : (SERVER != "" ? h(Admin::get()->getServerName(SERVER)) : lang('Server'));
+$name = DB != "" ? h(DB) : h(Admin::get()->getServerName(SERVER));
 page_header(lang('Export') . ": $name", ($_GET["export"] != "" ? ["table" => $_GET["export"]] : [lang('Export')]));
 
 echo "<form action='' method='post'>\n";
@@ -214,11 +269,18 @@ echo "<table>\n";
 echo script("qsl('table').onclick = dumpClick;");
 
 $prefixes = [];
-if (DB != "") {
+if (DB != "" && $_GET["ns"] === "") {
+	echo "<thead><tr><th>";
+	echo "<label class='block'><input type='checkbox' id='check-schemas' checked class='jsonly'>" . lang('Schema') . "</label>" . script("gid('check-schemas').onclick = partial(formCheck, /^schemas\\[/);", "");
+	echo "</thead>\n";
+	foreach (Admin::get()->getSchemas() as $schema) {
+		echo "<tr><td>" . checkbox("schemas[]", $schema, true, $schema, "", "block") . "\n";
+	}
+} elseif (DB != "") {
 	$checked = ($TABLE != "" ? "" : " checked");
 	echo "<thead><tr>";
-	echo "<th><label class='block'><input type='checkbox' id='check-tables'$checked>" . lang('Tables') . "</label>" . script("gid('check-tables').onclick = partial(formCheck, /^tables\\[/);", "");
-	echo "<th class='right'><label class='block'>" . lang('Data') . "<input type='checkbox' id='check-data'$checked></label>" . script("gid('check-data').onclick = partial(formCheck, /^data\\[/);", "");
+	echo "<th><label class='block'><input type='checkbox' id='check-tables'$checked class='jsonly'>" . lang('Table') . "</label>" . script("gid('check-tables').onclick = partial(formCheck, /^tables\\[/);", "");
+	echo "<th class='right'><label class='block'>" . lang('Data') . "<input type='checkbox' id='check-data'$checked class='jsonly'></label>" . script("gid('check-data').onclick = partial(formCheck, /^data\\[/);", "");
 	echo "</thead>\n";
 
 	$views = "";
@@ -241,11 +303,14 @@ if (DB != "") {
 	}
 
 } else {
-	echo "<thead><tr><th>";
-	echo "<label class='block'><input type='checkbox' id='check-databases'" . ($TABLE == "" ? " checked" : "") . ">" . lang('Database') . "</label>";
-	echo script("gid('check-databases').onclick = partial(formCheck, /^databases\\[/);", "");
-	echo "</thead>\n";
 	$databases = Admin::get()->getDatabases();
+	echo "<thead><tr><th>";
+	echo "<label class='block'>"
+		. ($databases ? "<input type='checkbox' id='check-databases'" . ($TABLE == "" ? " checked" : "") . " class='jsonly'>" . script("gid('check-databases').onclick = partial(formCheck, /^databases\\[/);", "") : "")
+		. lang('Database')
+		. "</label>"
+	;
+	echo "</thead>\n";
 	if ($databases) {
 		foreach ($databases as $db) {
 			if (!information_schema($db)) {

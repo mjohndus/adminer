@@ -30,7 +30,7 @@ class GeminiSqlPlugin extends Plugin
 	 * @param string $apiKey API key (get your own at https://aistudio.google.com/apikey)
 	 * @param string $model Model (https://ai.google.dev/gemini-api/docs/models#available-models)
 	 */
-	public function __construct(string $apiKey, string $model = "gemini-2.5-flash")
+	public function __construct(string $apiKey, string $model = "gemini-3.1-flash-lite")
 	{
 		$this->apiKey = $apiKey;
 		$this->model = $model;
@@ -79,7 +79,7 @@ class GeminiSqlPlugin extends Plugin
 
 		$url = "https://generativelanguage.googleapis.com/v1beta/models/$this->model:generateContent";
 
-		$result = @file_get_contents("$url?key=$this->apiKey", false, $context);
+		[$result] = get_url("$url?key=$this->apiKey", $context);
 		if ($result === false || !($response = json_decode($result))) {
 			echo "-- Error loading URL: $url\n\n";
 			exit();
@@ -108,8 +108,7 @@ class GeminiSqlPlugin extends Plugin
 
 	public function printAfterSqlCommand(): ?bool
 	{
-		// The phrases from https://gemini.google.com/
-		$waitingText = lang('Just a sec...');
+		$waitingText = lang('Loading') . "…";
 
 		$script = <<<JS
 (function() {

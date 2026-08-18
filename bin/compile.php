@@ -13,6 +13,7 @@ include __DIR__ . "/../admin/include/version.inc.php";
 include __DIR__ . "/../admin/include/debug.inc.php";
 include __DIR__ . "/../admin/include/polyfill.inc.php";
 include __DIR__ . "/../admin/include/available.inc.php";
+include __DIR__ . "/../admin/include/decompress.inc.php";
 include __DIR__ . "/../admin/include/compile.inc.php";
 include __DIR__ . "/../vendor/vrana/phpshrink/phpShrink.php";
 
@@ -35,7 +36,7 @@ function append_linked_files_cases(string $name, string $files, string &$name_ca
 	$linked_filename = linked_filename($name, $file_paths);
 	if ($linked_filename) {
 		$name_cases .= "case '$name': \$filename = '$linked_filename'; break;";
-		$data_cases .= "case '$linked_filename': \$data = '" . compile_file($name, $file_paths) . "'; break;";
+		$data_cases .= "case '$linked_filename': \$data = '" . protect_blob(compile_file($name, $file_paths)) . "'; break;";
 	}
 }
 
@@ -99,6 +100,7 @@ function put_translations(): string
 	}, glob(__DIR__ . "/../admin/translations/*.inc.php"));
 
 	$cases = "";
+	$blobs = "";
 	$plurals_map = [];
 
 	foreach ($languages as $language) {
@@ -122,16 +124,20 @@ function put_translations(): string
 			}
 		}
 
-		$cases .= 'case "' . $language . '": $compressed = "' . base64_encode(lzw_compress(json_encode($translation_ids, JSON_UNESCAPED_UNICODE))) . '"; break;';
+		$blob = compress_string(json_encode($translation_ids, JSON_UNESCAPED_UNICODE));
+		$blobs .= "$language:$blob";
+
+		$cases .= "case '$language': \$compressed = '" . protect_blob($blob) . "'; break;";
 	}
 
-	$translations_version = crc32($cases);
+	// Compute the version from the real data, the placeholders in $cases are the same for any content.
+	$translations_version = crc32($blobs);
 
 	return '
 		function get_translations($lang) {
 			switch ($lang) {' . $cases . '}
 
-			return json_decode(lzw_decompress(base64_decode($compressed)), true);
+			return json_decode(decompress_string($compressed), true);
 		}
 
 		function get_plural_translation_id($key) {
@@ -164,6 +170,30 @@ function get_absolute_path($file_path): string
 	global $current_path;
 
 	return $file_path[0] == "/" ? $file_path : "$current_path/$file_path";
+}
+
+/**
+ * Replaces a compressed data blob with a placeholder.
+ *
+ * The compression alphabet contains characters like "[", "]", "(" or "=", so a blob can accidentally spell a PHP
+ * construct. downgrade_php() can accidentally corrupt the blob afterward.
+ */
+function protect_blob(string $blob): string
+{
+	global $protected_blobs;
+
+	$protected_blobs[] = $blob;
+
+	return "\0blob:" . (count($protected_blobs) - 1) . "\0";
+}
+
+function restore_blobs(string $code): string
+{
+	global $protected_blobs;
+
+	return preg_replace_callback('~\0blob:(\d+)\0~', function ($match) use ($protected_blobs) {
+		return $protected_blobs[$match[1]];
+	}, $code);
 }
 
 function print_usage(): void
@@ -245,6 +275,8 @@ $compilation_info[] = $text = "languages: " . ($selected_languages ? implode(", 
 echo $text;
 
 // Themes.
+$colors = ["blue", "green", "orange", "purple", "red"];
+$colors_pattern = "(" . implode("|", $colors) . ")";
 $selected_themes = [];
 if ($arguments) {
 	$params = explode(",", $arguments[0]);
@@ -252,17 +284,19 @@ if ($arguments) {
 	if (file_exists(__DIR__ . "/../admin/themes/$params[0]")) {
 		$themes_map = [];
 		foreach ($params as $theme) {
-			if (preg_match('~-(blue|green|red)$~', $theme)) {
+			if (preg_match('~-'. $colors_pattern . '$~', $theme)) {
 				$dirNames = [$theme];
 			} else {
-				$dirNames = ["$theme-blue", "$theme-green", "$theme-red"];
+				$dirNames = array_map(function ($color) use ($theme) {
+					return "$theme-$color";
+				}, $colors);
 			}
 
 			// Collect unique themes, ensure to include the default color variant for every theme.
 			foreach ($dirNames as $dirName) {
 				$dirname = basename($dirName);
 
-				preg_match('~-(blue|green|red)$~', $dirname, $matches);
+				preg_match('~-' . $colors_pattern. '$~', $dirname, $matches);
 
 				$themes_map["default-$matches[1]"] = true;
 				$themes_map[$dirname] = true;
@@ -279,8 +313,8 @@ $compilation_info[] = $text = "themes:    " . ($selected_themes ? implode(", ", 
 echo $text;
 
 if (!$selected_themes) {
-	foreach (find_available_themes() as $theme => $colors) {
-		foreach ($colors as $color => $available) {
+	foreach (find_available_themes() as $theme => $theme_colors) {
+		foreach ($theme_colors as $color => $available) {
 			$selected_themes[] = "$theme-$color";
 		}
 	}
@@ -351,6 +385,7 @@ foreach (glob(__DIR__ . "/../admin/drivers/*.inc.php") as $filename) {
 
 $features = ["check", "call" => "routine", "dump", "event", "privileges", "procedure" => "routine", "processlist", "routine", "scheme", "sequence", "status", "trigger", "type", "user" => "privileges", "variables", "view"];
 $lang_ids = []; // global variable simplifies usage in a callback functions
+$protected_blobs = []; // compressed data hidden from the code transformations, see protect_blob()
 
 // Change current directory to the project's root. This is required for generating static files.
 chdir(__DIR__ . "/../$project");
@@ -417,12 +452,13 @@ if ($single_driver) {
 	// Remove source code for unsupported features.
 	foreach ($features as $feature) {
 		if (!support($feature)) {
-			$file = preg_replace("((\t*)" . preg_quote('if (support("' . $feature . '")') . ".*?\n\\1\\}( else)?)s", '', $file);
+			$file = preg_replace("~(\t*)" . preg_quote('} elseif (support("' . $feature . '")', "~") . ".*?\n\\1}~s", '}', $file);
+			$file = preg_replace("~(\t*)" . preg_quote('if (support("' . $feature . '")', "~") . ".*?\n\\1}( else)?~s", '', $file);
 		}
 	}
 
 	// Remove Jush modules for other drivers.
-    $keep_driver = '|' . preg_quote($single_driver == "mysql" ? "sql" : $single_driver) . '\.';
+    $keep_driver = '|' . preg_quote($single_driver == "mysql" ? "sql" : $single_driver, "~") . '\.';
     $keep_autocompletion = support("sql") ? '|autocomplete-sql\.' : "";
 
 	$file = preg_replace('~"\.\./vendor/vrana/jush/modules/jush-(?!textarea\.|txt\.|js\.' . $keep_driver . $keep_autocompletion . ')[^.]+.js",\n~', '', $file);
@@ -465,7 +501,7 @@ for ($i = 0; $i < count($matches[0]); $i++) {
 	// Default theme.
 	if (str_starts_with($name, 'default-$color_variant')) {
 		foreach ($selected_themes as $theme) {
-			if (preg_match('~^default-(blue|green|red)$~', $theme, $matches2)) {
+			if (preg_match('~^default-' . $colors_pattern. '$~', $theme, $matches2)) {
 				$name2 = str_replace('default-$color_variant', $theme, $name);
 				$files2 = str_replace('default-$color_variant', $theme, $files);
 
@@ -482,7 +518,7 @@ for ($i = 0; $i < count($matches[0]); $i++) {
 	if (str_starts_with($name, '$theme-$color_variant')) {
 		foreach ($selected_themes as $theme) {
 			if (!str_starts_with($theme, "default-")) {
-				preg_match('~^(.*)-(blue|green|red)$~', $theme, $matches2);
+				preg_match('~^(.*)-' . $colors_pattern. '$~', $theme, $matches2);
 
 				$name2 = str_replace('$theme-$color_variant', $theme, $name);
 				$files2 = str_replace('$theme-$color_variant', $theme, $files);
@@ -500,7 +536,7 @@ for ($i = 0; $i < count($matches[0]); $i++) {
 	// Favicons.
 	if (str_contains($name, 'icon-$colorVariant.')) {
 		foreach ($selected_themes as $theme) {
-			if (preg_match('~^default-(blue|green|red)$~', $theme, $matches2)) {
+			if (preg_match('~^default-' . $colors_pattern. '$~', $theme, $matches2)) {
 				$name2 = str_replace('$colorVariant', $matches2[1], $name);
 				$files2 = str_replace('$colorVariant', $matches2[1], $files);
 
@@ -571,6 +607,9 @@ $file = downgrade_php($file);
 // Shrink final file.
 $file = phpShrink($file);
 
+// Put the compressed data back once no transformation can corrupt it anymore.
+$file = restore_blobs($file);
+
 // Save file to the output directory.
 if ($output_file_path) {
 	if (is_dir($output_file_path)) {
@@ -591,7 +630,6 @@ if ($output_file_path) {
 
 if (!$output_name) {
 	$output_name = "{$project}neo"
-		. (preg_match('~-dev$~', VERSION) ? "" : "-" . VERSION)
 		. ($single_driver ? "-$single_driver" : "")
 		. ($single_language ? "-$single_language" : "")
 		. ".php";
@@ -601,7 +639,7 @@ $filename = "$output_dir/$output_name";
 
 file_put_contents($filename, $file);
 
-$short_filename = preg_replace('~^' . preg_quote("$current_path/") . '~', "", realpath($filename));
+$short_filename = preg_replace('~^' . preg_quote("$current_path/", "~") . '~', "", realpath($filename));
 echo "output:    $short_filename (" . strlen($file) . " B)\n";
 
 // Compile plugins.

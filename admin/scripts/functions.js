@@ -358,24 +358,133 @@ function initNavigation() {
 	});
 }
 
+/**
+ * Makes the navigation panel resizable by the handle at its inner edge.
+ *
+ * @param {string} url Address storing the new width.
+ * @param {string} token CSRF token.
+ * @param {number} minWidth Number of rem units.
+ * @param {number} maxWidth Number of rem units.
+ */
+function initNavigationResizer(url, token, minWidth, maxWidth) {
+	const handle = gid("navigation-resizer");
+	const panel = gid("navigation-panel");
+	const style = gid("navigation-width");
+	const rtl = document.body.classList.contains("rtl");
+
+	let hoverTimeout = null;
+	let dragging = false;
+	let remSize = 0;
+	let width = 0;
+
+	// The handle is highlighted with a delay to not distract when the pointer just passes over it.
+	handle.addEventListener("mouseenter", () => {
+		hoverTimeout = window.setTimeout(() => handle.classList.add("active"), 100);
+	});
+
+	handle.addEventListener("mouseleave", () => {
+		window.clearTimeout(hoverTimeout);
+		if (!dragging) {
+			handle.classList.remove("active");
+		}
+	});
+
+	const resize = event => {
+		const rect = panel.getBoundingClientRect();
+		const offset = (rtl ? rect.right - event.clientX : event.clientX - rect.left) / remSize;
+		width = Math.round(Math.min(Math.max(offset, minWidth), maxWidth) * 100) / 100;
+
+		// The same media query as on the server keeps the custom width off the floating panel.
+		style.textContent = '@media screen and (min-width: 1024px) { :root { --menu-width: ' + width + 'rem } }';
+	};
+
+	const save = value => {
+		ajax(url, null, 'width=' + value + '&token=' + encodeURIComponent(token), null, true);
+	};
+
+	const stop = () => {
+		dragging = false;
+		document.removeEventListener("mousemove", resize);
+		document.removeEventListener("mouseup", stop);
+		document.body.classList.remove("resizing");
+
+		if (width) {
+			save(width);
+		}
+	};
+
+	handle.addEventListener("mousedown", event => {
+		if (event.button) { // 0 - left button
+			return;
+		}
+
+		// Prevent selecting the panel content.
+		event.preventDefault();
+
+		dragging = true;
+		remSize = parseFloat(getComputedStyle(document.documentElement).fontSize);
+		width = 0;
+		handle.classList.add("active");
+		document.body.classList.add("resizing");
+		document.addEventListener("mousemove", resize);
+		document.addEventListener("mouseup", stop);
+	});
+
+	// Double click restores the default width.
+	handle.addEventListener("dblclick", () => {
+		width = 0;
+		style.textContent = "";
+		save("");
+	});
+}
+
+function initTablesList(dbName) {
+	if (!sessionStorage) {
+		return;
+	}
+
+	const navigationPanel = gid('navigation-panel');
+	const tablesList = gid('tables');
+
+	if (sessionStorage.getItem('neo_tables_position_db') !== dbName) {
+		sessionStorage.removeItem('neo_tables_position');
+	} else if (sessionStorage.getItem('neo_tables_position')) {
+		const positions = sessionStorage.getItem('neo_tables_position').split("|");
+
+		navigationPanel.classList.add('opened');
+		navigationPanel.scrollTop = positions[0] * 1;
+		tablesList.scrollTop = positions[1] * 1;
+		navigationPanel.classList.remove('opened');
+	}
+
+	sessionStorage.setItem('neo_tables_position_db', dbName);
+
+	window.addEventListener('pagehide', function() {
+		navigationPanel.classList.add('opened');
+		sessionStorage.setItem('neo_tables_position', `${navigationPanel.scrollTop}|${tablesList.scrollTop}`);
+		navigationPanel.classList.remove('opened');
+	}, false);
+}
+
 let tablesFilterTimeout = null;
 let tablesFilterValue = '';
 
 function initTablesFilter(dbName) {
+	const filterInput = gid('tables-filter');
+
 	if (sessionStorage) {
 		document.addEventListener('DOMContentLoaded', () => {
-			if (dbName === sessionStorage.getItem('neo_tables_filter_db') && sessionStorage.getItem('neo_tables_filter')) {
-				gid('tables-filter').value = sessionStorage.getItem('neo_tables_filter');
-				filterTables();
-			} else {
+			if (sessionStorage.getItem('neo_tables_filter_db') !== dbName) {
 				sessionStorage.removeItem('neo_tables_filter');
+			} else if (sessionStorage.getItem('neo_tables_filter')) {
+				filterInput.value = sessionStorage.getItem('neo_tables_filter');
+				filterTables();
 			}
 
 			sessionStorage.setItem('neo_tables_filter_db', dbName);
 		});
 	}
 
-	const filterInput = gid('tables-filter');
 	filterInput.addEventListener('input', () => {
 		window.clearTimeout(tablesFilterTimeout);
 		tablesFilterTimeout = window.setTimeout(filterTables, 200);
@@ -1098,6 +1207,16 @@ function initTableFooter() {
 }
 
 /**
+ * Enables the Save button while at least one inline edit field is displayed.
+ */
+function updateSaveButton() {
+	const button = gid('modify-save');
+	if (button && button.dataset.inlineEdit) {
+		button.disabled = !qs('#table td[data-editing="true"]');
+	}
+}
+
+/**
  * Displays inline edit field.
  *
  * @param {MouseEvent} event
@@ -1138,6 +1257,7 @@ function selectClick(event, text, warning) {
 			td.dataset.editing = "";
 			td.innerHTML = original;
 			initToggles(td);
+			updateSaveButton();
 		}
 	};
 
@@ -1173,6 +1293,7 @@ function selectClick(event, text, warning) {
 	td.innerHTML = '';
 	td.appendChild(input);
 	input.focus();
+	updateSaveButton();
 
 	if (text === 2) { // long text
 		return ajax(location.href + '&' + encodeURIComponent(td.id) + '=', request => {

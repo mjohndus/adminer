@@ -12,7 +12,7 @@ $oid = $table_status["Oid"];
 $rights = []; // privilege => 0
 $columns = []; // selectable columns
 $search_columns = []; // searchable columns
-$order_columns = []; // searchable columns
+$order_columns = []; // sortable columns
 $text_length = null;
 foreach ($fields as $key => $field) {
 	$name = Admin::get()->getFieldName($field);
@@ -171,8 +171,10 @@ if ($_POST) {
 		}
 		queries_redirect(remove_from_uri($_POST["all"] && $_POST["delete"] ? "page" : ""), $message, (bool)$result);
 		if (!$_POST["delete"]) {
-			$post_fields = (array) $_POST["fields"];
-			edit_form($TABLE, array_intersect_key($fields, $post_fields), $post_fields, !$_POST["clone"]);
+			$editable_fields = array_filter($fields, function ($field) {
+				return !($field["generated"] ?? null);
+			});
+			edit_form($TABLE, $editable_fields, (array)$_POST["fields"], !$_POST["clone"]);
 			page_footer();
 			exit;
 		}
@@ -248,20 +250,18 @@ if (is_ajax()) {
 	page_header(lang('Select') . ": $table_name", [$table_name]);
 }
 
-$set = null;
+$insert_params = null;
 if (isset($rights["insert"]) || !support("table")) {
-	$params = [];
+	$insert_params = [];
 	foreach ((array) $_GET["where"] as $val) {
 		if (isset($foreign_keys[$val["col"]]) && count($foreign_keys[$val["col"]]) == 1
 			&& ($val["op"] == "=" || (!$val["op"] && (is_array($val["val"]) || !preg_match('~[_%]~', $val["val"]))) // LIKE in Editor
 		)) {
-			$params["set" . "[" . bracket_escape($val["col"]) . "]"] = $val["val"];
+			$insert_params["preset" . "[" . bracket_escape($val["col"]) . "]"] = $val["val"];
 		}
 	}
-
-	$set = $params ? "&" . http_build_query($params) : "";
 }
-Admin::get()->printTableMenu($table_status, $set);
+Admin::get()->printTableMenu($table_status, $insert_params);
 
 if (!$columns && support("table")) {
 	echo "<p class='error'>" . lang('Unable to select the table') . ($fields ? "." : ": " . error()) . "\n";
@@ -343,6 +343,9 @@ if (!$columns && support("table")) {
 			$found_rows = Connection::get()->getValue(" SELECT FOUND_ROWS()"); // space to allow mysql.trace_mode
 		}
 
+		// Values rejected by a failed save are printed as edit fields again.
+		$editing_fields = false;
+
 		if (!$rows) {
 			echo "<p class='message'>" . lang('No rows.') . "\n";
 		} else {
@@ -351,7 +354,6 @@ if (!$columns && support("table")) {
 			echo "<div class='scrollable'>\n";
 			echo "<table id='table' class='nowrap checkable'>\n";
 
-			echo script("mixin(gid('table'), {onclick: partialArg(tableClick, false, " . (Admin::get()->isDataEditAllowed() ? "true" : "false") . "), ondblclick: partialArg(tableClick, true), onkeydown: onEditingKeydown});");
 			echo "<thead><tr>";
 
 			if ($group || !$select) {
@@ -414,6 +416,7 @@ if (!$columns && support("table")) {
 				echo "<th>" . lang('Relations') . "</th>";
 			}
 			echo "</thead>\n";
+			echo "<tbody>\n";
 
 			if (is_ajax()) {
 				ob_end_clean();
@@ -507,8 +510,9 @@ if (!$columns && support("table")) {
 						$class = $numeric_type && ($null_val || is_numeric(strip_tags($html)) || $money) ? "class='number'" : "";
 						echo "<td id='$id' $class";
 						if (($_GET["modify"] && $editable && !$null_val) || $posted !== null) {
+							$editing_fields = true;
 							$h_value = h($posted !== null ? $posted : $row[$key]);
-							echo ">" . ($text ? "<textarea name='$id' cols='30' rows='" . (substr_count($row[$key], "\n") + 1) . "'>$h_value</textarea>" : "<input class='input' name='$id' value='$h_value' size='$lengths[$key]'>");
+							echo " data-editing='true'>" . ($text ? "<textarea name='$id' cols='30' rows='" . (substr_count($row[$key], "\n") + 1) . "'>$h_value</textarea>" : "<input class='input' name='$id' value='$h_value' size='$lengths[$key]'>");
 						} else {
 							$long = strpos($html, "<i>…</i>");
 							if ($update) {
@@ -532,6 +536,9 @@ if (!$columns && support("table")) {
 			if (is_ajax()) {
 				exit;
 			}
+
+			echo "</tbody>\n";
+			echo script("mixin(qs('#table tbody'), {onclick: partialArg(tableClick, false, " . (Admin::get()->isDataEditAllowed() ? "true" : "false") . "), ondblclick: partialArg(tableClick, true), onkeydown: onEditingKeydown});");
 
 			echo "</table>\n";
 			echo script("initToggles(gid('table'));");
@@ -636,8 +643,11 @@ if (!$columns && support("table")) {
 				if (Admin::get()->isDataEditAllowed()) {
 					echo "<fieldset", ($_GET["modify"] ? '' : ' class="jsonly"'), ">";
 					echo "<legend>", lang('Modify'), "</legend>";
-					echo "<div class='fieldset-content'>";
-					echo "<input type='submit' class='button' value='", lang('Save'), "'", ($_GET["modify"] ? "" : " title='" . lang('Ctrl+click on a value to modify it.') . "'"), ">";
+					// Outside the modify mode the button is enabled only while some inline edit field is displayed.
+					// The title belongs to the wrapper, because browsers don't show tooltips of disabled controls.
+					$save_attributes = ($_GET["modify"] ? "" : " data-inline-edit='1'" . ($editing_fields ? "" : " disabled"));
+					echo "<div class='fieldset-content'", ($_GET["modify"] ? "" : " title='" . lang('Ctrl+click on a value to modify it.') . "'"), ">";
+					echo "<input type='submit' class='button' id='modify-save' value='", lang('Save'), "'", $save_attributes, ">";
 					echo "</div>";
 					echo "</fieldset>\n";
 

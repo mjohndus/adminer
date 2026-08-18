@@ -69,12 +69,16 @@ class Admin extends Origin
 		return h($field["field"]);
 	}
 
-	public function printTableMenu(array $tableStatus, ?string $set = ""): void
+	public function printTableMenu(array $tableStatus, ?array $insertParams): void
 	{
-		if ($set !== null) {
-			$table = $tableStatus["Name"];
-			echo '<p class="links top-links"><a href="', h(ME . 'edit=' . urlencode($table) . $set), '">', icon("item-add"), lang('New item'), "</a>\n";
+		if ($insertParams === null) {
+			return;
 		}
+
+		$table = $tableStatus["Name"];
+		$params = $insertParams ? "&" . http_build_query($insertParams) : "";
+
+		echo '<p class="links top-links"><a href="', h(ME . 'edit=' . urlencode($table) . $params), '">', icon("item-add"), lang('New item'), "</a>\n";
 	}
 
 	public function formatSelectQuery(string $query, float $start, bool $failed = false): string
@@ -418,7 +422,7 @@ class Admin extends Origin
 		$options = $this->foreignKeyOptions($table, $field["field"], $value);
 		if ($options !== null) {
 			if (is_array($options)) {
-				$result = "<select $attrs>" . optionlist($options, $value, true) . "</select>";
+				$result = "<select $attrs>" . optionlist($options, (string) $value, true) . "</select>";
 			} else {
 				$result = "<input $attrs value='" . h($value) . "' class='input hidden'>"
 					. "<input value='" . h($options) . "' class='input jsonly'>"

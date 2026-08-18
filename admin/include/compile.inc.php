@@ -4,6 +4,8 @@ namespace AdminNeo;
 
 require __DIR__ . "/../../vendor/vrana/jsshrink/jsShrink.php";
 
+const CompressionMethod = "deflate";
+
 function read_compiled_file(string $filename): ?string
 {
 	$file_path = get_temp_dir() . "/adminneo/$filename";
@@ -63,14 +65,15 @@ function linked_filename(string $name, array $file_paths): ?string
 		return null;
 	}
 
-	$version = md5($pathString) . "__" . substr(md5($timeString), 0, 8);
+	$version = md5($pathString) . "__" . substr(md5($timeString . CompressionMethod), 0, 8);
 
 	return preg_replace('~\.[^.]+$~', "-$version$0", $name);
 }
 
 function compile_file(string $name, array $file_paths): ?string
 {
-	switch (pathinfo($name, PATHINFO_EXTENSION)) {
+	$extension = pathinfo($name, PATHINFO_EXTENSION);
+	switch ($extension) {
 		case "css":
 			$shrink_function = "AdminNeo\\minify_css";
 			break;
@@ -100,7 +103,11 @@ function compile_file(string $name, array $file_paths): ?string
 		$file = call_user_func($shrink_function, $file);
 	}
 
-	return base64_encode(lzw_compress($file));
+	if (in_array($extension, ["png", "ico"])) {
+		return base64_encode($file);
+	} else {
+		return compress_string($file);
+	}
 }
 
 function minify_css(string $file): string
@@ -116,48 +123,38 @@ function minify_js(string $file): string
 	return jsShrink($file);
 }
 
-function lzw_compress(string $string): string
+/**
+ * Compresses string with deflate to characters from compress_alphabet().
+ */
+function compress_string(string $string): string
 {
-	// Compress.
-	$dictionary = array_flip(range("\0", "\xFF"));
-	$word = "";
-	$codes = [];
-
-	for ($i = 0; $i <= strlen($string); $i++) {
-		$x = @$string[$i];
-		if (strlen($x) && isset($dictionary[$word . $x])) {
-			$word .= $x;
-		} elseif ($i) {
-			$codes[] = $dictionary[$word];
-			$dictionary[$word . $x] = count($dictionary);
-			$word = $x;
-		}
-	}
-
-	// Convert codes to binary string.
-	$dictionary_count = 256;
-	$bits = 8; // ceil(log($dictionary_count, 2))
+	$binary = ($string != "" ? gzdeflate($string, 9) : "");
+	// convert bytes to string; 2 chars from a 93-symbol alphabet hold 13 bits
+	$alphabet = compress_alphabet();
 	$return = "";
 	$rest = 0;
 	$rest_length = 0;
 
-	foreach ($codes as $code) {
-		$rest = ($rest << $bits) + $code;
-		$rest_length += $bits;
+	for ($i = 0; $i < strlen($binary); $i++) {
+		$rest = ($rest << 8) + ord($binary[$i]);
+		$rest_length += 8;
 
-		$dictionary_count++;
-		if ($dictionary_count >> $bits) {
-			$bits++;
-		}
-
-		while ($rest_length > 7) {
-			$rest_length -= 8;
-			$return .= chr($rest >> $rest_length);
+		if ($rest_length >= 13) {
+			$rest_length -= 13;
+			$chunk = $rest >> $rest_length;
+			$return .= $alphabet[(int) ($chunk / 93)] . $alphabet[$chunk % 93];
 			$rest &= (1 << $rest_length) - 1;
 		}
 	}
 
-	return $return . ($rest_length ? chr($rest << (8 - $rest_length)) : "");
+	$padding = 0;
+	if ($rest_length) {
+		$padding = 13 - $rest_length;
+		$chunk = $rest << $padding;
+		$return .= $alphabet[(int) ($chunk / 93)] . $alphabet[$chunk % 93];
+	}
+
+	return ($binary != "" ? $alphabet[$padding] . $return : "");
 }
 
 function downgrade_php(string $code): string
@@ -168,11 +165,37 @@ function downgrade_php(string $code): string
 	// Null coalescing - variables and constants.
 	$coalescing = '\s*\?\?';
 
+	$class = '\\\\?(\w+\\\\)*\w+::'; // self, parent, static or a class name, optionally fully qualified
 	$array_key = '[^](]+';
 	$array_key2 = $array_key . '\[' . $array_key . ']' . '[^](]*';
 
+	// Null coalescing - chains. The operator is right associative, but the ternary operator replacing it is not, so
+	// the tail is parenthesized: A ?? B ?? C => A ?? (B ?? C). Chains written with parentheses are left as they are.
+	// The alternatives are ordered from the longest one, there is no ?? anchor forcing the backtracking.
+	$variable = '(?:\$(?:\w+->)+|' . $class . '\$?|\$)\w+(?:\[(?:' . $array_key . '|' . $array_key2 . ')])*';
+	$call = '(?:(?:\$(?:\w+->)+|' . $class . ')?\w+\([^()]*\))';
+	$literal = '(?:null|true|false|-?\d+(?:\.\d+)?|\'[^\']*\'|"[^"]*"|\[])';
+	$operand = '(?:' . $call . '|' . $variable . '|' . $literal . ')';
+
+	$code = preg_replace_callback(
+		'~' . $operand . '(?:' . $coalescing . '\s*' . $operand . '){2,}~',
+		function ($match) use ($operand) {
+			preg_match_all('~' . $operand . '~', $match[0], $operands);
+
+			$operands = $operands[0];
+			$result = array_pop($operands);
+
+			for ($tail = false; $operands; $tail = true) {
+				$result = array_pop($operands) . ' ?? ' . ($tail ? "($result)" : $result);
+			}
+
+			return $result;
+		},
+		$code
+	);
+
 	$code = preg_replace(
-		'~((\$|\$(\w+->)+|self::\$|self::)\w+' // name
+		'~((\$|\$(\w+->)+|' . $class . '\$?)\w+' // name
 		. '(\[(' . $array_key . '|' . $array_key2 . ')])*)' // array, max 2 levels
 		. $coalescing
 		. '~', 'isset(\1) ? \1 :', $code
@@ -180,7 +203,7 @@ function downgrade_php(string $code): string
 
 	// Null coalescing - function calls.
 	$code = preg_replace(
-		'~((\$(\w+->)+|self::)?\w+' // name
+		'~((\$(\w+->)+|' . $class . ')?\w+' // name
 		. '\([^()]*\))' // parameters
 		. $coalescing
 		. '~', '($_result = \1) !== null ? $_result :', $code);

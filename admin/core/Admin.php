@@ -131,9 +131,9 @@ class Admin extends Origin
 	 * Prints top menu on table selection and structure page.
 	 *
 	 * @param array $tableStatus The result of SHOW TABLE STATUS.
-	 * @param ?string $set New item options, null for no new item.
+	 * @param ?array $insertParams New item URL parameters, null for no new item.
 	 */
-	public function printTableMenu(array $tableStatus, ?string $set = ""): void
+	public function printTableMenu(array $tableStatus, ?array $insertParams): void
 	{
 		echo '<p class="links top-tabs">';
 
@@ -159,18 +159,21 @@ class Admin extends Origin
 		if (support("table")) {
 			$is_view = is_view($tableStatus);
 			if (!$is_view) {
-				$links["create"] = [lang('Alter table'), "edit"];
+				if ($table != "") {
+					$links["create"] = [lang('Alter table'), "edit"];
+				}
 			} elseif (support("view")) {
 				$links["view"] = [lang('Alter view'), "edit"];
 			}
 		}
 
-		if ($set !== null) {
+		if ($insertParams !== null) {
 			$links["edit"] = [lang('New item'), "item-add"];
 		}
+		$params = $insertParams ? "&" . http_build_query($insertParams) : "";
 
 		foreach ($links as $key => $val) {
-			echo " <a href='", h(ME), "$key=", urlencode($table), ($key == "edit" ? $set : ""), "'", bold(isset($_GET[$key])), ">", icon($val[1]), "$val[0]</a>";
+			echo " <a href='", h(ME), "$key=", urlencode($table), ($key == "edit" ? $params : ""), "'", bold(isset($_GET[$key])), ">", icon($val[1]), "$val[0]</a>";
 		}
 
 		echo doc_link([DIALECT => Driver::get()->tableHelp($table, $is_view)], icon("help") . lang('Info'));
@@ -335,7 +338,7 @@ class Admin extends Origin
 			$text = "<code>$val</code>";
 		} elseif (is_blob($field) && !is_utf8($val)) {
 			$text = "<i>" . lang('%d byte(s)', strlen($original)) . "</i>";
-		} elseif ($this->admin->detectJson($field["type"], $original)) {
+		} elseif ($this->admin->detectJson($field["full_type"], $original)) {
 			$text = "<code class='jush-json'>$val</code>";
 		} else {
 			$text = $val;
@@ -900,8 +903,8 @@ class Admin extends Origin
 			return $value; //! SQL injection
 		}
 
-		if (isset($field["type"])) {
-			$this->admin->detectJson($field["type"], $value, false);
+		if (isset($field["full_type"])) {
+			$this->admin->detectJson($field["full_type"], $value, false);
 		}
 
 		$name = $field["field"];
@@ -1096,10 +1099,13 @@ class Admin extends Origin
 							}
 
 							$field = $fields[$key];
-							$row[$key] = ($val !== null
-								? unconvert_field($field, preg_match(number_type(), $field["type"]) && !preg_match('~\[~', $field["full_type"]) && is_numeric($val) ? $val : q(($val === false ? 0 : $val)))
-								: "NULL"
-							);
+							$row[$key] = ($val === null ? "NULL"
+								: ($val === false ? 0
+								: unconvert_field($field, preg_match(number_type(), $field["type"]) && !preg_match('~\[~', $field["full_type"]) && is_numeric($val)
+									? $val
+									: (!is_blob($field) || is_utf8($val) ? q($val) : Driver::get()->quoteBinary($val))
+								)
+							));
 						}
 
 						$s = ($max_packet ? "\n" : " ") . "(" . implode(",\t", $row) . ")";
@@ -1185,7 +1191,7 @@ class Admin extends Origin
 						if ($password !== null) {
 							$dbs = $_SESSION["db"][$vendor][$server][$username];
 							foreach (($dbs ? array_keys($dbs) : [""]) as $db) {
-								$server_name = $this->admin->getServerName($server);
+								$server_name = $this->admin->getServerName($server, false);
 								$title = h(get_driver_name($vendor, $server))
 									. ($username != "" || $server_name != "" ? " - " : "")
 									. h($username)
@@ -1283,7 +1289,7 @@ class Admin extends Origin
 			}
 
 			echo script("let autocompletion;\nwindow.addEventListener('DOMContentLoaded', () => { initSyntaxHighlighting('" .
-				Connection::get()->getVersion() . "', '" . Connection::get()->getFlavor() . "', autocompletion); });");
+				js_escape(doc_version()) . "', '" . js_escape(Connection::get()->getFlavor()) . "', autocompletion); });");
 		}
 	}
 
@@ -1387,6 +1393,7 @@ class Admin extends Origin
 		}
 
 		echo "</menu></nav>\n";
+		echo script("initTablesList(" . json_encode($this->admin->getDatabase()) . ");");
 	}
 
 	public function getSettingsRows(int $groupId): array

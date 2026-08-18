@@ -22,9 +22,10 @@ function load_compiled_file(string $filename)
 	header("Last-Modified: " . gmdate("D, d M Y H:i:s") . " GMT");
 	header("Cache-Control: immutable");
 
-	@ini_set("zlib.output_compression", "1"); // @ - may be disabled
+	ini_set("zlib.output_compression", "1");
 
-	switch (pathinfo($filename, PATHINFO_EXTENSION)) {
+	$extension = pathinfo($filename, PATHINFO_EXTENSION);
+	switch ($extension) {
 		case "css":
 			header("Content-Type: text/css; charset=utf-8");
 			break;
@@ -48,6 +49,12 @@ function load_compiled_file(string $filename)
 		exit;
 	}
 
-	echo lzw_decompress(base64_decode($data));
+	if (in_array($extension, ["png", "ico"])) {
+		$data = base64_decode($data);
+	} else {
+		$data = decompress_string($data);
+	}
+
+	echo $data;
 	exit;
 }

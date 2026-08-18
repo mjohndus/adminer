@@ -274,8 +274,11 @@ function process_field($field, $type_field) {
 * @return string
 */
 function default_value($field) {
-	$default = $field["default"];
-	if ($default === null) return "";
+	if ($field["default"] === null) {
+		return "";
+	}
+
+	$default = str_replace("\r", "", $field["default"]);
 
 	$generated = $field["generated"];
 	if (in_array($generated, Driver::get()->getGenerated())) {
@@ -347,7 +350,7 @@ function edit_fields(array $fields, array $collations, $type = "TABLE", $foreign
 
 	echo "<th id='label-name'>", ($type == "TABLE" ? lang('Column name') : lang('Parameter name')), "</th>\n";
 	echo "<td id='label-type'>", lang('Type'), "<textarea id='enum-edit' rows='4' cols='12' wrap='off' style='display: none;'></textarea>", script("gid('enum-edit').onblur = onFieldLengthBlur;"), "</td>\n";
-	echo "<td id='label-length'>", lang("Length"), "</td>\n";
+	echo "<td id='label-length'>", lang('Length'), "</td>\n";
 	echo "<td>", lang('Options'), "</td>\n"; // No label required, options have their own label.
 
 	if ($type == "TABLE") {
@@ -411,7 +414,17 @@ function edit_fields(array $fields, array $collations, $type = "TABLE", $foreign
 			} else {
 				echo checkbox("fields[$i][generated]", 1, $field["generated"], "", "", "", "label-default");
 			}
-			echo "<input class='input' name='fields[$i][default]' value='", h($field["default"]), "' aria-labelledby='label-default'>";
+			$attrs = "name='fields[$i][default]' aria-labelledby='label-default'";
+			$value = h($field["default"]);
+			if (str_contains($value, "\n")) {
+				// Preserve the leading newline in textarea.
+				if ($value[0] == "\n") {
+					$value = "\n$value";
+				}
+				echo "<textarea $attrs rows='3' cols='30' style='vertical-align: bottom;'>$value</textarea>";
+			} else {
+				echo "<input class='input' $attrs value='$value'>";
+			}
 			echo "</td>\n";
 
 			if (support("comment")) {
@@ -663,7 +676,7 @@ function doc_link(array $paths, string $text = "<sup>?</sup>"): string
 		return "";
 	}
 
-	$version = preg_replace('~^(\d\.?\d).*~s', '\1', Connection::get()->getVersion()); // two most significant digits
+	$version = doc_version();
 
 	$urls = [
 		'sql' => "https://dev.mysql.com/doc/refman/$version/en/",
@@ -680,6 +693,14 @@ function doc_link(array $paths, string $text = "<sup>?</sup>"): string
 	}
 
 	return "<a href='" . h($urls[DIALECT] . $paths[DIALECT] . (DIALECT == 'mssql' ? "?view=sql-server-ver$version" : "")) . "'" . target_blank() . ">$text</a>";
+}
+
+/**
+ * Returns database version used in URL links to documentation.
+ */
+function doc_version(): string
+{
+	return preg_replace('~^(\d\.?\d).*~s', '\1', Connection::get()->getVersion()); // two most significant digits
 }
 
 /** Compute size of database

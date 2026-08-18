@@ -6,15 +6,8 @@ $USER = $_GET["user"];
 $privileges = ["" => ["All privileges" => ""]];
 foreach (get_rows("SHOW PRIVILEGES") as $row) {
 	foreach (explode(",", ($row["Privilege"] == "Grant option" ? "" : $row["Context"])) as $context) {
-		$privileges[$context][$row["Privilege"]] = $row["Comment"];
+		$privileges[$context == "File access on server" ? "Server Admin" : $context][$row["Privilege"]] = $row["Comment"];
 	}
-}
-$privileges["Server Admin"] += $privileges["File access on server"];
-$privileges["Databases"]["Create routine"] = $privileges["Procedures"]["Create routine"]; // MySQL bug #30305
-unset($privileges["Procedures"]["Create routine"]);
-$privileges["Columns"] = [];
-foreach (["Select", "Insert", "Update", "References"] as $val) {
-	$privileges["Columns"][$val] = $privileges["Tables"][$val];
 }
 unset($privileges["Server Admin"]["Usage"]);
 foreach ($privileges["Tables"] as $key => $val) {
@@ -28,7 +21,6 @@ if ($_POST) {
 	}
 }
 $grants = [];
-$old_pass = "";
 
 if (isset($_GET["host"]) && ($result = Connection::get()->query("SHOW GRANTS FOR " . q($USER) . "@" . q($_GET["host"])))) { //! use information_schema for MySQL 5 - column names in column privileges are not escaped
 	while ($row = $result->fetchRow()) {
@@ -42,12 +34,10 @@ if (isset($_GET["host"]) && ($result = Connection::get()->query("SHOW GRANTS FOR
 				}
 			}
 		}
-		if (preg_match("~ IDENTIFIED BY PASSWORD '([^']+)~", $row[0], $match)) {
-			$old_pass = $match[1];
-		}
 	}
 }
 
+$plain_password = !Connection::get()->isMariaDB() && Connection::get()->isMinVersion("8");
 if ($_POST) {
 	$old_user = (isset($_GET["host"]) ? q($USER) . "@" . q($_GET["host"]) : "''");
 	if ($_POST["drop"]) {
@@ -55,29 +45,17 @@ if ($_POST) {
 	} else {
 		$new_user = q($_POST["user"]) . "@" . q($_POST["host"]); // if $_GET["host"] is not set then $new_user is always different
 		$pass = $_POST["pass"];
-		if ($pass != '' && !$_POST["hashed"] && !Connection::get()->isMinVersion("8")) {
-			// compute hash in a separate query so that plain text password is not saved to history
-			$pass = Connection::get()->getValue("SELECT PASSWORD(" . q($pass) . ")");
-			$error = !$pass;
-		} else {
-			$error = false;
-		}
 
 		$created = false;
-		if (!$error) {
-			if ($old_user != $new_user) {
-				$created = queries((Connection::get()->isMinVersion("5") ? "CREATE USER" : "GRANT USAGE ON *.* TO") . " $new_user IDENTIFIED BY " . (Connection::get()->isMinVersion("8") ? "" : "PASSWORD ") . q($pass));
-				$error = !$created;
-			} elseif ($pass != $old_pass) {
-				$pass_part = q($pass);
-				if (Connection::get()->isMariaDB()) {
-					$pass_part = "PASSWORD($pass_part)";
-				}
-				queries("SET PASSWORD FOR $new_user = $pass_part");
-			}
+		$result = true;
+		if ($old_user != $new_user) {
+			$created = (bool)queries("CREATE USER $new_user IDENTIFIED BY " . ($_POST["hashed"] ? "PASSWORD " : "") . q($pass));
+			$result = $created;
+		} elseif ($pass != "") {
+			$result = (bool)queries("SET PASSWORD FOR $new_user = " . ($plain_password || $_POST["hashed"] ? q($pass) : "PASSWORD(" . q($pass) . ")"));
 		}
 
-		if (!$error) {
+		if ($result) {
 			$revoke = [];
 			foreach ($new_grants as $object => $grant) {
 				if (isset($_GET["grant"])) {
@@ -97,13 +75,13 @@ if ($_POST) {
 					!grant(false, $revoke, $match[2], $match[1], $new_user) //! SQL injection
 					|| !grant(true, $grant, $match[2], $match[1], $new_user)
 				)) {
-					$error = true;
+					$result = false;
 					break;
 				}
 			}
 		}
 
-		if (!$error && isset($_GET["host"])) {
+		if ($result && isset($_GET["host"])) {
 			if ($old_user != $new_user) {
 				queries("DROP USER $old_user");
 			} elseif (!isset($_GET["grant"])) {
@@ -115,7 +93,7 @@ if ($_POST) {
 			}
 		}
 
-		queries_redirect(ME . "privileges=", (isset($_GET["host"]) ? lang('User has been altered.') : lang('User has been created.')), !$error);
+		queries_redirect(ME . "privileges=", (isset($_GET["host"]) ? lang('User has been altered.') : lang('User has been created.')), $result);
 
 		if ($created) {
 			// delete new user in case of an error
@@ -133,10 +111,6 @@ if ($_POST) {
 	$grants = $new_grants;
 } else {
 	$row = $_GET + ["host" =>  Connection::get()->getValue("SELECT SUBSTRING_INDEX(CURRENT_USER, '@', -1)")]; // create user on the same domain by default
-	$row["pass"] = $old_pass;
-	if ($old_pass != "") {
-		$row["hashed"] = true;
-	}
 
 	if ($grants) {
 		$grants[".*"] = [];
@@ -155,12 +129,13 @@ echo "<td><input class='input' name='host' data-maxlength='60' value='", h($row[
 echo "<tr><th>", lang('Username'), "</th>";
 echo "<td><input class='input' name='user' data-maxlength='80' value='", h($row["user"]), "' autocapitalize='off'></td>\n";
 echo '<tr><th>', lang('Password'), "</th>";
-echo "<td><input class='input' name='pass' id='pass' value='", h($row["pass"]), "' autocomplete='new-password'></td>\n";
+echo "<td><input class='input' name='pass' id='pass' value='", h($row["pass"]), "' autocomplete='new-password'>";
+if (!$plain_password) {
+	echo checkbox("hashed", 1, $row["hashed"], lang('Hashed'), "typePassword(this.form['pass'], this.checked);");
+}
+echo "</td>\n";
 if (!$row["hashed"]) {
 	echo script("typePassword(gid('pass'));");
-}
-if (!Connection::get()->isMinVersion("8")) {
-	echo checkbox("hashed", 1, $row["hashed"], lang('Hashed'), "typePassword(this.form['pass'], this.checked);");
 }
 echo "</table>\n";
 
@@ -188,7 +163,6 @@ foreach ([
 	"Server Admin" => lang('Server'),
 	"Databases" => lang('Database'),
 	"Tables" => lang('Table'),
-	"Columns" => lang('Column'),
 	"Procedures" => lang('Routine'),
  ] as $context => $desc) {
 	foreach ((array) $privileges[$context] as $privilege => $comment) {

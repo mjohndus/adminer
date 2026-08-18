@@ -117,11 +117,6 @@ if (isset($_GET["oracle"])) {
 				$this->resource = $result;
 			}
 
-			public function __destruct()
-			{
-				oci_free_statement($this->resource);
-			}
-
 			public function fetchAssoc()
 			{
 				return $this->convertRow(oci_fetch_assoc($this->resource));
@@ -409,7 +404,8 @@ ORDER BY 1"
 		return $return;
 	}
 
-	function is_view($table_status) {
+	function is_view(array $table_status):bool
+	{
 		return $table_status["Engine"] == "view";
 	}
 

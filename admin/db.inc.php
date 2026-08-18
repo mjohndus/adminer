@@ -50,7 +50,7 @@ if ($tables_views && !$_POST["search"]) {
 		}
 	}
 
-	queries_redirect(substr(ME, 0, -1), $message, (bool)$result);
+	queries_redirect($_SERVER["REQUEST_URI"], $message, (bool)$result);
 }
 
 if ($_GET["ns"] == "") {
@@ -82,7 +82,79 @@ if ($_GET["ns"] === "") {
 	echo '<p class="links"><a href="' . h(ME) . 'scheme=">' . icon("database-add") . lang('Create schema') . "</a>\n";
 } else {
 	echo "<h2 id='tables-views'>" . lang('Tables and views') . "</h2>\n";
-	$tables_list = tables_list();
+
+	$table_status_links = [
+		'sql' => 'show-table-status.html',
+		'mariadb' => 'reference/sql-statements/administrative-sql-statements/show/show-table-status'
+	];
+
+	$db_collation = db_collation(DB, collations());
+
+	$columns = [
+		"Engine" => [
+			"label" => lang('Engine'),
+			"doc" => doc_link(['sql' => 'storage-engines.html', 'mariadb' => 'server-usage/storage-engines']),
+		],
+	];
+	if ($db_collation != "") {
+		$columns["Collation"] = [
+			"label" => lang('Collation'),
+			"doc" => doc_link(['sql' => 'charset-charsets.html', 'mariadb' => 'reference/data-types/string-data-types/character-sets/supported-character-sets-and-collations']),
+		];
+	}
+	$columns += [
+		"Data_length" => [
+			"label" => lang('Data Length'),
+			"doc" => doc_link($table_status_links + ['pgsql' => 'functions-admin.html#FUNCTIONS-ADMIN-DBOBJECT', 'oracle' => 'REFRN20286']),
+			"link" => "create", "title" => lang('Alter table'),
+		],
+		"Index_length" => [
+			"label" => lang('Index Length'),
+			"doc" => doc_link($table_status_links + ['pgsql' => 'functions-admin.html#FUNCTIONS-ADMIN-DBOBJECT']),
+			"link" => "indexes", "title" => lang('Alter indexes'),
+		],
+		"Data_free" => [
+			"label" => lang('Data Free'),
+			"doc" => doc_link($table_status_links),
+			"link" => "edit", "title" => lang('New item'),
+		],
+		"Auto_increment" => [
+			"label" => lang('Auto Increment'),
+			"doc" => doc_link(['sql' => 'example-auto-increment.html', 'mariadb' => 'reference/data-types/auto_increment']),
+			"link" => "auto_increment=1&create", "title" => lang('Alter table'),
+		],
+		"Rows" => [
+			"label" => lang('Rows'),
+			"doc" => doc_link($table_status_links + ['pgsql' => 'catalog-pg-class.html#CATALOG-PG-CLASS', 'oracle' => 'REFRN20286']),
+			"link" => "select", "title" => lang('Select data'),
+		],
+	];
+	if (support("comment")) {
+		$columns["Comment"] = [
+			"label" => lang('Comment'),
+			"doc" => doc_link($table_status_links + ['pgsql' => 'functions-info.html#FUNCTIONS-INFO-COMMENT-TABLE']),
+		];
+	}
+
+	// Tables are sorted by name in ascending order by default, which is the order returned by drivers.
+	$order = (is_string($_GET["order"]) ? $_GET["order"] : "");
+	$descending = null;
+	if (preg_match('~^(.+)-(asc|desc)$~', $order, $match)) {
+		$order = $match[1];
+		$descending = ($match[2] == "desc");
+	}
+	if ($order != "__table" && !isset($columns[$order])) {
+		$order = "";
+	}
+	if ($descending === null) {
+		// Numeric columns, i.e. those with a link, are sorted in descending order by default.
+		$descending = isset($columns[$order]["link"]);
+	}
+
+	// Sorting by a status column requires the statuses of all tables, so they are not loaded by AJAX in that case.
+	$with_status = ($order != "" && $order != "__table");
+
+	$tables_list = ($with_status ? table_status() : tables_list());
 	if (!$tables_list) {
 		echo "<p class='message'>" . lang('No tables.') . "\n";
 	} else {
@@ -107,29 +179,41 @@ if ($_GET["ns"] === "") {
 
 		echo "<div class='scrollable'>\n";
 		echo "<table class='nowrap checkable'>\n";
-		echo script("mixin(qsl('table'), {onclick: tableClick, ondblclick: partialArg(tableClick, true)});");
-
-		$table_status_links = [
-			'sql' => 'show-table-status.html',
-			'mariadb' => 'reference/sql-statements/administrative-sql-statements/show/show-table-status'
-		];
 
 		echo '<thead><tr class="wrap">';
 		echo '<td class="actions"><input id="check-all" type="checkbox" class="input jsonly">' . script("gid('check-all').onclick = partial(formCheck, /^(tables|views)\[/);", "");
-		echo '<th>' . lang('Table');
-		echo '<td>' . lang('Engine') . doc_link(['sql' => 'storage-engines.html', 'mariadb' => 'server-usage/storage-engines']);
-		echo '<td>' . lang('Collation') . doc_link(['sql' => 'charset-charsets.html', 'mariadb' => 'reference/data-types/string-data-types/character-sets/supported-character-sets-and-collations']);
-		echo '<td>' . lang('Data Length') . doc_link($table_status_links + ['pgsql' => 'functions-admin.html#FUNCTIONS-ADMIN-DBOBJECT', 'oracle' => 'REFRN20286']);
-		echo '<td>' . lang('Index Length') . doc_link($table_status_links + ['pgsql' => 'functions-admin.html#FUNCTIONS-ADMIN-DBOBJECT']);
-		echo '<td>' . lang('Data Free') . doc_link($table_status_links);
-		echo '<td>' . lang('Auto Increment') . doc_link(['sql' => 'example-auto-increment.html', 'mariadb' => 'reference/data-types/auto_increment']);
-		echo '<td>' . lang('Rows') . doc_link($table_status_links + ['pgsql' => 'catalog-pg-class.html#CATALOG-PG-CLASS', 'oracle' => 'REFRN20286']);
-		echo (support("comment") ? '<td>' . lang('Comment') . doc_link($table_status_links + ['pgsql' => 'functions-info.html#FUNCTIONS-INFO-COMMENT-TABLE']) : '');
+		// Tables are already sorted by name when no other column is used, so only the descending order needs a parameter.
+		$name_order = ($order == "" || $order == "__table");
+		$table_link = ($name_order && !$descending ? ME . "order=__table-desc" : substr(ME, 0, -1));
+		echo '<th><a href="' . h($table_link) . '">' . lang('Table') . '</a>';
+		foreach ($columns as $key => $column) {
+			// The sorted column is linked to the opposite direction, so repeated clicks toggle it.
+			$direction = ($key === $order ? !$descending : isset($column["link"]));
+			echo '<td><a href="' . h(ME) . "order=$key-" . ($direction ? "desc" : "asc") . '">' . $column["label"] . '</a>' . $column["doc"];
+		}
 		echo "</thead>\n";
+		echo "<tbody>\n";
+
+		if ($order == "__table") {
+			if ($descending) {
+				$tables_list = array_reverse($tables_list, true); // Drivers return tables sorted by name.
+			}
+		} elseif ($order) {
+			uasort($tables_list, function ($a, $b) use ($order, $descending) {
+				$x = $a[$order] ?? null;
+				$y = $b[$order] ?? null;
+				$result = ($x < $y ? -1 : ($x > $y ? 1 : 0)); // <=> is not downgraded to PHP 5.4.
+
+				return ($descending ? -$result : $result);
+			});
+		}
+
+		$sums = ["Data_length" => 0, "Index_length" => 0, "Data_free" => 0];
 
 		$tables = 0;
-		foreach ($tables_list as $name => $type) {
-			$view = ($type !== null && !preg_match('~table|sequence~i', $type));
+		foreach ($tables_list as $name => $status) {
+			$view = ($with_status ? is_view($status) : $status !== null && !preg_match('~table|sequence~i', $status));
+			$engine = ($with_status ? ($status["Engine"] ?? "") : $status);
 			$id = h("Table-" . $name);
 
 			echo '<tr><td class="actions">' . checkbox(($view ? "views[]" : "tables[]"), $name, in_array("$name", $tables_views, true), "", "", "", $id); // "$name" to check numeric table names
@@ -141,38 +225,67 @@ if ($_GET["ns"] === "") {
 			}
 			echo "<th><a href='", h(ME), "$action=", urlencode($name), "' id='$id'>", h($name), "</a></th>";
 
-			if ($view && !preg_match('~materialized~i', $type)) {
+			if ($view && !preg_match('~materialized~i', $engine)) {
 				$title = lang('View');
-				echo '<td colspan="6">' . (support("view") ? "<a href='" . h(ME) . "view=" . urlencode($name) . "' title='" . lang('Alter view') . "'>$title</a>" : $title);
+				$colspan = count($columns) - (support("comment") ? 2 : 1); // Rows and Comment columns are printed separately.
+				echo '<td colspan="' . $colspan . '">' . (support("view") ? "<a href='" . h(ME) . "view=" . urlencode($name) . "' title='" . lang('Alter view') . "'>$title</a>" : $title);
 				echo '<td align="right"><a href="' . h(ME) . "select=" . urlencode($name) . '" title="' . lang('Select data') . '">?</a>';
 			} else {
-				foreach ([
-					"Engine" => [],
-					"Collation" => [],
-					"Data_length" => ["create", lang('Alter table')],
-					"Index_length" => ["indexes", lang('Alter indexes')],
-					"Data_free" => ["edit", lang('New item')],
-					"Auto_increment" => ["auto_increment=1&create", lang('Alter table')],
-					"Rows" => ["select", lang('Select data')],
-				] as $key => $link) {
+				foreach ($columns as $key => $column) {
+					if ($key == "Comment") {
+						continue;
+					}
+
 					$id = " id='$key-" . h($name) . "'";
-					echo ($link ? "<td align='right'>" . (support("table") || $key == "Rows" || (support("indexes") && $key != "Data_length")
-						? "<a href='" . h(ME . "$link[0]=") . urlencode($name) . "'$id title='$link[1]'>?</a>"
-						: "<span$id>?</span>"
-					) : "<td id='$key-" . h($name) . "'>");
+					$link = $column["link"] ?? "";
+					if (!$link) {
+						$val = "";
+						if ($with_status) {
+							$val = $status[$key] ?? "";
+
+							// Tables without own collation inherit it from the database.
+							if ($key == "Collation" && $val == "") {
+								$val = $db_collation;
+							}
+						}
+
+						echo "<td$id>" . h($val);
+						continue;
+					}
+
+					$val = "?";
+					if ($with_status) {
+						$number = $status[$key] ?? "";
+						if (is_numeric($number) && $number >= 0) {
+							$val = ($key == "Rows" && $number && $engine == (DIALECT == "pgsql" ? "table" : "InnoDB") ? "~ " : "") . format_number($number);
+
+							// Ignore innodb_file_per_table because it is not active for tables created before it was enabled.
+							if (isset($sums[$key]) && ($engine != "InnoDB" || $key != "Data_free")) {
+								$sums[$key] += $number;
+							}
+						}
+					}
+
+					echo "<td align='right'>" . (support("table") || $key == "Rows" || (support("indexes") && $key != "Data_length")
+						? "<a href='" . h(ME . "$link=") . urlencode($name) . "'$id title='" . $column["title"] . "'>$val</a>"
+						: "<span$id>$val</span>"
+					);
 				}
 				$tables++;
 			}
-			echo (support("comment") ? "<td id='Comment-" . h($name) . "'>" : "");
+			echo (support("comment") ? "<td id='Comment-" . h($name) . "'>" . ($with_status ? h($status["Comment"] ?? "") : "") : "");
 			echo "\n";
 		}
+
+		echo "</tbody>\n";
+		echo script("mixin(qsl('tbody'), {onclick: tableClick, ondblclick: partialArg(tableClick, true)});");
 
 		echo "<tfoot><tr>";
 		echo "<td><th>" . lang('%d in total', count($tables_list));
 		echo "<td>" . h(DIALECT == "sql" ? Connection::get()->getValue("SELECT @@default_storage_engine") : "");
-		echo "<td>" . h(db_collation(DB, collations()));
-		foreach (["Data_length", "Index_length", "Data_free"] as $key) {
-			echo "<td align='right' id='sum-$key'>";
+		echo ($db_collation != "" ? "<td>" . h($db_collation) : "");
+		foreach ($sums as $key => $sum) {
+			echo "<td align='right' id='sum-$key'>" . ($with_status ? format_number($sum) : "");
 		}
 		echo "<td></td><td></td>";
 		if (support("comment")) {
@@ -183,7 +296,7 @@ if ($_GET["ns"] === "") {
 		echo "</table>\n";
 		echo "</div>\n"; // scrollable
 
-		echo script("ajaxSetHtml('" . js_escape(ME) . "script=db');");
+		echo ($with_status ? "" : script("ajaxSetHtml('" . js_escape(ME) . "script=db');"));
 
 		if (Admin::get()->isDataEditAllowed()) {
 			echo "<div class='table-footer'><div class='field-sets'>\n";

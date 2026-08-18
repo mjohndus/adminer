@@ -17,6 +17,11 @@ if (isset($_GET["elastic"])) {
 			/** @var string */
 			private $serviceUrl;
 
+			public function getDefaultServerName(): string
+			{
+				return "localhost:9200";
+			}
+
 			/**
 			 * @return array|false
 			 */
@@ -38,7 +43,7 @@ if (isset($_GET["elastic"])) {
 					$options["ssl"] = ["verify_peer" => false];
 				}
 
-				$file = @file_get_contents("$this->serviceUrl/" . ltrim($path, '/'), false, stream_context_create($options));
+				[$file, $headers] = get_url("$this->serviceUrl/" . ltrim($path, '/'), stream_context_create($options));
 
 				if ($file === false) {
 					$this->error = lang('Invalid server or credentials.');
@@ -46,7 +51,7 @@ if (isset($_GET["elastic"])) {
 				}
 
 				$isElastic = false;
-				foreach ($http_response_header as $header) {
+				foreach ($headers as $header) {
 					// X-elastic-product is available from Elasticsearch 7.10.
 					if (!strcasecmp($header, "X-elastic-product: Elasticsearch")) {
 						$isElastic = true;
@@ -64,7 +69,7 @@ if (isset($_GET["elastic"])) {
 					return false;
 				}
 
-				if (!preg_match('~^HTTP/[0-9.]+ 2~i', $http_response_header[0])) {
+				if (!preg_match('~^HTTP/[0-9.]+ 2~i', $headers[0] ?? '')) {
 					if (isset($return['error']['root_cause'][0]['type'])) {
 						$this->error = $return['error']['root_cause'][0]['type'] . ": " . $return['error']['root_cause'][0]['reason'];
 					} elseif (isset($return['status']) && isset($return['error']) && is_string($return['error'])) {
@@ -547,7 +552,8 @@ if (isset($_GET["elastic"])) {
 		];
 	}
 
-	function is_view($table_status) {
+	function is_view(array $table_status):bool
+	{
 		return $table_status["Engine"] == "view";
 	}
 

@@ -36,6 +36,7 @@ include __DIR__ . "/polyfill.inc.php";
 include __DIR__ . "/functions.inc.php";
 include __DIR__ . "/html.inc.php";
 include __DIR__ . "/available.inc.php";
+include __DIR__ . "/decompress.inc.php";
 include __DIR__ . "/compile.inc.php";
 
 // Compiled files loading.
@@ -47,18 +48,19 @@ if (!$_SERVER["REQUEST_URI"]) { // IIS 5 compatibility
 if (!strpos($_SERVER["REQUEST_URI"], '?') && $_SERVER["QUERY_STRING"] != "") { // IIS 7 compatibility
 	$_SERVER["REQUEST_URI"] .= "?$_SERVER[QUERY_STRING]";
 }
-if ($_SERVER["HTTP_X_FORWARDED_PREFIX"]) {
+if (preg_match('~^/[-\w.]~', $_SERVER["HTTP_X_FORWARDED_PREFIX"])) {
 	$_SERVER["REQUEST_URI"] = $_SERVER["HTTP_X_FORWARDED_PREFIX"] . $_SERVER["REQUEST_URI"];
 }
 
 // session.cookie_secure could be set on HTTP if we are behind a reverse proxy.
 define("Adminneo\HTTPS", ($_SERVER["HTTPS"] && strcasecmp($_SERVER["HTTPS"], "off")) || ini_bool("session.cookie_secure"));
 
-@ini_set("session.use_trans_sid", "0"); // protect links in export @ - may be disabled
 if (!defined("SID")) {
+	ini_set("session.use_trans_sid", "0"); // protect links in export
+
 	session_cache_limiter(""); // to allow restarting session
 	session_name("neo_sid");
-	session_set_cookie_params(0, preg_replace('~\?.*~', '', $_SERVER["REQUEST_URI"]), "", HTTPS, true);
+	session_set_cookie_params(0, cookie_path(), "", HTTPS, true);
 	session_start();
 }
 
@@ -70,24 +72,10 @@ if (function_exists("get_magic_quotes_gpc") && get_magic_quotes_gpc()) {
 	$_COOKIE = remove_slashes($_COOKIE, $filter);
 }
 
-@set_time_limit(0); // @ - can be disabled
-@ini_set("precision", "15"); // @ - can be disabled, 15 - internal PHP precision
-
-// Migrate changed cookies.
-if (!isset($_COOKIE["neo_dump"]) && str_contains($_COOKIE["neo_export"] ?? "", "db_style")) {
-	$_COOKIE["neo_dump"] = $_COOKIE["neo_export"];
-	cookie("neo_dump", $_COOKIE["neo_dump"]);
-
-	unset($_COOKIE["neo_export"]);
-	cookie("neo_export", "", -3600);
+if (function_exists("set_time_limit")) { // can be disabled
+	set_time_limit(0);
 }
-if (isset($_COOKIE["neo_import"])) {
-	$_COOKIE["neo_export"] = $_COOKIE["neo_import"];
-	cookie("neo_export", $_COOKIE["neo_export"]);
-
-	unset($_COOKIE["neo_import"]);
-	cookie("neo_import", "", -3600);
-}
+ini_set("precision", "16"); // 16 - IEEE 754 has 15.95 decimal digits for double
 
 // Remove unused file.
 @unlink(get_temp_dir() . "/adminneo.version");
@@ -150,6 +138,12 @@ if ($instance_error) {
 	$admin->addError($instance_error);
 }
 
+// Store the language selected in the navigation panel. The settings page saves it with the other settings.
+if ($posted_language !== null && !isset($_GET["settings"])) {
+	$admin->getSettings()->updateParameter("lang", $posted_language);
+	redirect(remove_from_uri());
+}
+
 if (!defined("AdminNeo\DRIVER")) {
 	define("AdminNeo\DRIVER", null);
 	define("AdminNeo\DIALECT", null);
@@ -168,6 +162,7 @@ define("AdminNeo\ME", BASE_URL . '?'
 define("AdminNeo\HOME_URL", BASE_URL ?: ".");
 define("AdminNeo\SERVER_HOME_URL", substr(preg_replace('~\b(username|db|ns)=[^&]*&~', '', ME), 0, -1) ?: ".");
 
+include __DIR__ . "/set.inc.php";
 include __DIR__ . "/version.inc.php";
 include __DIR__ . "/design.inc.php";
 include __DIR__ . "/xxtea.inc.php";

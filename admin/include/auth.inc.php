@@ -17,14 +17,14 @@ if ($_COOKIE["neo_permanent"]) {
  */
 function validate_server_input(array &$permanent): void
 {
-	if (SERVER == "") {
+	// Remove socket. E.g:
+	// :/var/www/mysql.sock
+	// 127.0.0.1:/var/www/mysql.sock
+	// [::1]:/var/www/mysql.sock
+	// :/cloudsql/project:region:instance (Google Cloud SQL Unix socket)
+	$server = preg_replace('~:/[-\w.][-\w.:/]*$~D', "", SERVER);
+	if ($server == "") {
 		return;
-	}
-
-	// Add brackets around single IPv6 for correct parsing.
-	$server = SERVER;
-	if (function_exists("filter_var") && filter_var($server,  FILTER_VALIDATE_IP, FILTER_FLAG_IPV6)) {
-		$server = "[$server]";
 	}
 
 	// Add dummy https scheme for correct parsing.
@@ -89,7 +89,7 @@ function build_http_url(string $server, string $username, string $password, stri
 
 function add_invalid_login(): void
 {
-	$base_name = get_temp_dir() . "/adminneo.invalid";
+	$base_name = get_temp_dir() . "/adminneo-invalid";
 	// adminer.invalid may not be writable by us, try the files with random suffixes
 	$file = null;
 	foreach (glob("$base_name*") ?: [$base_name] as $filename) {
@@ -106,7 +106,7 @@ function add_invalid_login(): void
 		}
 	}
 
-	$invalids = unserialize(stream_get_contents($file));
+	$invalids = json_decode(stream_get_contents($file), true);
 	$time = time();
 	if ($invalids) {
 		foreach ($invalids as $ip => $val) {
@@ -122,7 +122,7 @@ function add_invalid_login(): void
 	}
 	$invalid[1]++;
 
-	write_and_unlock_file($file, serialize($invalids));
+	write_and_unlock_file($file, json_encode($invalids));
 }
 
 /**
@@ -130,13 +130,13 @@ function add_invalid_login(): void
  */
 function check_invalid_login(array &$permanent): void
 {
-	$base_name = get_temp_dir() . "/adminneo.invalid";
+	$base_name = get_temp_dir() . "/adminneo-invalid";
 
 	$invalids = [];
 	foreach (glob("$base_name*") as $filename) {
 		$file = open_file_with_lock($filename);
 		if ($file) {
-			$invalids = unserialize(stream_get_contents($file));
+			$invalids = json_decode(stream_get_contents($file), true);
 			unlock_file($file);
 			break;
 		}
@@ -341,11 +341,7 @@ function print_login_page(): void
 }
 
 if (isset($_GET["username"]) && !DRIVER) {
-	Admin::get()->addError(lang('Database driver not found.'));
-
-	page_header(lang('No driver'), false);
-	page_footer("auth");
-	exit;
+	print_login_page();
 }
 
 if (isset($_GET["username"]) && !defined('AdminNeo\DRIVER_EXTENSION')) {
