@@ -39,12 +39,14 @@ if ($tables_views && !$_POST["search"]) {
 	} elseif (DIALECT != "sql") {
 		$result = (DIALECT == "sqlite"
 			? queries("VACUUM")
-			: apply_queries("VACUUM" . ($_POST["optimize"] ? " ANALYZE" : ""), $_POST["tables"])
+			: apply_queries("VACUUM" . ($_POST["optimize"] ? " ANALYZE" : ""), (array)$_POST["tables"])
 		);
 		$message = lang('Tables have been optimized.');
 	} elseif (!$_POST["tables"]) {
 		$message = lang('No tables.');
-	} elseif ($result = queries(($_POST["optimize"] ? "OPTIMIZE" : ($_POST["check"] ? "CHECK" : ($_POST["repair"] ? "REPAIR" : "ANALYZE"))) . " TABLE " . implode(", ", array_map('AdminNeo\idf_escape', $_POST["tables"])))) {
+	} elseif ($result = queries(
+		($_POST["optimize"] ? "OPTIMIZE" : ($_POST["check"] ? "CHECK" : ($_POST["repair"] ? "REPAIR" : "ANALYZE"))) . " TABLE " . implode(", ", array_map('AdminNeo\idf_escape', $_POST["tables"]))
+	)) {
 		while ($row = $result->fetchAssoc()) {
 			$message .= "<b>" . h($row["Table"]) . "</b>: " . h($row["Msg_text"]) . "<br>";
 		}
@@ -152,7 +154,8 @@ if ($_GET["ns"] === "") {
 	}
 
 	// Sorting by a status column requires the statuses of all tables, so they are not loaded by AJAX in that case.
-	$with_status = ($order != "" && $order != "__table");
+	// Neither are they for drivers serving them fast enough to not delay the page.
+	$with_status = ($order != "" && $order != "__table") || support("fast_status");
 
 	$tables_list = ($with_status ? table_status() : tables_list());
 	if (!$tables_list) {
@@ -166,7 +169,7 @@ if ($_GET["ns"] === "") {
 			echo "<fieldset><legend>" . lang('Search data in tables') . " <span id='selected2'></span></legend><div class='fieldset-content'>";
 			echo html_select("op", Admin::get()->getOperators(), $_POST["op"] ?? Driver::get()->getLikeOperator());
 			echo "<input type='search' class='input' name='query' value='" . h($_POST["query"]) . "'>";
-			echo script("qsl('input').onkeydown = partialArg(bodyKeydown, 'search');", "");
+			echo script("qsl('input').onkeydown = event => bodyKeydown(event, 'search');", "");
 			echo " <input type='submit' class='button' name='search' value='" . lang('Search') . "'>\n";
 			echo "</div></fieldset>\n";
 			echo "</div>\n";
@@ -181,15 +184,20 @@ if ($_GET["ns"] === "") {
 		echo "<table class='nowrap checkable'>\n";
 
 		echo '<thead><tr class="wrap">';
-		echo '<td class="actions"><input id="check-all" type="checkbox" class="input jsonly">' . script("gid('check-all').onclick = partial(formCheck, /^(tables|views)\[/);", "");
+		echo '<th class="actions"><input id="check-all" type="checkbox" class="input jsonly" title="' . lang('All') . '">' .
+			script("gid('check-all').onclick = partial(formCheck, /^(tables|views)\[/);", "");
 		// Tables are already sorted by name when no other column is used, so only the descending order needs a parameter.
 		$name_order = ($order == "" || $order == "__table");
 		$table_link = ($name_order && !$descending ? ME . "order=__table-desc" : substr(ME, 0, -1));
-		echo '<th><a href="' . h($table_link) . '">' . lang('Table') . '</a>';
+		// SQLite puts the sqlite_ tables last, so its list is not sorted by name.
+		$name_sorted = ($name_order && DIALECT != "sqlite");
+		echo '<th' . ($name_sorted ? " aria-sort='" . ($descending ? "descending" : "ascending") . "'" : '')
+			. '><a href="' . h($table_link) . '">' . lang('Table') . '</a>';
 		foreach ($columns as $key => $column) {
 			// The sorted column is linked to the opposite direction, so repeated clicks toggle it.
 			$direction = ($key === $order ? !$descending : isset($column["link"]));
-			echo '<td><a href="' . h(ME) . "order=$key-" . ($direction ? "desc" : "asc") . '">' . $column["label"] . '</a>' . $column["doc"];
+			echo '<th' . ($key === $order ? " aria-sort='" . ($descending ? "descending" : "ascending") . "'" : '')
+				. '><a href="' . h(ME) . "order=$key-" . ($direction ? "desc" : "asc") . '">' . $column["label"] . '</a>' . $column["doc"];
 		}
 		echo "</thead>\n";
 		echo "<tbody>\n";
@@ -216,7 +224,7 @@ if ($_GET["ns"] === "") {
 			$engine = ($with_status ? ($status["Engine"] ?? "") : $status);
 			$id = h("Table-" . $name);
 
-			echo '<tr><td class="actions">' . checkbox(($view ? "views[]" : "tables[]"), $name, in_array("$name", $tables_views, true), "", "", "", $id); // "$name" to check numeric table names
+			echo '<tr><th class="actions">' . checkbox(($view ? "views[]" : "tables[]"), $name, in_array("$name", $tables_views, true), "", "", "", $id); // "$name" to check numeric table names
 
 			if (!Admin::get()->getSettings()->isSelectionPreferred() && (support("table") || support("indexes"))) {
 				$action = "table";
@@ -229,7 +237,7 @@ if ($_GET["ns"] === "") {
 				$title = lang('View');
 				$colspan = count($columns) - (support("comment") ? 2 : 1); // Rows and Comment columns are printed separately.
 				echo '<td colspan="' . $colspan . '">' . (support("view") ? "<a href='" . h(ME) . "view=" . urlencode($name) . "' title='" . lang('Alter view') . "'>$title</a>" : $title);
-				echo '<td align="right"><a href="' . h(ME) . "select=" . urlencode($name) . '" title="' . lang('Select data') . '">?</a>';
+				echo "<td align='right'><a href='" . h(ME) . "select=" . urlencode($name) . "' title='" . lang('Select data') . "'>?</a>";
 			} else {
 				foreach ($columns as $key => $column) {
 					if ($key == "Comment") {
@@ -257,7 +265,7 @@ if ($_GET["ns"] === "") {
 					if ($with_status) {
 						$number = $status[$key] ?? "";
 						if (is_numeric($number) && $number >= 0) {
-							$val = ($key == "Rows" && $number && $engine == (DIALECT == "pgsql" ? "table" : "InnoDB") ? "~ " : "") . format_number($number);
+							$val = ($key == "Rows" ? format_rows($status) : format_number($number));
 
 							// Ignore innodb_file_per_table because it is not active for tables created before it was enabled.
 							if (isset($sums[$key]) && ($engine != "InnoDB" || $key != "Data_free")) {
@@ -267,8 +275,8 @@ if ($_GET["ns"] === "") {
 					}
 
 					echo "<td align='right'>" . (support("table") || $key == "Rows" || (support("indexes") && $key != "Data_length")
-						? "<a href='" . h(ME . "$link=") . urlencode($name) . "'$id title='" . $column["title"] . "'>$val</a>"
-						: "<span$id>$val</span>"
+						? "<a href='" . h(ME . "$link=") . urlencode($name) . "'$id title='" . $column["title"] . "'>" . h($val) . "</a>"
+						: "<span$id>" . h($val) . "</span>"
 					);
 				}
 				$tables++;
@@ -278,12 +286,15 @@ if ($_GET["ns"] === "") {
 		}
 
 		echo "</tbody>\n";
-		echo script("mixin(qsl('tbody'), {onclick: tableClick, ondblclick: partialArg(tableClick, true)});");
+		echo script("mixin(qsl('tbody'), {onclick: tableClick, ondblclick: event => tableClick(event, true)});");
 
 		echo "<tfoot><tr>";
 		echo "<td><th>" . lang('%d in total', count($tables_list));
 		echo "<td>" . h(DIALECT == "sql" ? Connection::get()->getValue("SELECT @@default_storage_engine") : "");
 		echo ($db_collation != "" ? "<td>" . h($db_collation) : "");
+		if ($with_status && function_exists('AdminNeo\db_status')) {
+			$sums = db_status();
+		}
 		foreach ($sums as $key => $sum) {
 			echo "<td align='right' id='sum-$key'>" . ($with_status ? format_number($sum) : "");
 		}
@@ -310,11 +321,11 @@ if ($_GET["ns"] === "") {
 				. "<input type='submit' class='button' name='check' value='" . lang('Check') . "'> " . help_script("CHECK TABLE")
 				. "<input type='submit' class='button' name='repair' value='" . lang('Repair') . "'> " . help_script("REPAIR TABLE")
 			: "")))
-			. "<input type='submit' class='button' name='truncate' value='" . lang('Truncate') . "'> " . help_script(DIALECT == "sqlite" ? "DELETE" : ("TRUNCATE" . (DIALECT == "pgsql" ? "" : " TABLE"))) . confirm()
+			. "<input type='submit' class='button' name='truncate' value='" . lang('Truncate') . "'> " .
+				help_script(DIALECT == "sqlite" ? "DELETE" : ("TRUNCATE" . (DIALECT == "pgsql" ? "" : " TABLE"))) . confirm()
 			. "<input type='submit' class='button' name='drop' value='" . lang('Drop') . "'>" . help_script("DROP TABLE") . confirm() . "\n";
 			$databases = (support("scheme") ? Admin::get()->getSchemas() : Admin::get()->getDatabases());
 			echo "</div></fieldset>\n";
-			$script = "";
 			if (count($databases) != 1 && DIALECT != "sqlite") {
 				echo "<fieldset><legend>" . lang('Move to other database') . " <span id='selected3'></span></legend><div>";
 				$db = (isset($_POST["target"]) ? $_POST["target"] : (support("scheme") ? $_GET["ns"] : DB));
@@ -322,13 +333,9 @@ if ($_GET["ns"] === "") {
 				echo " <input type='submit' class='button' name='move' value='" . lang('Move') . "'>";
 				echo (support("copy") ? " <input type='submit' class='button' name='copy' value='" . lang('Copy') . "'> " . checkbox("overwrite", 1, $_POST["overwrite"], lang('overwrite')) : "");
 				echo "</div></fieldset>\n";
-				$script = " selectCount('selected3', formChecked(this, /^(tables|views)\[/));";
 			}
 			echo input_hidden("all"); // used by trCheck()
-			echo script("qsl('input').onclick = function () { selectCount('selected', formChecked(this, /^(tables|views)\[/));"
-				. (support("table") ? " selectCount('selected2', formChecked(this, /^tables\[/) || $tables);" : "")
-				. "$script }"
-			);
+			echo script("qsl('input').onclick = partial(countTables, $tables);");
 			echo input_token();
 			echo "</div></div>\n";
 
@@ -433,8 +440,10 @@ if ($_GET["ns"] === "") {
 			foreach ($rows as $row) {
 				echo "<tr>";
 				echo "<th>" . h($row["Name"]);
-				echo "<td>" . ($row["Execute at"] ? lang('At given time') . "<td>" . $row["Execute at"] : lang('Every') . " " . $row["Interval value"] . " " . $row["Interval field"] . "<td>$row[Starts]");
-				echo "<td>$row[Ends]";
+				echo "<td>" . ($row["Execute at"] ?
+					lang('At given time') . "<td>" . h($row["Execute at"]) :
+					lang('Every') . " " . h($row["Interval value"]) . " " . h($row["Interval field"]) . "<td>" . h($row["Starts"]));
+				echo "<td>" . h($row["Ends"]);
 				echo '<td><a href="' . h(ME) . 'event=' . urlencode($row["Name"]) . '">' . lang('Alter') . '</a>';
 			}
 			echo "</table>\n";

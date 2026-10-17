@@ -80,6 +80,11 @@ class Settings
 		cookie(self::CookieName, http_build_query($this->params), 7776000);
 	}
 
+	public function getTheme(): string
+	{
+		return $this->getParameter("theme") ?? $this->config->getTheme();
+	}
+
 	public function getColorScheme(): ?string
 	{
 		return $this->getParameter("colorScheme");
@@ -98,6 +103,11 @@ class Settings
 	public function isNavigationDual(): bool
 	{
 		return $this->getNavigationMode() == Config::NavigationDual;
+	}
+
+	public function isNavigationHover(): bool
+	{
+		return $this->getNavigationMode() == Config::NavigationHover;
 	}
 
 	public function isNavigationReversed(): bool

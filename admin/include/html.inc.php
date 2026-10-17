@@ -223,7 +223,7 @@ function html_radios($name, $options, $value = "") {
 * @return string
 */
 function confirm($message = "", $selector = "qsl('input')") {
-	return script("$selector.onclick = () => confirm('" . ($message ? js_escape($message) : lang('Are you sure?')) . "');", "");
+	return script("$selector.onclick = () => confirm('" . js_escape($message ?: lang('Are you sure?')) . "');", "");
 }
 
 /**
@@ -267,7 +267,9 @@ function bold($bold, $class = "") {
 * @return string
 */
 function js_escape($string) {
-	return addcslashes($string, "\r\n'\\/"); // slash for <script>
+	// The HTML parser doesn't understand JavaScript escaping, so < must not stay in the string at all, otherwise
+	// <!-- would start the script data escaped state and the following </script> wouldn't end the element.
+	return str_replace("<", "\\x3C", addcslashes($string, "\r\n'\\"));
 }
 
 /**
@@ -275,7 +277,16 @@ function js_escape($string) {
  */
 function js_escape_key($string): string
 {
-	return '"' . addcslashes($string, "\r\n\t\"\\/") . '"';
+	return '"' . str_replace("<", "\\x3C", addcslashes($string, "\r\n\t\"\\")) . '"';
+}
+
+/**
+ * Escapes string to be used inside a JavaScript regular expression literal.
+ */
+function js_escape_re(string $string): string
+{
+	// preg_quote() escapes also < ! - so the HTML parser doesn't see <!-- or </script>.
+	return addcslashes(preg_quote($string, "/"), "\r\n");
 }
 
 /**
@@ -441,7 +452,7 @@ function input($field, $value, $function, bool $autofocus = false): void {
 		echo $input;
 	} elseif (preg_match('~bool~', $field["type"])) {
 		echo "<input type='hidden'$attrs value='0'>" .
-			"<input type='checkbox'" . (preg_match('~^(1|t|true|y|yes|on)$~i', $value) ? " checked='checked'" : "") . "$attrs value='1'>";
+			"<input type='checkbox'" . (preg_match('~^(1|t|true|y|yes|on)$~i', $value) ? " checked" : "") . "$attrs value='1'>";
 	} elseif ($field["type"] == "enum") {
 		echo enum_input($attrs, $field, $value);
 	} elseif ($field["type"] == "set") {
@@ -463,7 +474,10 @@ function input($field, $value, $function, bool $autofocus = false): void {
 		echo "<input type='file' name='fields-$name'>";
 	} elseif ($is_json) {
 		echo "<textarea $attrs cols='50' rows='12' class='jush-json'>" . h($value) . '</textarea>';
-	} elseif (($text = preg_match('~text|lob|memo|json~i', $field["type"])) || preg_match("~\n~", $value)) {
+	} elseif (
+		($text = preg_match('~text|lob|memo|json~i', $field["type"]) || (preg_match('~char|binary~', $field["type"]) && $field["length"] == "max")) ||
+		preg_match("~\n~", $value)
+	) {
 		if ($text && DIALECT != "sqlite") {
 			$attrs .= " cols='50' rows='12'";
 		} else {
@@ -481,7 +495,7 @@ function input($field, $value, $function, bool $autofocus = false): void {
 		}
 		// type='date' and type='time' display localized value which may be confusing, type='datetime' uses 'T' as date and time separator
 		echo "<input class='input'"
-			. ((!$has_function || $function === "") && preg_match('~(?<!o)int(?!er)~', $field["type"]) && !preg_match('~\[\]~', $field["full_type"]) ? " type='number'" : "")
+			. ((!$has_function || $function === "") && preg_match('~(?<!o)int(?!er)~', $field["type"]) && !preg_match('~\[]~', $field["full_type"]) ? " type='number'" : "")
 			. ($function != "now" ? " value='" . h($value) . "'" : " data-last-value='" . h($value) . "'")
 			. ($maxlength ? " data-maxlength='$maxlength'" : "")
 			. (preg_match('~char|binary~', $field["type"]) && $maxlength > 20 ? " size='44'" : "")
@@ -493,6 +507,11 @@ function input($field, $value, $function, bool $autofocus = false): void {
 	$hint = Admin::get()->getFieldInputHint($_GET["edit"], $field, $value);
 	if ($hint != "") {
 		echo " <span class='input-hint'>$hint</span>";
+	}
+
+	// Apply the initially selected function (e.g. hide the input for now()) without touching the printed value.
+	if (count($functions) > 1) {
+		echo script("qs('select', qsl('td').previousSibling).onchange(null, true);", "");
 	}
 
 	// Change scripts.
@@ -514,6 +533,10 @@ function input($field, $value, $function, bool $autofocus = false): void {
  * @return string|array|false|null False to leave the original value (copy original while cloning), null to skip the column
  */
 function process_input($field) {
+	if (is_generated_always($field)) {
+		return null;
+	}
+
 	$idf = bracket_escape($field["field"]);
 	$function = $_POST["function"][$idf] ?? "";
 	if ($function == "orig") {
@@ -525,7 +548,7 @@ function process_input($field) {
 	if (is_blob($field) && ini_bool("file_uploads")) {
 		$file = get_file("fields-$idf");
 		if (!is_string($file)) {
-			return false; //! report errors
+			return false; // TODO report errors
 		}
 		return Driver::get()->quoteBinary($file);
 	}
@@ -544,7 +567,7 @@ function process_input($field) {
 	if ($function == "json") {
 		$value = json_decode($value, true);
 		if (!is_array($value)) {
-			return false; //! report errors
+			return false; // TODO report errors
 		}
 		return $value;
 	}
@@ -636,6 +659,15 @@ function edit_form($table, $fields, $row, $update): void {
 	echo "<form action='' method='post' enctype='multipart/form-data' id='form'>\n";
 	$editable = false;
 
+	// The WHERE condition in the URL is not updated after saving, so changing these values would break Save and continue edit.
+	$where_columns = ($update && !isset($_GET["select"]) ? where_columns($_GET, $fields) : []);
+
+	// Without a unique key the condition uses all columns, so the button would be always disabled.
+	$continue_edit = (count($where_columns) != count($fields));
+	if (!$continue_edit) {
+		$where_columns = [];
+	}
+
 	if (!$fields) {
 		echo "<p class='error'>" . lang('You have no privileges to update this table.') . "\n";
 	} else {
@@ -644,7 +676,7 @@ function edit_form($table, $fields, $row, $update): void {
 		$autofocus = !$_POST;
 
 		foreach ($fields as $name => $field) {
-			echo "<tr><th>" . Admin::get()->getFieldName($field);
+			echo "<tr" . (isset($where_columns[$name]) ? " class='where-column'" : "") . "><th>" . Admin::get()->getFieldName($field);
 			$key = bracket_escape($name);
 			$default = $_GET["preset"][$key] ?? null;
 			if ($default === null) {
@@ -669,7 +701,8 @@ function edit_form($table, $fields, $row, $update): void {
 			if (!$_POST["save"] && is_string($value)) {
 				$value = Admin::get()->formatFieldValue($value, $field);
 			}
-			if (($update && !isset($field["privileges"]["update"])) || $field["generated"]) {
+			// Values generated by the database are read-only, they cannot be inserted nor updated.
+			if (($update && !isset($field["privileges"]["update"])) || is_generated_always($field)) {
 				echo "<td class='function'></td><td>";
 				if ($update || !$field["generated"]) {
 					echo select_value($value, '', $field, null);
@@ -680,7 +713,7 @@ function edit_form($table, $fields, $row, $update): void {
 			} else {
 				$editable = true;
 				$function = ($_POST["save"]
-					? $_POST["function"][$name] ?? ""
+					? $_POST["function"][$key] ?? ""
 					: ($update && preg_match('~^CURRENT_TIMESTAMP~i', $field["on_update"])
 						? "now"
 						: ($value === false ? null : ($value !== null ? '' : 'NULL'))
@@ -718,17 +751,23 @@ function edit_form($table, $fields, $row, $update): void {
 		}
 		echo "</table>\n";
 		echo script("initToggles(gid('form'));");
+		if ($where_columns) {
+			echo script("initWhereChange();");
+		}
 	}
 
 	echo "<p>";
 	if ($editable) {
 		echo "<input type='submit' class='button default' value='" . lang('Save') . "'>\n";
-		if (!isset($_GET["select"])) {
+		if (!isset($_GET["select"]) && $continue_edit) {
+			// The printed values were not saved, so they can differ from the WHERE condition in the URL and no change event fires for them.
+			$disabled = ($where_columns && Admin::get()->getErrors() ? " disabled" : "");
+
 			echo "<input type='submit' class='button' name='insert' value='" . ($update
 					? lang('Save and continue edit')
 					: lang('Save and insert next')
-				) . "' title='Ctrl+Shift+Enter'>\n";
-			echo ($update ? script("qsl('input').onclick = function () { return !ajaxForm(this.form, '" . lang('Saving') . "…', this); };") : "");
+				) . "' title='Ctrl+Shift+Enter'$disabled>\n";
+			echo ($update ? script("qsl('input').onclick = function () { return !ajaxForm(this.form, '" . js_escape(lang('Saving…')) . "', this); };") : "");
 		}
 	}
 	echo ($update ? "<input type='submit' class='button' name='delete' value='" . lang('Delete') . "'>" . confirm() . "\n" : "");
@@ -750,6 +789,6 @@ function file_upload_form_script(string $formId, string $inputName): string
 	$max_size_bytes = ini_bytes("upload_max_filesize");
 
 	return script("initFilesUploadForm('" . js_escape($formId) . "', '" . js_escape($inputName) . "', " .
-		"$max_count, '" . lang('The maximum number of files is %d. Select fewer files or increase the %s configuration directive.', $max_count, "\'max_file_uploads\'") . "', " .
-		"$max_size_bytes, '" . lang('The maximum total size of files is %s. Select smaller files or increase the %s configuration directive.', $max_size, "\'upload_max_filesize\'") . "')");
+		"$max_count, '" . js_escape(lang('The maximum number of files is %d. Select fewer files or increase the %s configuration directive.', $max_count, "'max_file_uploads'")) . "', " .
+		"$max_size_bytes, '" . js_escape(lang('The maximum total size of files is %s. Select smaller files or increase the %s configuration directive.', $max_size, "'upload_max_filesize'")) . "')");
 }

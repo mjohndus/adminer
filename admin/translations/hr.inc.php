@@ -9,12 +9,17 @@ return [
 
 	// Editor
 	'$1-$3-$5' => '$5.$3.$1', // date format: $1 yyyy, $2 yy, $3 mm, $4 m, $5 dd, $6 d
-	'YYYY-MM-DD' => null, // hint for date format - use language equivalents for day, month and year shortcuts
+	'YYYY-MM-DD' => 'DD.MM.GGGG', // hint for date format - use language equivalents for day, month and year shortcuts // by Claude Fable 5.1
 	'HH:MM:SS' => 'HH:MM:SS', // hint for time format - use language equivalents for hour, minute and second shortcuts
 
 	// Bootstrap
-	'%s must return an array.' => '%s mora vratiti polje.', // by Claude Opus 5
-	'%s and %s must return an object created by %s method.' => '%s i %s moraju vratiti objekt kreiran metodom %s.', // by Claude Opus 5
+	'%s must return an array.' => '%s mora vratiti polje.', // by Claude Fable 5.1
+	'%s and %s must return an object created by %s method.' => '%s i %s moraju vratiti objekt kreiran metodom %s.', // by Claude Fable 5.1
+
+	// Accessibility
+	'Skip to main content' => 'Preskoči na glavni sadržaj', // by Claude Fable 5.1
+	'Skip to menu' => 'Preskoči na izbornik', // by Claude Fable 5.1
+	'Skip to table list' => 'Preskoči na popis tablica', // by Claude Fable 5.1
 
 	// Login
 	'System' => 'Sustav',
@@ -27,18 +32,18 @@ return [
 	'Logged as: %s' => 'Prijavljen kao: %s',
 	'Logout successful.' => 'Uspješna odjava.',
 	'hostname[:port] or :socket' => 'hostname[:port] ili :socket',
-	'Invalid server or credentials.' => 'Neispravan poslužitelj ili podaci za prijavu.', // by Claude Opus 5
+	'Invalid server or credentials.' => 'Neispravan poslužitelj ili podaci za prijavu.', // by Claude Fable 5.1
 	'There is a space in the input password which might be the cause.' => 'U unesenoj lozinci postoji razmak koji bi mogao biti uzrok problema.',
-	'AdminNeo does not support accessing a database without a password, <a href="https://www.adminneo.org/password"%s>more information</a>.' => 'AdminNeo ne podržava pristup bazi podataka bez lozinke, <a href="https://www.adminneo.org/password"%s>više informacija</a>.', // by Claude Opus 5
+	'AdminNeo does not support accessing a database without a password, <a href="https://www.adminneo.org/password"%s>more information</a>.' => 'AdminNeo ne podržava pristup bazi podataka bez lozinke, <a href="https://www.adminneo.org/password"%s>više informacija</a>.', // by Claude Fable 5.1
 	'Database does not support password.' => 'Baza podataka ne podržava lozinku.',
 	'Too many unsuccessful logins, try again in %d minute(s).' => [
 		'Previše neuspješnih pokušaja prijave, pokušajte ponovo za %d minutu.',
 		'Previše neuspješnih pokušaja prijave, pokušajte ponovo za %d minute.',
 		'Previše neuspješnih pokušaja prijave, pokušajte ponovo za %d minuta.',
 	],
-	'Invalid permanent login, please login again.' => 'Neispravna trajna prijava, molimo prijavite se ponovo.', // by Claude Opus 5
+	'Invalid permanent login, please login again.' => 'Neispravna trajna prijava, molimo prijavite se ponovo.', // by Claude Fable 5.1
 	'Invalid CSRF token. Send the form again.' => 'Nevažeći CSRF token. Pošaljite obrazac ponovo.',
-	'If you did not send this request from AdminNeo then close this page.' => 'Ako ovaj zahtjev niste poslali iz AdminNea, zatvorite ovu stranicu.', // by Claude Opus 5
+	'If you did not send this request from AdminNeo then close this page.' => 'Ako ovaj zahtjev niste poslali iz AdminNea, zatvorite ovu stranicu.', // by Claude Fable 5.1
 	'The action will be performed after successful login with the same credentials.' => 'Radnja će biti izvršena nakon uspješne prijave s istim podacima.',
 
 	// Connection
@@ -52,10 +57,12 @@ return [
 	// Settings
 	'Language' => 'Jezik',
 
-	'Home' => 'Početna', // by Claude Opus 5
+	'Menu' => 'Izbornik', // by Claude Fable 5.1
+	'Home' => 'Početna', // by Claude Fable 5.1
 	'Refresh' => 'Osvježi',
-	'Info' => 'Informacije', // by Claude Opus 5
-	'More information.' => 'Više informacija.', // by Claude Opus 5
+	'Info' => 'Informacije', // by Claude Fable 5.1
+	'More information.' => 'Više informacija.', // by Claude Fable 5.1
+	'Close' => 'Zatvori', // by Claude Fable 5.1
 
 	// Privileges
 	'Privileges' => 'Ovlasti',
@@ -85,7 +92,7 @@ return [
 
 	// Queries
 	'SQL command' => 'SQL naredba',
-	'HTTP request' => 'HTTP zahtjev', // by Claude Opus 5
+	'HTTP request' => 'HTTP zahtjev', // by Claude Fable 5.1
 	'%d query(s) executed OK.' => [
 		'%d upit je uspješno izvršen.',
 		'%d upita su uspješno izvršena.',
@@ -120,8 +127,8 @@ return [
 	'File uploads are disabled.' => 'Prijenos datoteka je onemogućen.',
 	'Unable to upload a file.' => 'Prijenos datoteke nije uspio.',
 	'Maximum allowed file size is %sB.' => 'Maksimalna dozvoljena veličina datoteke je %sB.',
-	'The maximum number of files is %d. Select fewer files or increase the %s configuration directive.' => 'Maksimalan broj datoteka je %d. Odaberite manje datoteka ili povećajte vrijednost konfiguracijske direktive %s.', // by Claude Opus 5
-	'The maximum total size of files is %s. Select smaller files or increase the %s configuration directive.' => 'Maksimalna ukupna veličina datoteka je %s. Odaberite manje datoteke ili povećajte vrijednost konfiguracijske direktive %s.', // by Claude Opus 5
+	'The maximum number of files is %d. Select fewer files or increase the %s configuration directive.' => 'Maksimalan broj datoteka je %d. Odaberite manje datoteka ili povećajte vrijednost konfiguracijske direktive %s.', // by Claude Fable 5.1
+	'The maximum total size of files is %s. Select smaller files or increase the %s configuration directive.' => 'Maksimalna ukupna veličina datoteka je %s. Odaberite manje datoteke ili povećajte vrijednost konfiguracijske direktive %s.', // by Claude Fable 5.1
 	'Too big POST data. Reduce the data or increase the %s configuration directive.' => 'Preveliki POST podaci. Smanjite podatke ili povećajte vrijednost konfiguracijske direktive %s.',
 	'You can upload a big SQL file via FTP and import it from server.' => 'Veliku SQL datoteku možete prenijeti putem FTP-a i uvesti je s poslužitelja.',
 	'File must be in UTF-8 encoding.' => 'Datoteka mora biti u UTF-8 kodiranju.',
@@ -142,7 +149,7 @@ return [
 
 	// Databases
 	'Database' => 'Baza podataka',
-	'database' => 'baza podataka', // by Claude Opus 5
+	'database' => 'baza podataka', // by Claude Fable 5.1
 	'DB' => 'BP',
 	'Use' => 'Koristi',
 	'Invalid database.' => 'Neispravna baza podataka.',
@@ -162,10 +169,10 @@ return [
 
 	// Schemas (PostgreSQL, MS SQL)
 	'Schema' => 'Shema',
-	'schema' => 'shema', // by Claude Opus 5
-	'Schemas' => 'Sheme', // by Claude Opus 5
-	'No schemas.' => 'Nema shema.', // by Claude Opus 5
-	'Show schema' => 'Prikaži shemu', // by Claude Opus 5
+	'schema' => 'shema', // by Claude Fable 5.1
+	'Schemas' => 'Sheme', // by Claude Fable 5.1
+	'No schemas.' => 'Nema shema.', // by Claude Fable 5.1
+	'Show schema' => 'Prikaži shemu', // by Claude Fable 5.1
 	'Alter schema' => 'Izmijeni shemu',
 	'Create schema' => 'Kreiraj shemu',
 	'Schema has been dropped.' => 'Shema je izbrisana.',
@@ -174,6 +181,7 @@ return [
 	'Invalid schema.' => 'Neispravna shema.',
 
 	// Table list
+	'All' => 'Sve', // checkbox selecting all tables and views // by Claude Fable 5.1
 	'Engine' => 'Motor',
 	'engine' => 'motor',
 	'Collation' => 'Uspoređivanje',
@@ -219,6 +227,7 @@ return [
 	'Options' => 'Opcije',
 	'Comment' => 'Komentar',
 	'Default value' => 'Zadana vrijednost',
+	'default value' => 'zadana vrijednost',
 	'Drop' => 'Izbriši',
 	'Drop %s?' => 'Izbrisati %s?',
 	'Are you sure?' => 'Jeste li sigurni?',
@@ -240,12 +249,12 @@ return [
 
 	// Partitions
 	'Partition by' => 'Particioniraj po',
-	'Partition' => 'Particija', // by Claude Opus 5
+	'Partition' => 'Particija', // by Claude Fable 5.1
 	'Partitions' => 'Particije',
 	'Partition name' => 'Naziv particije',
 	'Values' => 'Vrijednosti',
-	'Inherited tables' => 'Naslijeđene tablice', // by Claude Opus 5
-	'Inherited from' => 'Naslijeđena od', // by Claude Opus 5
+	'Inherited tables' => 'Naslijeđene tablice', // by Claude Fable 5.1
+	'Inherited from' => 'Naslijeđena od', // by Claude Fable 5.1
 
 	// Indexes
 	'Indexes' => 'Indeksi',
@@ -254,12 +263,12 @@ return [
 	'Add next' => 'Dodaj sljedeći',
 	'Index Type' => 'Tip indeksa',
 	'length' => 'duljina',
+	'operator class' => 'klasa operatora', // by Claude Fable 5.1
 	'Algorithm' => 'Algoritam',
 	'Condition' => 'Uvjet',
 
 	// Foreign keys
 	'Foreign keys' => 'Strani ključevi',
-	'Foreign key' => 'Strani ključ',
 	'Foreign key has been dropped.' => 'Strani ključ je izbrisan.',
 	'Foreign key has been altered.' => 'Strani ključ je izmijenjen.',
 	'Foreign key has been created.' => 'Strani ključ je kreiran.',
@@ -269,7 +278,8 @@ return [
 	'Target' => 'Cilj',
 	'Add column' => 'Dodaj stupac',
 	'Alter' => 'Izmijeni',
-	'Add foreign key' => 'Dodaj strani ključ',
+	'Alter foreign key' => 'Izmijeni strani ključ', // by Claude Fable 5.1
+	'Create foreign key' => 'Kreiraj strani ključ', // by Claude Fable 5.1
 	'ON DELETE' => 'ON DELETE (pri brisanju)',
 	'ON UPDATE' => 'ON UPDATE (pri ažuriranju)',
 	'Source and target columns must have the same data type, there must be an index on the target columns and referenced data must exist.' => 'Izvorni i ciljni stupci moraju biti istog tipa podataka, ciljni stupci moraju biti indeksirani i referencirani podaci moraju postojati.',
@@ -324,7 +334,6 @@ return [
 
 	// Triggers
 	'Triggers' => 'Okidači',
-	'Add trigger' => 'Dodaj okidač',
 	'Trigger has been dropped.' => 'Okidač je izbrisan.',
 	'Trigger has been altered.' => 'Okidač je izmijenjen.',
 	'Trigger has been created.' => 'Okidač je kreiran.',
@@ -355,6 +364,7 @@ return [
 	'Full table scan' => 'Puno pretraživanje tablice',
 	'Unable to select the table' => 'Nije moguće odabrati tablicu',
 	'Search data in tables' => 'Pretraži podatke u tablicama',
+	'All rows on this page' => 'Svi redci na ovoj stranici', // by Claude Fable 5.1
 	'No rows.' => 'Nema redaka.',
 	'%d / ' => '%d / ',
 	'%d row(s)' => [
@@ -365,7 +375,7 @@ return [
 	'Page' => 'Stranica',
 	'last' => 'posljednja',
 	'Load more data' => 'Učitaj više podataka',
-	'Loading' => 'Učitavanje',
+	'Loading…' => 'Učitavanje…',
 	'Whole result' => 'Cijeli skup rezultata',
 	'%d byte(s)' => [
 		'%d bajt',
@@ -387,7 +397,7 @@ return [
 	'Save' => 'Spremi',
 	'Save and continue edit' => 'Spremi i nastavi uređivanje',
 	'Save and insert next' => 'Spremi i unesi sljedeće',
-	'Saving' => 'Spremanje',
+	'Saving…' => 'Spremanje…',
 	'Selected' => 'Odabrano',
 	'Clone' => 'Kloniraj',
 	'Delete' => 'Izbriši',
@@ -417,37 +427,40 @@ return [
 	'no' => 'ne',
 
 	// Settings
-	'Settings' => 'Postavke', // by Claude Opus 5
-	'Default' => 'Zadano', // by Claude Opus 5
-	'Color scheme' => 'Shema boja', // by Claude Opus 5
-	'By system' => 'Prema sustavu', // by Claude Opus 5
-	'Light' => 'Svijetla', // by Claude Opus 5
-	'Dark' => 'Tamna', // by Claude Opus 5
-	'Navigation mode' => 'Način navigacije', // by Claude Opus 5
-	'Simple' => 'Jednostavan', // by Claude Opus 5
-	'Dual' => 'Dvostruk', // by Claude Opus 5
-	'Reversed' => 'Obrnut', // by Claude Opus 5
-	'Layout of main navigation with table links.' => 'Raspored glavne navigacije s vezama tablica.', // by Claude Opus 5
-	'Table links' => 'Veze tablica', // by Claude Opus 5
-	'Primary action for all table links.' => 'Glavna radnja za sve veze tablica.', // by Claude Opus 5
-	'Links to tables referencing the current row.' => 'Veze na tablice koje se referenciraju na trenutni redak.', // by Claude Opus 5
-	'Display' => 'Prikaži', // by Claude Opus 5
-	'Hide' => 'Sakrij', // by Claude Opus 5
-	'Records per page' => 'Zapisa po stranici', // by Claude Opus 5
-	'Default number of records displayed in data table.' => 'Zadani broj zapisa prikazanih u tablici podataka.', // by Claude Opus 5
-	'Enum as select' => 'Enum kao padajući izbornik', // by Claude Opus 5
-	'Never' => 'Nikada', // by Claude Opus 5
-	'Always' => 'Uvijek', // by Claude Opus 5
-	'More values than %d' => 'Više od %d vrijednosti', // by Claude Opus 5
-	'Threshold for displaying a selection menu for enum fields.' => 'Prag za prikaz padajućeg izbornika za enum stupce.', // by Claude Opus 5
+	'Settings' => 'Postavke', // by Claude Fable 5.1
+	'Default' => 'Zadano', // by Claude Fable 5.1
+	'Theme' => 'Tema', // by Claude Fable 5.1
+	'Color scheme' => 'Shema boja', // by Claude Fable 5.1
+	'By system' => 'Prema sustavu', // by Claude Fable 5.1
+	'Light' => 'Svijetla', // by Claude Fable 5.1
+	'Dark' => 'Tamna', // by Claude Fable 5.1
+	'Navigation mode' => 'Način navigacije', // by Claude Fable 5.1
+	'Simple' => 'Jednostavan', // by Claude Fable 5.1
+	'Dual' => 'Dvostruk', // by Claude Fable 5.1
+	'Dual on hover' => 'Dvostruk pri prijelazu mišem', // by Claude Fable 5.1
+	'Reversed' => 'Obrnut', // by Claude Fable 5.1
+	'Layout of main navigation with table links.' => 'Raspored glavne navigacije s vezama tablica.', // by Claude Fable 5.1
+	'Table links' => 'Veze tablica', // by Claude Fable 5.1
+	'Primary action for all table links.' => 'Glavna radnja za sve veze tablica.', // by Claude Fable 5.1
+	'Links to tables referencing the current row.' => 'Veze na tablice koje referenciraju trenutni redak.', // by Claude Fable 5.1
+	'Display' => 'Prikaži', // by Claude Fable 5.1
+	'Hide' => 'Sakrij', // by Claude Fable 5.1
+	'Records per page' => 'Zapisa po stranici', // by Claude Fable 5.1
+	'Default number of records displayed in data table.' => 'Zadani broj zapisa prikazanih u tablici podataka.', // by Claude Fable 5.1
+	'Enum as select' => 'Enum kao padajući izbornik', // by Claude Fable 5.1
+	'Never' => 'Nikada', // by Claude Fable 5.1
+	'Always' => 'Uvijek', // by Claude Fable 5.1
+	'More values than %d' => 'Više od %d vrijednosti', // by Claude Fable 5.1
+	'Threshold for displaying a selection menu for enum fields.' => 'Prag za prikaz padajućeg izbornika za enum stupce.', // by Claude Fable 5.1
 
 	// Plugins
-	'One Time Password' => 'Jednokratna lozinka', // by Claude Opus 5
-	'Enter OTP code.' => 'Unesite OTP kod.', // by Claude Opus 5
-	'Invalid OTP code.' => 'Neispravan OTP kod.', // by Claude Opus 5
-	'Access denied.' => 'Pristup odbijen.', // by Claude Opus 5
-	'JSON previews' => 'Pregled JSON-a', // by Claude Opus 5
-	'Data table' => 'Tablica podataka', // by Claude Opus 5
-	'Edit form' => 'Obrazac za uređivanje', // by Claude Opus 5
-	'Ask %s' => 'Pitaj %s', // by Claude Opus 5
+	'One Time Password' => 'Jednokratna lozinka', // by Claude Fable 5.1
+	'Enter OTP code.' => 'Unesite OTP kod.', // by Claude Fable 5.1
+	'Invalid OTP code.' => 'Neispravan OTP kod.', // by Claude Fable 5.1
+	'Access denied.' => 'Pristup odbijen.', // by Claude Fable 5.1
+	'JSON previews' => 'Pregled JSON-a', // by Claude Fable 5.1
+	'Data table' => 'Tablica podataka', // by Claude Fable 5.1
+	'Edit form' => 'Obrazac za uređivanje', // by Claude Fable 5.1
+	'Ask %s' => 'Pitaj %s', // by Claude Fable 5.1
+	'Views' => 'Pogledi', // by Claude Opus 5.5
 ];

@@ -146,7 +146,7 @@ function check_invalid_login(array &$permanent): void
 	$invalid = ($invalids ? $invalids[Admin::get()->getBruteForceKey()] : []);
 
 	$next_attempt = ($invalid && $invalid[1] > 29 ? $invalid[0] - time() : 0); // allow 30 invalid attempts
-	if ($next_attempt > 0) { //! do the same with permanent login
+	if ($next_attempt > 0) { // TODO do the same with permanent login
 		auth_error($permanent, lang('Too many unsuccessful logins, try again in %d minute(s).', ceil($next_attempt / 60)));
 	}
 }
@@ -389,29 +389,10 @@ if ($auth && $_POST["token"]) {
 
 if ($_POST) {
 	if (!verify_token()) {
-		$ini = "max_input_vars";
-		$max_vars = ini_get($ini);
-
-		if (extension_loaded("suhosin")) {
-			foreach (["suhosin.request.max_vars", "suhosin.post.max_vars"] as $key) {
-				$val = ini_get($key);
-				if ($val && (!$max_vars || $val < $max_vars)) {
-					$ini = $key;
-					$max_vars = $val;
-				}
-			}
-		}
-
-		if (!$_POST["token"] && $max_vars) {
-			Admin::get()->addError(
-				lang('Maximum number of allowed fields exceeded. Please increase %s.', "'$ini'")
-			);
-		} else {
-			Admin::get()->addError(
-				lang('Invalid CSRF token. Send the form again.') . ' ' .
-				lang('If you did not send this request from AdminNeo then close this page.')
-			);
-		}
+		Admin::get()->addError(
+			lang('Invalid CSRF token. Send the form again.') . ' ' .
+			lang('If you did not send this request from AdminNeo then close this page.')
+		);
 
 		$_POST = [];
 	}

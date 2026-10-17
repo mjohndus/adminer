@@ -16,6 +16,11 @@ return [
 	'%s must return an array.' => '%s debe ser un array.',
 	'%s and %s must return an object created by %s method.' => '%s y %s deben devolver un objeto creado mediante el método %s.',
 
+	// Accessibility
+	'Skip to main content' => 'Saltar al contenido principal', // by Claude Fable 5.1
+	'Skip to menu' => 'Saltar al menú', // by Claude Fable 5.1
+	'Skip to table list' => 'Saltar a la lista de tablas', // by Claude Fable 5.1
+
 	// Login
 	'System' => 'Motor de base de datos',
 	'Server' => 'Servidor',
@@ -51,10 +56,12 @@ return [
 	// Settings
 	'Language' => 'Idioma',
 
+	'Menu' => 'Menú', // by Claude Fable 5.1
 	'Home' => 'Inicio',
 	'Refresh' => 'Actualizar',
 	'Info' => 'Info',
 	'More information.' => 'Más información.',
+	'Close' => 'Cerrar', // by Claude Fable 5.1
 
 	// Privileges
 	'Privileges' => 'Privilegios',
@@ -116,8 +123,8 @@ return [
 	'File uploads are disabled.' => 'Importación de archivos deshablilitada.',
 	'Unable to upload a file.' => 'No es posible cargar el archivo.',
 	'Maximum allowed file size is %sB.' => 'El tamaño máximo de archivo es %sB.',
-	'The maximum number of files is %d. Select fewer files or increase the %s configuration directive.' => 'El número máximo de archivos es %d. Seleccione menos archivos o aumente la directiva de configuración %s.', // by Claude Opus 5
-	'The maximum total size of files is %s. Select smaller files or increase the %s configuration directive.' => 'El tamaño total máximo de los archivos es %s. Seleccione archivos más pequeños o aumente la directiva de configuración %s.', // by Claude Opus 5
+	'The maximum number of files is %d. Select fewer files or increase the %s configuration directive.' => 'El número máximo de archivos es %d. Seleccione menos archivos o aumente la directiva de configuración %s.', // by Claude Fable 5.1
+	'The maximum total size of files is %s. Select smaller files or increase the %s configuration directive.' => 'El tamaño total máximo de los archivos es %s. Seleccione archivos más pequeños o aumente la directiva de configuración %s.', // by Claude Fable 5.1
 	'Too big POST data. Reduce the data or increase the %s configuration directive.' => 'POST data demasiado grande. Reduzca el tamaño o aumente la directiva de configuración %s.',
 	'You can upload a big SQL file via FTP and import it from server.' => 'Usted puede cargar un SQL grande mediante FTP e importarlo desde el servidor.',
 	'File must be in UTF-8 encoding.' => 'El archivo tiene que ser codificacion UTF-8.',
@@ -169,6 +176,7 @@ return [
 	'Invalid schema.' => 'Esquema inválido.',
 
 	// Table list
+	'All' => 'Todo', // checkbox selecting all tables and views // by Claude Fable 5.1
 	'Engine' => 'Motor',
 	'engine' => 'motor',
 	'Collation' => 'Codificación',
@@ -214,6 +222,7 @@ return [
 	'Options' => 'Opciones',
 	'Comment' => 'Comentario',
 	'Default value' => 'Valor por defecto',
+	'default value' => 'valor por defecto',
 	'Drop' => 'Eliminar',
 	'Drop %s?' => '¿Eliminar %s?',
 	'Are you sure?' => '¿Está seguro?',
@@ -249,12 +258,12 @@ return [
 	'Add next' => 'Agregar',
 	'Index Type' => 'Tipo de índice',
 	'length' => 'longitud',
+	'operator class' => 'clase de operadores', // by Claude Fable 5.1
 	'Algorithm' => 'Algoritmo',
 	'Condition' => 'Condición',
 
 	// Foreign keys
 	'Foreign keys' => 'Claves foráneas',
-	'Foreign key' => 'Clave foránea',
 	'Foreign key has been dropped.' => 'Clave foránea eliminada.',
 	'Foreign key has been altered.' => 'Clave foránea modificada.',
 	'Foreign key has been created.' => 'Clave foránea creada.',
@@ -264,7 +273,8 @@ return [
 	'Target' => 'Destino',
 	'Add column' => 'Agregar columna',
 	'Alter' => 'Modificar',
-	'Add foreign key' => 'Agregar clave foránea',
+	'Alter foreign key' => 'Modificar clave foránea', // by Claude Fable 5.1
+	'Create foreign key' => 'Crear clave foránea', // by Claude Fable 5.1
 	'ON DELETE' => 'AL BORRAR',
 	'ON UPDATE' => 'AL ACTUALIZAR',
 	'Source and target columns must have the same data type, there must be an index on the target columns and referenced data must exist.' => 'Las columnas de origen y destino deben ser del mismo tipo, debe existir un índice entre las columnas del destino y el registro referenciado debe existir también.',
@@ -318,7 +328,6 @@ return [
 
 	// Triggers
 	'Triggers' => 'Disparadores',
-	'Add trigger' => 'Agregar disparador',
 	'Trigger has been dropped.' => 'Disparador eliminado.',
 	'Trigger has been altered.' => 'Disparador modificado.',
 	'Trigger has been created.' => 'Disparador creado.',
@@ -349,6 +358,7 @@ return [
 	'Full table scan' => 'Escaneo total de la tabla',
 	'Unable to select the table' => 'No es posible seleccionar la tabla',
 	'Search data in tables' => 'Buscar datos en tablas',
+	'All rows on this page' => 'Todas las filas de esta página', // by Claude Fable 5.1
 	'No rows.' => 'No existen registros.',
 	'%d / ' => '%d / ',
 	'%d row(s)' => [
@@ -358,7 +368,7 @@ return [
 	'Page' => 'Página',
 	'last' => 'último',
 	'Load more data' => 'Cargar más datos',
-	'Loading' => 'Cargando',
+	'Loading…' => 'Cargando…',
 	'Whole result' => 'Resultado completo',
 	'%d byte(s)' => [
 		'%d byte',
@@ -379,7 +389,7 @@ return [
 	'Save' => 'Guardar',
 	'Save and continue edit' => 'Guardar y continuar editando',
 	'Save and insert next' => 'Guardar e insertar siguiente',
-	'Saving' => 'Guardando',
+	'Saving…' => 'Guardando…',
 	'Selected' => 'Seleccionado',
 	'Clone' => 'Clonar',
 	'Delete' => 'Eliminar',
@@ -410,6 +420,7 @@ return [
 	// Settings
 	'Settings' => 'Ajustes',
 	'Default' => 'Por defecto',
+	'Theme' => 'Tema', // by Claude Fable 5.1
 	'Color scheme' => 'Esquema de colores',
 	'By system' => 'Desde el sistema',
 	'Light' => 'Claro',
@@ -417,6 +428,7 @@ return [
 	'Navigation mode' => 'Modo de navegación',
 	'Simple' => 'Simple',
 	'Dual' => 'Dual',
+	'Dual on hover' => 'Dual al pasar el cursor', // by Claude Fable 5.1
 	'Reversed' => 'Invertido',
 	'Layout of main navigation with table links.' => 'Diseño de la navegación principal con enlaces de tabla.',
 	'Table links' => 'Enlaces de tabla',
@@ -441,4 +453,5 @@ return [
 	'Data table' => 'Tabla',
 	'Edit form' => 'Editar formulario',
 	'Ask %s' => 'Preguntar a %s',
+	'Views' => 'Vistas', // by Claude Opus 5.5
 ];

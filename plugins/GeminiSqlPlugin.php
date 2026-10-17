@@ -108,7 +108,7 @@ class GeminiSqlPlugin extends Plugin
 
 	public function printAfterSqlCommand(): ?bool
 	{
-		$waitingText = lang('Loading') . "…";
+		$waitingText = lang('Loading…');
 
 		$script = <<<JS
 (function() {
@@ -125,7 +125,7 @@ class GeminiSqlPlugin extends Plugin
 
 	textarea.onkeydown = event => {
 		// Handle Ctrl+Enter.
-		if (isCtrl(event) && (event.keyCode === 13 || event.keyCode === 10)) {
+		if (isCtrl(event) && event.key === 'Enter') {
 			button.onclick(null);
 			event.stopPropagation();
 		}

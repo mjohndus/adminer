@@ -53,10 +53,10 @@ if ($_POST) {
 		}
 
 		if ($query != "" && strlen($query) < 1e6) { // don't add big queries
-			$q = $query . (preg_match("~;[ \t\r\n]*\$~", $query) ? "" : ";"); //! doesn't work with DELIMITER |
+			$q = $query . (preg_match("~;[ \t\r\n]*\$~", $query) ? "" : ";"); // TODO doesn't work with DELIMITER |
 			if (!$history || first(end($history)) != $q) { // no repeated queries
 				restart_session();
-				$history[] = [$q, time()]; //! add elapsed time
+				$history[] = [$q, time()]; // TODO add elapsed time
 				set_session("queries", $history_all); // required because reference is unlinked by stop_session()
 				stop_session();
 			}
@@ -68,7 +68,7 @@ if ($_POST) {
 		$offset = 0;
 		$empty = true;
 
-		// connection for exploring indexes and EXPLAIN (to not replace FOUND_ROWS()) //! PDO - silent error
+		// connection for exploring indexes and EXPLAIN (to not replace FOUND_ROWS()) // TODO PDO - silent error
 		$connection2 = connect();
 		if ($connection2 && DB != "") {
 			$connection2->selectDatabase(DB);
@@ -79,10 +79,11 @@ if ($_POST) {
 
 		$commands = 0;
 		$errors = [];
-		$parse = '[\'"' . (DIALECT == "sql" ? '`#' : (DIALECT == "sqlite" ? '`[' : (DIALECT == "mssql" ? '[' : ''))) . ']|/\*|' . $line_comment . '|$' . (DIALECT == "pgsql" ? '|\$([a-zA-Z]\w*)?\$' : '');
+		$parse = '[\'"' . (DIALECT == "sql" ? '`#' : (DIALECT == "sqlite" ? '`[' : (DIALECT == "mssql" ? '[' : ''))) .
+			']|/\*|' . $line_comment . '|$' . (DIALECT == "pgsql" ? '|\$([a-zA-Z]\w*)?\$' : '');
 		$total_start = microtime(true);
-		$dump_format = Admin::get()->getDumpFormats();
-		unset($dump_format["sql"]);
+		$data_formats = Admin::get()->getDataDumpFormats();
+		unset($data_formats["sql"]);
 
 		while ($query != "") {
 			if (!$offset && preg_match("~^$space*+DELIMITER\\s+(\\S+)~i", $query, $match)) {
@@ -158,7 +159,7 @@ if ($_POST) {
 								flush(); // can take a long time - show the running query
 							}
 							$start = microtime(true);
-							//! don't allow changing of character_set_results, convert encoding of displayed query
+							// TODO don't allow changing of character_set_results, convert encoding of displayed query
 							if (Connection::get()->multiQuery($q) && is_object($connection2) && preg_match("~^$space*+USE\\b~i", $q)) {
 								$connection2->query($q);
 							}
@@ -168,7 +169,9 @@ if ($_POST) {
 
 								if (Connection::get()->getError()) {
 									echo ($_POST["only_errors"] ? $print : "");
-									echo "<p class='error'>", lang('Error in query'), (!empty(Connection::get()->getErrno()) ? " (" . Connection::get()->getErrno() . ")" : ""), ": ", error() . "</p>\n";
+									echo "<p class='error'>", lang('Error in query'),
+										(!empty(Connection::get()->getErrno()) ? " (" . Connection::get()->getErrno() . ")" : ""),
+										": ", error() . "</p>\n";
 
 									$errors[] = " <a href='#sql-$commands'>$commands</a>";
 									if ($_POST["error_stops"]) {
@@ -176,7 +179,8 @@ if ($_POST) {
 									}
 								} else {
 									$time = " <span class='time'>(" . format_time($start) . ")</span>";
-									$edit_link = (strlen($q) < 1000 ? " <a href='" . h(ME) . "sql=" . urlencode(trim($q)) . "'>" . icon("edit") . lang('Edit') . "</a>" : ""); // 1000 - maximum length of encoded URL in IE is 2083 characters
+									// 1000 - maximum length of encoded URL in IE is 2083 characters
+									$edit_link = (strlen($q) < 1000 ? " <a href='" . h(ME) . "sql=" . urlencode(trim($q)) . "'>" . icon("edit") . lang('Edit') . "</a>" : "");
 									$query_info = Connection::get()->getQueryInfo();
 									$affected = Connection::get()->getAffectedRows(); // getting warnings overwrites this
 
@@ -188,6 +192,7 @@ if ($_POST) {
 									$explain_id = "explain-$commands";
 									$export = false;
 									$export_id = "export-$commands";
+									$limit = 0;
 
 									if (is_object($result)) {
 										if (!$_POST["only_errors"]) {
@@ -247,11 +252,14 @@ if ($_POST) {
 
 									if ($export) {
 										echo "<form id='$export_id' action='' method='post' class='hidden'><p>\n";
-										echo html_select("format", $dump_format, $settings->getParameter("exportFormat"));
+										echo html_select("format", $data_formats, $settings->getParameter("exportFormat"));
 										echo html_select("output", Admin::get()->getDumpOutputs(), $settings->getParameter("exportOutput")) . " ";
 										echo input_hidden("query", $q);
 										echo input_token();
 										echo " <input type='submit' class='button' name='export' value='" . lang('Export') . "'>";
+										if (!$limit) { // JS export requires all rows in the table.
+											echo script("qsl('input').onclick = function (event) { return sqlExport.call(this, event, '" . js_escape(ME) . "set=export-settings'); };", "");
+										}
 										echo "</p></form>\n";
 									}
 
@@ -281,7 +289,7 @@ if ($_POST) {
 		} elseif ($errors && $commands > 1) {
 			echo "<p class='error'>" . lang('Error in query') . ": " . implode("", $errors) . "\n";
 		}
-		//! MS SQL - SET SHOWPLAN_ALL OFF
+		// TODO MS SQL - SET SHOWPLAN_ALL OFF
 
 	} else {
 		echo "<p class='error'>" . upload_error($query) . "\n";
@@ -301,7 +309,8 @@ if (!isset($_GET["import"])) {
 	}
 	echo "<p>";
 	textarea("query", $q, 20);
-	echo script(($_POST ? "" : "qs('textarea').focus();\n") . "gid('form').onsubmit = partial(sqlSubmit, gid('form'), '" . js_escape(remove_from_uri("sql|limit|error_stops|only_errors|history")) . "');");
+	echo script(($_POST ? "" : "qs('textarea').focus();\n") .
+		"gid('form').onsubmit = partial(sqlSubmit, gid('form'), '" . js_escape(remove_from_uri("sql|limit|error_stops|only_errors|history")) . "');");
 	echo "</p>";
 
 	echo "<p><input type='submit' class='button default' value='" . lang('Execute') . "' title='Ctrl+Enter'>";
@@ -325,14 +334,14 @@ if (!isset($_GET["import"])) {
 	if ($import_file_path) {
 		echo "<fieldset><legend>" . lang('From server') . "</legend><div class='fieldset-content'>";
 		echo lang('Webserver file %s', "<code>" . h($import_file_path) . "$gz</code>");
-		echo ' <input type="submit" class="button default" name="webfile" value="' . lang('Run file') . '">';
+		echo " <input type='submit' class='button default' name='webfile' value='" . lang('Run file') . "'>";
 		echo "</div></fieldset>\n";
 	}
 	echo "</div>\n";
 	echo "<p>";
 }
 
-echo checkbox("error_stops", 1, ($_POST ? $_POST["error_stops"] : isset($_GET["import"]) || $_GET["error_stops"]), lang('Stop on error'));
+echo checkbox("error_stops", 1, ($_POST ? $_POST["error_stops"] : ($_GET["error_stops"] ?? true)), lang('Stop on error'));
 echo checkbox("only_errors", 1, ($_POST ? $_POST["only_errors"] : isset($_GET["import"]) || $_GET["only_errors"]), lang('Show only errors'));
 echo input_token();
 echo "</p>\n";
@@ -350,7 +359,7 @@ if (!isset($_GET["import"]) && $history) {
 		$key = key($history);
 		list($q, $time, $elapsed) = $val;
 
-		echo " <pre><code class='jush-" . DIALECT . "'>", truncate_utf8(ltrim(str_replace("\n", " ", str_replace("\r", "", preg_replace("~^(#|$line_comment).*~m", '', $q))))), "</code></pre>";
+		echo " <pre><code class='jush-" . DIALECT . "'>", truncate_utf8(preg_replace('~\s+~', ' ', ltrim(preg_replace("~^(#|$line_comment).*~m", '', $q)))), "</code></pre>";
 		echo '<p class="links">';
 		echo "<a href='" . h(ME . "sql=&history=$key") . "'>" . icon("edit") . lang('Edit') . "</a>";
 		echo " <span class='time' title='" . @date('Y-m-d', $time) . "'>" . @date("H:i:s", $time) . // @ - time zone may be not set

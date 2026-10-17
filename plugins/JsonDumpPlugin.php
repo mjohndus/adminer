@@ -21,10 +21,13 @@ class JsonDumpPlugin extends Plugin
 
 	public function getDumpFormats(): array
 	{
-		return ['json' => 'JSON'];
+		return ['json' => [
+			'name' => 'JSON',
+			'data' => true,
+		]];
 	}
 
-	public function sendDumpHeaders(string $identifier, bool $multiTable = false): ?string
+	public function sendDumpFormatHeaders(string $identifier, bool $multiTable = false): ?string
 	{
 		if ($_POST["format"] != "json") {
 			return null;

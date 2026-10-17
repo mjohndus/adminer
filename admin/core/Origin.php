@@ -240,15 +240,22 @@ abstract class Origin extends Plugin
 	public abstract function getDatabase(): ?string;
 
 	/**
-	 * Returns cached list of databases.
+	 * Returns list of databases.
 	 *
 	 * @return list<string>
 	 */
 	public function getDatabases(bool $flush = true): array
 	{
-		return $this->filterListWithWildcards(
+		$databases = $this->filterListWithWildcards(
 			get_databases($flush), $this->config->getHiddenDatabases(), false, Driver::get()->getSystemDatabases()
 		);
+
+		// The current database is listed even if it is hidden.
+		if (DB != "" && !in_array(DB, $databases)) {
+			array_unshift($databases, DB);
+		}
+
+		return $databases;
 	}
 
 	/**
@@ -263,9 +270,16 @@ abstract class Origin extends Plugin
 			$hiddenSchemas[] = "__system";
 		}
 
-		return $this->filterListWithWildcards(
+		$schemas = $this->filterListWithWildcards(
 			schemas(), $hiddenSchemas, false, Driver::get()->getSystemSchemas()
 		);
+
+		// The current schema is listed even if it is hidden or does not exist.
+		if (isset($_GET["ns"]) && $_GET["ns"] != "" && !in_array($_GET["ns"], $schemas)) {
+			array_unshift($schemas, $_GET["ns"]);
+		}
+
+		return $schemas;
 	}
 
 	/**
@@ -450,7 +464,7 @@ abstract class Origin extends Plugin
 	{
 		echo "<div class='logout'>";
 		echo "<form action='' method='post'>\n";
-		echo h($_GET["username"]);
+		echo "<span title='", lang('Username'), "'>", h($_GET["username"]), "</span>";
 		echo "<input type='submit' class='button' name='logout' value='", lang('Logout'), "' id='logout'>";
 		echo input_token();
 		echo "</form>";
@@ -739,14 +753,83 @@ abstract class Origin extends Plugin
 		return show_status();
 	}
 
-	public abstract function getDumpOutputs(): array;
-
-	public abstract function getDumpFormats(): array;
-
-	public abstract function sendDumpHeaders(string $identifier, bool $multiTable = false): string;
+	/**
+	 * Returns export format options.
+	 *
+	 * Each format is defined either by its name, which means the format supports both structure and data, or by
+	 * an array with keys:
+	 * - "name" (string) Displayed name, defaults to the format identifier.
+	 * - "structure" (bool) The format supports export of database and table structure, defaults to false.
+	 * - "data" (bool) The format supports export of table data, defaults to false.
+	 *
+	 * @return string[]|array[] Format identifier => name or definition. Empty to disable export.
+	 */
+	public function getDumpFormats(): array
+	{
+		return [
+			'csv' => ['name' => 'CSV,', 'data' => true],
+			'csv;' => ['name' => 'CSV;', 'data' => true],
+			'tsv' => ['name' => 'TSV', 'data' => true],
+		];
+	}
 
 	/**
-	 * Exports database structure.
+	 * Returns export format options for database and table structure.
+	 *
+	 * @return string[]
+	 */
+	public function getStructureDumpFormats(): array
+	{
+		return $this->filterDumpFormats("structure");
+	}
+
+	/**
+	 * Returns export format options for table data.
+	 *
+	 * @return string[]
+	 */
+	public function getDataDumpFormats(): array
+	{
+		return $this->filterDumpFormats("data");
+	}
+
+	/**
+	 * Returns export format options for given type.
+	 *
+	 * @param string $type "structure" or "data"
+	 *
+	 * @return string[]
+	 */
+	private function filterDumpFormats(string $type): array
+	{
+		$formats = [];
+		foreach (self::get()->getDumpFormats() as $format => $definition) {
+			if (is_string($definition)) {
+				$formats[$format] = $definition;
+			} elseif ($definition[$type] ?? false) {
+				$formats[$format] = $definition["name"] ?? $format;
+			}
+		}
+
+		return $formats;
+	}
+
+	public abstract function sendDumpFormatHeaders(string $identifier, bool $multiTable = false): string;
+
+	public abstract function getDumpOutputs(): array;
+
+	public abstract function sendDumpOutputHeaders(string $identifier, string $extension): void;
+
+	/**
+	 * @deprecated Use sendDumpFormatHeaders() instead.
+	 */
+	public function sendDumpHeaders(string $identifier, bool $multiTable = false): ?string
+	{
+		return null;
+	}
+
+	/**
+	 * Exports database structure. Called for each exported database after it is selected, before its tables.
 	 */
 	public function dumpDatabase(string $database): void
 	{
@@ -761,30 +844,7 @@ abstract class Origin extends Plugin
 
 	public abstract function printDatabaseMenu(): void;
 
-	public function printNavigation(?string $missing): void
-	{
-		$last_version = $_COOKIE["neo_version"] ?? null;
-
-		echo "<div class='header'>\n";
-		echo $this->admin->getServiceTitle() . "\n";
-
-		if ($missing != "auth") {
-			echo "<span class='version'>";
-			echo h(preg_replace('~\\.0(-|$)~', '$1', VERSION));
-			if ($this->config->isVersionVerificationEnabled() && $last_version && version_compare(VERSION, $last_version) < 0) {
-				echo "<a id='version' class='version-badge' href='https://www.adminneo.org/download' " . target_blank() . " title='" . h($last_version) . "'>";
-				echo icon_solo("asterisk");
-				echo "</a>";
-			}
-			echo "</span>\n";
-
-			if ($this->config->isVersionVerificationEnabled() && !$last_version) {
-				echo script("verifyVersion('" . js_escape(ME) . "', '" . get_token() . "');");
-			}
-		}
-
-		echo "</div>\n";
-	}
+	public abstract function printNavigation(?string $missing): void;
 
 	public abstract function printDatabaseSwitcher(?string $missing): void;
 
@@ -795,7 +855,7 @@ abstract class Origin extends Plugin
 	{
 		echo "<div class='tables-filter jsonly'>"
 			. "<input id='tables-filter' type='search' class='input' autocomplete='off' placeholder='" . lang('Table') . "'>"
-			. script("initTablesFilter(" . json_encode($this->admin->getDatabase()) . ");")
+			. script("initTablesFilter(" . json_encode($this->admin->getDatabase(), JSON_HEX_TAG) . ");")
 			. "</div>\n";
 	}
 
@@ -819,6 +879,18 @@ abstract class Origin extends Plugin
 				$settings["lang"] = "<tr><th id='label-language'>" . lang('Language') . "</th>" .
 					"<td>" .
 					html_select("lang", get_language_options(), Locale::get()->getLanguage(), "", "label-language") .
+					"</td></tr>\n";
+			}
+
+			// Theme.
+			$titles = get_theme_titles($this->config->getColorVariant());
+			if (count($titles) > 1) {
+				[$theme] = validate_theme($this->config->getTheme(), $this->config->getColorVariant());
+				$options = ["" => lang('Default') . " ($titles[$theme])"] + $titles;
+
+				$settings["theme"] = "<tr><th id='label-theme'>" . lang('Theme') . "</th>" .
+					"<td>" .
+					html_select("theme", $options, $this->settings->getParameter("theme") ?? "", "", "label-theme") .
 					"</td></tr>\n";
 			}
 

@@ -16,6 +16,11 @@ return [
 	'%s must return an array.' => '%s musí vraciať pole.',
 	'%s and %s must return an object created by %s method.' => '%s a %s musí vraciať objekt vytvorený pomocou metódy %s.',
 
+	// Accessibility
+	'Skip to main content' => 'Preskočiť na hlavný obsah',
+	'Skip to menu' => 'Preskočiť na menu',
+	'Skip to table list' => 'Preskočiť na zoznam tabuliek',
+
 	// Login
 	'System' => 'Systém',
 	'Server' => 'Server',
@@ -52,10 +57,12 @@ return [
 	// Settings
 	'Language' => 'Jazyk',
 
+	'Menu' => 'Menu',
 	'Home' => 'Domov',
 	'Refresh' => 'Obnoviť',
 	'Info' => 'Info',
 	'More information.' => 'Viac informácií.',
+	'Close' => 'Zavrieť',
 
 	// Privileges
 	'Privileges' => 'Oprávnenia',
@@ -174,6 +181,7 @@ return [
 	'Invalid schema.' => 'Neplatná schéma.',
 
 	// Table list
+	'All' => 'Všetko', // checkbox selecting all tables and views
 	'Engine' => 'Typ',
 	'engine' => 'úložisko',
 	'Collation' => 'Porovnávanie',
@@ -219,6 +227,7 @@ return [
 	'Options' => 'Voľby',
 	'Comment' => 'Komentár',
 	'Default value' => 'Predvolená hodnota',
+	'default value' => 'predvolená hodnota',
 	'Drop' => 'Odstrániť',
 	'Drop %s?' => 'Odstrániť %s?',
 	'Are you sure?' => 'Naozaj?',
@@ -254,12 +263,12 @@ return [
 	'Add next' => 'Pridať ďalší',
 	'Index Type' => 'Typ indexu',
 	'length' => 'dĺžka',
+	'operator class' => 'trieda operátorov',
 	'Algorithm' => 'Algoritmus',
 	'Condition' => 'Podmienka',
 
 	// Foreign keys
 	'Foreign keys' => 'Cudzie kľúče',
-	'Foreign key' => 'Cudzí kľúč',
 	'Foreign key has been dropped.' => 'Cudzí kľúč bol odstránený.',
 	'Foreign key has been altered.' => 'Cudzí kľúč bol zmenený.',
 	'Foreign key has been created.' => 'Cudzí kľúč bol vytvorený.',
@@ -269,7 +278,8 @@ return [
 	'Target' => 'Cieľ',
 	'Add column' => 'Pridať stĺpec',
 	'Alter' => 'Zmeniť',
-	'Add foreign key' => 'Pridať cudzí kľúč',
+	'Alter foreign key' => 'Zmeniť cudzí kľúč',
+	'Create foreign key' => 'Vytvoriť cudzí kľúč',
 	'ON DELETE' => 'Pri zmazaní',
 	'ON UPDATE' => 'Pri aktualizácii',
 	'Source and target columns must have the same data type, there must be an index on the target columns and referenced data must exist.' => 'Zdrojové a cieľové stĺpce musia mať rovnaký datový typ, nad cieľovými stĺpcami musí byť definovaný index a odkazované dáta musia existovať.',
@@ -324,7 +334,6 @@ return [
 
 	// Triggers
 	'Triggers' => 'Triggery',
-	'Add trigger' => 'Pridať trigger',
 	'Trigger has been dropped.' => 'Trigger bol odstránený.',
 	'Trigger has been altered.' => 'Trigger bol zmenený.',
 	'Trigger has been created.' => 'Trigger bol vytvorený.',
@@ -355,6 +364,7 @@ return [
 	'Full table scan' => 'Prechod celej tabuľky',
 	'Unable to select the table' => 'Tabuľku sa nepodarilo vypísať',
 	'Search data in tables' => 'Vyhľadať dáta v tabuľkách',
+	'All rows on this page' => 'Všetky riadky na tejto stránke',
 	'No rows.' => 'Žiadne riadky.',
 	'%d / ' => '%d / ',
 	'%d row(s)' => [
@@ -365,7 +375,7 @@ return [
 	'Page' => 'Stránka',
 	'last' => 'posledný',
 	'Load more data' => 'Načítať ďalšie dáta',
-	'Loading' => 'Načítava sa',
+	'Loading…' => 'Načítava sa…',
 	'Whole result' => 'Celý výsledok',
 	'%d byte(s)' => [
 		'%d bajt',
@@ -387,7 +397,7 @@ return [
 	'Save' => 'Uložiť',
 	'Save and continue edit' => 'Uložiť a pokračovať v úpravách',
 	'Save and insert next' => 'Uložiť a vložiť ďalší',
-	'Saving' => 'Ukladá sa',
+	'Saving…' => 'Ukladá sa…',
 	'Selected' => 'Označené',
 	'Clone' => 'Klonovať',
 	'Delete' => 'Zmazať',
@@ -415,6 +425,7 @@ return [
 	// Settings
 	'Settings' => 'Nastavenia',
 	'Default' => 'Predvolené',
+	'Theme' => 'Motív',
 	'Color scheme' => 'Farebná schéma',
 	'By system' => 'Podľa systému',
 	'Light' => 'Svetlá',
@@ -422,6 +433,7 @@ return [
 	'Navigation mode' => 'Navigačný mód',
 	'Simple' => 'Jednoduchý',
 	'Dual' => 'Dvojitý',
+	'Dual on hover' => 'Dvojitý pri prejdení myšou',
 	'Reversed' => 'Obrátený',
 	'Layout of main navigation with table links.' => 'Rozloženie hlavnej navigácie s odkazmi na tabuľky.',
 	'Table links' => 'Odkazy na tabuľky',
@@ -446,4 +458,5 @@ return [
 	'Data table' => 'Dátová tabuľka',
 	'Edit form' => 'Editační formulář',
 	'Ask %s' => 'Opýtať sa %s',
+	'Views' => 'Pohľady',
 ];

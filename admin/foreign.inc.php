@@ -32,11 +32,15 @@ if ($_POST && !$_POST["add"] && !$_POST["change"] && !$_POST["change-js"]) {
 		(bool)$result
 	);
 	if (!$row["drop"]) {
-		Admin::get()->addError(lang('Source and target columns must have the same data type, there must be an index on the target columns and referenced data must exist.')); //! no partitioning
+		Admin::get()->addError(lang('Source and target columns must have the same data type, there must be an index on the target columns and referenced data must exist.')); // TODO no partitioning
 	}
 }
 
-page_header(lang('Foreign key') . ": " . h($TABLE), ["table" => $TABLE, lang('Foreign key')]);
+if ($name != "") {
+	page_header(lang('Alter foreign key') . ": " . h($name), ["table" => $TABLE, lang('Alter foreign key')]);
+} else {
+	page_header(lang('Create foreign key') . ": " . h($TABLE), ["table" => $TABLE, lang('Create foreign key')]);
+}
 
 if ($_POST) {
 	ksort($row["source"]);
@@ -56,7 +60,7 @@ if ($_POST) {
 
 echo "<form action='' method='post'>\n";
 
-$source = array_keys(fields($TABLE)); //! no text and blob
+$source = array_keys(fields($TABLE)); // TODO no text and blob
 if ($row["db"] != "") {
 	Connection::get()->selectDatabase($row["db"]);
 }
@@ -65,7 +69,7 @@ if ($row["ns"] != "") {
 	set_schema($row["ns"]);
 }
 $referencable = array_keys(array_filter(table_status('', true), 'AdminNeo\fk_support'));
-$target = array_keys(fields(in_array($row["table"], $referencable) ? $row["table"] : reset($referencable)));
+$target = $referencable ? array_keys(fields(in_array($row["table"], $referencable) ? $row["table"] : reset($referencable))) : [];
 $onchange = "this.form['change-js'].value = '1'; this.form.submit();";
 
 echo "<p>";
@@ -73,7 +77,7 @@ echo "<span id='label-table'>", lang('Target table'), ":</span> ", html_select("
 
 if (support("scheme")) {
 	$schemas = array_filter(Admin::get()->getSchemas(), function ($schema) {
-		return !preg_match('~^information_schema$~i', $schema);
+		return !information_schema(DB, $schema);
 	});
 	echo "<span id='label-schema'>", lang('Schema'), ":</span> ", html_select("ns", $schemas, $row["ns"] != "" ? $row["ns"] : $_GET["ns"], $onchange, "label-schema");
 	if ($row["ns"] != "") {

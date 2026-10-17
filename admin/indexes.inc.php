@@ -26,9 +26,16 @@ if (DIALECT == "mongo") { // doesn't support primary key
 	unset($indexes["_id_"]);
 }
 $row = $_POST;
+
+// Remove obsolete parameter from the settings.
+// TODO: Delete this code in 2027.
 if ($row) {
-	Admin::get()->getSettings()->updateParameter("indexOptions", $row["options"] ?? null);
+	$settings = Admin::get()->getSettings();
+	if ($settings->getParameter("indexOptions") !== null) {
+		$settings->updateParameter("indexOptions", null);
+	}
 }
+
 if ($_POST && !$_POST["add"] && !$_POST["drop_col"]) {
 	$alter = [];
 	foreach ($row["indexes"] as $index) {
@@ -37,6 +44,7 @@ if ($_POST && !$_POST["add"] && !$_POST["drop_col"]) {
 			$columns = [];
 			$lengths = [];
 			$descs = [];
+			$opclasses = [];
 			$index_algorithm = $index_algorithms ? (in_array($index["algorithm"], $index_algorithms) ? $index["algorithm"] : first($index_algorithms)) : "";
 			$index_condition = (support("partial_indexes") ? $index["partial"] : "");
 			$set = [];
@@ -45,10 +53,13 @@ if ($_POST && !$_POST["add"] && !$_POST["drop_col"]) {
 				if ($column != "") {
 					$length = $index["lengths"][$key] ?? null;
 					$desc = $index["descs"][$key] ?? null;
-					$set[] = ($fields[$column] ? idf_escape($column) : $column) . ($length ? "(" . (+$length) . ")" : "") . ($desc ? " DESC" : "");
+					$opclass = $index["opclasses"][$key] ?? null;
+					$set[] = ($fields[$column] ? idf_escape($column) : $column) . ($length ? "(" . (+$length) . ")" : "")
+						. ($opclass != "" ? " " . idf_escape($opclass) : "") . ($desc ? " DESC" : "");
 					$columns[] = $column;
 					$lengths[] = ($length ?: null);
 					$descs[] = $desc;
+					$opclasses[] = "$opclass";
 				}
 			}
 
@@ -61,6 +72,7 @@ if ($_POST && !$_POST["add"] && !$_POST["drop_col"]) {
 					&& array_values($existing["columns"]) === $columns
 					&& (!$existing["lengths"] || array_values($existing["lengths"]) === $lengths)
 					&& array_values($existing["descs"]) === $descs
+					&& (!$existing["opclasses"] || array_values($existing["opclasses"]) === $opclasses)
 					&& (!$index_algorithms || $existing["algorithm"] === $index_algorithm)
 					&& $existing["partial"] == $index_condition
 				) {
@@ -85,7 +97,7 @@ if ($_POST && !$_POST["add"] && !$_POST["drop_col"]) {
 	queries_redirect(ME . "table=" . urlencode($TABLE), lang('Indexes have been altered.'), alter_indexes($TABLE, $alter));
 }
 
-page_header(lang('Alter indexes'), ["table" => $TABLE, lang('Alter indexes')], h($TABLE));
+page_header(lang('Alter indexes') . ": " . h($TABLE), ["table" => $TABLE, lang('Alter indexes')]);
 
 $fields_keys = array_keys($fields);
 if ($_POST["add"]) {
@@ -108,7 +120,24 @@ if (!$row) {
 	$row["indexes"] = $indexes;
 }
 $lengths = (DIALECT == "sql" || DIALECT == "mssql");
-$show_options = $_POST ? $_POST["options"] : Admin::get()->getSettings()->getParameter("indexOptions");
+$opclasses = Driver::get()->getIndexOpclasses();
+if ($_POST) {
+	$show_options = $_POST["options"];
+} else {
+	// Show the options if some of the existing indexes uses them.
+	$show_options = false;
+	foreach ($indexes as $index) {
+		if (
+			array_filter($index["lengths"] ?? []) ||
+			array_filter($index["descs"] ?? []) ||
+			array_filter($index["opclasses"] ?? []) ||
+			($index["partial"] ?? "") != ""
+		) {
+			$show_options = true;
+			break;
+		}
+	}
+}
 
 echo "<form action='' method='post'>\n";
 echo "<div class='scrollable'>\n";
@@ -127,8 +156,8 @@ if (count($index_algorithms) > 1) {
 	echo "</th>";
 }
 
-echo "<th><input type='submit' class='button invisible'>";
-echo lang('Columns') . ($lengths ? "<span $options_class> (" . lang('length') . ")</span>" : "");
+echo "<th><input type='submit' hidden>";
+echo lang('Columns') . ($lengths ? "<span " . str_replace("class='", "class='note ", $options_class) . "> (" . lang('length') . ")</span>" : "");
 if ($lengths || support("descidx")) {
 	echo checkbox("options", 1, $show_options, lang('Options'), "indexOptionsShow(this.checked)", "jsonly") . "\n";
 }
@@ -147,7 +176,7 @@ echo "</tr></thead>\n";
 if ($primary) {
 	echo "<tr><td>PRIMARY<td>";
 	foreach ($primary["columns"] as $column) {
-		echo select_input(" disabled", $fields_keys, $column);
+		echo select_input(" disabled", array_combine($fields_keys, $fields_keys), $column);
 		echo "<label><input type='checkbox' disabled>" . lang('descending') . "</label> ";
 	}
 	echo "<td><td>\n";
@@ -173,16 +202,27 @@ foreach ($row["indexes"] as $index) {
 				" name='indexes[$j][columns][$i]' title='" . lang('Column') . "'",
 				($fields && ($column == "" || $fields[$column]) ? array_combine($fields_keys, $fields_keys) : []),
 				$column,
-				"partial(" . ($i == count($index["columns"]) ? "indexesAddColumn" : "indexesChangeColumn") . ", '" . js_escape(DIALECT == "sql" ? "" : $_GET["indexes"] . "_") . "')"
+				"partial(indexesChangeColumn, '" . js_escape(DIALECT == "sql" ? "" : $_GET["indexes"] . "_") . "')"
 			);
+
 			echo "<span $options_class>";
 			if ($lengths) {
 				echo "<input type='number' name='indexes[$j][lengths][$i]' class='input size' value='". (h($index["lengths"][$key] ?? "")), "' title='" . lang('Length'), "'>";
 			}
+			if ($opclasses) {
+				$opclass = $index["opclasses"][$key] ?? "";
+				echo html_select(
+					"indexes[$j][opclasses][$i]",
+					["" => "(" . lang('operator class') . ")"] + array_combine($opclasses, $opclasses) + ($opclass != "" ? [$opclass => $opclass] : []),
+					$opclass
+				);
+				echo doc_link(['pgsql' => 'indexes-opclass.html']);
+			}
 			if (support("descidx")) {
 				echo checkbox("indexes[$j][descs][$i]", 1, $index["descs"][$key] ?? false, lang('descending'));
 			}
-			echo "</span> </span>";
+			echo "<br></span></span>";
+
 			$i++;
 		}
 		echo "</td>";
@@ -192,7 +232,7 @@ foreach ($row["indexes"] as $index) {
 			echo "<td $options_class><input name='indexes[$j][partial]' value='" . h($index["partial"]) . "' autocapitalize='off' aria-labelledby='label-condition'>\n";
 		}
 		echo "<td>",
-			"<button name='drop_col[$j]' value='1' title='", h(lang('Remove')), "' class='button light'>", icon_solo("remove"), "</button>",
+			"<button name='drop_col[$j]' value='1' title='", lang('Remove'), "' class='button light'>", icon_solo("remove"), "</button>",
 			script("qsl('button').onclick = onRemoveIndexRowClick;"),
 			"</td>\n";
 	}

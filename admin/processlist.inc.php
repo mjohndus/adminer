@@ -43,7 +43,9 @@ foreach (process_list() as $i => $row) {
 			(DIALECT == "sql" && $key == "Info" && preg_match("~Query|Killed~", $row["Command"])) ||
 			(DIALECT == "pgsql" && $key == "query") ||
 			(DIALECT == "oracle" && $key == "sql_text"))
-			? "<code class='jush-" . DIALECT . "'>" . truncate_utf8($val, 100) . '</code> <a href="' . h(ME . ($row["db"] != "" ? "db=" . urlencode($row["db"]) . "&" : "") . "sql=" . urlencode($val)) . '">' . icon("edit") . lang('Clone') . '</a>'
+			? "<code class='jush-" . DIALECT . "'>" . truncate_utf8($val, 100) . '</code> <a href="' .
+				h(ME . ($row["db"] != "" ? "db=" . urlencode($row["db"]) . "&" : "") . "sql=" . urlencode($val)) .
+				'">' . icon("edit") . lang('Clone') . '</a>'
 			: h($val)
 		);
 	}
@@ -52,7 +54,7 @@ foreach (process_list() as $i => $row) {
 
 if ($i >= 0) {
 	echo "</tbody>\n";
-	echo script("mixin(qsl('tbody'), {onclick: tableClick, ondblclick: partialArg(tableClick, true)});");
+	echo script("mixin(qsl('tbody'), {onclick: tableClick, ondblclick: event => tableClick(event, true)});");
 }
 
 echo "</table>\n";

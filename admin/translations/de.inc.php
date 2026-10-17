@@ -16,6 +16,11 @@ return [
 	'%s must return an array.' => '%s muss ein Array zurückgeben.',
 	'%s and %s must return an object created by %s method.' => '%s und %s müssen ein mit der Methode %s erstelltes Objekt zurückgeben.',
 
+	// Accessibility
+	'Skip to main content' => 'Zum Hauptinhalt springen', // by Claude Fable 5.1
+	'Skip to menu' => 'Zum Menü springen', // by Claude Fable 5.1
+	'Skip to table list' => 'Zur Tabellenliste springen', // by Claude Fable 5.1
+
 	// Login
 	'System' => 'Datenbank System',
 	'Server' => 'Server',
@@ -51,10 +56,12 @@ return [
 	// Settings
 	'Language' => 'Sprache',
 
+	'Menu' => 'Menü', // by Claude Fable 5.1
 	'Home' => 'Startseite',
 	'Refresh' => 'Aktualisieren',
 	'Info' => 'Info',
 	'More information.' => 'Weitere Informationen.',
+	'Close' => 'Schließen', // by Claude Fable 5.1
 
 	// Privileges
 	'Privileges' => 'Rechte',
@@ -169,6 +176,7 @@ return [
 	'Invalid schema.' => 'Schema nicht gültig.',
 
 	// Table list
+	'All' => 'Alle', // checkbox selecting all tables and views // by Claude Fable 5.1
 	'Engine' => 'Speicher-Engine',
 	'engine' => 'Speicher-Engine',
 	'Collation' => 'Kollation',
@@ -213,7 +221,8 @@ return [
 	'Auto Increment' => 'Auto-Inkrement',
 	'Options' => 'Optionen',
 	'Comment' => 'Kommentar',
-	'Default value' => 'Vorgabewert festlegen',
+	'Default value' => 'Vorgabewert',
+	'default value' => 'Vorgabewert',
 	'Drop' => 'Entfernen',
 	'Drop %s?' => '%s entfernen?',
 	'Are you sure?' => 'Sind Sie sicher?',
@@ -226,7 +235,7 @@ return [
 
 	// Views
 	'View' => 'View',
-	'Materialized view' => 'Materialisierte View', // by Claude Fable 5
+	'Materialized view' => 'Materialisierte View', // by Claude Fable 5.1
 	'View has been dropped.' => 'View wurde entfernt.',
 	'View has been altered.' => 'View wurde geändert.',
 	'View has been created.' => 'View wurde erstellt.',
@@ -249,12 +258,12 @@ return [
 	'Add next' => 'Hinzufügen',
 	'Index Type' => 'Index-Typ',
 	'length' => 'Länge',
+	'operator class' => 'Operatorklasse', // by Claude Fable 5.1
 	'Algorithm' => 'Algorithmus',
 	'Condition' => 'Bedingung',
 
 	// Foreign keys
 	'Foreign keys' => 'Fremdschlüssel',
-	'Foreign key' => 'Fremdschlüssel',
 	'Foreign key has been dropped.' => 'Fremdschlüssel wurde entfernt.',
 	'Foreign key has been altered.' => 'Fremdschlüssel wurde geändert.',
 	'Foreign key has been created.' => 'Fremdschlüssel wurde erstellt.',
@@ -264,7 +273,8 @@ return [
 	'Target' => 'Ziel',
 	'Add column' => 'Spalte hinzufügen',
 	'Alter' => 'Ändern',
-	'Add foreign key' => 'Fremdschlüssel hinzufügen',
+	'Alter foreign key' => 'Fremdschlüssel ändern', // by Claude Fable 5.1
+	'Create foreign key' => 'Fremdschlüssel erstellen', // by Claude Fable 5.1
 	'ON DELETE' => 'ON DELETE',
 	'ON UPDATE' => 'ON UPDATE',
 	'Source and target columns must have the same data type, there must be an index on the target columns and referenced data must exist.' => 'Quell- und Zielspalten müssen vom gleichen Datentyp sein, es muss unter den Zielspalten ein Index existieren und die referenzierten Daten müssen existieren.',
@@ -318,7 +328,6 @@ return [
 
 	// Triggers
 	'Triggers' => 'Trigger',
-	'Add trigger' => 'Trigger hinzufügen',
 	'Trigger has been dropped.' => 'Trigger wurde entfernt.',
 	'Trigger has been altered.' => 'Trigger wurde geändert.',
 	'Trigger has been created.' => 'Trigger wurde erstellt.',
@@ -331,7 +340,7 @@ return [
 	'Alter check' => 'Check ändern',
 	'Check has been created.' => 'Check wurde erstellt.',
 	'Check has been altered.' => 'Check wurde geändert.',
-	'Check has been dropped.' => 'Check wurde entfernt.', // by Claude Fable 5
+	'Check has been dropped.' => 'Check wurde entfernt.', // by Claude Fable 5.1
 
 	// Selection
 	'Select data' => 'Daten auswählen',
@@ -349,6 +358,7 @@ return [
 	'Full table scan' => 'Vollständige Überprüfung der Tabelle',
 	'Unable to select the table' => 'Auswahl der Tabelle fehlgeschlagen',
 	'Search data in tables' => 'Suche in Tabellen',
+	'All rows on this page' => 'Alle Zeilen auf dieser Seite', // by Claude Fable 5.1
 	'No rows.' => 'Keine Datensätze.',
 	'%d / ' => '%d / ',
 	'%d row(s)' => [
@@ -358,7 +368,7 @@ return [
 	'Page' => 'Seite',
 	'last' => 'letzte',
 	'Load more data' => 'Mehr Daten laden',
-	'Loading' => 'Lade',
+	'Loading…' => 'Lade…',
 	'Whole result' => 'Gesamtergebnis',
 	'%d byte(s)' => [
 		'%d Byte',
@@ -379,7 +389,7 @@ return [
 	'Save' => 'Speichern',
 	'Save and continue edit' => 'Speichern und weiter bearbeiten',
 	'Save and insert next' => 'Speichern und nächsten einfügen',
-	'Saving' => 'Speichere',
+	'Saving…' => 'Speichere…',
 	'Selected' => 'Ausgewählte',
 	'Clone' => 'Klonen',
 	'Delete' => 'Entfernen',
@@ -407,6 +417,7 @@ return [
 	// Settings
 	'Settings' => 'Einstellungen',
 	'Default' => 'Standard',
+	'Theme' => 'Design', // by Claude Fable 5.1
 	'Color scheme' => 'Farbschema',
 	'By system' => 'Systembasiert',
 	'Light' => 'Hell',
@@ -414,6 +425,7 @@ return [
 	'Navigation mode' => 'Navigationsmodus',
 	'Simple' => 'Einfach',
 	'Dual' => 'Dual',
+	'Dual on hover' => 'Dual beim Überfahren mit der Maus', // by Claude Fable 5.1
 	'Reversed' => 'Umgekehrt',
 	'Layout of main navigation with table links.' => 'Layout der Hauptnavigation mit Tabellenlinks.',
 	'Table links' => 'Tabellenlinks',
@@ -438,4 +450,5 @@ return [
 	'Data table' => 'Datentabelle',
 	'Edit form' => 'Formular bearbeiten',
 	'Ask %s' => '%s fragen',
+	'Views' => 'Views', // by Claude Opus 5.5
 ];

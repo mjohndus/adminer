@@ -22,14 +22,15 @@ if ($_POST) {
 }
 $grants = [];
 
-if (isset($_GET["host"]) && ($result = Connection::get()->query("SHOW GRANTS FOR " . q($USER) . "@" . q($_GET["host"])))) { //! use information_schema for MySQL 5 - column names in column privileges are not escaped
+// TODO use information_schema for MySQL 5 - column names in column privileges are not escaped
+if (isset($_GET["host"]) && ($result = Connection::get()->query("SHOW GRANTS FOR " . q($USER) . "@" . q($_GET["host"])))) {
 	while ($row = $result->fetchRow()) {
-		if (preg_match('~GRANT (.*) ON (.*) TO ~', $row[0], $match) && preg_match_all('~ *([^(,]*[^ ,(])( *\([^)]+\))?~', $match[1], $matches, PREG_SET_ORDER)) { //! escape the part between ON and TO
+		if (preg_match('~GRANT (.*) ON (.*) TO ~', $row[0], $match) && preg_match_all('~ *([^(,]*[^ ,(])( *\([^)]+\))?~', $match[1], $matches, PREG_SET_ORDER)) { // TODO escape the part between ON and TO
 			foreach ($matches as $val) {
 				if ($val[1] != "USAGE") {
 					$grants["$match[2]$val[2]"][$val[1]] = true;
 				}
-				if (preg_match('~ WITH GRANT OPTION~', $row[0])) { //! don't check inside strings and identifiers
+				if (preg_match('~ WITH GRANT OPTION~', $row[0])) { // TODO don't check inside strings and identifiers
 					$grants["$match[2]$val[2]"]["GRANT OPTION"] = true;
 				}
 			}
@@ -72,7 +73,7 @@ if ($_POST) {
 					unset($grants[$object]);
 				}
 				if (preg_match('~^(.+)\s*(\(.*\))?$~U', $object, $match) && (
-					!grant(false, $revoke, $match[2], $match[1], $new_user) //! SQL injection
+					!grant(false, $revoke, $match[2], $match[1], $new_user) // TODO SQL injection
 					|| !grant(true, $grant, $match[2], $match[1], $new_user)
 				)) {
 					$result = false;
@@ -91,6 +92,10 @@ if ($_POST) {
 					}
 				}
 			}
+		}
+
+		if ($result && !Queries::$queries) {
+			redirect(ME . "privileges="); // Nothing was changed.
 		}
 
 		queries_redirect(ME . "privileges=", (isset($_GET["host"]) ? lang('User has been altered.') : lang('User has been created.')), $result);
@@ -139,14 +144,16 @@ if (!$row["hashed"]) {
 }
 echo "</table>\n";
 
-//! MAX_* limits, REQUIRE
+// TODO MAX_* limits, REQUIRE
 echo "<div class='scrollable'><table class='checkable'>\n";
 
-echo "<thead><tr><th colspan='2'>" . lang('Privileges') . doc_link(['sql' => "grant.html#priv_level", "mariadb" => "reference/sql-statements/account-management-sql-statements/grant#privilege-levels"]) . "</th>";
+echo "<thead><tr><th colspan='2'>" . lang('Privileges') .
+	doc_link(['sql' => "grant.html#priv_level", "mariadb" => "reference/sql-statements/account-management-sql-statements/grant#privilege-levels"]) .
+	"</th>";
 $i = 0;
 foreach ($grants as $object => $grant) {
 	echo "<th>";
-	//! separate db, table, columns, PROCEDURE|FUNCTION, routine
+	// TODO separate db, table, columns, PROCEDURE|FUNCTION, routine
 	if ($object == "*.*") {
 		echo "*.*";
 		echo input_hidden("objects[$i]", "*.*");

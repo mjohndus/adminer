@@ -41,6 +41,11 @@
 	border-bottom: 1px solid var(--panel-border);
 }
 
+.navigation-panel .links a {
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
 .rtl .navigation-panel {
 	left: auto;
 	right: 0;
@@ -67,12 +72,6 @@
 	cursor: col-resize;
 }
 
-body.resizing {
-	cursor: col-resize;
-	-webkit-user-select: none;
-	user-select: none;
-}
-
 .navigation-button {
 	display: none;
 	position: fixed;
@@ -81,25 +80,13 @@ body.resizing {
 	width: 2rem;
 	height: 2rem;
 	padding: 0 !important;
-	z-index: 50;
+	font-size: initial;
 }
 
 .navigation-button .icon {
 	width: 1.2rem;
 	height: 1.2rem;
 	margin: 0 !important;
-}
-
-.navigation-button .ic-close {
-	display: none;
-}
-
-.navigation-button.opened .ic-menu {
-	display: none;
-}
-
-.navigation-button.opened .ic-close {
-	display: inline;
 }
 
 .logo {
@@ -153,6 +140,20 @@ body.resizing {
 #tables {
 	overflow-y: auto;
 	margin-top: 10px;
+	border-top: 1px solid transparent;
+}
+
+#tables.scrolled {
+	border-color: var(--panel-border);
+}
+
+#tables .scroll-marker {
+	height: 1px;
+	margin-bottom: -1px;
+}
+
+#tables p:first-child {
+	padding-top: 0;
 }
 
 #logins {
@@ -207,7 +208,7 @@ menu .secondary {
 }
 
 menu .secondary .icon {
-	opacity: 0.85;
+	opacity: 0.8;
 }
 
 menu .secondary:hover .icon {
@@ -239,6 +240,15 @@ menu.dual .secondary {
 	right: 0;
 }
 
+/* Opacity keeps the link in the tab order, unlike visibility or display. */
+menu.hover .secondary {
+	opacity: 0;
+}
+
+menu.hover li:hover .secondary, menu.hover .secondary:focus-visible {
+	opacity: 1;
+}
+
 .rtl menu .secondary {
 	left: 0;
 	right: auto;
@@ -254,7 +264,7 @@ menu.dual .secondary {
 	line-height: 2.05rem; /* +0.05rem for better alignment on Firefox. */
 	padding: 0 20px;
 	display: flex;
-	gap: 10px 20px;
+	gap: 10px;
 	align-items: baseline;
 	z-index: 10;
 }
@@ -327,8 +337,12 @@ menu.dual .secondary {
 	}
 
 	.toolbox, .logout {
-		overflow: hidden;
 		line-height: normal;
 		max-width: 100%;
+	}
+
+	.logout span {
+		overflow: hidden;
+		text-overflow: ellipsis;
 	}
 }

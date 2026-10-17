@@ -1,14 +1,145 @@
 Changelog
 =========
 
-AdminNeo 5.7.0
+AdminNeo 5.8.1
 --------------
+
+### Changes
+
+- Add MarkdownDumpPlugin - export of database structure and data to Markdown format
+- Table structure: Show generated columns in SQL syntax
+- Unify import and export icons
+- Export: Disable structure and data options for formats that do not support them
 
 ### Bugfixes
 
-Fix embedding to a page with already started session (fix #199)   
-Fix presetting foreign keys in edit form (fix #200, regression from 5.6.0)
-Editor: Fix displaying relation links (regression from 5.2.0)
+- Select: Align titles of numeric columns to the right
+- Export: Fix gzip compression for formats added by plugins
+- Edit: Fix JavaScript error for blob fields with file upload
+- Fix parse error of the compiled file in PHP 5 (regression from 5.6.0)
+- Alter table: Fix toggling of column comments (regression from 5.8.0)
+- MySQL: Fix lost charset introducers and parameters starting with "_" in routine definitions (issue #197)
+- PostgreSQL, MS SQL: Fix foreign key statements printed into non-SQL export formats
+- PostgreSQL: Fix missing check constraints in export of all schemas
+- PostgreSQL: Do not mark identity columns as Auto increment
+- MS SQL: Fix reading and editing of varchar(max) and similar columns
+- MS SQL: Read complete view definitions from the selected schema (by @kabachello)
+- SQLite: Fix reading of generated columns defined on one line or without GENERATED ALWAYS keywords
+
+AdminNeo 5.8.0 (2026-09-15)
+---------------------------
+
+### Changes
+
+- CSS: Add new Dune theme
+- Settings: Add a theme selector
+- Scroll the navigation panel to the selected table when it is out of view
+- Indicate a scrolled table list in the navigation panel by a separator line
+- Accessibility: Keep focus in floating menu on small screens
+- Accessibility: Add skip links
+- Alter table, Privileges: Do not print a success message if nothing was changed (by @vrana)
+- Alter table, Select: Warn if the number of fields can exceed max_input_vars (by @vrana)
+- Select: Remove asking for the page number after clicking the Page legend (by @vrana)
+- Table structure: Shorten long checks (by @vrana)
+- Table structure: Unify wording of links and page titles
+- Edit: Disable Save and continue edit after changing a value identifying the row
+- SQL command: Check the "Stop on error" option by default
+- Database schema: Improve design, highlight a clicked table box
+- Database schema: Move table boxes also on touch screens
+- PostgreSQL: Hide table actions and row editing in pg_catalog and pg_toast
+- PostgreSQL: Order NULL last (by @vrana)
+- PostgreSQL: Remove the Truncate Cascade button (by @vrana)
+- MS SQL: Hide table actions and row editing in the sys schema
+- MongoDB, SimpleDB: Sort the list of tables by name
+- Drop compatibility with IIS 5 and with IIS 7.0 before its 2008 FastCGI update (by @vrana)
+- Fix mistranslated texts in all languages (AI reviewed)
+- Update Polish translation (by @Matthaiks)
+- Update Dutch translation (by Maarten Balliauw)
+- Update Malay translation (by @pisyek)
+- Update Catalan translation (by Joan Llosas)
+- Update Serbian translation (by Nikola Radovanović)
+- Update Bulgarian translation (by Deyan Delchev)
+
+### Bugfixes
+
+- Sanitize the connection id returned by the server (by @vrana, GHSA-qjpp-55x9-q62v, XSS)
+- Fix JavaScript in Safari < 14, Firefox < 79 and Chrome < 85 (regression from 5.7.0)
+- Fix showing and hiding elements in Chrome < 61 and Edge < 17 (regression from 5.2.0)
+- Fix JavaScript error on pages with a sticky table footer in Safari < 12.1 (regression from 5.0.0)
+- Syntax highlighting: Fix the color of JSON keys
+- Select: Keep sorting by an aggregation function in the Sort fieldset (by @vrana)
+- Select: Disable inline edit of binary values (by @vrana)
+- Edit: Fix editing rows with binary columns in tables without a unique key
+- Editor: Fix JavaScript error on the select page caused by the import form (regression from 5.5.0)
+- Database schema: Fix overlapping table boxes
+- Database schema: Allow dragging a table box also by its name
+- Database schema: Snap a moved table box to the grid
+- MySQL: Fix displaying backward relation links
+- PostgreSQL: Fix editing a record with a GENERATED ALWAYS AS IDENTITY column (issue #205, regression from 5.5.0)
+- PostgreSQL, MS SQL: Highlight primary keys in the database schema (regression from 5.1.0)
+- SQLite: Fix working with binary data through PDO
+- MongoDB: Show the primary key column when altering indexes (by @vrana, regression from 5.5.0)
+
+(Ported relevant changes from Adminer 6.0.0 • part 3)
+
+AdminNeo 5.7.1 (2026-08-27)
+---------------------------
+
+### Changes
+
+- Editor: Display all images recognized by PHP, set their size, load them lazily (by @vrana)
+
+### Bugfixes
+
+- Escape `<` in strings printed to JavaScript, a name containing `<!--<script>` broke the page
+- Alter table: Edit multiline column comments in a textarea (by @vrana)
+- Alter table: Do not rewrite newlines in multiline column and table comments
+- Edit: Fix losing the value of nullable enum fields (issue #203, regression from 5.7.0)
+- Edit: Fix JavaScript error when changing the function of enum, set and bool fields (regression from 5.7.0)
+- PostgreSQL, SQLite, MS SQL: Fix reading a multiline default value
+
+(Ported relevant changes from Adminer 6.0.0 • part 2)
+
+AdminNeo 5.7.0 (2026-08-24)
+---------------------------
+
+### Changes
+
+- Add "Dual on hover" navigation mode
+- Select: Fade in the column context menu with a short delay
+- Sort languages by their translated name (by @vrana)
+- Tables overview: Speed up, show totals in SQLite, real size in MS SQL, Oracle (by @vrana)
+- Indexes: Display columns with options one below the other
+- Indexes: Show index options automatically if some index uses them
+- SQL command: Show column type in result table header (by @vrana)
+- SQL command: Export result to CSV by JavaScript without re-running the query (by @vrana)
+- Alter table: Add next column without page reload (by @vrana)
+- Edit: Hide the value field for functions without arguments (e.g. now, uuid) (by @vrana)
+- MySQL: Cache the list of databases only if getting it is slow (by @vrana)
+- MySQL: Link sys schema views to their documentation (by @vrana)
+- PostgreSQL: Support operator classes in indexes (by @vrana)
+- PostgreSQL: Add Truncate Cascade button (by @vrana)
+- PostgreSQL: Do not show functions and types created by extensions (by @vrana)
+- SimpleDB: Use default server
+
+### Bugfixes
+
+- Escape index type, algorithm and length (XSS) (by @vrana)
+- Escape values of table status and event schedule (XSS) (by @vrana)
+- Fix embedding to a page with already started session (issue #199)
+- Fix presetting foreign keys in edit form (issue #200, regression from 5.6.0)
+- Editor: Fix displaying relation links (regression from 5.2.0)
+- Select: Fix the number of selected rows after going back in history (by @vrana)
+- Edit: Keep values of columns with special characters in name after error (by @vrana)
+- Edit: Fix changing function to SQL with the ForeignEditPlugin
+- MySQL, MariaDB: Fix reading descending indexes
+- MariaDB: Fix comparing `CURRENT_TIMESTAMP` definition while altering a table
+- PostgreSQL: Fix altering functions with parameters of array or user-defined types (by @vrana)
+- PostgreSQL, MS SQL: Show two columns in select COUNT(*), COUNT(DISTINCT id) (by @vrana)
+- PostgreSQL: Fix empty headers of computed columns in query result (regression from 5.1.0)
+- MS SQL: Treat binary fields as blob (by @vrana)
+
+(Ported relevant changes from Adminer 6.0.0 • part 1)
 
 AdminNeo 5.6.0 (2026-08-16)
 ---------------------------
@@ -40,7 +171,7 @@ AdminNeo 5.6.0 (2026-08-16)
 - Support disabled set_time_limit() and ini_set() (by @vrana)
 - Do not export foreign key constraints if the table structure is not exported
 - MariaDB: Allow setting password with password validation plugin (by @vrana)
-- PostgreSQL: Fix data-only export failing to import due to foreign key violations (fix #192)
+- PostgreSQL: Fix data-only export failing to import due to foreign key violations (issue #192)
 - PostgreSQL: Restart sequences in a data-only export if auto increment values are exported
 - SQLite: Preserve STRICT and WITHOUT ROWID in alter table (by @vrana)
 - SQLite: Do not treat INTEGER PRIMARY KEY without AUTOINCREMENT as auto increment (by @vrana)
@@ -77,7 +208,7 @@ AdminNeo 5.5.1 (2026-07-20)
 - MySQL: Fix routine fields length (by @vrana, regression from 5.5.0)
 - MySQL: Do not export IN in FUNCTION parameters (by @vrana, regression from 5.5.0)
 - MySQL: Allow connecting to socket without hostname (by @magnusvin, regression from 5.5.0)
-- MySQL: Fix database version in URL links to documentation (fix #194, regression from 5.1.0)
+- MySQL: Fix database version in URL links to documentation (issue #194, regression from 5.1.0)
 - MariaDB: Fix form for changing user password (regression from 5.1.0)
 - MariaDB: Speed up getting checks (by @vrana, regression from 5.4.2)
 - MariaDB, PostgreSQL: Use CREATE OR REPLACE FUNCTION if possible (by @vrana)
@@ -180,7 +311,7 @@ AdminNeo 5.4.1 (2026-06-07)
 - PostgreSQL: Fix exporting whole databases (regression from 5.1.0)
 - MongoDB: Fix displaying selection table (regression from 5.4.0)
   MongoDB: Fix edit form when inserting the first record (regression from 5.0.0)
-- MongoDB: Fix authenticating user restricted to one database (fix #177)
+- MongoDB: Fix authenticating user restricted to one database (issue #177)
 - MongoDB: Fix detecting of JSON values
 - MongoDB: Fix saving NULL and "NULL" values
 
@@ -217,6 +348,7 @@ AdminNeo 5.4.0 (2026-05-27)
 - PostgreSQL: Fix calling functions with name-less parameters (by @vrana)
 - PostgreSQL: Fix calling functions returning table (by @vrana)
 - PostgreSQL PDO: Fix bytea without primary key (by @vrana)
+- Elasticsearch: Verify response origin (GHSA-m4j3-gq7v-wpp8)
 - FileUploadPlugin: Fix searching in *_path columns
 - Editor: Fix missing token in search anywhere form
 
@@ -354,12 +486,12 @@ AdminNeo 5.0.0 (2025-05-29)
 ---------------------------
 
 This is the first release of AdminNeo and EditorNeo as standalone products. It mainly brings the brand new responsive
-theme with dark mode support and color variants, easy to use [configuration](https://www.adminneo.org/configuration), 
-several UX improvements and reviewed [plugins](https://www.adminneo.org/plugins) and 
-[customizations](https://www.adminneo.org/customizations). 
+theme with dark mode support and color variants, easy to use [configuration](https://www.adminneo.org/configuration),
+several UX improvements and reviewed [plugins](https://www.adminneo.org/plugins) and
+[customizations](https://www.adminneo.org/customizations).
 Please consult the [Upgrade guide](https://www.adminneo.org/upgrade) to upgrade your AdminNeo installation.
 
-AdminNeo can be downloaded on the new [adminneo.org/download](https://www.adminneo.org/download) page where you can select 
+AdminNeo can be downloaded on the new [adminneo.org/download](https://www.adminneo.org/download) page where you can select
 the components according to your needs.
 
 ### Changes
@@ -393,7 +525,7 @@ the components according to your needs.
 - Display column comments as a hints in edit form
 - Unify setting NULL value for 'enum' fields in edit form
 - Upgrade encryption of stored login information to AES-256-GCM
-- Editor: Remove displaying comments instead of table and field names  
+- Editor: Remove displaying comments instead of table and field names
 - Editor: Remove password input for fields that end with _md5 and _sha1
 - Editor: Remove support for sending mass e-mails
 - MySQL: Drop support for MySQL 4
@@ -802,7 +934,7 @@ AdminNeo 4.8.2 (2024-03-16)
 Adminer 4.8.1 (2021-05-14)
 --------------------------
 
-- Internet Explorer or PDO in ## Adminer 4.7.8-4.8.0: Fix XSS in doc_link (bug SF-797)
+- Internet Explorer or PDO in Adminer 4.7.8-4.8.0: Fix XSS in doc_link (bug SF-797)
 - Fix more PHP 8 warnings (bug SF-781)
 - Avoid PHP warnings with PDO drivers (bug SF-786, regression from 4.7.8)
 - MySQL: Allow moving views to other DB and renaming DB with views (bug SF-783)
@@ -948,7 +1080,7 @@ Adminer 4.7.0 (2018-11-24)
 - Warn when using password with leading or trailing spaces
 - Hide import from server if importServerPath() returns an empty string
 - Fix inline editing of empty cells (regression from 4.6.3)
-- Allow adding more than two indexes and forign key columns at a time (regression from 4.4.0)
+- Allow adding more than two indexes and foreign key columns at a time (regression from 4.4.0)
 - Avoid overwriting existing tables when copying tables (bug SF-642)
 - Fix function change with set data type
 - Increase username maxlength to 80 (bug SF-623)
@@ -1153,7 +1285,7 @@ Adminer 4.2.0 (2015-02-07)
 - Make master key unreadable to others (bug SF-410)
 - Fix edit by long non-utf8 string
 - Specify encoding for PHP 5.6 with invalid default_charset
-- Fix saving NULL value, bug since ## Adminer 4.0.3
+- Fix saving NULL value, bug since Adminer 4.0.3
 - Send 403 for auth error
 - Report offline and other AJAX errors (bug SF-419)
 - Don't alter table comment if not changed
@@ -1186,7 +1318,7 @@ Adminer 4.1.0 (2014-04-18)
 - MySQL 5.6.5+: Support ON UPDATE on datatime column
 - SQLite: Support UPDATE OF triggers
 - SQLite: Display auto-created unique indexes, bug since Adminer 3.5.0
-- Editor: Fix login() method, bug since ## Adminer 4.0.0
+- Editor: Fix login() method, bug since Adminer 4.0.0
 - Translate numbers in ar, bn, fa
 - Vietnamese translation
 
@@ -1195,9 +1327,9 @@ Adminer 4.0.3 (2014-02-01)
 
 - MongoDB: insert, truncate, indexes
 - SimpleDB, MongoDB: insert more fields at once
-- SQLite: Fix creating table and altering primary key, bug since ## Adminer 4.0.0
-- Don't store invalid credentials to session, bug since ## Adminer 4.0.0
-- Norweigan translation
+- SQLite: Fix creating table and altering primary key, bug since Adminer 4.0.0
+- Don't store invalid credentials to session, bug since Adminer 4.0.0
+- Norwegian translation
 
 Adminer 4.0.2 (2014-01-11)
 --------------------------
@@ -1213,7 +1345,7 @@ Adminer 4.0.1 (2014-01-11)
 - Don't autofocus SQL textarea in Firefox
 - Don't link NULL foreign key values
 - Fix displaying images in Editor, bug since Adminer 3.6.0
-- Fix uploading files, bug since ## Adminer 4.0.0
+- Fix uploading files, bug since Adminer 4.0.0
 - MongoDB: Count tables, display ObjectIds, sort, limit, offset, count rows
 - Elasticsearch: Fix compiled version, create and drop DB, drop table
 

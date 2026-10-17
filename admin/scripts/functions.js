@@ -4,80 +4,82 @@
  * Returns the element found by given identifier.
  *
  * @param {string} id
- * @param {?HTMLElement} context Defaults to document.
+ * @param {Document} [context] Defaults to document.
+ *
  * @return {?HTMLElement}
  */
-function gid(id, context = null) {
-	return (context || document).getElementById(id);
+function gid(id, context = document) {
+	return context.getElementById(id);
 }
 
-/** Get first element by selector
-* @param string
-* @param [HTMLElement] defaults to document
-* @return HTMLElement
-*/
-function qs(selector, context = null) {
-	return (context || document).querySelector(selector);
+/**
+ * Returns the first element matching the selector.
+ *
+ * @param {string} selector
+ * @param {ParentNode} [context] Defaults to document.
+ *
+ * @return {?HTMLElement}
+ */
+function qs(selector, context = document) {
+	return context.querySelector(selector);
 }
 
-/** Get last element by selector
-* @param string
-* @param [HTMLElement] defaults to document
-* @return HTMLElement
-*/
-function qsl(selector, context = null) {
+/**
+ * Returns the last element matching the selector.
+ *
+ * @param {string} selector
+ * @param {ParentNode} [context] Defaults to document.
+ *
+ * @return {HTMLElement|undefined}
+ */
+function qsl(selector, context = document) {
 	const els = qsa(selector, context);
 	return els[els.length - 1];
 }
 
-/** Get all elements by selector
-* @param string
-* @param [HTMLElement] defaults to document
-* @return NodeList
-*/
-function qsa(selector, context = null) {
-	return (context || document).querySelectorAll(selector);
+/**
+ * Returns all elements matching the selector.
+ *
+ * @param {string} selector
+ * @param {ParentNode} [context] Defaults to document.
+ *
+ * @return {NodeListOf<HTMLElement>}
+ */
+function qsa(selector, context = document) {
+	// The application markup holds no other elements than the HTML ones.
+	return /** @type {NodeListOf<HTMLElement>} */ (context.querySelectorAll(selector));
 }
 
-/** Return a function calling fn with the next arguments
-* @param function
-* @param ...
-* @return function with preserved this
-*/
-function partial(fn) {
-	const args = Array.apply(null, arguments).slice(1);
+/**
+ * Returns a function calling fn with the given arguments.
+ *
+ * @param {function} fn
+ * @param {...*} args
+ *
+ * @return {function} Function with preserved this.
+ */
+function partial(fn, ...args) {
 	return function () {
 		return fn.apply(this, args);
 	};
 }
 
-/** Return a function calling fn with the first parameter and then the next arguments
-* @param function
-* @param ...
-* @return function with preserved this
-*/
-function partialArg(fn) {
-	const args = Array.apply(null, arguments);
-	return function (arg) {
-		args[0] = arg;
-		return fn.apply(this, args);
-	};
-}
-
-/** Assign values from source to target
-* @param Object
-* @param Object
-*/
+/**
+ * Assigns values from source to target.
+ *
+ * @param {Object} target
+ * @param {Object} source
+ */
 function mixin(target, source) {
-	for (const key in source) {
-		target[key] = source[key];
-	}
+	// A shortcut for Object.assign() saving bytes in the inline scripts, used also by external plugins.
+	Object.assign(target, source);
 }
 
 /**
  * Toggles visibility of element with ID.
  *
  * @param {string} id
+ *
  * @return {boolean} Always false.
  */
 function toggle(id) {
@@ -86,10 +88,12 @@ function toggle(id) {
 	return false;
 }
 
-/** Set permanent cookie
-* @param string
-* @param number
-*/
+/**
+ * Sets permanent cookie.
+ *
+ * @param {string} assign Assignment in the 'name=value' format.
+ * @param {number} days Number of days until expiration.
+ */
 function cookie(assign, days) {
 	const date = new Date();
 	date.setDate(date.getDate() + days);
@@ -98,11 +102,8 @@ function cookie(assign, days) {
 
 /**
  * Verifies current AdminNeo version.
- *
- * @param baseUrl string
- * @param token string
  */
-function verifyVersion(baseUrl, token) {
+function verifyVersion() {
 	document.addEventListener("DOMContentLoaded", () => {
 		// Dummy value to prevent repeated verifications after AJAX failure.
 		cookie('neo_version=0', 1);
@@ -118,10 +119,13 @@ function verifyVersion(baseUrl, token) {
 	});
 }
 
-/** Get value of select
-* @param HTMLElement <select> or <input>
-* @return string
-*/
+/**
+ * Returns the value of select or input.
+ *
+ * @param {HTMLSelectElement|HTMLInputElement} select
+ *
+ * @return {string}
+ */
 function selectValue(select) {
 	if (!select.selectedIndex) {
 		return select.value;
@@ -130,36 +134,17 @@ function selectValue(select) {
 	return ((selected.attributes.value || {}).specified ? selected.value : selected.text);
 }
 
-/** Verify if element has a specified tag name
-* @param HTMLElement
-* @param string regular expression
-* @return boolean
-*/
-function isTag(el, tag) {
-	const re = new RegExp('^(' + tag + ')$', 'i');
-	return el && re.test(el.tagName);
-}
-
-/** Get parent node with specified tag name
-* @param HTMLElement
-* @param string regular expression
-* @return HTMLElement
-*/
-function parentTag(el, tag) {
-	while (el && !isTag(el, tag)) {
-		el = el.parentNode;
-	}
-	return el;
-}
-
-/** Set checked class
-* @param HTMLInputElement
-*/
+/**
+ * Sets the checked class on the row of the given checkbox.
+ *
+ * @param {HTMLInputElement} el
+ */
 function trCheck(el) {
-	const tr = parentTag(el, 'tr');
+	const tr = el.closest('tr');
 	tr.classList.toggle('checked', el.checked);
-	if (el.form && el.form['all'] && el.form['all'].onclick) { // Opera treats form.all as document.all
-		el.form['all'].onclick();
+	const all = el.form && el.form['all'];
+	if (all && all.onclick) {
+		all.onclick();
 	}
 }
 
@@ -168,6 +153,7 @@ function trCheck(el) {
  *
  * @param {string} id
  * @param {number|string} count Can be exact number or string like '~ 100'.
+ *
  * @uses thousandsSeparator
  */
 function selectCount(id, count) {
@@ -179,15 +165,18 @@ function selectCount(id, count) {
 	if (!el) return;
 
 	const inputs = qsa('input[type="submit"]', el.parentNode.parentNode);
-	for (let input of inputs) {
+	for (const input of inputs) {
 		input.disabled = zero;
 	}
 }
 
-/** Check all elements matching given name
-* @param RegExp
-* @this HTMLInputElement
-*/
+/**
+ * Checks all elements matching the given name.
+ *
+ * @param {RegExp} name
+ *
+ * @this {HTMLInputElement}
+ */
 function formCheck(name) {
 	for (const el of this.form.elements) {
 		if (name.test(el.name)) {
@@ -197,23 +186,29 @@ function formCheck(name) {
 	}
 }
 
-/** Check all rows in <table class="checkable">
-*/
+/**
+ * Checks all rows in <table class="checkable">.
+ */
 function tableCheck() {
-	for (const input of qsa('table.checkable td:first-child input')) {
-		trCheck(input);
-	}
+	qsa('table.checkable td:first-child input, table.checkable th:first-child input').forEach(trCheck);
+
+	// Once the browser restores the checkboxes while browsing history.
+	window.addEventListener('pageshow', tableCheck);
 }
 
 /**
- * Uncheck single element.
+ * Unchecks single element.
+ *
+ * @param {string} id
  */
 function formUncheck(id) {
 	formUncheckAll("#" + id);
 }
 
 /**
- * Uncheck elements matched by selector.
+ * Unchecks elements matched by selector.
+ *
+ * @param {string} selector
  */
 function formUncheckAll(selector) {
 	for (const element of qsa(selector)) {
@@ -222,69 +217,122 @@ function formUncheckAll(selector) {
 	}
 }
 
-/** Get number of checked elements matching given name
-* @param HTMLInputElement
-* @param RegExp
-* @return number
-*/
+/**
+ * Returns the number of checked elements matching the given name.
+ *
+ * @param {HTMLInputElement} input
+ * @param {RegExp} name
+ *
+ * @return {number}
+ */
 function formChecked(input, name) {
-	let checked = 0;
-	for (const el of input.form.elements) {
-		if (name.test(el.name) && el.checked) {
-			checked++;
-		}
-	}
-	return checked;
+	return [...input.form.elements].filter(el => name.test(el.name) && el.checked).length;
 }
 
-/** Select clicked row
-* @param MouseEvent
-* @param [boolean] force click
-*/
+/**
+ * Fills the number of selected databases.
+ *
+ * @this {HTMLInputElement}
+ */
+function countDbs() {
+	selectCount('selected', formChecked(this, /^db/));
+}
+
+/**
+ * Fills the numbers of selected tables.
+ *
+ * @param {number} tables Number of tables in the database.
+ *
+ * @this {HTMLInputElement}
+ */
+function countTables(tables) {
+	const checked = formChecked(this, /^(tables|views)\[/);
+
+	selectCount('selected', checked);
+	selectCount('selected2', formChecked(this, /^tables\[/) || tables); // Search is performed in all tables if none is selected.
+	selectCount('selected3', checked);
+}
+
+/**
+ * Fills the numbers of selected rows.
+ *
+ * @param {string} rows Number of rows in the whole result.
+ *
+ * @this {HTMLInputElement}
+ */
+function countRows(rows) {
+	const checked = formChecked(this, /^check/);
+
+	selectCount('selected', this.checked ? rows : checked);
+	selectCount('selected2', this.checked || !checked ? rows : checked); // The command is performed on the whole result if no row is selected.
+}
+
+/**
+ * Selects clicked row.
+ *
+ * @param {MouseEvent} event
+ * @param {boolean} [click] Forces the click.
+ * @param {boolean} [canEdit]
+ */
 function tableClick(event, click, canEdit = true) {
-	const td = parentTag(event.target, 'td');
+	const td = event.target.closest('td');
 	let text;
 	if (canEdit && td && (text = td.dataset.text)) {
 		if (selectClick.call(td, event, +text, td.dataset.warning)) {
 			return;
 		}
 	}
-	click = (click || !window.getSelection || getSelection().isCollapsed);
-	let el = event.target;
-	while (!isTag(el, 'tr')) {
-		if (isTag(el, 'table|a|input|textarea')) {
-			if (el.type !== 'checkbox') {
-				return;
-			}
-			checkboxClick.call(el, event);
-			click = false;
-		}
-		el = el.parentNode;
-		if (!el) { // Ctrl+click on text fields hides the element
+	click = (click || getSelection().isCollapsed);
+
+	// The other elements handle the click themselves.
+	let el = event.target.closest('tr, table, a, input, textarea');
+	if (el && !el.matches('tr')) {
+		if (el.type !== 'checkbox') {
 			return;
 		}
+		checkboxClick.call(el, event);
+		click = false;
+		el = el.closest('tr');
 	}
-	el = el.firstChild.firstChild;
+	if (!el) {
+		// Ctrl+click on text fields hides the element
+		return;
+	}
+
+	// Not the first child - the cell can also contain the edit link.
+	el = qs('input[type=checkbox]', el.firstElementChild);
+	if (!el) {
+		// The first cell has no checkbox, e.g. in the process list of a driver which cannot kill.
+		return;
+	}
+
 	if (click) {
 		el.checked = !el.checked;
-		el.onclick && el.onclick();
+		if (el.onclick) {
+			el.onclick();
+		}
 	}
+
 	if (el.name === 'check[]') {
 		el.form['all'].checked = false;
 		formUncheck('all-page');
 	}
-	if (/^(tables|views)\[\]$/.test(el.name)) {
+	if (/^(tables|views)\[]$/.test(el.name)) {
 		formUncheck('check-all');
 	}
+
 	trCheck(el);
 }
 
 let lastChecked;
 
-/** Shift-click on checkbox for multiple selection.
-* @param MouseEvent
-* @this HTMLInputElement
-*/
+/**
+ * Handles Shift+click on checkbox for multiple selection.
+ *
+ * @param {MouseEvent} event
+ *
+ * @this {HTMLInputElement}
+ */
 function checkboxClick(event) {
 	if (!this.name) {
 		return;
@@ -292,7 +340,7 @@ function checkboxClick(event) {
 	if (event.shiftKey && (!lastChecked || lastChecked.name === this.name)) {
 		const checked = (lastChecked ? lastChecked.checked : true);
 		let checking = !lastChecked;
-		for (const input of qsa('input', parentTag(this, 'table'))) {
+		for (const input of qsa('input', this.closest('table'))) {
 			if (input.name === this.name) {
 				if (checking) {
 					input.checked = checked;
@@ -311,10 +359,12 @@ function checkboxClick(event) {
 	}
 }
 
-/** Set HTML code of an element
-* @param string
-* @param string undefined to set parentNode to empty string
-*/
+/**
+ * Sets HTML code of an element.
+ *
+ * @param {string} id
+ * @param {?string} html Null to set parentNode to empty string.
+ */
 function setHtml(id, html) {
 	const el = qs('[id="' + id.replace(/[\\"]/g, '\\$&') + '"]'); // database name is used as ID
 	if (el) {
@@ -326,35 +376,44 @@ function setHtml(id, html) {
 	}
 }
 
-/** Find node position
-* @param Node
-* @return number
-*/
-function nodePosition(el) {
-	let pos = 0;
-	while ((el = el.previousSibling)) {
-		pos++;
-	}
-	return pos;
-}
-
-/** Go to the specified page
-* @param string
-* @param string
-*/
-function pageClick(href, page) {
-	if (!isNaN(page) && page) {
-		location.href = href + (page !== 1 ? '&page=' + (page - 1) : '');
-	}
-}
-
+/**
+ * Initializes toggling of the navigation panel by the navigation button.
+ */
 function initNavigation() {
-	const button = gid("navigation-button");
+	const openButton = gid("open-navigation-button");
+	const closeButton = gid("close-navigation-button");
 	const panel = gid("navigation-panel");
 
-	button.addEventListener("click", () => {
-		button.classList.toggle("opened");
-		panel.classList.toggle("opened");
+	openButton.addEventListener("click", () => {
+		panel.classList.toggle("opened", true);
+		openButton.setAttribute("aria-expanded", "true");
+		closeButton.focus();
+		enableFocusTrap(panel);
+	});
+
+	const close = () => {
+		disableFocusTrap();
+		panel.classList.toggle("opened", false);
+		openButton.setAttribute("aria-expanded", "false");
+	};
+
+	closeButton.addEventListener("click", () => {
+		close();
+		openButton.focus();
+	});
+
+	panel.addEventListener("keydown", event => {
+		if (event.key === "Escape" && panel.classList.contains("opened")) {
+			closeButton.click();
+		}
+	});
+
+	// Release the trap when the panel turns into the regular sidebar on wide screens.
+	// Note: addListener() is used instead of addEventListener("change") for compatibility with Safari 10.
+	window.matchMedia("(min-width: 1024px)").addListener(event => {
+		if (event.matches && panel.classList.contains("opened")) {
+			close();
+		}
 	});
 }
 
@@ -370,7 +429,7 @@ function initNavigationResizer(url, token, minWidth, maxWidth) {
 	const handle = gid("navigation-resizer");
 	const panel = gid("navigation-panel");
 	const style = gid("navigation-width");
-	const rtl = document.body.classList.contains("rtl");
+	const rtl = document.documentElement.classList.contains("rtl");
 
 	let hoverTimeout = null;
 	let dragging = false;
@@ -438,37 +497,123 @@ function initNavigationResizer(url, token, minWidth, maxWidth) {
 	});
 }
 
+/**
+ * Restores the scroll position of the navigation panel and the tables list, or scrolls to the active table.
+ *
+ * @param {string} dbName Database the stored position belongs to.
+ */
 function initTablesList(dbName) {
-	if (!sessionStorage) {
+	const navigationPanel = gid('navigation-panel');
+	const tablesList = gid('tables');
+	let restored = false;
+
+	if (sessionStorage) {
+		if (sessionStorage.getItem('neo_tables_position_db') !== dbName) {
+			sessionStorage.removeItem('neo_tables_position');
+		} else if (sessionStorage.getItem('neo_tables_position')) {
+			const positions = sessionStorage.getItem('neo_tables_position').split("|");
+
+			navigationPanel.classList.add('opened');
+			navigationPanel.scrollTop = positions[0] * 1;
+			tablesList.scrollTop = positions[1] * 1;
+			navigationPanel.classList.remove('opened');
+
+			restored = true;
+		}
+
+		sessionStorage.setItem('neo_tables_position_db', dbName);
+
+		window.addEventListener('pagehide', function() {
+			navigationPanel.classList.add('opened');
+			sessionStorage.setItem('neo_tables_position', `${navigationPanel.scrollTop}|${tablesList.scrollTop}`);
+			navigationPanel.classList.remove('opened');
+		}, false);
+	}
+
+	if (!restored) {
+		scrollToActiveTable(navigationPanel, tablesList);
+	}
+
+	initTablesListSeparator(tablesList);
+}
+
+/**
+ * Scrolls the tables list to make the active table visible, ideally 25 % from its top.
+ *
+ * @param {HTMLElement} navigationPanel Navigation panel element.
+ * @param {HTMLElement} tablesList Tables list element.
+ */
+function scrollToActiveTable(navigationPanel, tablesList) {
+	const active = qs('.active', tablesList);
+	if (!active) {
 		return;
 	}
 
-	const navigationPanel = gid('navigation-panel');
-	const tablesList = gid('tables');
+	navigationPanel.classList.add('opened');
 
-	if (sessionStorage.getItem('neo_tables_position_db') !== dbName) {
-		sessionStorage.removeItem('neo_tables_position');
-	} else if (sessionStorage.getItem('neo_tables_position')) {
-		const positions = sessionStorage.getItem('neo_tables_position').split("|");
+	// On wide screens the tables list scrolls itself, on narrow ones the whole panel scrolls.
+	const container = (tablesList.scrollHeight > tablesList.clientHeight ? tablesList : navigationPanel);
+	const containerTop = container.getBoundingClientRect().top;
+	const activeRect = active.getBoundingClientRect();
 
-		navigationPanel.classList.add('opened');
-		navigationPanel.scrollTop = positions[0] * 1;
-		tablesList.scrollTop = positions[1] * 1;
-		navigationPanel.classList.remove('opened');
+	if (activeRect.top < containerTop || activeRect.bottom > containerTop + container.clientHeight) {
+		// The browser clamps the value to the scrollable range, so the 25 % offset is best effort.
+		container.scrollTop += activeRect.top - containerTop - container.clientHeight * 0.2;
 	}
 
-	sessionStorage.setItem('neo_tables_position_db', dbName);
+	navigationPanel.classList.remove('opened');
+}
 
-	window.addEventListener('pagehide', function() {
-		navigationPanel.classList.add('opened');
-		sessionStorage.setItem('neo_tables_position', `${navigationPanel.scrollTop}|${tablesList.scrollTop}`);
-		navigationPanel.classList.remove('opened');
-	}, false);
+/**
+ * Toggles a class changing the border of an element, applying the very first state instantly.
+ *
+ * The initial state is computed after the page has been rendered, so the transition must be enabled
+ * only once the browser has applied that state, otherwise it animates right after the page load.
+ *
+ * @param {HTMLElement} element
+ * @param {string} className Class to toggle.
+ * @param {boolean} state
+ */
+function toggleClassWithAnimatedBorder(element, className, state) {
+	element.classList.toggle(className, state);
+
+	if (!element.classList.contains('animated-border')) {
+		// Forces a style recalculation, otherwise the transition enabled below would run on the state applied above.
+		void element.offsetHeight;
+
+		element.classList.add('animated-border');
+	}
+}
+
+/**
+ * Displays a separator line at the top of the tables list while the list is scrolled.
+ *
+ * @param {HTMLElement} tablesList Tables list element.
+ */
+function initTablesListSeparator(tablesList) {
+	// The marker sits at the very top of the list content, so it leaves the visible area as soon as
+	// the list is scrolled. Watching it avoids handling every scroll event.
+	const marker = qs('.scroll-marker', tablesList);
+	if (!marker || !window.IntersectionObserver) { // IntersectionObserver - unsupported in Safari < 12.1
+		return;
+	}
+
+	const observer = new IntersectionObserver(() => {
+		// The observer only triggers the check, the scroll position itself is authoritative.
+		toggleClassWithAnimatedBorder(tablesList, 'scrolled', tablesList.scrollTop > 1);
+	}, { root: tablesList });
+
+	observer.observe(marker);
 }
 
 let tablesFilterTimeout = null;
 let tablesFilterValue = '';
 
+/**
+ * Initializes filtering of the tables list, including the Ctrl+Shift+F shortcut.
+ *
+ * @param {string} dbName Database the stored filter value belongs to.
+ */
 function initTablesFilter(dbName) {
 	const filterInput = gid('tables-filter');
 
@@ -500,6 +645,9 @@ function initTablesFilter(dbName) {
 	});
 }
 
+/**
+ * Hides the tables not matching the filter value and highlights the matched part of their name.
+ */
 function filterTables() {
 	const value = gid('tables-filter').value.toLowerCase();
 	if (value === tablesFilterValue) {
@@ -540,7 +688,7 @@ function filterTables() {
 }
 
 /**
- * Initialize collapsable fieldset.
+ * Initializes collapsible fieldset.
  *
  * @param {string} id
  */
@@ -568,7 +716,7 @@ function initFieldset(id) {
 function initToggles(parent) {
 	for (const link of qsa('.toggle', parent)) {
 		link.addEventListener("click", event => {
-			const id = link.getAttribute('href').substring(1);
+			const id = link.getAttribute('href').slice(1);
 
 			gid(id).classList.toggle("hidden");
 			link.classList.toggle("opened");
@@ -580,13 +728,25 @@ function initToggles(parent) {
 }
 
 /**
- * Initialize auto-submitting of settings form.
+ * Disables the Save and continue edit button after changing a value identifying the row.
+ */
+function initWhereChange() {
+	for (const row of qsa('#form tr.where-column')) {
+		row.addEventListener("change", () => {
+			// The WHERE condition in the URL is not updated by the AJAX save, so the next save would not match the row.
+			qs('#form [name="insert"]').disabled = true;
+		});
+	}
+}
+
+/**
+ * Initializes auto-submitting of the settings form.
  */
 function initSettingsForm() {
 	const form = gid("settings");
 	const inputs = qsa("select, input[type='checkbox'], input[type='radio']", form);
 
-	for (let input of inputs) {
+	for (const input of inputs) {
 		input.addEventListener("change", () => {
 			input.form.submit();
 		});
@@ -594,14 +754,41 @@ function initSettingsForm() {
 }
 
 /**
+ * Sets up validation of the files upload form.
+ *
+ * @param {string} formId
+ * @param {string} inputName
+ * @param {number} maxCount
+ * @param {string} countErrorMessage
+ * @param {number} maxSize
+ * @param {string} sizeErrorMessage
+ */
+function initFilesUploadForm(formId, inputName, maxCount, countErrorMessage, maxSize, sizeErrorMessage) {
+	const form = gid(formId);
+
+	form.addEventListener("submit", event => {
+		const files = form.elements[inputName].files;
+
+		if (files.length > maxCount) {
+			alert(countErrorMessage);
+			event.preventDefault();
+		} else if (Array.from(files).reduce((sum, file) => sum + file.size, 0) > maxSize) {
+			alert(sizeErrorMessage);
+			event.preventDefault();
+		}
+	});
+}
+
+/**
  * Adds row in select fieldset.
  *
  * @param {Event} event
- * @this HTMLSelectElement
+ *
+ * @this {HTMLSelectElement|HTMLInputElement}
  */
 function selectAddRow(event) {
 	const field = this;
-	const row = cloneNode(field.parentNode);
+	const row = cloneNode(field.parentElement);
 
 	field.onchange = selectFieldChange;
 	field.onchange(event);
@@ -623,18 +810,19 @@ function selectAddRow(event) {
 	const button = qs('.remove', row);
 	button.onclick = selectRemoveRow;
 
-	const parent = field.parentNode.parentNode;
+	const parent = field.parentElement.parentElement;
 	if (parent.classList.contains("sortable")) {
 		initSortableRow(field.parentElement);
 	}
 
-	parent.appendChild(row);
+	parent.append(row);
 }
 
 /**
  * Removes a row in select fieldset.
  *
- * @this HTMLInputElement
+ * @this {HTMLButtonElement}
+ *
  * @return {boolean} Always false.
  */
 function selectRemoveRow() {
@@ -643,242 +831,39 @@ function selectRemoveRow() {
 	return false;
 }
 
-/** Prevent onsearch handler on Enter
-* @param KeyboardEvent
-* @this HTMLInputElement
-*/
+/**
+ * Prevents onsearch handler on Enter.
+ *
+ * @param {KeyboardEvent} event
+ *
+ * @this {HTMLInputElement}
+ */
 function selectSearchKeydown(event) {
-	if (event.keyCode === 13 || event.keyCode === 10) {
+	if (event.key === 'Enter') {
 		this.onsearch = () => {
 		};
 	}
 }
 
-// Sorting.
-(() => {
-	let placeholderRow = null, nextRow = null, dragHelper = null;
-	let startScrollY, startY, minY, maxY, lastPointerY, rowHeight;
-
-	/**
-	 * Initializes sortable list of DIV elements.
-	 *
-	 * @param {string} parentSelector
-	 */
-	window.initSortable = function(parentSelector) {
-		const parent = qs(parentSelector);
-		if (!parent) return;
-
-		for (const row of parent.children) {
-			if (!row.classList.contains("no-sort")) {
-				initSortableRow(row);
-			}
-		}
-	};
-
-	/**
-	 * Initializes one row of sortable parent.
-	 *
-	 * @param {HTMLElement} row
-	 */
-	window.initSortableRow = function(row) {
-		row.classList.remove("no-sort");
-
-		const handle = qs(".handle", row);
-		handle.addEventListener("mousedown", event => { startSorting(row, event) });
-		handle.addEventListener("touchstart", event => { startSorting(row, event) });
-	};
-
-	window.isSorting = function() {
-		return dragHelper !== null;
-	};
-
-	function startSorting(row, event) {
-		event.preventDefault();
-
-		const pointerY = getPointerY(event);
-
-		const parent = row.parentNode;
-		startScrollY = window.scrollY;
-		startY = pointerY - getOffsetTop(row);
-		minY = getOffsetTop(parent);
-		maxY = minY + parent.offsetHeight - row.offsetHeight;
-
-		placeholderRow = row.cloneNode(true);
-		placeholderRow.classList.add("placeholder");
-		parent.insertBefore(placeholderRow, row);
-
-		rowHeight = placeholderRow.offsetHeight;
-		if (row.tagName !== "TR") {
-			rowHeight += parseFloat(window.getComputedStyle(placeholderRow).marginBottom);
-		}
-
-		nextRow = row.nextElementSibling;
-
-		let top = pointerY - startY;
-		let left = getOffsetLeft(row);
-		let width = row.getBoundingClientRect().width;
-
-		if (row.tagName === "TR") {
-			const firstChild = row.firstElementChild;
-			const borderWidth = (firstChild.offsetWidth - firstChild.clientWidth) / 2;
-			const borderHeight = (firstChild.offsetHeight - firstChild.clientHeight) / 2;
-
-			minY -= borderHeight;
-			maxY -= borderHeight;
-			top -= borderHeight;
-			left -= borderWidth;
-			width += 2 * borderWidth;
-
-			for (const child of row.children) {
-				child.style.width = child.getBoundingClientRect().width + "px";
-			}
-
-			dragHelper = document.createElement("table");
-			dragHelper.appendChild(document.createElement("tbody")).appendChild(row);
-		} else {
-			dragHelper = row;
-		}
-
-		dragHelper.style.top = `${top}px`;
-		dragHelper.style.left = `${left}px`;
-		dragHelper.style.width = `${width}px`;
-		dragHelper.classList.add("dragging");
-		document.body.appendChild(dragHelper);
-
-		window.addEventListener("mousemove", updateSorting);
-		window.addEventListener("touchmove", updateSorting);
-		window.addEventListener("scroll", updateSorting);
-
-		window.addEventListener("mouseup", finishSorting);
-		window.addEventListener("touchend", finishSorting);
-		window.addEventListener("touchcancel", finishSorting);
-	}
-
-	function updateSorting(event) {
-		const pointerY = getPointerY(event);
-		const scrollingBoundary = 30;
-		const speedCoefficient = 8;
-
-		// If mouse pointer is over the top boundary, scroll page down.
-		let distance = pointerY - scrollingBoundary;
-		if (distance < 0 && window.scrollY > 0) {
-			window.scrollBy(0, distance / speedCoefficient);
-			return;
-		}
-
-		// If mouse pointer is under the bottom boundary, scroll page up.
-		distance = pointerY - window.innerHeight + scrollingBoundary;
-		if (distance > 0 && window.scrollY + window.innerHeight < document.documentElement.scrollHeight) {
-			window.scrollBy(0, distance / speedCoefficient);
-			return;
-		}
-
-		// Move helper row to the pointer position.
-		let top = Math.min(Math.max(pointerY - startY + window.scrollY - startScrollY, minY), maxY);
-		dragHelper.style.top = `${top}px`;
-
-		// Find a new position for the placeholder.
-		const parent = placeholderRow.parentNode;
-		let oldNextRow = nextRow;
-		top = top - minY + parent.offsetTop;
-
-		let testingRow = placeholderRow;
-		do {
-			if (top > testingRow.offsetTop + rowHeight / 2 + 1) {
-				if (!nextRow.classList.contains("no-sort")) {
-					testingRow = nextRow;
-					nextRow = nextRow.nextElementSibling;
-				} else {
-					break;
-				}
-			} else if (top + rowHeight < testingRow.offsetTop + rowHeight / 2 - 1) {
-				nextRow = testingRow = testingRow.previousElementSibling;
-			} else {
-				break;
-			}
-		} while (nextRow);
-
-		// Move the placeholder to a new position.
-		if (nextRow !== oldNextRow) {
-			if (nextRow) {
-				parent.insertBefore(placeholderRow, nextRow);
-			} else {
-				parent.appendChild(placeholderRow);
-			}
-		}
-	}
-
-	function finishSorting() {
-		dragHelper.classList.remove("dragging");
-		dragHelper.style.top = null;
-		dragHelper.style.left = null;
-		dragHelper.style.width = null;
-
-		document.body.removeChild(dragHelper);
-
-		placeholderRow.parentNode.insertBefore(
-			dragHelper.tagName === "TABLE" ? dragHelper.firstChild.firstChild : dragHelper,
-			placeholderRow
-		);
-		placeholderRow.remove();
-
-		placeholderRow = nextRow = dragHelper = null;
-
-		window.removeEventListener("mousemove", updateSorting);
-		window.removeEventListener("touchmove", updateSorting);
-		window.removeEventListener("scroll", updateSorting);
-
-		window.removeEventListener("mouseup", finishSorting);
-		window.removeEventListener("touchend", finishSorting);
-		window.removeEventListener("touchcancel", finishSorting);
-	}
-
-	function getPointerY(event) {
-		if (event.type.includes("touch")) {
-			const touch = event.touches[0] || event.changedTouches[0];
-			lastPointerY = touch.clientY;
-		} else if (event.clientY !== undefined) {
-			lastPointerY = event.clientY;
-		}
-
-		return lastPointerY;
-	}
-})();
-
-
-
-
-/** Toggles column context menu
-* @param [string] extra class name
-* @this HTMLElement
-*/
-function columnMouse(className) {
-	for (const span of qsa('span', this)) {
-		if (/column/.test(span.className)) {
-			span.className = 'column' + (className || '');
-		}
-	}
-}
-
-
-
-/** Fill column in search field
-* @param string
-* @return boolean false
-*/
+/**
+ * Fills column in search field.
+ *
+ * @param {string} name
+ *
+ * @return {boolean} Always false.
+ */
 function selectSearch(name) {
-	const el = gid('fieldset-search');
-	el.className = '';
-	const divs = qsa('div', el);
-	let i, div;
-	for (i = 0; i < divs.length; i++) {
-		div = divs[i];
-		const el = qs('[name$="[col]"]', div);
-		if (el && selectValue(el) === name) {
-			break;
-		}
-	}
-	if (i === divs.length) {
+	const fieldset = gid('fieldset-search');
+	fieldset.className = '';
+
+	const divs = qsa('div', fieldset);
+	let div = [...divs].find(row => {
+		const col = qs('[name$="[col]"]', row);
+		return col && selectValue(col) === name;
+	});
+
+	if (!div) { // use the last empty row
+		div = divs[divs.length - 1];
 		div.firstChild.value = name;
 		div.firstChild.onchange();
 	}
@@ -887,26 +872,32 @@ function selectSearch(name) {
 }
 
 
-/** Check if Ctrl key (Command key on Mac) was pressed
-* @param KeyboardEvent|MouseEvent
-* @return boolean
-*/
+/**
+ * Checks if the Ctrl key (Command key on Mac) was pressed.
+ *
+ * @param {KeyboardEvent|MouseEvent} event
+ *
+ * @return {boolean}
+ */
 function isCtrl(event) {
 	return (event.ctrlKey || event.metaKey) && !event.altKey; // shiftKey allowed
 }
 
-/** Send form by Ctrl+Enter on <select> and <textarea>
-* @param KeyboardEvent
-* @param [string]
-* @return boolean
-*/
+/**
+ * Sends form by Ctrl+Enter on <select> and <textarea>.
+ *
+ * @param {KeyboardEvent} event
+ * @param {string} [button] Name of the submit button.
+ *
+ * @return {boolean}
+ */
 function bodyKeydown(event, button) {
-	eventStop(event);
+	event.stopPropagation();
 	let target = event.target;
 	if (target.jushTextarea) {
 		target = target.jushTextarea;
 	}
-	if (isCtrl(event) && (event.keyCode === 13 || event.keyCode === 10) && isTag(target, 'select|textarea|input')) { // 13|10 - Enter
+	if (isCtrl(event) && event.key === 'Enter' && target.matches('select, textarea, input')) {
 		target.blur();
 		if (target.form[button]) {
 			target.form[button].click();
@@ -920,12 +911,16 @@ function bodyKeydown(event, button) {
 	return true;
 }
 
-/** Open form to a new window on Ctrl+click or Shift+click
-* @param MouseEvent
-*/
+/**
+ * Opens form in a new window on Ctrl+click or Shift+click.
+ *
+ * @param {MouseEvent} event
+ */
 function bodyClick(event) {
 	const target = event.target;
-	if ((isCtrl(event) || event.shiftKey) && target.type === 'submit' && isTag(target, 'input')) {
+
+	// type - the target can be a text node without matches()
+	if ((isCtrl(event) || event.shiftKey) && target.type === 'submit' && target.matches('input')) {
 		target.form.target = '_blank';
 		setTimeout(() => {
 			// if (isCtrl(event)) { focus(); } doesn't work
@@ -945,29 +940,35 @@ function bodyClick(event) {
  */
 function onEditingKeydown(event)
 {
-	if ((event.keyCode === 40 || event.keyCode === 38) && isCtrl(event)) { // 40 - Down, 38 - Up
+	if (/^Arrow(Down|Up)$/.test(event.key) && isCtrl(event)) {
 		event.preventDefault();
 
 		const target = event.target;
-		let row = parentTag(target, "tr");
-		if (!row) {
-			return false;
-		}
-
-		row = event.keyCode === 40 ? row.nextElementSibling : row.previousElementSibling;
-		if (!row || !isTag(row, 'tr')) {
-			return false;
-		}
-
-		const cell = row.childNodes[nodePosition(parentTag(target, "th|td"))];
+		// Not parentNode - the NULL and AI checkboxes are wrapped in a <label>.
+		const cell = target.closest("th, td");
 		if (!cell) {
 			return false;
 		}
 
-		let input = cell.childNodes[nodePosition(target)];
-		if (!input || !isTag(input, "input|select|textarea|pre|button") || input.classList.contains("hidden")) {
-			input = qs("input:not(.hidden), select:not(.hidden), textarea:not(.hidden), pre.jush, button", cell);
+		const position = [...cell.parentNode.children].indexOf(cell);
+		let row = cell.parentNode;
+		do {
+			row = event.key === 'ArrowDown' ? row.nextElementSibling : row.previousElementSibling;
+		} while (row && row.hidden); // Skip removed columns, focusing their hidden row does nothing.
+
+		const nextCell = (row ? row.children[position] : null);
+		if (!nextCell) {
+			return false;
 		}
+
+		// The element at the same position can be hidden, the cell displays e.g. collation or ON DELETE by the column type.
+		// Look for the same field by the name suffix and fall back to the first displayed element.
+		const field = target.jushTextarea || target;
+		const name = (field.name || '').replace(/.*(\[[^[]+])$/, '$1');
+		const input = [
+			(name ? qs(`[name$='${name}']`, nextCell) : null),
+			...qsa("input, select, textarea, pre.jush, button", nextCell),
+		].find(el => el && el.offsetParent);
 
 		if (input) {
 			input.focus();
@@ -987,16 +988,39 @@ function onEditingKeydown(event)
 /**
  * Disables maxlength for functions and manages value visibility.
  *
- * @this HTMLSelectElement
+ * @param {?Event} event
+ * @param {boolean} [init] True when applying the function selected by the server, so the value must be kept.
+ *
+ * @this {HTMLSelectElement}
  */
-function functionChange() {
+function functionChange(event, init = false) {
 	const func = selectValue(this);
 
 	const inputName = this.name.replace(/^function/, 'fields');
-	const input = this.form[inputName] || this.form[`${inputName}[]`];
+	let input = this.form[inputName] || this.form[`${inputName}[]`];
+
+	// File input is named 'fields-*' and there is no value to manage.
+	if (!input) {
+		return;
+	}
 
 	// Switch to the text field if function is selected.
-	if (func && func !== "NULL" && input.type !== "file") {
+	if (func === "SQL" || func === "+" || func === "-") {
+		if (!input.origElement) {
+			const text = document.createElement('input');
+			text.className = "input";
+			text.name = input.name;
+			text.value = input.lastValue || selectValue(input);
+			text.origElement = input;
+			text.size = input.size || -1;
+			input.replaceWith(text);
+		}
+	} else if (input.origElement) { // revive the original element (keeps its type, e.g. number for +)
+		input.replaceWith(input.origElement);
+		input = input.origElement;
+	}
+
+	if (func && func !== "NULL" && input.type !== "select-one" && input.type !== "file") {
 		if (input.origType === undefined) {
 			input.origType = input.type;
 			input.origMaxLength = input.dataset.maxlength;
@@ -1011,65 +1035,75 @@ function functionChange() {
 		}
 	}
 
-	if (func === "NULL" || func === "now") {
-		// Hide input value if it will be not used by selected function.
-		if (input.type === "select-one") {
-			input.lastValue = input.value;
-			input.value = "__adminneo_empty__";
-		} else if (input.length) {
-			// Uncheck every single radio/checkbox.
-			let checkedList = [];
-			for (let i = 0; i < input.length; i++) {
-				const radio = input[i];
+	// Adjust the value to the selected function. The initial value is already set by the server.
+	if (!init) {
+		if (func === "NULL") {
+			// Hide input value if it will be not used by selected function.
+			if (input.type === "select-one") {
+				input.lastValue = input.value;
+				input.value = "__adminneo_empty__";
+			} else if (input.length) {
+				// Uncheck every single radio/checkbox.
+				let checkedList = [];
+				for (let i = 0; i < input.length; i++) {
+					const radio = input[i];
 
-				if (!radio.checked) continue;
+					if (!radio.checked) continue;
 
-				checkedList.push(i);
-				radio.checked = false;
+					checkedList.push(i);
+					radio.checked = false;
 
-				if (radio.type === "radio") {
-					break;
+					if (radio.type === "radio") {
+						break;
+					}
 				}
-			}
 
-			input.lastValue = checkedList;
-		} else {
-			input.lastValue = input.value;
-			input.value = "";
-		}
-	} else if (input.lastValue) {
-		// Restore last value.
-		if (input.type !== "select-one" && input.length) {
-			for (let index of input.lastValue) {
-				input[index].checked = true;
+				input.lastValue = checkedList;
+			} else {
+				input.lastValue = input.value;
+				input.value = "";
+			}
+		} else if (input.lastValue) {
+			// Restore last value.
+			if (input.type !== "select-one" && input.length) {
+				for (const index of input.lastValue) {
+					input[index].checked = true;
+				}
+			} else {
+				input.value = input.lastValue;
 			}
 		} else {
-			input.value = input.lastValue;
-		}
-	} else {
-		// Set the first available value.
-		if (input.type === "select-one") {
-			if (input.options[0].value === "__adminneo_empty__") {
-				input.value = input.options[1].value;
+			// Set the first available value.
+			if (input.type === "select-one") {
+				if (input.options[0].value === "__adminneo_empty__") {
+					input.value = input.options[1].value;
+				}
+			} else if (input.length && input[0].type === "radio") {
+				input[0].checked = true;
 			}
-		} else if (input.length && input[0].type === "radio") {
-			input[0].checked = true;
 		}
 	}
 
+	// Hide input for functions without argument. Radio/checkbox groups are a RadioNodeList without classList,
+	// but they never offer such a function.
+	if (input.classList) {
+		input.classList.toggle("hidden", /^(now|getdate|current_date|current_timestamp|uuid)$/.test(func));
+	}
+
 	if (!input.length) {
-		oninput({target: input});
+		updateMaxLengthMark(input);
 	}
 }
 
 /**
- * Unset 'original', 'NULL' and 'now' functions when typing.
+ * Unsets 'original', 'NULL' and 'now' functions when typing.
  *
- * @param first number
- * @this HTMLTableCellElement
+ * @param {number} first
+ *
+ * @this {HTMLTableCellElement}
  */
 function skipOriginal(first) {
-	const fnSelect = qs('select', this.previousSibling);
+	const fnSelect = qs('select', this.previousElementSibling);
 	const value = selectValue(fnSelect);
 
 	if (fnSelect.selectedIndex < first || value === "NULL" || value === "now") {
@@ -1077,16 +1111,19 @@ function skipOriginal(first) {
 	}
 }
 
-/** Add new field in schema-less edit
-* @this HTMLInputElement
-*/
+/**
+ * Adds new field in schema-less edit.
+ *
+ * @this {HTMLInputElement}
+ */
 function fieldChange() {
-	const row = cloneNode(parentTag(this, 'tr'));
+	const tr = this.closest('tr');
+	const row = cloneNode(tr);
 	for (const input of qsa('input', row)) {
 		input.value = '';
 	}
 	// keep value in <select> (function)
-	parentTag(this, 'tbody').appendChild(row);
+	tr.parentNode.append(row);
 	this.oninput = null;
 }
 
@@ -1096,26 +1133,29 @@ function fieldChange() {
  * Sends AJAX request.
  *
  * @param {string} url
- * @param {function|null} onSuccess (XMLHttpRequest)
- * @param {string|null} data POST data.
- * @param {string|null} progressMessage
- * @param {boolean} failSilently
- * @return XMLHttpRequest or false in case of an error
+ * @param {?function(XMLHttpRequest)} [onSuccess]
+ * @param {?string} [data] POST data.
+ * @param {?string} [progressMessage]
+ * @param {boolean} [failSilently]
+ *
+ * @return {XMLHttpRequest}
+ *
  * @uses offlineMessage
  */
 function ajax(url, onSuccess = null, data = null, progressMessage = null, failSilently = false) {
 	const ajaxStatus = gid('ajaxstatus');
 
-	if (progressMessage) {
-		ajaxStatus.innerHTML = '<div class="message">' + progressMessage + '</div>';
-		ajaxStatus.classList.remove("hidden");
-	} else {
-		ajaxStatus.classList.add("hidden");
-	}
+	// Empty the live region instead of hiding it, display: none would remove it from the accessibility tree.
+	ajaxStatus.innerHTML = (progressMessage ? '<div class="message">' + progressMessage + '</div>' : '');
 
 	const request = new XMLHttpRequest();
 	request.open((data ? 'POST' : 'GET'), url);
-	request.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+
+	// Cross-origin would be preflighted and is_ajax() is only ours.
+	if (new URL(url, location).origin === location.origin) {
+		request.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+	}
+
 	if (data) {
 		request.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
 	}
@@ -1130,7 +1170,6 @@ function ajax(url, onSuccess = null, data = null, progressMessage = null, failSi
 				console.error(request.status ? request.responseText : "No internet connection");
 			} else {
 				ajaxStatus.innerHTML = (request.status ? request.responseText : '<div class="error">' + offlineMessage + '</div>');
-				ajaxStatus.classList.remove("hidden");
 			}
 		}
 	};
@@ -1140,25 +1179,33 @@ function ajax(url, onSuccess = null, data = null, progressMessage = null, failSi
 	return request;
 }
 
-/** Use setHtml(key, value) for JSON response
-* @param string
-* @return boolean false for success
-*/
+/**
+ * Uses setHtml(key, value) for JSON response.
+ *
+ * @param {string} url
+ *
+ * @return {boolean} Always false.
+ */
 function ajaxSetHtml(url) {
-	return !ajax(url, request => {
-		const data = window.JSON ? JSON.parse(request.responseText) : eval('(' + request.responseText + ')');
+	ajax(url, request => {
+		const data = JSON.parse(request.responseText);
 		for (const key in data) {
 			setHtml(key, data[key]);
 		}
 	});
+
+	return false;
 }
 
-/** Save form contents through AJAX
-* @param HTMLFormElement
-* @param string
-* @param [HTMLInputElement]
-* @return boolean
-*/
+/**
+ * Saves form contents through AJAX.
+ *
+ * @param {HTMLFormElement} form
+ * @param {?string} message Progress message.
+ * @param {HTMLInputElement} [button] Button to send with the form data.
+ *
+ * @return {XMLHttpRequest|boolean} False when the form contains a file to upload.
+ */
 function ajaxForm(form, message, button) {
 	let data = [];
 	for (const el of form.elements) {
@@ -1167,7 +1214,9 @@ function ajaxForm(form, message, button) {
 				return false;
 			}
 			if (!/^(checkbox|radio|submit|file)$/i.test(el.type) || el.checked || el === button) {
-				data.push(encodeURIComponent(el.name) + '=' + encodeURIComponent(isTag(el, 'select') ? selectValue(el) : el.value));
+				const value = (el.matches('select') ? selectValue(/** @type {HTMLSelectElement} */ (el)) : el.value);
+
+				data.push(encodeURIComponent(el.name) + '=' + encodeURIComponent(value));
 			}
 		}
 	}
@@ -1187,20 +1236,24 @@ function ajaxForm(form, message, button) {
 	}, data, message);
 }
 
+/**
+ * Makes the table footer sticky while it is scrolled out of the visible area.
+ */
 function initTableFooter() {
 	const footer = qs(".table-footer");
-	if (!footer) return;
+	if (!footer || !window.IntersectionObserver) return; // IntersectionObserver - unsupported in Safari < 12.1
 
 	const options = {
 		root: qs(".table-footer-parent"),
-		rootMargin: "0px 0px -1px 0px",
+		rootMargin: "0px 100% -1px 100%",
 		threshold: 1.0,
 	};
 
 	const observer = new IntersectionObserver((entries) => {
 		const entry = entries[0];
 		// Note: entry.isIntersecting does not work well on mobile Safari so we are comparing bottom positions.
-		footer.classList.toggle("sticky", entry.boundingClientRect.bottom < entry.rootBounds.bottom);
+		// On the other hand, bottom positions are not correctly calculated on Firefox.
+		toggleClassWithAnimatedBorder(footer, "sticky", entry.isIntersecting || entry.boundingClientRect.bottom < entry.rootBounds.bottom);
 	}, options);
 
 	observer.observe(footer);
@@ -1221,18 +1274,18 @@ function updateSaveButton() {
  *
  * @param {MouseEvent} event
  * @param {number} text Display textarea instead of input, 2 - load long text.
- * @param {string|null} warning Warning text if editing is disabled.
+ * @param {?string} warning Warning text if editing is disabled.
  *
- * @this {HTMLElement}
+ * @this {HTMLTableCellElement}
  *
- * @return boolean|XMLHttpRequest
+ * @return {boolean|XMLHttpRequest}
  */
 function selectClick(event, text, warning) {
 	const td = this;
 	const target = event.target;
 
 	// Note: Shift key forces the editing when clicking on a link.
-	if (!isCtrl(event) || td.dataset.editing || (!event.shiftKey && parentTag(target, 'a'))) {
+	if (!isCtrl(event) || td.dataset.editing || (!event.shiftKey && target.closest('a'))) {
 		return false;
 	}
 
@@ -1253,7 +1306,7 @@ function selectClick(event, text, warning) {
 	}
 
 	input.onkeydown = event => {
-		if (event.keyCode === 27 && !event.shiftKey && !event.altKey && !isCtrl(event)) { // 27 - Esc
+		if (event.key === 'Escape' && !event.shiftKey && !event.altKey && !isCtrl(event)) {
 			td.dataset.editing = "";
 			td.innerHTML = original;
 			initToggles(td);
@@ -1261,7 +1314,7 @@ function selectClick(event, text, warning) {
 		}
 	};
 
-	const dataset = td.firstChild ? (td.firstChild.dataset || {}) : {};
+	const dataset = (td.firstChild && td.firstChild.dataset) || {};
 	let value;
 	if (dataset.value !== undefined) {
 		const dom = new DOMParser().parseFromString(dataset.value, "text/html");
@@ -1274,11 +1327,7 @@ function selectClick(event, text, warning) {
 	input.style.width = Math.max(td.clientWidth - parseFloat(tdStyle.paddingLeft) - parseFloat(tdStyle.paddingRight), (text ? 200 : 20)) + 'px';
 
 	if (text) {
-		let rows = 1;
-		value.replace(/\n/g, () => {
-			rows++;
-		});
-		input.rows = rows;
+		input.rows = value.split('\n').length;
 	}
 
 	if (qsa('i', td).length) { // <i> - NULL
@@ -1287,11 +1336,11 @@ function selectClick(event, text, warning) {
 
 	// Firefox: event.rangeOffset is defined, anchorOffset is related to the whole TR not the inner text node.
 	// Chrome/Safari: event.rangeOffset is not defined, anchorOffset is related to the inner text node.
-	const pos = event.rangeOffset !== undefined ? event.rangeOffset : getSelection().anchorOffset;
+	const pos = (event.rangeOffset !== undefined ? event.rangeOffset : getSelection().anchorOffset);
 
 	td.dataset.editing = "true";
 	td.innerHTML = '';
-	td.appendChild(input);
+	td.append(input);
 	input.focus();
 	updateSaveButton();
 
@@ -1319,9 +1368,10 @@ function selectClick(event, text, warning) {
  *
  * @param {number} limit
  * @param {string} loadingText
- * @this {HTMLLinkElement}
  *
- * @return {boolean} false for success to stop the click event.
+ * @this {HTMLAnchorElement}
+ *
+ * @return {boolean} False for success to stop the click event.
  */
 function loadNextPage(limit, loadingText) {
 	const a = this;
@@ -1331,10 +1381,7 @@ function loadNextPage(limit, loadingText) {
 		return true;
 	}
 
-	a.innerHTML = loadingText;
-	a.removeAttribute('href');
-
-	return !ajax(href, request => {
+	ajax(href, request => {
 		const newBody = document.createElement('tbody');
 		newBody.innerHTML = request.responseText;
 
@@ -1342,11 +1389,8 @@ function loadNextPage(limit, loadingText) {
 		initToggles(newBody);
 
 		const lastPage = newBody.children.length < limit;
-		const tableBody = qs('#table tbody');
 
-		while (newBody.children.length) {
-			tableBody.appendChild(newBody.children[0]);
-		}
+		qs('#table tbody').append(...newBody.children);
 
 		if (lastPage) {
 			a.parentElement.remove();
@@ -1355,35 +1399,30 @@ function loadNextPage(limit, loadingText) {
 			a.innerHTML = title;
 		}
 	});
+
+	// Change the link only after creating the request, so an exception leaves it usable.
+	a.innerHTML = loadingText;
+	a.removeAttribute('href');
+
+	return false;
 }
 
 
 
-/** Stop event propagation
-* @param Event
-*/
-function eventStop(event) {
-	if (event.stopPropagation) {
-		event.stopPropagation();
-	} else {
-		event.cancelBubble = true;
-	}
-}
-
-
-
-/** Clone node and setup submit highlighting
-* @param HTMLElement
-* @return HTMLElement
-*/
+/**
+ * Clones node and sets up submit highlighting.
+ *
+ * @param {HTMLElement} el
+ *
+ * @return {HTMLElement}
+ */
 function cloneNode(el) {
 	const el2 = el.cloneNode(true);
-	const selector = 'input, select';
+	const selector = 'input, select, button';
 	const origEls = qsa(selector, el);
 	const cloneEls = qsa(selector, el2);
 
-	for (let i = 0; i < origEls.length; i++) {
-		const origEl = origEls[i];
+	for (const [i, origEl] of origEls.entries()) {
 		for (const key in origEl) {
 			if (/^on/.test(key) && origEl[key]) {
 				cloneEls[i][key] = origEl[key];
@@ -1394,22 +1433,51 @@ function cloneNode(el) {
 	return el2;
 }
 
+/**
+ * Returns the distance of the element from the top of the document.
+ *
+ * @param {HTMLElement} element
+ *
+ * @return {number}
+ */
 function getOffsetTop(element) {
 	let box = element.getBoundingClientRect();
 
 	return box.top + window.scrollY;
 }
 
+/**
+ * Returns the distance of the element from the left edge of the document.
+ *
+ * @param {HTMLElement} element
+ *
+ * @return {number}
+ */
 function getOffsetLeft(element) {
 	let box = element.getBoundingClientRect();
 
 	return box.left + window.scrollX;
 }
 
-oninput = event => {
-	const target = event.target;
-	const maxLength = target.dataset.maxlength;
+/**
+ * Marks the input by the 'maxlength' class when its value is longer than the allowed length.
+ *
+ * @param {HTMLInputElement|HTMLTextAreaElement} input
+ */
+function updateMaxLengthMark(input) {
+	const maxLength = input.dataset.maxlength;
 
 	// maxLength could be 0
-	target.classList.toggle('maxlength', target.value && maxLength != null && target.value.length > maxLength);
-};
+	input.classList.toggle('maxlength', input.value && maxLength != null && input.value.length > maxLength);
+}
+
+oninput = event => updateMaxLengthMark(event.target);
+
+// documentElement - this file is loaded in <head> where document.body does not exist yet.
+document.documentElement.classList.add('js');
+document.documentElement.classList.remove('nojs'); // Two calls, not classList.replace() - unsupported in Chrome < 61.
+
+mixin(document, {
+	onclick: bodyClick,
+	onkeydown: bodyKeydown,
+});

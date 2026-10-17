@@ -35,7 +35,11 @@ if ($_POST && !isset($_POST["add_x"])) { // add is an image and PHP changes add.
 		if (!$row["collation"]) {
 			redirect(substr(ME, 0, -1));
 		}
-		query_redirect("ALTER DATABASE " . idf_escape($name) . (preg_match('~^[a-z0-9_]+$~i', $row["collation"]) ? " COLLATE $row[collation]" : ""), substr(ME, 0, -1), lang('Database has been altered.'));
+		query_redirect(
+			"ALTER DATABASE " . idf_escape($name) . (preg_match('~^[a-z0-9_]+$~i', $row["collation"]) ? " COLLATE $row[collation]" : ""),
+			substr(ME, 0, -1),
+			lang('Database has been altered.')
+		);
 	}
 }
 
@@ -86,7 +90,7 @@ echo "<input type='submit' class='button default' value='", lang('Save'), "'>\n"
 if (DB != "") {
 	echo "<input type='submit' class='button' name='drop' value='" . lang('Drop') . "'>" . confirm(lang('Drop %s?', DB)) . "\n";
 } elseif (!$_POST["add_x"] && $_GET["db"] == "") {
-	echo "<button name='add_x' value='1' title='", h(lang('Add next')), "' class='button light'>", icon_solo("add"), "</button>\n";
+	echo "<button name='add_x' value='1' title='", lang('Add next'), "' class='button light'>", icon_solo("add"), "</button>\n";
 }
 
 echo input_token();

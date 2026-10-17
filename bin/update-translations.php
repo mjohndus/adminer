@@ -74,11 +74,13 @@ $all_texts = [];
 foreach ($file_paths as $file_path) {
 	$source_code = file_get_contents($file_path);
 
-	// lang() always uses apostrophes.
-	if (preg_match_all("~lang\\('([^\\\\']+|\\\\.)*'([),])~", $source_code, $matches)) {
-		$all_texts += array_combine($matches[1], $matches[2]);
+	// lang() always uses apostrophes, the message can be on its own line.
+	if (preg_match_all("~lang\\(\\s*'((?:[^\\\\']+|\\\\.)*)'\\s*([),])~", $source_code, $matches)) {
+		$all_texts += array_combine(array_map('stripslashes', $matches[1]), $matches[2]);
 	}
 }
+
+$exit_status = 0;
 
 // Generate language files. The template is always processed first, so its translations are known to the other languages.
 $template_translations = [];
@@ -95,6 +97,8 @@ foreach ($languages as $language => $dummy) {
 	if ($language == $template) {
 		$template_translations = $translations;
 	}
+
+	$ok = true;
 
 	// Language files are regenerated from the template, so remember which texts are marked as machine translated.
 	$marks = read_ai_marks($old_content);
@@ -131,7 +135,8 @@ foreach ($languages as $language => $dummy) {
 
 				// Check forbidden periods.
 				if (!$period && preg_match("~\.$~", $variant)) {
-					print_warning($filename, $term, "Period is forbidden");
+					print_error($filename, $term, "Period is forbidden");
+					$ok = false;
 				}
 
 				// Check mismatched periods. Period is optional in 'ja' and can mismatch in date/time formatting.
@@ -140,13 +145,15 @@ foreach ($languages as $language => $dummy) {
 					!preg_match('~^[0-9.$YMD\-]+$~', $en) &&
 					($endWithPeriod xor preg_match("~$period$~", $variant)))
 				{
-					print_warning($filename, $term, "Not matching period");
+					print_error($filename, $term, "Not matching period");
+					$ok = false;
 				}
 			}
 
 			// Check mismatched placeholders.
 			foreach (placeholder_errors($language, $en, $translation, $language == $template) as $error) {
-				print_warning($filename, $term, "Placeholders - $error");
+				print_error($filename, $term, "Placeholders - $error");
+				$ok = false;
 			}
 		}
 	}
@@ -185,9 +192,19 @@ foreach ($languages as $language => $dummy) {
 	if ($content != $old_content) {
 		file_put_contents($file_path, $content);
 
-		echo "✳️ $filename updated\n";
-	} elseif ($language != $template || count($languages) == 1) {
-		echo "✔︎ $filename\n";
+		echo "✏️  $filename | Updated\n";
+		$ok = false;
+	}
+	if (str_contains($content, " => null,")) {
+		echo "✳️  $filename | Missing translations\n";
+		$ok = false;
+	}
+	if (str_contains($content, " // by ")) {
+		echo "👁️  $filename | Machine translations\n";
+		$ok = false;
+	}
+	if ($ok && ($language != $template || count($languages) == 1)) {
+		echo "✔️  $filename\n";
 	}
 }
 
@@ -318,12 +335,20 @@ function write_ai_mark(string $content, string $en, string $mark): string
 }
 
 /**
+ * Formats the message as it is written in the translation files.
+ */
+function format_key(string $en): string
+{
+	return addcslashes($en, "\\'");
+}
+
+/**
  * @param string|array|null $translation
  */
 function write_translation(string &$content, string $en, $translation, bool $single_line): void
 {
 	$content = preg_replace(
-		'~^(\t\'' . preg_quote($en, "~") . '\' => ).+?,( +//.*)?$~m',
+		'~^(\t\'' . preg_quote(format_key($en), "~") . '\' => ).+?,( +//.*)?$~m',
 		"$1" . format_translation($translation, $single_line, true) . ",$2",
 		$content
 	);
@@ -332,7 +357,7 @@ function write_translation(string &$content, string $en, $translation, bool $sin
 function delete_translation(string &$content, string $en): void
 {
 	$content = preg_replace(
-		'~\t+\'' . preg_quote($en, "~") . '\' => [^\n]+\n~',
+		'~\t+\'' . preg_quote(format_key($en), "~") . '\' => [^\n]+\n~',
 		"",
 		$content
 	);
@@ -348,9 +373,9 @@ function add_translation(string &$content, string $en, bool $first = false): voi
 		);
 	}
 
-	$content = preg_replace(
+	$content = preg_replace_callback(
 		'~];~',
-		"\t'$en' => null,\n];",
+		function () use ($en) { return "\t'" . format_key($en) . "' => null,\n];"; },
 		$content
 	);
 }
@@ -381,7 +406,12 @@ function format_translation($translation, bool $single_line = false, bool $escap
 	return $result;
 }
 
-function print_warning(string $filename, string $term, string $message): void
+function print_error(string $filename, string $term, string $message): void
 {
+	global $exit_status;
+
 	echo "⚠️ $filename | $message: $term\n";
+	$exit_status = 1;
 }
+
+exit($exit_status);

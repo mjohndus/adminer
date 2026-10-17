@@ -8,6 +8,8 @@ namespace AdminNeo;
  * This version mirrors the original Gemini plugin but talks to an OpenWebUI instance
  * (any OpenAI‑compatible chat endpoint).
  *
+ * Last changed in release: !compile: version
+ *
  * @link https://github.com/open-webui/open-webui
  * @link https://docs.openwebui.com/
  *
@@ -132,7 +134,7 @@ class OpenWebUiPlugin extends Plugin
 	 */
 	public function printAfterSqlCommand(): ?bool
 	{
-		$waitingText = lang('Loading') . "…";
+		$waitingText = lang('Loading…');
 
 		$script = <<<JS
 (function() {
@@ -146,7 +148,7 @@ class OpenWebUiPlugin extends Plugin
 	textarea.onblur  = () => toggleDefaultButton(this.form);
 	textarea.onkeydown = event => {
 	    // Ctrl+Enter → submit.
-	    if (isCtrl(event) && (event.keyCode === 13 || event.keyCode === 10)) {
+	    if (isCtrl(event) && event.key === 'Enter') {
 	        button.onclick(null);
 	        event.stopPropagation();
 	    }

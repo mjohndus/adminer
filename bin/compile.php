@@ -17,6 +17,34 @@ include __DIR__ . "/../admin/include/decompress.inc.php";
 include __DIR__ . "/../admin/include/compile.inc.php";
 include __DIR__ . "/../vendor/vrana/phpshrink/phpShrink.php";
 
+/**
+ * Replaces a string in the compiled code and reports if it was not found.
+ */
+function replace(string $search, string $replace, string $subject): string
+{
+	$result = str_replace($search, $replace, $subject, $count);
+
+	if (!$count) {
+		echo "⚠️ code replacement not found: " . substr(str_replace("\n", "\\n", $search), 0, 70) . "\n";
+	}
+
+	return $result;
+}
+
+/**
+ * Replaces a pattern in the compiled code and reports if it was not found.
+ */
+function replace_pattern(string $pattern, callable $callback, string $subject): string
+{
+	$result = preg_replace_callback($pattern, $callback, $subject, -1, $count);
+
+	if (!$count) {
+		echo "⚠️ code replacement not found: $pattern\n";
+	}
+
+	return $result;
+}
+
 function replace_lang(array $match): string
 {
 	global $lang_ids;
@@ -50,7 +78,7 @@ function put_file(array $match, string $current_path = ""): string
 	$content = file_get_contents(__DIR__ . "/../$project/" . ($current_path ? "$current_path/" : "") . $file_path);
 
 	if ($filename == "Locale.php") {
-		$content = str_replace(
+		$content = replace(
 			'return $key; // !compile: convert translation key',
 			'static $en_translations = null;
 
@@ -78,7 +106,7 @@ function put_file(array $match, string $current_path = ""): string
 			$available_languages = find_available_languages();
 		}
 
-		$content = str_replace(
+		$content = replace(
 			'return find_available_languages(); // !compile: available languages',
 			'return ' . var_export($available_languages, true) . ';',
 			$content
@@ -281,7 +309,10 @@ $selected_themes = [];
 if ($arguments) {
 	$params = explode(",", $arguments[0]);
 
-	if (file_exists(__DIR__ . "/../admin/themes/$params[0]")) {
+	// Color variant is stored in a subdirectory, e.g. "dune-green" is in "themes/dune/green".
+	$theme_dir = preg_replace('~-' . $colors_pattern . '$~', '/$1', $params[0]);
+
+	if (file_exists(__DIR__ . "/../admin/themes/$theme_dir")) {
 		$themes_map = [];
 		foreach ($params as $theme) {
 			if (preg_match('~-'. $colors_pattern . '$~', $theme)) {
@@ -363,9 +394,9 @@ if ($arguments) {
 /* Disabled for now because it reports too many warnings.
 $file = file_get_contents(__DIR__ . "/../admin/drivers/mysql.inc.php");
 $file = preg_replace('~class Min_Driver.*\n\t}~sU', '', $file);
-preg_match_all('~\bfunction ([^(]+)~', $file, $matches); //! respect context (extension, class)
+preg_match_all('~\bfunction ([^(]+)~', $file, $matches); // TODO respect context (extension, class)
 $functions = array_combine($matches[1], $matches[0]);
-//! do not warn about functions without declared support()
+// TODO do not warn about functions without declared support()
 unset($functions["__construct"], $functions["__destruct"], $functions["set_charset"]);
 
 foreach (glob(__DIR__ . "/../admin/drivers/*.inc.php") as $filename) {
@@ -383,7 +414,10 @@ foreach (glob(__DIR__ . "/../admin/drivers/*.inc.php") as $filename) {
 }
 */
 
-$features = ["check", "call" => "routine", "dump", "event", "privileges", "procedure" => "routine", "processlist", "routine", "scheme", "sequence", "status", "trigger", "type", "user" => "privileges", "variables", "view"];
+$features = [
+	"check", "call" => "routine", "dump", "event", "privileges", "procedure" => "routine", "processlist", "routine",
+	"scheme", "sequence", "status", "trigger", "type", "user" => "privileges", "variables", "view",
+];
 $lang_ids = []; // global variable simplifies usage in a callback functions
 $protected_blobs = []; // compressed data hidden from the code transformations, see protect_blob()
 
@@ -412,11 +446,18 @@ if ($single_driver) {
 			if (is_string($key)) {
 				$feature = $key;
 			}
-			$file = str_replace("} elseif (isset(\$_GET[\"$feature\"])) {\n\tinclude \"$feature.inc.php\";\n", "", $file);
+			// E.g. routine and status have no page of their own, EditorNeo includes the pages from admin/.
+			if (file_exists(__DIR__ . "/../$project/$feature.inc.php")) {
+				$file = replace("} elseif (isset(\$_GET[\"$feature\"])) {\n\tinclude \"$feature.inc.php\";\n", "", $file);
+			}
 		}
 	}
-	if (!support("routine")) {
-		$file = str_replace("if (isset(\$_GET[\"callf\"])) {\n\t\$_GET[\"call\"] = \$_GET[\"callf\"];\n}\nif (isset(\$_GET[\"function\"])) {\n\t\$_GET[\"procedure\"] = \$_GET[\"function\"];\n}\n", "", $file);
+	if ($project != "editor" && !support("routine")) {
+		$file = replace(
+			"if (isset(\$_GET[\"callf\"])) {\n\t\$_GET[\"call\"] = \$_GET[\"callf\"];\n}\nif (isset(\$_GET[\"function\"])) {\n\t\$_GET[\"procedure\"] = \$_GET[\"function\"];\n}\n",
+			"",
+			$file
+		);
 	}
 }
 
@@ -424,10 +465,10 @@ if ($single_driver) {
 $file = preg_replace_callback('~\binclude (__DIR__ \. )?"([^"]+)";~', 'AdminNeo\put_file', $file);
 
 // Remove including unneeded code.
-$file = str_replace('include __DIR__ . "/debug.inc.php"', '', $file);
-$file = str_replace('include __DIR__ . "/available.inc.php";', '', $file);
-$file = str_replace('include __DIR__ . "/compile.inc.php";', '', $file);
-$file = str_replace('include __DIR__ . "/coverage.inc.php";', '', $file);
+$file = replace('include __DIR__ . "/debug.inc.php"', '', $file);
+$file = replace('include __DIR__ . "/available.inc.php";', '', $file);
+$file = replace('include __DIR__ . "/compile.inc.php";', '', $file);
+$file = replace('include __DIR__ . "/coverage.inc.php";', '', $file);
 
 // Remove including unwanted drivers.
 if ($selected_drivers) {
@@ -437,7 +478,7 @@ if ($selected_drivers) {
 }
 
 // Change plugins directory.
-$file = str_replace(
+$file = replace(
 	'$plugins_dir = __DIR__ . "/../../plugins"; // !compile: plugins directory',
 	'$plugins_dir = "adminneo-plugins";',
 	$file
@@ -447,6 +488,10 @@ $file = str_replace(
 $file = preg_replace_callback('~\binclude (__DIR__ \. )?"([^"]+)";~', function ($match) {
 	return put_file($match, "../admin/include");
 }, $file);
+
+// Remove lines intended only for the other project: those carrying a trailing `// !admin` or `// !editor` marker.
+$file = preg_replace('~^.*// !' . ($project == "editor" ? "admin" : "editor") . '\n~m', '', $file);
+$file = preg_replace('~ // !(admin|editor)$~m', '', $file);
 
 if ($single_driver) {
 	// Remove source code for unsupported features.
@@ -469,12 +514,12 @@ if ($single_driver) {
 		return (trim($links) ? "doc_link([$links])" : "''");
 	}, $file);
 
-	//! strip doc_link() definition
+	// TODO strip doc_link() definition
 }
 
 // Compile language files.
-$file = preg_replace_callback("~lang\\('((?:[^\\\\']+|\\\\.)*)'([,)])~s", 'AdminNeo\replace_lang', $file);
-$file = preg_replace_callback('~\$translations = .* // !compile: translations~', 'AdminNeo\put_translations', $file);
+$file = preg_replace_callback("~lang\\(\\s*'((?:[^\\\\']+|\\\\.)*)'\\s*([,)])~s", 'AdminNeo\replace_lang', $file);
+$file = replace_pattern('~\$translations = .* // !compile: translations~', 'AdminNeo\put_translations', $file);
 
 $file = str_replace("\r", "", $file);
 
@@ -502,12 +547,13 @@ for ($i = 0; $i < count($matches[0]); $i++) {
 	if (str_starts_with($name, 'default-$color_variant')) {
 		foreach ($selected_themes as $theme) {
 			if (preg_match('~^default-' . $colors_pattern. '$~', $theme, $matches2)) {
+				$color_variant = $matches2[1];
 				$name2 = str_replace('default-$color_variant', $theme, $name);
-				$files2 = str_replace('default-$color_variant', $theme, $files);
+				$files2 = str_replace('$color_variant', $color_variant, $files);
 
 				append_linked_files_cases($name2, $files2, $name_cases, $data_cases);
 
-				$available_themes["default"][$matches2[1]] = true;
+				$available_themes["default"][$color_variant] = true;
 			}
 		}
 
@@ -520,13 +566,15 @@ for ($i = 0; $i < count($matches[0]); $i++) {
 			if (!str_starts_with($theme, "default-")) {
 				preg_match('~^(.*)-' . $colors_pattern. '$~', $theme, $matches2);
 
+				$theme_name = $matches2[1];
+				$color_variant = $matches2[2];
 				$name2 = str_replace('$theme-$color_variant', $theme, $name);
-				$files2 = str_replace('$theme-$color_variant', $theme, $files);
-				$files2 = str_replace('$theme', $matches2[1], $files2);
+				$files2 = str_replace('$color_variant', $color_variant, $files);
+				$files2 = str_replace('$theme', $theme_name, $files2);
 
 				append_linked_files_cases($name2, $files2, $name_cases, $data_cases);
 
-				$available_themes[$matches2[1]][$matches2[2]] = true;
+				$available_themes[$theme_name][$color_variant] = true;
 			}
 		}
 
@@ -537,8 +585,9 @@ for ($i = 0; $i < count($matches[0]); $i++) {
 	if (str_contains($name, 'icon-$colorVariant.')) {
 		foreach ($selected_themes as $theme) {
 			if (preg_match('~^default-' . $colors_pattern. '$~', $theme, $matches2)) {
-				$name2 = str_replace('$colorVariant', $matches2[1], $name);
-				$files2 = str_replace('$colorVariant', $matches2[1], $files);
+				$color_variant = $matches2[1];
+				$name2 = str_replace('$colorVariant', $color_variant, $name);
+				$files2 = str_replace('$colorVariant', $color_variant, $files);
 
 				append_linked_files_cases($name2, $files2, $name_cases, $data_cases);
 			}
@@ -550,19 +599,19 @@ for ($i = 0; $i < count($matches[0]); $i++) {
 	append_linked_files_cases($name, $files, $name_cases, $data_cases);
 }
 
-$file = str_replace(
+$file = replace(
 	'$filename = generate_linked_file($name, $file_paths); // !compile: generate linked file',
 	'switch ($name) {' . $name_cases . ' default: $filename = null; break; }',
 	$file
 );
 
-$file = str_replace(
+$file = replace(
 	'$data = read_compiled_file($filename); // !compile: get compiled file',
 	'switch ($filename) {' . $data_cases . ' default: $data = null; break; }',
 	$file
 );
 
-$file = str_replace(
+$file = replace(
 	'return find_available_themes(); // !compile: available themes',
 	'return ' . var_export($available_themes, true) . ';',
 	$file
@@ -573,36 +622,30 @@ $file = preg_replace('~link_files\("([^"]+)", \[([^]]+)]\)~', 'link_files("$1", 
 
 // Custom configuration.
 if ($custom_config) {
-	$file = str_replace(
+	$file = replace(
 		'$this->params = $params; // !compile: custom config',
 		'$this->params = array_merge(' . var_export($custom_config, true) . ', $params);',
 		$file
 	);
 } else {
-	$file = str_replace('// !compile: custom config', '', $file);
+	$file = replace('// !compile: custom config', '', $file);
 }
 
 // Print version and compilation parameters.
-$file = str_replace("!compile: version", "v" . VERSION, $file);
+$file = replace("!compile: version", "v" . VERSION, $file);
 
-$file = str_replace(
+$file = replace(
 	"!compile: parameters\n",
 	"Compiled with\n * " . implode(" * ", $compilation_info),
 	$file
 );
-
-// Check whether all code replacements have been done.
-if (preg_match_all('~\n\s*(.+!compile:.+)\n~', $file, $matches)) {
-	foreach ($matches[1] as $match) {
-		echo "⚠️ unresolved code replacement: $match\n";
-	}
-}
 
 // Remove superfluous PHP tags.
 $file = preg_replace("~<\\?php\\s*\\?>\n?|\\?>\n?<\\?php~", '', $file);
 
 // PHP 5.6 compatibility.
 $file = downgrade_php($file);
+$php7_operators = find_php7_operators($file);
 
 // Shrink final file.
 $file = phpShrink($file);
@@ -650,6 +693,9 @@ foreach (glob(__DIR__ . "/../plugins/*") as $file_path) {
 	$file = file_get_contents($file_path);
 
 	$file = downgrade_php($file);
+	foreach (find_php7_operators($file) as $snippet) {
+		$php7_operators[] = basename($file_path) . ": $snippet";
+	}
 
 	// Print version.
 	$commit_hash = exec("git rev-list HEAD -1 -- $file_path 2> /dev/null");
@@ -660,8 +706,16 @@ foreach (glob(__DIR__ . "/../plugins/*") as $file_path) {
 		$version = false;
 	}
 
-	$file = str_replace("!compile: version", $version ?: "v" . VERSION, $file);
+	$file = replace("!compile: version", $version ?: "v" . VERSION, $file);
 
 	$filename = "$output_dir/" . basename($file_path);
 	file_put_contents($filename, $file);
+}
+
+if ($php7_operators) {
+	echo "\n⚠️ PHP 7 operators were left in the compiled code, it can't be parsed in PHP 5:\n";
+	foreach ($php7_operators as $snippet) {
+		echo "  $snippet\n";
+	}
+	exit(1);
 }

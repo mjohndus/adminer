@@ -16,6 +16,11 @@ return [
 	'%s must return an array.' => '%s xx.',
 	'%s and %s must return an object created by %s method.' => '%s xx %s xx %s.',
 
+	// Accessibility
+	'Skip to main content' => 'Xx',
+	'Skip to menu' => 'Xx',
+	'Skip to table list' => 'Xx',
+
 	// Login
 	'System' => 'Xx',
 	'Server' => 'Xx',
@@ -48,10 +53,12 @@ return [
 	// Settings
 	'Language' => 'Xx',
 
+	'Menu' => 'Xx',
 	'Home' => 'Xx',
 	'Refresh' => 'Xx',
 	'Info' => 'Xx',
 	'More information.' => 'Xx.',
+	'Close' => 'Xx',
 
 	// Privileges
 	'Privileges' => 'Xx',
@@ -154,6 +161,7 @@ return [
 	'Invalid schema.' => 'Xx.',
 
 	// Table list
+	'All' => 'Xx', // checkbox selecting all tables and views
 	'Engine' => 'Xx',
 	'engine' => 'xx',
 	'Collation' => 'Xx',
@@ -199,6 +207,7 @@ return [
 	'Options' => 'Xx',
 	'Comment' => 'Xx',
 	'Default value' => 'Xx',
+	'default value' => 'xx',
 	'Drop' => 'Xx',
 	'Drop %s?' => 'Xx %s?',
 	'Are you sure?' => 'Xx?',
@@ -234,12 +243,12 @@ return [
 	'Add next' => 'Xx',
 	'Index Type' => 'Xx',
 	'length' => 'xx',
+	'operator class' => 'xx',
 	'Algorithm' => 'Xx',
 	'Condition' => 'Xx',
 
 	// Foreign keys
 	'Foreign keys' => 'Xx',
-	'Foreign key' => 'Xx',
 	'Foreign key has been dropped.' => 'Xx.',
 	'Foreign key has been altered.' => 'Xx.',
 	'Foreign key has been created.' => 'Xx.',
@@ -249,7 +258,8 @@ return [
 	'Target' => 'Xx',
 	'Add column' => 'Xx',
 	'Alter' => 'Xx',
-	'Add foreign key' => 'Xx',
+	'Alter foreign key' => 'Xx',
+	'Create foreign key' => 'Xx',
 	'ON DELETE' => 'Xx',
 	'ON UPDATE' => 'Xx',
 	'Source and target columns must have the same data type, there must be an index on the target columns and referenced data must exist.' => 'Xx.',
@@ -300,7 +310,6 @@ return [
 
 	// Triggers
 	'Triggers' => 'Xx',
-	'Add trigger' => 'Xx',
 	'Trigger has been dropped.' => 'Xx.',
 	'Trigger has been altered.' => 'Xx.',
 	'Trigger has been created.' => 'Xx.',
@@ -331,13 +340,14 @@ return [
 	'Full table scan' => 'Xx',
 	'Unable to select the table' => 'Xx',
 	'Search data in tables' => 'Xx',
+	'All rows on this page' => 'Xx',
 	'No rows.' => 'Xx.',
 	'%d / ' => '%d / ',
 	'%d row(s)' => ['%d xx', '%d xx'],
 	'Page' => 'Xx',
 	'last' => 'xx',
 	'Load more data' => 'Xx',
-	'Loading' => 'Xx',
+	'Loading…' => 'Xx…',
 	'Whole result' => 'Xx',
 	'%d byte(s)' => ['%d xx', '%d xx'],
 
@@ -355,7 +365,7 @@ return [
 	'Save' => 'Xx',
 	'Save and continue edit' => 'Xx',
 	'Save and insert next' => 'Xx',
-	'Saving' => 'Xx',
+	'Saving…' => 'Xx…',
 	'Selected' => 'Xx',
 	'Clone' => 'Xx',
 	'Delete' => 'Xx',
@@ -383,6 +393,7 @@ return [
 	// Settings
 	'Settings' => 'Xx',
 	'Default' => 'Xx',
+	'Theme' => 'Xx',
 	'Color scheme' => 'Xx',
 	'By system' => 'Xx',
 	'Light' => 'Xx',
@@ -390,6 +401,7 @@ return [
 	'Navigation mode' => 'Xx',
 	'Simple' => 'Xx',
 	'Dual' => 'Xx',
+	'Dual on hover' => 'Xx',
 	'Reversed' => 'Xx',
 	'Layout of main navigation with table links.' => 'Xx.',
 	'Table links' => 'Xx',
@@ -414,4 +426,5 @@ return [
 	'Data table' => 'Xx',
 	'Edit form' => 'Xx',
 	'Ask %s' => 'Xx %s',
+	'Views' => 'Xx',
 ];

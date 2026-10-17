@@ -13,7 +13,8 @@ class Admin extends Origin
 
 	public function getServiceTitle(): string
 	{
-		return "<a href='" . h(HOME_URL) . "'><svg role='img' class='logo' width='130' height='28'><desc>EditorNeo</desc><use href='" . link_files("logo.svg", ["images/logo.svg"]) . "#logo'/></svg></a>";
+		return "<a href='" . h(HOME_URL) . "'><svg role='img' class='logo' width='130' height='28'><desc>EditorNeo</desc>" .
+			"<use href='" . link_files("logo.svg", ["images/logo.svg"]) . "#logo'/></svg></a>";
 	}
 
 	public function getDatabase(): ?string
@@ -54,7 +55,11 @@ class Admin extends Origin
 		echo "<table class='box box-light'>\n";
 		echo $this->admin->getLoginFormRow('driver', '', input_hidden("auth[driver]", $driver));
 		echo $this->admin->getLoginFormRow('server', '', input_hidden("auth[server]", $server));
-		echo $this->admin->getLoginFormRow('username', lang('Username'), '<input class="input" name="auth[username]" id="username" value="' . h($_GET["username"]) . '" autocomplete="username" autocapitalize="off">');
+		echo $this->admin->getLoginFormRow(
+			'username',
+			lang('Username'),
+			'<input class="input" name="auth[username]" id="username" value="' . h($_GET["username"]) . '" autocomplete="username" autocapitalize="off">'
+		);
 		echo $this->admin->getLoginFormRow('password', lang('Password'), '<input type="password" class="input" name="auth[password]" autocomplete="current-password">');
 		echo "</table>\n";
 
@@ -145,8 +150,17 @@ class Admin extends Origin
 			$text = $val;
 		} elseif (is_blob($field) && !is_utf8($val)) {
 			$text = lang('%d byte(s)', strlen($original));
-			if (preg_match("~^(GIF|\xFF\xD8\xFF|\x89PNG\x0D\x0A\x1A\x0A)~", $original)) { // GIF|JPG|PNG, getimagetype() works with filename
-				$text = "<img src='$link' alt='$text'>";
+
+			// @ - the notice for other data contains the data.
+			$size = @getimagesizefromstring($original);
+
+			// Display only the types renderable by browsers. WBMP is excluded intentionally - it has no magic
+			// bytes, so any binary data is detected as it.
+			$mimeTypes = ["image/gif", "image/jpeg", "image/png", "image/bmp", "image/x-ms-bmp", "image/webp", "image/avif"];
+
+			if ($size && in_array($size["mime"], $mimeTypes)) {
+				// $size[3] contains the width and height attributes.
+				$text = "<img src='$link' alt='$text' $size[3] loading='lazy'>";
 			}
 		} elseif ($this->looksLikeBool($field)) { // bool
 			$text = (preg_match('~^(1|t|true|y|yes|on)$~i', $val) ? lang('yes') : lang('no'));
@@ -212,7 +226,7 @@ class Admin extends Origin
 		$fields = fields($_GET["select"]);
 		foreach ($columns as $name => $desc) {
 			$field = $fields[$name];
-			if (preg_match("~enum~", $field["type"]) || $this->looksLikeBool($field)) { //! set - uses 1 << $i and FIND_IN_SET()
+			if (preg_match("~enum~", $field["type"]) || $this->looksLikeBool($field)) { // TODO set - uses 1 << $i and FIND_IN_SET()
 				$key = $keys[$name];
 				$i--;
 				echo "<div>" . h($desc) . ":" . input_hidden("where[$i][col]", $name);
@@ -232,7 +246,8 @@ class Admin extends Origin
 				}
 				$key = $keys[$name];
 				$i--;
-				echo "<div>" . h($desc) . input_hidden("where[$i][col]", $name) . input_hidden("where[$i][op]", "=") . ": <select name='where[$i][val]'>" . optionlist($options, $where[$key]["val"] ?? null, true) . "</select></div>\n";
+				echo "<div>" . h($desc) . input_hidden("where[$i][col]", $name) . input_hidden("where[$i][op]", "=") .
+					": <select name='where[$i][val]'>" . optionlist($options, $where[$key]["val"] ?? null, true) . "</select></div>\n";
 				unset($columns[$name]);
 			}
 		}
@@ -242,7 +257,7 @@ class Admin extends Origin
 				echo "<div><select name='where[$i][col]'><option value=''>(" . lang('anywhere') . ")" . optionlist($columns, $val["col"], true) . "</select>";
 				echo html_select("where[$i][op]", [-1 => ""] + $this->admin->getOperators(), $val["op"]);
 				echo "<input type='text' class='input' name='where[$i][val]' value='" . h($val["val"]) . "'>" . script("mixin(qsl('input'), {onkeydown: selectSearchKeydown});", "");
-				echo " <button class='button light remove jsonly' title='" . h(lang('Remove')) . "'>", icon_solo("remove"), "</button>";
+				echo " <button class='button light remove jsonly' title='" . lang('Remove') . "'>", icon_solo("remove"), "</button>";
 				echo script('qsl("#fieldset-search .remove").onclick = selectRemoveRow;', "");
 				echo "</div>\n";
 				$i++;
@@ -253,7 +268,7 @@ class Admin extends Origin
 		echo html_select("where[$i][op]", [-1 => ""] + $this->admin->getOperators());
 		echo "<input type='text' class='input' name='where[$i][val]'>";
 		echo script("mixin(qsl('input'), {onchange: function () { this.parentNode.firstChild.onchange(); }});");
-		echo " <button class='button light remove jsonly' title='" . h(lang('Remove')) . "'>", icon_solo("remove"), "</button>";
+		echo " <button class='button light remove jsonly' title='" . lang('Remove') . "'>", icon_solo("remove"), "</button>";
 		echo script('qsl("#fieldset-search .remove").onclick = selectRemoveRow;', "");
 		echo "</div>";
 		echo "</div></fieldset>\n";
@@ -261,7 +276,7 @@ class Admin extends Origin
 
 	public function printSelectionOrder(array $order, array $columns, array $indexes): void
 	{
-		//! desc
+		// TODO desc
 		$orders = [];
 		foreach ($indexes as $key => $index) {
 			$order = [];
@@ -278,7 +293,7 @@ class Admin extends Origin
 			echo "</div></fieldset>\n";
 		}
 		if ($_GET["order"]) {
-			echo "<div style='display: none;'>" . print_hidden_fields([
+			echo "<div hidden>" . print_hidden_fields([
 				"order" => [1 => reset($_GET["order"])],
 				"desc" => ($_GET["desc"] ? [1 => 1] : []),
 			]) . "</div>\n";
@@ -398,7 +413,7 @@ class Admin extends Origin
 
 		$return[""] = ($field["null"] || $field["auto_increment"] || $this->looksLikeBool($field) ? "" : "*");
 
-		//! respect driver
+		// TODO respect driver
 		if (preg_match('~date|time~', $field["type"])) {
 			$return["now"] = lang('now');
 		}
@@ -471,8 +486,15 @@ class Admin extends Origin
 		}
 
 		$return = $value;
-		if (preg_match('~date|timestamp~', $field["type"]) && preg_match('(^' . str_replace('\$1', '(?P<p1>\d*)', preg_replace('~(\\\\\\$([2-6]))~', '(?P<p\2>\d{1,2})', preg_quote(lang('$1-$3-$5')))) . '(.*))', $value, $match)) {
-			$return = ($match["p1"] != "" ? $match["p1"] : ($match["p2"] != "" ? ($match["p2"] < 70 ? 20 : 19) . $match["p2"] : gmdate("Y"))) . "-$match[p3]$match[p4]-$match[p5]$match[p6]" . end($match);
+		if (preg_match('~date|timestamp~', $field["type"]) && preg_match(
+			'(^' . str_replace('\$1', '(?P<p1>\d*)', preg_replace('~(\\\\\\$([2-6]))~', '(?P<p\2>\d{1,2})', preg_quote(lang('$1-$3-$5')))) . '(.*))',
+			$value,
+			$match
+		)) {
+			$return = ($match["p1"] != "" ?
+				$match["p1"] :
+				($match["p2"] != "" ? ($match["p2"] < 70 ? 20 : 19) . $match["p2"] : gmdate("Y"))) .
+				"-$match[p3]$match[p4]-$match[p5]$match[p6]" . end($match);
 		}
 
 		$return = q($return);
@@ -488,21 +510,21 @@ class Admin extends Origin
 		return unconvert_field($field, $return);
 	}
 
+	public function sendDumpFormatHeaders(string $identifier, bool $multiTable = false): string
+	{
+		header("Content-Type: text/csv; charset=utf-8");
+
+		return "csv";
+	}
+
 	public function getDumpOutputs(): array
 	{
 		return [];
 	}
 
-	public function getDumpFormats(): array
+	public function sendDumpOutputHeaders(string $identifier, string $extension): void
 	{
-		return ['csv' => 'CSV,', 'csv;' => 'CSV;', 'tsv' => 'TSV'];
-	}
-
-	public function sendDumpHeaders(string $identifier, bool $multiTable = false): string
-	{
-		header("Content-Type: text/csv; charset=utf-8");
-
-		return "csv";
+		//
 	}
 
 	public function dumpTable(string $table, string $style, int $viewType = 0): void
@@ -539,12 +561,10 @@ class Admin extends Origin
 
 	public function printNavigation(?string $missing): void
 	{
-		parent::printNavigation($missing);
-
 		if ($missing == "auth") {
 			$first = true;
 			foreach ((array)$_SESSION["pwds"] as $vendor => $servers) {
-				foreach ($servers[""] as $username => $password) {
+				foreach (($servers[""] ?? []) as $username => $password) {
 					if ($password !== null) {
 						if ($first) {
 							echo "<nav id='logins'><menu>";
@@ -564,12 +584,16 @@ class Admin extends Origin
 			if ($missing != "db" && $missing != "ns") {
 				$status = table_status('', true);
 
-				if (!$status) {
-					echo "<p class='message'>" . lang('No tables.') . "</p>\n";
-				} else {
+				if ($status) {
 					$this->admin->printTablesFilter();
 					$this->admin->printTableList($status);
+				} else {
+					// ID "tables" to make accessibility skip link always work.
+					echo "<div id='tables'><p>" . lang('No tables.') . "</p></div>\n";
 				}
+			} else {
+				// ID "tables" to make accessibility skip link always work.
+				echo "<div id='tables'></div>\n";
 			}
 		}
 	}
@@ -581,7 +605,7 @@ class Admin extends Origin
 
 	public function printTableList(array $tables): void
 	{
-		echo "<nav id='tables'><menu>";
+		echo "<nav id='tables'><div class='scroll-marker'></div><menu>";
 
 		foreach ($tables as $status) {
 			// Skip views and tables without a name.
@@ -600,6 +624,7 @@ class Admin extends Origin
 		}
 
 		echo "</menu></nav>\n";
+		echo script("initTablesList(" . json_encode($this->admin->getDatabase(), JSON_HEX_TAG) . ");");
 	}
 
 	public function getForeignColumnInfo(array $foreignKeys, string $column): ?array

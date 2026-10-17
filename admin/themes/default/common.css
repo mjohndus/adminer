@@ -23,7 +23,17 @@ body {
 	background: var(--body-bg);
 	color: var(--body-text);
 	font: calc(var(--font-size) * 100% / 20) var(--font-family);
-	line-height: 1.4;
+	line-height: var(--line-height);
+}
+
+body.resizing {
+	cursor: col-resize;
+	-webkit-user-select: none;
+	user-select: none;
+}
+
+body.moving, body.moving * {
+	cursor: move;
 }
 
 a {
@@ -92,8 +102,17 @@ ol, ul {
 	display: block;
 }
 
+.animated-border {
+	transition: border-color .2s ease-in;
+}
+
 .js .hidden, .nojs .jsonly {
 	display: none;
+}
+
+/* The browser hides [hidden] only by a UA rule which any custom theme setting display would beat. */
+[hidden] {
+	display: none !important;
 }
 
 .nowrap {
@@ -143,15 +162,8 @@ ol, ul {
 	color: var(--note-text);
 }
 
-.invisible {
-	width: 1px;
-	height: 1px;
-	margin: -1px;
-	overflow: hidden;
-	position: absolute;
-	padding: 0;
-	border: none;
-	clip: rect(0, 0, 0, 0);
+.note {
+	color: var(--note-text);
 }
 
 .icon {
@@ -187,26 +199,18 @@ ol, ul {
 #content {
 	position: relative;
 	margin-inline-start: var(--menu-width);
-	padding-top: 2rem;
+	padding-top: calc(2rem + var(--content-padding-v));
 	padding-bottom: 20px;
+	padding-inline-start: var(--content-padding-h);
 }
 
-#schema {
-	margin-left: 100px;
-	position: relative;
-	-moz-user-select: none;
-	-webkit-user-select: none;
+#content .header, #content .table-footer {
+	margin-inline-start: calc(var(--content-padding-h) * -1);
+	padding-inline-start: var(--content-padding-h);
 }
 
-#schema .table {
-	border: 1px solid var(--table-border);
-	padding: 0 2px;
-	cursor: move;
-	position: absolute;
-}
-
-#schema .references {
-	position: absolute;
+#main-content {
+	scroll-margin-top: 4rem;
 }
 
 #help {
@@ -223,7 +227,9 @@ ol, ul {
 
 @media screen and (max-width: 1023px) {
 	#content {
+		padding-top: 2rem;
 		margin-inline-start: 0;
+		padding-inline-start: 0;
 	}
 
 	#help {

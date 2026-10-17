@@ -15,6 +15,7 @@ foreach ($fields as $name => $field) {
 if ($_POST && !isset($_GET["select"])) {
 	$location = $_POST["referer"];
 	if ($_POST["insert"]) { // continue edit or insert
+		// TODO it should redirect to Select if the values in ?where changed (handled only in JS)
 		$location = ($update ? null : $_SERVER["REQUEST_URI"]);
 	} elseif (!preg_match('~^.+&select=.+$~', $location)) {
 		$location = ME . "select=" . urlencode($TABLE);
@@ -61,7 +62,7 @@ if ($_POST && !isset($_GET["select"])) {
 				$location,
 				lang('Item%s has been inserted.', ($last_id ? " $last_id" : "")),
 				(bool)$result
-			); //! link
+			); // TODO link
 		}
 	}
 }
@@ -114,7 +115,11 @@ if (!support("table") && !$fields) {
 }
 
 if ($_POST["save"] ?? false) {
-	$row = ($_POST["fields"] ?? []) + ($row ?: []);
+	$post_fields = [];
+	foreach (($_POST["fields"] ?? []) as $key => $val) {
+		$post_fields[bracket_escape($key, true)] = $val;
+	}
+	$row = $post_fields + ($row ?: []);
 }
 
 if ($_POST["edit"]) {

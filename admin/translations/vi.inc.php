@@ -16,6 +16,11 @@ return [
 	'%s must return an array.' => '%s phải trả về một mảng.',
 	'%s and %s must return an object created by %s method.' => '%s và %s phải trả về một đối tượng được tạo bởi phương thức %s.',
 
+	// Accessibility
+	'Skip to main content' => 'Chuyển đến nội dung chính', // by Claude Fable 5.1
+	'Skip to menu' => 'Chuyển đến menu', // by Claude Fable 5.1
+	'Skip to table list' => 'Chuyển đến danh sách bảng', // by Claude Fable 5.1
+
 	// Login
 	'System' => 'Hệ thống',
 	'Server' => 'Máy chủ',
@@ -48,10 +53,12 @@ return [
 	// Settings
 	'Language' => 'Ngôn ngữ',
 
+	'Menu' => 'Menu', // by Claude Fable 5.1
 	'Home' => 'Trang chủ',
 	'Refresh' => 'Làm mới',
 	'Info' => 'Thông tin',
 	'More information.' => 'Thông tin thêm.',
+	'Close' => 'Đóng', // by Claude Fable 5.1
 
 	// Privileges
 	'Privileges' => 'Quyền truy cập',
@@ -154,6 +161,7 @@ return [
 	'Invalid schema.' => 'Schema không hợp lệ.',
 
 	// Table list
+	'All' => 'Tất cả', // checkbox selecting all tables and views // by Claude Fable 5.1
 	'Engine' => 'Cơ chế lưu trữ',
 	'engine' => 'cơ chế lưu trữ',
 	'Collation' => 'Bộ mã',
@@ -199,6 +207,7 @@ return [
 	'Options' => 'Tuỳ chọn',
 	'Comment' => 'Chú thích',
 	'Default value' => 'Giá trị mặc định',
+	'default value' => 'giá trị mặc định',
 	'Drop' => 'Xoá',
 	'Drop %s?' => 'Xóa %s?',
 	'Are you sure?' => 'Bạn có chắc',
@@ -234,12 +243,12 @@ return [
 	'Add next' => 'Thêm tiếp',
 	'Index Type' => 'Loại chỉ mục',
 	'length' => 'độ dài',
+	'operator class' => 'lớp toán tử', // by Claude Fable 5.1
 	'Algorithm' => 'Thuật toán',
 	'Condition' => 'Điều kiện',
 
 	// Foreign keys
 	'Foreign keys' => 'Các khoá ngoại',
-	'Foreign key' => 'Khoá ngoại',
 	'Foreign key has been dropped.' => 'Khoá ngoại đã bị xoá.',
 	'Foreign key has been altered.' => 'Khoá ngoại đã được sửa.',
 	'Foreign key has been created.' => 'Khoá ngoại đã được tạo.',
@@ -249,7 +258,8 @@ return [
 	'Target' => 'Đích',
 	'Add column' => 'Thêm cột',
 	'Alter' => 'Sửa',
-	'Add foreign key' => 'Thêm khoá ngoại',
+	'Alter foreign key' => 'Sửa khoá ngoại', // by Claude Fable 5.1
+	'Create foreign key' => 'Tạo khoá ngoại', // by Claude Fable 5.1
 	'ON DELETE' => 'Khi xoá',
 	'ON UPDATE' => 'Khi cập nhật',
 	'Source and target columns must have the same data type, there must be an index on the target columns and referenced data must exist.' => 'Cột gốc và cột đích phải cùng kiểu, phải đặt chỉ mục trong cột đích và dữ liệu tham chiếu phải tồn tại.',
@@ -300,7 +310,6 @@ return [
 
 	// Triggers
 	'Triggers' => 'Phản xạ',
-	'Add trigger' => 'Thêm phản xạ',
 	'Trigger has been dropped.' => 'Đã xoá phản xạ.',
 	'Trigger has been altered.' => 'Đã sửa phản xạ.',
 	'Trigger has been created.' => 'Đã tạo phản xạ.',
@@ -331,13 +340,14 @@ return [
 	'Full table scan' => 'Quét toàn bộ bảng',
 	'Unable to select the table' => 'Không thể xem dữ liệu',
 	'Search data in tables' => 'Tìm kiếm dữ liệu trong các bảng',
+	'All rows on this page' => 'Tất cả các dòng trên trang này', // by Claude Fable 5.1
 	'No rows.' => 'Không có dòng dữ liệu nào.',
 	'%d / ' => '%d / ',
 	'%d row(s)' => '%d dòng',
 	'Page' => 'trang',
 	'last' => 'cuối',
 	'Load more data' => 'Xem thêm dữ liệu',
-	'Loading' => 'Đang nạp',
+	'Loading…' => 'Đang nạp…',
 	'Whole result' => 'Toàn bộ kết quả',
 	'%d byte(s)' => '%d byte(s)',
 
@@ -355,7 +365,7 @@ return [
 	'Save' => 'Lưu',
 	'Save and continue edit' => 'Lưu và tiếp tục sửa',
 	'Save and insert next' => 'Lưu và thêm tiếp',
-	'Saving' => 'Đang lưu',
+	'Saving…' => 'Đang lưu…',
 	'Selected' => 'Chọn',
 	'Clone' => 'Sao chép',
 	'Delete' => 'Xoá',
@@ -383,6 +393,7 @@ return [
 	// Settings
 	'Settings' => 'Cài đặt',
 	'Default' => 'Mặc định',
+	'Theme' => 'Chủ đề', // by Claude Fable 5.1
 	'Color scheme' => 'Giao diện màu sắc',
 	'By system' => 'Theo hệ thống',
 	'Light' => 'Sáng',
@@ -390,6 +401,7 @@ return [
 	'Navigation mode' => 'Chế độ điều hướng',
 	'Simple' => 'Đơn giản',
 	'Dual' => 'Kép (Dual)',
+	'Dual on hover' => 'Kép (Dual) khi rê chuột', // by Claude Fable 5.1
 	'Reversed' => 'Đảo ngược',
 	'Layout of main navigation with table links.' => 'Bố cục của điều hướng chính với các liên kết bảng.',
 	'Table links' => 'Liên kết bảng',
@@ -414,4 +426,5 @@ return [
 	'Data table' => 'Bảng dữ liệu',
 	'Edit form' => 'Biểu mẫu chỉnh sửa',
 	'Ask %s' => 'Hỏi %s',
+	'Views' => 'Khung nhìn', // by Claude Opus 5.5
 ];

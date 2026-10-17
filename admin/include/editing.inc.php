@@ -68,7 +68,10 @@ function print_select_result(Result $result, ?Connection $connection = null, arr
 
 				$types[$j] = $field->type;
 
-				echo "<th" . ($orgtable != "" || $field->name != $orgname ? " title='" . h(($orgtable != "" ? "$orgtable." : "") . $orgname) . "'" : "") . ">" . h($name)
+				$title = trim(($orgtable != "" ? "$orgtable.$orgname" : ($field->name != $orgname ? $orgname : ""))
+					. " " . Driver::get()->getTypeName($field));
+
+				echo "<th" . ($title != "" ? " title='" . h($title) . "'" : "") . ">" . h($name)
 					. ($orgtables ? doc_link([
 						'sql' => "explain-output.html#explain_" . strtolower($name),
 						'mariadb' => "reference/sql-statements/administrative-sql-statements/analyze-and-explain-statements/explain#columns-in-explain-...-select",
@@ -168,11 +171,14 @@ function textarea($name, $value, $rows = 10, $cols = 80): void {
 * @return string
 */
 function select_input($attrs, $options, $value = "", $onchange = "", $placeholder = "") {
+	if ($options && $value != "" && !isset($options[$value])) {
+		$options = [$value => $value] + $options; // e.g. ORDER BY COUNT(*)
+	}
 	$tag = ($options ? "select" : "input");
 	return "<$tag $attrs" . ($options
 			? "><option value=''>$placeholder" . optionlist($options, $value, true) . "</select>"
 			: " size='10' value='" . h($value) . "' placeholder='$placeholder'>"
-		) . ($onchange ? script("qsl('$tag').onchange = $onchange;", "") : ""); //! use oninput for input
+		) . ($onchange ? script("qsl('$tag').onchange = $onchange;", "") : ""); // TODO use oninput for input
 }
 
 /** Print one row in JSON object
@@ -215,11 +221,46 @@ if ($foreign_keys) {
 	$structured_types[lang('Foreign keys')] = $foreign_keys;
 }
 echo optionlist(array_merge($extra_types, $structured_types), $type);
-?></select><td><input name="<?php echo h($key); ?>[length]" value="<?php echo h($field["length"] ?? null); ?>" size="3"<?php echo (!($field["length"] ?? null) && preg_match('~var(char|binary)$~', $type) ? " class='input required'" : " class='input'"); //! type="number" with enabled JavaScript ?> aria-labelledby="label-length"><td class="options"><?php
-	echo ($collations ? "<select name='" . h($key) . "[collation]'" . (preg_match('~(char|text|enum|set)$~', $type) ? "" : " class='hidden'") . '><option value="">(' . lang('collation') . ')' . optionlist($collations, $field["collation"] ?? null) . '</select>' : '');
-	echo (Driver::get()->getUnsigned() ? "<select name='" . h($key) . "[unsigned]'" . (!$type || preg_match(number_type(), $type) ? "" : " class='hidden'") . '><option>' . optionlist(Driver::get()->getUnsigned(), $field["unsigned"] ?? null) . '</select>' : '');
-	echo (isset($field['on_update']) ? "<select name='" . h($key) . "[on_update]'" . (preg_match('~timestamp|datetime~', $type) ? "" : " class='hidden'") . '>' . optionlist(["" => "(" . lang('ON UPDATE') . ")", "CURRENT_TIMESTAMP"], (preg_match('~^CURRENT_TIMESTAMP~i', $field["on_update"]) ? "CURRENT_TIMESTAMP" : $field["on_update"])) . '</select>' : '');
-	echo ($foreign_keys ? "<select name='" . h($key) . "[on_delete]'" . (preg_match("~`~", $type) ? "" : " class='hidden'") . "><option value=''>(" . lang('ON DELETE') . ")" . optionlist(Driver::get()->getOnActions(), $field["on_delete"] ?? null) . "</select> " : " "); // space for IE
+?></select><td><input name="<?php echo h($key); ?>[length]" value="<?php echo h($field["length"] ?? null); ?>" size="3"<?php
+	// TODO type="number" with enabled JavaScript
+	echo (!($field["length"] ?? null) && preg_match('~var(char|binary)$~', $type) ? " class='input required'" : " class='input'");
+?> aria-labelledby="label-length"><td class="options"><?php
+	echo ($collations ?
+		"<select name='" . h($key) . "[collation]'" . option_types($type, '(char|text|enum|set)$') .
+			'><option value="">(' . lang('collation') . ')' . optionlist($collations, $field["collation"] ?? null) . '</select>' :
+		'');
+	// ^$ - the type is not known yet
+	echo (Driver::get()->getUnsigned() ?
+		"<select name='" . h($key) . "[unsigned]'" . option_types($type, '^$|' . number_type()) .
+			'><option>' . optionlist(Driver::get()->getUnsigned(), $field["unsigned"] ?? null) . '</select>' :
+		'');
+	// MySQL supports datetime since 5.6.5.
+	echo (isset($field['on_update']) ?
+		"<select name='" . h($key) . "[on_update]'" . option_types($type, 'timestamp|datetime') . '>' .
+			optionlist(
+				["" => "(" . lang('ON UPDATE') . ")", "CURRENT_TIMESTAMP"],
+				(preg_match('~^CURRENT_TIMESTAMP~i', $field["on_update"]) ? "CURRENT_TIMESTAMP" : $field["on_update"])
+			) . '</select>' :
+		'');
+	// space for IE
+	echo ($foreign_keys ?
+		"<select name='" . h($key) . "[on_delete]'" . option_types($type, '`') .
+			"><option value=''>(" . lang('ON DELETE') . ")" . optionlist(Driver::get()->getOnActions(), $field["on_delete"] ?? null) . "</select> " :
+		" ");
+}
+
+/**
+ * Returns attributes of an option displayed only for some column types.
+ *
+ * @param ?string $type Current column type.
+ * @param string $types Regular expression matching the column types displaying the option.
+ *
+ * @return string HTML attributes including the leading space.
+ */
+function option_types(?string $type, string $types): string
+{
+	// The expression is printed for onFieldTypeChange() which re-evaluates it after changing the type.
+	return " data-types='" . h($types) . "'" . (preg_match("~$types~", $type) ? "" : " class='hidden'");
 }
 
 /** Filter length value including enums
@@ -227,6 +268,11 @@ echo optionlist(array_merge($extra_types, $structured_types), $type);
 * @return string
 */
 function process_length($length) {
+	// MS SQL: varchar(max), nvarchar(max), varbinary(max).
+	if (preg_match('~^\s*\(?\s*max\s*\)?\s*$~i', $length)) {
+		return "(max)";
+	}
+
 	$enumLengthPattern = Driver::EnumLengthPattern;
 
 	return (preg_match("~^\\s*\\(?\\s*$enumLengthPattern(?:\\s*,\\s*$enumLengthPattern)*+\\s*\\)?\\s*\$~", $length) && preg_match_all("~$enumLengthPattern~", $length, $matches)
@@ -254,9 +300,9 @@ function process_type($field, $collate = "COLLATE") {
 * @return list<string> ["field", "type", "NULL", "DEFAULT", "ON UPDATE", "COMMENT", "AUTO_INCREMENT"]
 */
 function process_field($field, $type_field) {
-	// MariaDB exports CURRENT_TIMESTAMP as a function.
+	// MariaDB exports CURRENT_TIMESTAMP as a function or lowercase value.
 	if ($field["on_update"]) {
-		$field["on_update"] = str_ireplace("current_timestamp()", "CURRENT_TIMESTAMP", $field["on_update"]);
+		$field["on_update"] = preg_replace('~current_timestamp(\(\))?~i', "CURRENT_TIMESTAMP", $field["on_update"]);
 	}
 	return [
 		idf_escape(trim($field["field"])),
@@ -264,9 +310,17 @@ function process_field($field, $type_field) {
 		($field["null"] ? " NULL" : " NOT NULL"), // NULL for timestamp
 		default_value($field),
 		(preg_match('~timestamp|datetime~', $field["type"]) && $field["on_update"] ? " ON UPDATE " . $field["on_update"] : ""),
-		(support("comment") && $field["comment"] != "" ? " COMMENT " . q($field["comment"]) : ""),
+		(support("comment") && $field["comment"] != "" ? " COMMENT " . q(normalize_newlines($field["comment"])) : ""),
 		($field["auto_increment"] ? auto_increment() : null),
 	];
+}
+
+/**
+ * Normalizes newlines in a value submitted by a textarea, which sends CRLF.
+ */
+function normalize_newlines(?string $value): string
+{
+	return str_replace("\r", "", (string) $value);
 }
 
 /** Get default value clause
@@ -278,7 +332,7 @@ function default_value($field) {
 		return "";
 	}
 
-	$default = str_replace("\r", "", $field["default"]);
+	$default = normalize_newlines($field["default"]);
 
 	$generated = $field["generated"];
 	if (in_array($generated, Driver::get()->getGenerated())) {
@@ -342,14 +396,14 @@ function edit_fields(array $fields, array $collations, $type = "TABLE", $foreign
 
 	echo "<thead><tr>\n";
 	if (support("move_col")) {
-		echo "<td class='jsonly'></td>";
+		echo "<th class='jsonly'></th>";
 	}
 	if ($type == "PROCEDURE") {
 		echo "<td></td>";
 	}
 
 	echo "<th id='label-name'>", ($type == "TABLE" ? lang('Column name') : lang('Parameter name')), "</th>\n";
-	echo "<td id='label-type'>", lang('Type'), "<textarea id='enum-edit' rows='4' cols='12' wrap='off' style='display: none;'></textarea>", script("gid('enum-edit').onblur = onFieldLengthBlur;"), "</td>\n";
+	echo "<td id='label-type'>", lang('Type'), "<textarea id='enum-edit' rows='4' cols='12' wrap='off' hidden></textarea>", script("gid('enum-edit').onblur = onFieldLengthBlur;"), "</td>\n";
 	echo "<td id='label-length'>", lang('Length'), "</td>\n";
 	echo "<td>", lang('Options'), "</td>\n"; // No label required, options have their own label.
 
@@ -370,7 +424,8 @@ function edit_fields(array $fields, array $collations, $type = "TABLE", $foreign
 	}
 
 	echo "<td>";
-	echo "<button name='add[", (support("move_col") ? 0 : count($fields)), "]' value='1' title='", h(lang('Add next')), "' class='button light'>", icon_solo("add"), "</button>";
+	echo "<button name='add[", (support("move_col") ? 0 : count($fields)), "]' value='1' title='", lang('Add next'), "' class='button light'>", icon_solo("add"), "</button>";
+	echo (support("move_col") ? "" : script("qsl('button').onclick = onAddLastFieldRowClick;"));
 	echo script("row_count = " . count($fields) . ";");
 	echo "</td>\n";
 
@@ -384,11 +439,10 @@ function edit_fields(array $fields, array $collations, $type = "TABLE", $foreign
 		$orig = $field[($_POST ? "orig" : "field")];
 		$display = (isset($_POST["add"][$i-1]) || (isset($field["field"]) && !($_POST["drop_col"][$i] ?? null))) && (support("drop_col") || $orig == "");
 
-		$style = $display ? "" : "style='display: none;'";
-		echo "<tr $style>\n";
+		echo "<tr", ($display ? "" : " hidden"), ">\n";
 
 		if (support("move_col")) {
-			echo "<td class='handle jsonly'>", icon_solo("handle"), "</td>";
+			echo "<th class='handle jsonly'>", icon_solo("handle"), "</th>";
 		}
 		if ($type == "PROCEDURE") {
 			echo "<td>", html_select("fields[$i][inout]", Driver::get()->getInOut(), $field["inout"]), "</td>\n";
@@ -396,7 +450,8 @@ function edit_fields(array $fields, array $collations, $type = "TABLE", $foreign
 
 		echo "<th>";
 		if ($display) {
-			echo "<input class='input' name='fields[$i][field]' value='", h($field["field"]), "' data-maxlength='64' autocapitalize='off' aria-labelledby='label-name' " . (isset($_POST["add"][$i-1]) ? "autofocus" : "") . ">";
+			echo "<input class='input' name='fields[$i][field]' value='", h($field["field"]),
+				"' data-maxlength='64' autocapitalize='off' aria-labelledby='label-name' " . (isset($_POST["add"][$i-1]) ? "autofocus" : "") . ">";
 		}
 		echo input_hidden("fields[$i][orig]", $orig);
 		edit_type("fields[$i]", $field, $collations, $foreign_keys);
@@ -429,20 +484,31 @@ function edit_fields(array $fields, array $collations, $type = "TABLE", $foreign
 
 			if (support("comment")) {
 				$max_length = Connection::get()->isMinVersion("5.5") ? 1024 : 255;
-				echo "<td $comment_class>",
-					"<input class='input' name='fields[$i][comment]' value='", h($field["comment"]), "' data-maxlength='$max_length' aria-labelledby='label-comment'>",
-					"</td>\n";
+				$attrs = "name='fields[$i][comment]' data-maxlength='$max_length' aria-labelledby='label-comment'";
+				$value = h($field["comment"]);
+
+				echo "<td $comment_class>";
+				if (str_contains($value, "\n")) {
+					// Preserve the leading newline in textarea.
+					if ($value[0] == "\n") {
+						$value = "\n$value";
+					}
+					echo "<textarea $attrs rows='3' cols='30' style='vertical-align: bottom;'>$value</textarea>";
+				} else {
+					echo "<input class='input' $attrs value='$value'>";
+				}
+				echo "</td>\n";
 			}
 		}
 
 		echo "<td>";
 		if (support("move_col")) {
-			echo "<button name='add[$i]' value='1' title='" . h(lang('Add next')) . "' class='button light'>", icon_solo("add"), "</button>",
-				"<button name='up[$i]' value='1' title='" . h(lang('Move up')) . "' class='button light hidden'>", icon_solo("arrow-up"), "</button>",
-				"<button name='down[$i]' value='1' title='" . h(lang('Move down')) . "' class='button light hidden'>", icon_solo("arrow-down"), "</button>";
+			echo "<button name='add[$i]' value='1' title='" . lang('Add next') . "' class='button light'>", icon_solo("add"), "</button>",
+				"<button name='up[$i]' value='1' title='" . lang('Move up') . "' class='button light hidden'>", icon_solo("arrow-up"), "</button>",
+				"<button name='down[$i]' value='1' title='" . lang('Move down') . "' class='button light hidden'>", icon_solo("arrow-down"), "</button>";
 		}
 		if ($orig == "" || support("drop_col")) {
-			echo "<button name='drop_col[$i]' value='1' title='" . h(lang('Remove')) . "' class='button light'>", icon_solo("remove"), "</button>";
+			echo "<button name='drop_col[$i]' value='1' title='" . lang('Remove') . "' class='button light'>", icon_solo("remove"), "</button>";
 		}
 		echo "</td>\n</tr>\n";
 	}
@@ -619,7 +685,7 @@ function create_routine($routine, $row) {
 * @return string
 */
 function remove_definer($query) {
-	return preg_replace('~^([A-Z =]+) DEFINER=`' . preg_replace('~@(.*)~', '`@`(%|\1)', logged_user()) . '`~', '\1', $query); //! proper escaping of user
+	return preg_replace('~^([A-Z =]+) DEFINER=`' . preg_replace('~@(.*)~', '`@`(%|\1)', logged_user()) . '`~', '\1', $query); // TODO proper escaping of user
 }
 
 /** Format foreign key to use in SQL query
@@ -635,7 +701,7 @@ function format_foreign_key($foreign_key) {
 		. ($db != "" && $db != $_GET["db"] ? idf_escape($db) . "." : "")
 		. ($ns != "" && $ns != $_GET["ns"] ? idf_escape($ns) . "." : "")
 		. idf_escape($foreign_key["table"])
-		. " (" . implode(", ", array_map('AdminNeo\idf_escape', $foreign_key["target"])) . ")" //! reuse $name - check in older MySQL versions
+		. " (" . implode(", ", array_map('AdminNeo\idf_escape', $foreign_key["target"])) . ")" // TODO reuse $name - check in older MySQL versions
 		. (preg_match("~^($onActions)\$~", $foreign_key["on_delete"]) ? " ON DELETE $foreign_key[on_delete]" : "")
 		. (preg_match("~^($onActions)\$~", $foreign_key["on_update"]) ? " ON UPDATE $foreign_key[on_update]" : "")
 		. (isset($foreign_key["deferrable"]) ? " $foreign_key[deferrable]" : "")

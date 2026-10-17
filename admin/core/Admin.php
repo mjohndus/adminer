@@ -16,7 +16,8 @@ class Admin extends Origin
 	 */
 	public function getServiceTitle(): string
 	{
-		return "<a href='" . h(HOME_URL) . "'><svg role='img' class='logo' width='133' height='28'><desc>AdminNeo</desc><use href='" . link_files("logo.svg", ["images/logo.svg"]) . "#logo'/></svg></a>";
+		return "<a href='" . h(HOME_URL) . "'><svg role='img' class='logo' width='133' height='28'><desc>AdminNeo</desc>" .
+			"<use href='" . link_files("logo.svg", ["images/logo.svg"]) . "#logo'/></svg></a>";
 	}
 
 	/**
@@ -92,10 +93,18 @@ class Admin extends Origin
 				echo $this->admin->getLoginFormRow('driver', '', input_hidden("auth[driver]", $driver));
 			}
 
-			echo $this->admin->getLoginFormRow('server', lang('Server'), '<input class="input" name="auth[server]" value="' . h($server) . '" title="' . lang('hostname[:port] or :socket') . '" placeholder="localhost" autocapitalize="off">');
+			echo $this->admin->getLoginFormRow(
+				'server',
+				lang('Server'),
+				"<input class='input' name='auth[server]' value='" . h($server) . "' title='" . lang('hostname[:port] or :socket') . "' placeholder='localhost' autocapitalize='off'>"
+			);
 		}
 
-		echo $this->admin->getLoginFormRow('username', lang('Username'), '<input class="input" name="auth[username]" id="username" value="' . h($_GET["username"]) . '" autocomplete="username" autocapitalize="off">');
+		echo $this->admin->getLoginFormRow(
+			'username',
+			lang('Username'),
+			'<input class="input" name="auth[username]" id="username" value="' . h($_GET["username"]) . '" autocomplete="username" autocapitalize="off">'
+		);
 		echo $this->admin->getLoginFormRow('password', lang('Password'), '<input type="password" class="input" name="auth[password]" autocomplete="current-password">');
 
 		if (!$serverPairs) {
@@ -243,7 +252,7 @@ class Admin extends Origin
 			$query = preg_replace('~[\x80-\xFF]+$~', '', substr($query, 0, 1e6)) . "\n…"; // [\x80-\xFF] - valid UTF-8, \n - can end by one-line comment
 		}
 
-		$history[$_GET["db"]][] = [$query, time(), $time]; // not DB - $_GET["db"] is changed in database.inc.php //! respect $_GET["ns"]
+		$history[$_GET["db"]][] = [$query, time(), $time]; // not DB - $_GET["db"] is changed in database.inc.php // TODO respect $_GET["ns"]
 
 		$supportSql = support("sql");
 		$warnings = !$failed ? Driver::get()->warnings() : null;
@@ -270,7 +279,9 @@ class Admin extends Origin
 
 		$return .= "<p class='links'>";
 		if ($supportSql) {
-			$return .= "<a href='" . h(str_replace("db=" . urlencode(DB), "db=" . urlencode($_GET["db"]), ME) . 'sql=&history=' . (count($history[$_GET["db"]]) - 1)) . "'>" . icon("edit") . lang('Edit') . "</a>";
+			$return .= "<a href='" .
+				h(str_replace("db=" . urlencode(DB), "db=" . urlencode($_GET["db"]), ME) . 'sql=&history=' . (count($history[$_GET["db"]]) - 1)) .
+				"'>" . icon("edit") . lang('Edit') . "</a>";
 		}
 		if ($time) {
 			$return .= " <span class='time'>($time)</span>";
@@ -376,7 +387,7 @@ class Admin extends Origin
 
 		echo "<thead><tr>";
 		echo "<th>", lang('Column'), "</th>";
-		echo "<td>", lang('Type'), "</td>";
+		echo "<td>", lang('Type'), " <span class='note'>[" . lang('default value') . "]</span></td>";
 		echo "<td>", lang('Collation'), "</td>";
 		if (support("comment")) {
 			echo "<td>", lang('Comment'), "</td>";
@@ -404,11 +415,13 @@ class Admin extends Origin
 				echo " <i>" . lang('Auto Increment') . "</i>";
 			}
 
-			$default = h($field["default"]);
 			if (isset($field["default"])) {
-				echo " <span title='" . lang('Default value') . "'>[<b>";
-				echo $field["generated"] ? "<code class='jush-" . DIALECT . "'>$default</code>" : $default;
-				echo "</b>]</span>";
+				if ($field["generated"]) {
+					echo " <i>AS</i> <code class='jush-" . DIALECT . "'>" . h(parenthesize_expression($field["default"])) . "</code>";
+					echo " <i>" . h($field["generated"]) . "</i>";
+				} else {
+					echo " [<strong>" . h($field["default"]) . "</strong>]";
+				}
 			}
 
 			echo "</td>";
@@ -497,7 +510,7 @@ class Admin extends Origin
 		echo "<table>\n";
 		echo "<thead><tr>";
 		echo "<th>", lang('Type'), "</th>";
-		echo "<td>", lang('Columns'), " (", lang('length'), ")</td>";
+		echo "<td>", lang('Columns'), " <span class='note'>(", lang('length'), ")</span></td>";
 		if ($partial) {
 			echo "<td>", lang('Condition'), "</td>";
 		}
@@ -509,14 +522,14 @@ class Admin extends Origin
 
 			foreach ($index["columns"] as $key => $val) {
 				$print[] = "<i>" . h($val) . "</i>"
-					. ($index["lengths"][$key] ? "(" . $index["lengths"][$key] . ")" : "")
+					. ($index["lengths"][$key] ? "(" . h($index["lengths"][$key]) . ")" : "")
 					. ($index["descs"][$key] ? " DESC" : "");
 			}
 
 			echo "<tr title='", h($name), "'>";
-			echo "<th>", $index["type"];
+			echo "<th>", h($index["type"]);
 			if (isset($index['algorithm']) && $index['algorithm'] != $defaultAlgorithm) {
-				 echo " ({$index["algorithm"]})";
+				 echo " (", h($index['algorithm']), ")";
 			}
 			echo "</th>";
 			echo "<td>", implode(", ", $print), "</td>";
@@ -562,7 +575,11 @@ class Admin extends Origin
 			echo icon("handle", "handle jsonly");
 
 			if (Driver::get()->getFunctions() || Driver::get()->getGrouping()) {
-				echo html_select("columns[$i][fun]", [-1 => ""] + array_filter([lang('Functions') => Driver::get()->getFunctions(), lang('Aggregation') => Driver::get()->getGrouping()]), $val["fun"] ?? null);
+				echo html_select(
+					"columns[$i][fun]",
+					[-1 => ""] + array_filter([lang('Functions') => Driver::get()->getFunctions(), lang('Aggregation') => Driver::get()->getGrouping()]),
+					$val["fun"] ?? null
+				);
 				echo help_script_command("value && value.replace(/ |\$/, '(') + ')'", true);
 				echo script("qsl('select').onchange = (event) => { " . ($key !== "" ? "" : " qsl('select, input:not(.remove)', event.target.parentNode).onchange();") . " };", "");
 				echo "($column)";
@@ -570,7 +587,7 @@ class Admin extends Origin
 				echo $column;
 			}
 
-			echo " <button class='button light remove jsonly' title='", h(lang('Remove')), "'>", icon_solo("remove"), "</button>";
+			echo " <button class='button light remove jsonly' title='", lang('Remove'), "'>", icon_solo("remove"), "</button>";
 			echo script("qsl('#fieldset-select .remove').onclick = selectRemoveRow;", "");
 			echo "</div>\n";
 
@@ -617,7 +634,7 @@ class Admin extends Origin
 				echo html_select("where[$i][op]", $this->getOperators(), $val["op"], $change_next);
 				echo "<input type='text' class='input' name='where[$i][val]' value='" . h($val["val"]) . "'>";
 				echo script("mixin(qsl('input'), {oninput: function () { $change_next }, onkeydown: selectSearchKeydown});", "");
-				echo " <button class='button light remove jsonly' title='" . h(lang('Remove')) . "'>", icon_solo("remove"), "</button>";
+				echo " <button class='button light remove jsonly' title='" . lang('Remove') . "'>", icon_solo("remove"), "</button>";
 				echo script('qsl("#fieldset-search .remove").onclick = selectRemoveRow;', "");
 				echo "</div>\n";
 			}
@@ -647,7 +664,7 @@ class Admin extends Origin
 			echo icon("handle", "handle jsonly");
 			echo select_input("name='order[$i]'", $columns, $val, $key !== "" ? "selectFieldChange" : "selectAddRow");
 			echo " ", checkbox("desc[$i]", 1, isset($_GET["desc"][$key]), lang('descending'));
-			echo " <button class='button light remove jsonly' title='", h(lang('Remove')), "'>", icon_solo("remove"), "</button>";
+			echo " <button class='button light remove jsonly' title='", lang('Remove'), "'>", icon_solo("remove"), "</button>";
 			echo script('qsl("#fieldset-sort .remove").onclick = selectRemoveRow;', "");
 			echo "</div>\n";
 
@@ -702,7 +719,7 @@ class Admin extends Origin
 			}
 		}
 
-		echo "const indexColumns = " . json_encode($columns, JSON_UNESCAPED_UNICODE) . ";\n";
+		echo "const indexColumns = " . json_encode($columns, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG) . ";\n";
 		echo "selectFieldChange.call(gid('form')['select']);\n";
 		echo "</script>\n";
 		echo "</div></fieldset>\n";
@@ -747,7 +764,8 @@ class Admin extends Origin
 
 		foreach ($indexes as $i => $index) {
 			if ($index["type"] == "FULLTEXT" && isset($_GET["fulltext"]) && $_GET["fulltext"][$i] != "") {
-				$return[] = "MATCH (" . implode(", ", array_map('AdminNeo\idf_escape', $index["columns"])) . ") AGAINST (" . q($_GET["fulltext"][$i]) . (isset($_GET["boolean"][$i]) ? " IN BOOLEAN MODE" : "") . ")";
+				$return[] = "MATCH (" . implode(", ", array_map('AdminNeo\idf_escape', $index["columns"])) . ") AGAINST (" .
+					q($_GET["fulltext"][$i]) . (isset($_GET["boolean"][$i]) ? " IN BOOLEAN MODE" : "") . ")";
 			}
 		}
 
@@ -786,8 +804,10 @@ class Admin extends Origin
 						&& (preg_match('~^[-\d.' . (preg_match('~IN$~', $op) ? ',' : '') . ']+$~', $val) || !preg_match('~' . number_type() . '|bit~', $field["type"]))
 						&& (!preg_match("~[\x80-\xFF]~", $val) || preg_match('~char|text|enum|set~', $field["type"]))
 						&& (!preg_match('~date|timestamp~', $field["type"]) || preg_match('~^\d+-\d+-\d+~', $val))
-						&& (!preg_match('~^elastic~', DRIVER) || $field["type"] != "boolean" || preg_match('~true|false~', $val)) // Elasticsearch needs boolean value properly formatted.
-						&& (!preg_match('~^elastic~', DRIVER) || strpos($op, "regexp") === false || preg_match('~text|keyword~', $field["type"])) // Elasticsearch can use regexp only on text and keyword fields.
+						// Elasticsearch needs boolean value properly formatted.
+						&& (!preg_match('~^elastic~', DRIVER) || $field["type"] != "boolean" || preg_match('~true|false~', $val))
+						// Elasticsearch can use regexp only on text and keyword fields.
+						&& (!preg_match('~^elastic~', DRIVER) || strpos($op, "regexp") === false || preg_match('~text|keyword~', $field["type"]))
 					)) {
 						if ($oidColumn) {
 							$conditions[] = $prefix . idf_escape($name) . $cond;
@@ -823,8 +843,11 @@ class Admin extends Origin
 		$return = [];
 		foreach ((array)$_GET["order"] as $key => $val) {
 			if ($val != "") {
-				$return[] = (preg_match('~^((COUNT\(DISTINCT |[A-Z0-9_]+\()(`(?:[^`]|``)+`|"(?:[^"]|"")+")\)|COUNT\(\*\))$~', $val) ? $val : idf_escape($val)) //! MS SQL uses []
-					. (isset($_GET["desc"][$key]) ? " DESC" : "");
+				$return[] = (preg_match('~^((COUNT\(DISTINCT |[A-Z0-9_]+\()(`(?:[^`]|``)+`|"(?:[^"]|"")+")\)|COUNT\(\*\))$~', $val) ? $val : idf_escape($val)) // TODO MS SQL uses []
+					. (isset($_GET["desc"][$key])
+						? " DESC" . (DIALECT == "pgsql" && ($fields[$val]["null"] ?? null) ? " NULLS LAST" : "")
+						: ""
+					);
 			}
 		}
 
@@ -900,7 +923,7 @@ class Admin extends Origin
 	public function processFieldInput(array $field, string $value, string $function = "")
 	{
 		if ($function == "SQL") {
-			return $value; //! SQL injection
+			return $value; // TODO SQL injection
 		}
 
 		if (isset($field["full_type"])) {
@@ -928,6 +951,32 @@ class Admin extends Origin
 		return unconvert_field($field, $return);
 	}
 
+	public function getDumpFormats(): array
+	{
+		return (support("dump") ? ['sql' => 'SQL'] : []) + parent::getDumpFormats();
+	}
+
+	/**
+	 * Sends headers specific to the export format.
+	 *
+	 * @return string File extension.
+	 */
+	public function sendDumpFormatHeaders(string $identifier, bool $multiTable = false): string
+	{
+		// Multiple CSVs are packed to TAR.
+		$extension = (str_contains($_POST["format"], "sql") ? "sql" : ($multiTable ? "tar" : "csv"));
+
+		if ($extension == "tar") {
+			header("Content-Type: application/x-tar");
+		} elseif ($extension == "sql" || $_POST["output"] == "text") {
+			header("Content-Type: text/plain; charset=utf-8");
+		} else {
+			header("Content-Type: text/csv; charset=utf-8");
+		}
+
+		return $extension;
+	}
+
 	/**
 	 * Returns export output options.
 	 *
@@ -948,43 +997,21 @@ class Admin extends Origin
 	}
 
 	/**
-	 * Returns export format options.
+	 * Sends headers specific to the export output, e.g. starts the compression.
 	 *
-	 * @return string[] Empty to disable export.
+	 * @param string $extension File extension returned by sendDumpFormatHeaders().
 	 */
-	public function getDumpFormats(): array
+	public function sendDumpOutputHeaders(string $identifier, string $extension): void
 	{
-		return (support("dump") ? ['sql' => 'SQL'] : []) + ['csv' => 'CSV,', 'csv;' => 'CSV;', 'tsv' => 'TSV'];
-	}
-
-	/**
-	 * Sends headers for export.
-	 *
-	 * @return string File extension.
-	 */
-	public function sendDumpHeaders(string $identifier, bool $multiTable = false): string
-	{
-		$output = $_POST["output"];
-
-		// Multiple CSVs are packed to TAR.
-		$extension = (str_contains($_POST["format"], "sql") ? "sql" : ($multiTable ? "tar" : "csv"));
-
-		if ($output == "gz") {
+		if ($_POST["output"] == "gz") {
+			// Applies to all formats including the ones added by plugins.
 			header("Content-Type: application/x-gzip");
 
 			ob_start(function (string $string): string {
 				// ob_start() callback receives an optional parameter $phase but gzencode() accepts optional parameter $level
 				return gzencode($string);
 			}, 1e6);
-		} elseif ($extension == "tar") {
-			header("Content-Type: application/x-tar");
-		} elseif ($extension == "sql" || $output == "text") {
-			header("Content-Type: text/plain; charset=utf-8");
-		} else {
-			header("Content-Type: text/csv; charset=utf-8");
 		}
-
-		return $extension;
 	}
 
 	/**
@@ -1181,8 +1208,6 @@ class Admin extends Origin
 	 */
 	public function printNavigation(?string $missing): void
 	{
-		parent::printNavigation($missing);
-
 		if ($missing == "auth") {
 			$output = "";
 			foreach ((array)$_SESSION["pwds"] as $vendor => $servers) {
@@ -1244,8 +1269,12 @@ class Admin extends Origin
 					$this->admin->printTablesFilter();
 					$this->admin->printTableList($tables);
 				} else {
-					echo "<p class='message'>" . lang('No tables.') . "</p>\n";
+					// ID "tables" to make accessibility skip link always work.
+					echo "<div id='tables'><p>" . lang('No tables.') . "</p></div>\n";
 				}
+			} elseif ($_GET["ns"] !== "" && DB != "") {
+				// ID "tables" to make accessibility skip link always work.
+				echo "<div id='tables'></div>\n";
 			}
 
 			// Syntax highlighting.
@@ -1254,14 +1283,18 @@ class Admin extends Origin
 				if (support("sql") && $tables) {
 					$links = [];
 					foreach ($tables as $table => $type) {
-						$links[] = preg_quote($table, '/');
+						$links[] = js_escape_re($table);
 					}
 					$tableParam = support("table") && !$this->config->isSelectionPreferred() ? "table" : "select";
 					echo "window.jushLinks = { " . DIALECT . ": {\n";
-					echo js_escape_key(ME . $tableParam . '=$&'), ': /\b(' . implode('|', $links) . ')\b/g';
-					if (support('routine')) {
+					// $ is used in PostgreSQL as part of name.
+					echo js_escape_key(ME . $tableParam . '=$&'), ': /\b(?<!\$)(' . implode('|', $links) . ')(?!\$)\b/g';
+					// routines() is slow, so it is called only on the pages printing SQL where a routine name can appear.
+					// ?function= sets ?procedure=.
+					$sqlPages = ["sql", "check", "event", "procedure", "trigger", "view", "type", "table", "processlist"];
+					if (support('routine') && array_intersect_key($_GET, array_flip($sqlPages))) {
 						foreach (routines() as $row) {
-							echo ",\n", js_escape_key(ME . 'function=' . urlencode($row["SPECIFIC_NAME"]) . '&name=$&'), ': /\b' . preg_quote($row["ROUTINE_NAME"], '/') . '(?=["`]?\()/g';
+							echo ",\n", js_escape_key(ME . 'function=' . urlencode($row["SPECIFIC_NAME"]) . '&name=$&'), ': /\b' . js_escape_re($row["ROUTINE_NAME"]) . '(?=["`\]]?\()/g';
 						}
 					}
 					echo "\n}};\n";
@@ -1282,7 +1315,8 @@ class Admin extends Origin
 						}
 					}
 
-					echo "window.addEventListener('DOMContentLoaded', () => { autocompletion = jush.autocompleteSql('" . idf_escape("") . "', " . json_encode($tablesColumns) . "); });\n";
+					echo "window.addEventListener('DOMContentLoaded', () => { autocompletion = jush.autocompleteSql('" .
+						idf_escape("") . "', " . json_encode($tablesColumns, JSON_HEX_TAG) . "); });\n";
 				}
 
 				echo "</script>\n";
@@ -1344,9 +1378,12 @@ class Admin extends Origin
 	 */
 	public function printTableList(array $tables): void
 	{
-		$menuClass = ($this->settings->isNavigationDual() ? "class='dual'" : ($this->settings->isNavigationReversed() ? "class='reversed'" : ""));
+		$dualLinks = $this->settings->isNavigationDual() || $this->settings->isNavigationHover();
 
-		echo "<nav id='tables'><menu $menuClass>";
+		$menuClass = ($dualLinks ? "class='dual" . ($this->settings->isNavigationHover() ? " hover" : "") . "'" :
+			($this->settings->isNavigationReversed() ? "class='reversed'" : ""));
+
+		echo "<nav id='tables'><div class='scroll-marker'></div><menu $menuClass>";
 
 		foreach ($tables as $table => $status) {
 			$table = "$table"; // do not highlight "0" as active everywhere
@@ -1370,7 +1407,7 @@ class Admin extends Origin
 
 				echo "<a href='$selectUrl'", bold($active, $class), " data-primary='true' title='$name'>$name</a>";
 
-				if ($this->settings->isNavigationDual() && $supportStructure) {
+				if ($dualLinks && $supportStructure) {
 					echo " <a href='$tableUrl' title='", lang('Show structure'), "' class='secondary'>", icon_solo("structure"), "</a>";
 				}
 			} else {
@@ -1384,7 +1421,7 @@ class Admin extends Origin
 					echo "<span data-primary='true'", bold($active, $class), ">$name</span>";
 				}
 
-				if ($this->settings->isNavigationDual()) {
+				if ($dualLinks) {
 					echo " <a href='$selectUrl' title='", lang('Select data'), "' class='secondary'>", icon_solo("data"), "</a>";
 				}
 			}
@@ -1393,7 +1430,7 @@ class Admin extends Origin
 		}
 
 		echo "</menu></nav>\n";
-		echo script("initTablesList(" . json_encode($this->admin->getDatabase()) . ");");
+		echo script("initTablesList(" . json_encode($this->admin->getDatabase(), JSON_HEX_TAG) . ");");
 	}
 
 	public function getSettingsRows(int $groupId): array
@@ -1406,6 +1443,7 @@ class Admin extends Origin
 				"" => lang('Default'),
 				Config::NavigationSimple => lang('Simple'),
 				Config::NavigationDual => lang('Dual'),
+				Config::NavigationHover => lang('Dual on hover'),
 				Config::NavigationReversed => lang('Reversed')
 			];
 			$default = $options[$this->config->getNavigationMode()];

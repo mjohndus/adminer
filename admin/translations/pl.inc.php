@@ -16,6 +16,11 @@ return [
 	'%s must return an array.' => '%s musi zwrócić tablicę.',
 	'%s and %s must return an object created by %s method.' => '%s i %s muszą zwracać obiekt utworzony przez metodę %s.',
 
+	// Accessibility
+	'Skip to main content' => 'Przejdź do głównej treści', // by Claude Fable 5.1
+	'Skip to menu' => 'Przejdź do menu', // by Claude Fable 5.1
+	'Skip to table list' => 'Przejdź do listy tabel', // by Claude Fable 5.1
+
 	// Login
 	'System' => 'Rodzaj bazy',
 	'Server' => 'Serwer',
@@ -52,10 +57,12 @@ return [
 	// Settings
 	'Language' => 'Język',
 
+	'Menu' => 'Menu',
 	'Home' => 'Strona główna',
 	'Refresh' => 'Odśwież',
 	'Info' => 'Informacje',
 	'More information.' => 'Więcej informacji.',
+	'Close' => 'Zamknij', // by Claude Fable 5.1
 
 	// Privileges
 	'Privileges' => 'Uprawnienia użytkowników',
@@ -174,6 +181,7 @@ return [
 	'Invalid schema.' => 'Nieprawidłowy schemat.',
 
 	// Table list
+	'All' => 'Wszystko', // checkbox selecting all tables and views
 	'Engine' => 'Składowanie',
 	'engine' => 'składowanie',
 	'Collation' => 'Porównywanie znaków',
@@ -219,6 +227,7 @@ return [
 	'Options' => 'Opcje',
 	'Comment' => 'Komentarz',
 	'Default value' => 'Wartość domyślna',
+	'default value' => 'wartość domyślna',
 	'Drop' => 'Usuń',
 	'Drop %s?' => 'Usunąć %s?',
 	'Are you sure?' => 'Czy na pewno?',
@@ -254,12 +263,12 @@ return [
 	'Add next' => 'Dodaj następny',
 	'Index Type' => 'Typ indeksu',
 	'length' => 'długość',
+	'operator class' => 'klasa operatorów',
 	'Algorithm' => 'Algorytm',
 	'Condition' => 'Warunek',
 
 	// Foreign keys
 	'Foreign keys' => 'Klucze obce',
-	'Foreign key' => 'Klucz obcy',
 	'Foreign key has been dropped.' => 'Klucz obcy został usunięty.',
 	'Foreign key has been altered.' => 'Klucz obcy został zmieniony.',
 	'Foreign key has been created.' => 'Klucz obcy został utworzony.',
@@ -269,7 +278,8 @@ return [
 	'Target' => 'Cel',
 	'Add column' => 'Dodaj kolumnę',
 	'Alter' => 'Zmień',
-	'Add foreign key' => 'Dodaj klucz obcy',
+	'Alter foreign key' => 'Zmień klucz obcy',
+	'Create foreign key' => 'Utwórz klucz obcy',
 	'ON DELETE' => 'W przypadku usunięcia',
 	'ON UPDATE' => 'W przypadku zmiany',
 	'Source and target columns must have the same data type, there must be an index on the target columns and referenced data must exist.' => 'Źródłowa i docelowa kolumna muszą być tego samego typu, powinien istnieć indeks na docelowej kolumnie oraz muszą istnieć dane referencyjne.',
@@ -324,7 +334,6 @@ return [
 
 	// Triggers
 	'Triggers' => 'Wyzwalacze',
-	'Add trigger' => 'Dodaj wyzwalacz',
 	'Trigger has been dropped.' => 'Wyzwalacz został usunięty.',
 	'Trigger has been altered.' => 'Wyzwalacz został zmieniony.',
 	'Trigger has been created.' => 'Wyzwalacz został utworzony.',
@@ -355,6 +364,7 @@ return [
 	'Full table scan' => 'Wymaga pełnego przeskanowania tabeli',
 	'Unable to select the table' => 'Nie udało się pobrać danych z tabeli',
 	'Search data in tables' => 'Wyszukaj we wszystkich tabelach',
+	'All rows on this page' => 'Wszystkie wiersze na tej stronie',
 	'No rows.' => 'Brak rekordów.',
 	'%d / ' => '%d / ',
 	'%d row(s)' => [
@@ -365,7 +375,7 @@ return [
 	'Page' => 'Strona',
 	'last' => 'ostatni',
 	'Load more data' => 'Wczytaj więcej danych',
-	'Loading' => 'Wczytywanie',
+	'Loading…' => 'Wczytywanie…',
 	'Whole result' => 'Wybierz wszystkie',
 	'%d byte(s)' => [
 		'%d bajt',
@@ -387,7 +397,7 @@ return [
 	'Save' => 'Zapisz zmiany',
 	'Save and continue edit' => 'Zapisz i kontynuuj edycję',
 	'Save and insert next' => 'Zapisz i dodaj następny',
-	'Saving' => 'Zapisywanie',
+	'Saving…' => 'Zapisywanie…',
 	'Selected' => 'Zaznaczone',
 	'Clone' => 'Duplikuj',
 	'Delete' => 'Usuń',
@@ -419,6 +429,7 @@ return [
 	// Settings
 	'Settings' => 'Ustawienia',
 	'Default' => 'Domyślne',
+	'Theme' => 'Motyw', // by Claude Fable 5.1
 	'Color scheme' => 'Motyw kolorów',
 	'By system' => 'Według systemu',
 	'Light' => 'Jasny',
@@ -426,6 +437,7 @@ return [
 	'Navigation mode' => 'Tryb nawigacji',
 	'Simple' => 'Prosty',
 	'Dual' => 'Podwójny',
+	'Dual on hover' => 'Podwójny po najechaniu', // by Claude Fable 5.1
 	'Reversed' => 'Odwrócony',
 	'Layout of main navigation with table links.' => 'Układ głównej nawigacji z odnośnikami do tabel.',
 	'Table links' => 'Odnośniki do tabel',
@@ -450,4 +462,5 @@ return [
 	'Data table' => 'Tabela danych',
 	'Edit form' => 'Formularz edycji',
 	'Ask %s' => 'Zapytaj %s',
+	'Views' => 'Perspektywy', // by Claude Opus 5.5
 ];
