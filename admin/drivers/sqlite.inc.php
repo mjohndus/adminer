@@ -8,7 +8,8 @@ use SQLite3Result;
 
 Drivers::add("sqlite", "SQLite", ["SQLite3", "PDO_SQLite"]);
 
-if (isset($_GET["sqlite"])) {
+// Only one driver can be active.
+if (isset($_GET["sqlite"]) && !defined("AdminNeo\DRIVER")) {
 	define("AdminNeo\DRIVER", "sqlite");
 	define("AdminNeo\DIALECT", "sqlite");
 
@@ -23,6 +24,9 @@ if (isset($_GET["sqlite"])) {
 			public function open(string $server, string $username, string $password): bool
 			{
 				$this->sqlite = new SQLite3($server);
+				if (method_exists($this->sqlite, "setAuthorizer")) { // PHP 8.0+
+					$this->sqlite->setAuthorizer([$this, "authorize"]);
+				}
 
 				$this->version = $this->sqlite->version()["versionString"];
 
@@ -111,7 +115,15 @@ if (isset($_GET["sqlite"])) {
 		{
 			public function open(string $server, string $username, string $password): bool
 			{
-				return $this->dsn(DRIVER . ":$server", "", "");
+				if (!$this->dsn(DRIVER . ":$server", "", "", [], class_exists('Pdo\Sqlite') ? 'Pdo\Sqlite' : 'PDO')) {
+					return false;
+				}
+
+				if (method_exists($this->pdo, "setAuthorizer")) { // PHP 8.5+
+					$this->pdo->setAuthorizer([$this, "authorize"]);
+				}
+
+				return true;
 			}
 
 			public function quote(string $string): string
@@ -129,6 +141,9 @@ if (isset($_GET["sqlite"])) {
 	if (class_exists('AdminNeo\SqLiteConnectionBase')) {
 		class SqLiteConnection extends SqLiteConnectionBase
 		{
+			/** @var bool */
+			private $attaching = false;
+
 			protected function __construct()
 			{
 				parent::__construct();
@@ -138,6 +153,11 @@ if (isset($_GET["sqlite"])) {
 
 			public function open(string $server, string $username, string $password): bool
 			{
+				// SQLite can handle a name starting with "file:" as a URI, the opened file would differ from the checked name.
+				if (stripos($server, "file:") === 0) {
+					$server = "./$server";
+				}
+
 				if (!parent::open($server, $username, $password)) {
 					return false;
 				}
@@ -155,12 +175,31 @@ if (isset($_GET["sqlite"])) {
 
 			public function selectDatabase(string $name): bool
 			{
+				// SQLite handles a name starting with "file:" as a URI, so ATTACH would open a file
+				// differing from the checked name. Neutralize it, like open() does.
+				if (stripos($name, "file:") === 0) {
+					$name = "./$name";
+				}
+
+				$this->attaching = true;
 				// is_readable - SQLite 3
-				if (is_readable($name) && $this->query("ATTACH " . $this->quote(preg_match("~(^[/\\\\]|:)~", $name) ? $name : dirname($_SERVER["SCRIPT_FILENAME"]) . "/$name") . " AS a")) {
+				$attached = is_readable($name) && $this->query("ATTACH " . $this->quote(preg_match("~(^[/\\\\]|:)~", $name) ? $name : dirname($_SERVER["SCRIPT_FILENAME"]) . "/$name") . " AS a");
+				$this->attaching = false;
+
+				if ($attached) {
 					return self::open($name, "", "");
 				}
 
 				return false;
+			}
+
+			/**
+			 * Denies attaching a file, also used by VACUUM INTO.
+			 */
+			public function authorize(int $action, ?string $arg1): int
+			{
+				// 24 - SQLITE_ATTACH, "" is a temporary database used also by VACUUM.
+				return ($action != 24 || $arg1 === "" || $this->attaching ? 0 : 1); // SQLITE_OK, SQLITE_DENY
 			}
 		}
 	}
@@ -572,6 +611,13 @@ if (isset($_GET["sqlite"])) {
 
 	function check_sqlite_name(string $name): bool
 	{
+		// SQLite handles a name starting with "file:" as a URI, where the part after "?" or "#" is not a part of the file name,
+		// so the opened file would differ from the checked name - reject such names.
+		if (stripos($name, "file:") === 0) {
+			Connection::get()->setError(lang('Invalid database.'));
+			return false;
+		}
+
 		// avoid creating PHP files on unsecured servers
 		$extensions = "db|sdb|sqlite";
 		if (!preg_match("~^[^\\0]*\\.($extensions)\$~", $name)) {
@@ -618,7 +664,7 @@ if (isset($_GET["sqlite"])) {
 		return true;
 	}
 
-	function rename_database(string $name, string $collation): bool
+	function rename_database(string $name, ?string $collation): bool
 	{
 		if (!check_sqlite_name($name)) {
 			return false;
@@ -938,10 +984,6 @@ if (isset($_GET["sqlite"])) {
 		];
 	}
 
-	function begin() {
-		return queries("BEGIN");
-	}
-
 	function last_id($result)
 	{
 		return Connection::get()->getValue("SELECT LAST_INSERT_ROWID()");
@@ -1023,6 +1065,6 @@ if (isset($_GET["sqlite"])) {
 
 	function support(string $feature): bool
 	{
-		return preg_match('~^(check|columns|database|drop_col|dump|indexes|descidx|move_col|sql|status|table|trigger|variables|view|view_trigger)$~', $feature);
+		return preg_match('~^(check|columns|database|drop_col|dump|indexes|descidx|move_col|sql|status|table|transaction_ddl|trigger|variables|view|view_trigger)$~', $feature);
 	}
 }

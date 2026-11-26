@@ -17,7 +17,7 @@ class Admin extends Origin
 	public function getServiceTitle(): string
 	{
 		return "<a href='" . h(HOME_URL) . "'><svg role='img' class='logo' width='133' height='28'><desc>AdminNeo</desc>" .
-			"<use href='" . link_files("logo.svg", ["images/logo.svg"]) . "#logo'/></svg></a>";
+			"<use href='" . h(link_files("logo.svg", ["images/logo.svg"])) . "#logo'/></svg></a>";
 	}
 
 	/**
@@ -45,16 +45,16 @@ class Admin extends Origin
 	 */
 	public function printToHead(): void
 	{
-		echo "<link rel='stylesheet' href='", link_files("jush.css", [
+		echo "<link rel='stylesheet' href='", h(link_files("jush.css", [
 			"../vendor/vrana/jush/jush.css",
 			"themes/default/jush.css",
-		]), "'>";
+		])), "'>";
 
 		if (!$this->admin->isLightModeForced()) {
 			echo "<link rel='stylesheet' " . (!$this->admin->isDarkModeForced() ? "media='(prefers-color-scheme: dark)' " : "") . "href='";
-			echo link_files("jush-dark.css", [
+			echo h(link_files("jush-dark.css", [
 				"themes/default/jush-dark.css",
-			]);
+			]));
 			echo "'>\n";
 		}
 
@@ -447,7 +447,7 @@ class Admin extends Origin
 		$showList = isset($partitionInfo["partition_names"]);
 
 		echo "<p>";
-		echo "<code class='jush-" . DIALECT . "'>BY {$partitionInfo["partition_by"]} ({$partitionInfo["partition"]})</code>";
+		echo "<code class='jush-" . DIALECT . "'>BY " . h($partitionInfo["partition_by"]) . " (" . h($partitionInfo["partition"]) . ")</code>";
 		if (!$showList && isset($partitionInfo["partitions"])) {
 			echo " " . lang('Partitions') . ": " . h($partitionInfo["partitions"]);
 		}
@@ -611,7 +611,7 @@ class Admin extends Origin
 		foreach ($indexes as $i => $index) {
 			if ($index["type"] == "FULLTEXT") {
 				echo "<div>(<i>" . implode("</i>, <i>", array_map('AdminNeo\h', $index["columns"])) . "</i>) AGAINST";
-				echo "<input type='text' class='input' name='fulltext[$i]' value='" . h($_GET["fulltext"][$i] ?? null) . "'>";
+				echo "<input type='text' class='input' name='fulltext[" . h($i) . "]' value='" . h($_GET["fulltext"][$i] ?? null) . "'>";
 				echo script("qsl('input').oninput = selectFieldChange;", "");
 				if (DIALECT == 'sql') {
 					echo checkbox("boolean[$i]", 1, isset($_GET["boolean"][$i]), "BOOL");
@@ -621,7 +621,8 @@ class Admin extends Origin
 		}
 
 		$change_next = "this.parentNode.firstChild.onchange();";
-		foreach (array_merge((array)$_GET["where"], [[]]) as $i => $val) {
+		// Keys are not preserved, they come from the URL and are printed to the name attributes.
+		foreach (array_merge(array_values((array)$_GET["where"]), [[]]) as $i => $val) {
 			if (!$val || ("$val[col]$val[val]" != "" && in_array($val["op"], $this->getOperators()))) {
 				echo "<div>";
 				echo select_input(
@@ -680,7 +681,8 @@ class Admin extends Origin
 	public function printSelectionLimit(int $limit): void
 	{
 		echo "<fieldset><legend>" . lang('Limit') . "</legend><div class='fieldset-content'>";
-		echo "<input type='number' name='limit' class='input size' value='$limit'>";
+		// 0 is printed as an empty value, both mean no limit.
+		echo "<input type='number' name='limit' class='input size' value='" . h($limit ?: "") . "'>";
 		echo script("qsl('input').oninput = selectFieldChange;", "");
 		echo "</div></fieldset>\n";
 	}
@@ -760,6 +762,11 @@ class Admin extends Origin
 	 */
 	public function processSelectionSearch(array $fields, array $indexes): array
 	{
+		if (isset($_GET["where"])) {
+			// Malformed conditions are removed here also for the code that reads them later.
+			$_GET["where"] = validate_search_conditions($_GET["where"]);
+		}
+
 		$return = [];
 
 		foreach ($indexes as $i => $index) {
@@ -775,18 +782,40 @@ class Admin extends Origin
 			$val = $where["val"];
 
 			if ("$col$val" != "" && in_array($op, $this->getOperators())) {
+				if ($op == "SQL" && (!$_POST || !verify_token())) {
+					Connection::get()->setUntrusted(true); // The condition can be sent by GET which is not protected by the CSRF token.
+				}
+
 				$conditions = [];
 
-				foreach (($col != "" ? [$col => $fields[$col]] : $fields) as $name => $field) {
+				// Numeric value, or a list of them for IN, e.g. -1.5,2
+				$integer = '-?\d+';
+				$number = '-?(\d+(\.\d*)?|\.\d+)';
+				$isList = preg_match('~IN$~', $op);
+				$integerPattern = "~^$integer" . ($isList ? "(,$integer)*" : "") . "$~";
+				$numberPattern = "~^$number" . ($isList ? "(,$number)*" : "") . "$~";
+
+				// Date with an optional time and time zone, e.g. 2026-01-15 12:30:45+02
+				$datePattern = '~^(\d+)-(\d+)-(\d+)([ T]([01]?\d|2[0-3]):[0-5]\d(:[0-5]\d(\.\d+)?)?(\s*(z|utc|[+-](0?\d|1[0-5])(:?[0-5]\d)?))?)?$~i';
+
+				foreach (($col != "" ? [$col => $fields[$col] ?? []] : $fields) as $name => $field) {
 					$prefix = "";
 					$cond = " $op";
+					// Arrays are not numbers even if their elements are, e.g. integer[]. PostgreSQL compares bit columns as text.
+					$isNumber = preg_match('~' . number_type() . (DIALECT == "pgsql" ? "" : '|bit') . '~', $field["type"]) && !preg_match('~\[~', $field["full_type"]);
 
 					$oidColumn = DIALECT == "pgsql" && $op == "=" && $field["type"] == "oid";
 					if ($oidColumn) {
 						$cond .= " " . $this->admin->processFieldInput($field, $val) . "::regproc";
-					} elseif (preg_match('~IN$~', $op)) {
-						$in = process_length($val);
-						$cond .= " " . ($in != "" ? $in : "(NULL)");
+					} elseif ($isList) {
+						// Compare non-numeric columns with strings, e.g. text = integer is an error in PostgreSQL. So is money = integer.
+						$isNumberList = $isNumber && !(DIALECT == "pgsql" && $field["type"] == "money");
+						$in = [];
+						foreach (parse_search_list($val) as $value) {
+							// Every other value is quoted, it must never get into the query as it was sent.
+							$in[] = $isNumberList && preg_match("~^$number$~", $value) ? $value : q($value);
+						}
+						$cond .= " (" . ($in ? implode(", ", $in) : "NULL") . ")";
 					} elseif ($op == "SQL") {
 						$cond = " $val"; // SQL injection
 					} elseif (preg_match('~^(I?LIKE) %%$~', $op, $match)) {
@@ -801,13 +830,16 @@ class Admin extends Origin
 					if ($col != "" || (
 						// find anywhere
 						isset($field["privileges"]["where"])
-						&& (preg_match('~^[-\d.' . (preg_match('~IN$~', $op) ? ',' : '') . ']+$~', $val) || !preg_match('~' . number_type() . '|bit~', $field["type"]))
-						&& (!preg_match("~[\x80-\xFF]~", $val) || preg_match('~char|text|enum|set~', $field["type"]))
-						&& (!preg_match('~date|timestamp~', $field["type"]) || preg_match('~^\d+-\d+-\d+~', $val))
+						&& (preg_match(preg_match('~^' . int_type() . '$~', $field["type"]) ? $integerPattern : $numberPattern, $val) || !$isNumber)
+						&& (!preg_match("~[\x80-\xFF]~", $val) || preg_match('~char|text|enum|set|keyword~', $field["type"])) // keyword - Elasticsearch
+						&& (!preg_match('~date|timestamp~', $field["type"]) || (preg_match($datePattern, $val, $match) && checkdate((int) $match[2], (int) $match[3], (int) $match[1])))
+						&& Driver::get()->isSearchable($where, $field)
 						// Elasticsearch needs boolean value properly formatted.
-						&& (!preg_match('~^elastic~', DRIVER) || $field["type"] != "boolean" || preg_match('~true|false~', $val))
+						&& (!preg_match('~^elastic~', DRIVER) || $field["type"] != "boolean" || preg_match('~^(true|false)$~i', $val))
 						// Elasticsearch can use regexp only on text and keyword fields.
 						&& (!preg_match('~^elastic~', DRIVER) || strpos($op, "regexp") === false || preg_match('~text|keyword~', $field["type"]))
+						// Elasticsearch has integer types not covered by number_type().
+						&& (!preg_match('~^elastic~', DRIVER) || !preg_match('~^((unsigned_)?long|short|byte)$~', $field["type"]) || preg_match('~^-?\d+$~', $val))
 					)) {
 						if ($oidColumn) {
 							$conditions[] = $prefix . idf_escape($name) . $cond;
@@ -841,9 +873,13 @@ class Admin extends Origin
 	public function processSelectionOrder(array $fields, array $indexes): array
 	{
 		$return = [];
+		// ClickHouse uses backslash as an escape character in identifiers, so it could hide the closing quote.
+		$escape = (DIALECT == "clickhouse" ? '\\\\' : '');
+		// TODO MS SQL uses []
+		$function = '~^((COUNT\(DISTINCT |[A-Z0-9_]+\()(`(?:[^`' . $escape . ']|``)+`|"(?:[^"' . $escape . ']|"")+")\)|COUNT\(\*\))$~';
 		foreach ((array)$_GET["order"] as $key => $val) {
 			if ($val != "") {
-				$return[] = (preg_match('~^((COUNT\(DISTINCT |[A-Z0-9_]+\()(`(?:[^`]|``)+`|"(?:[^"]|"")+")\)|COUNT\(\*\))$~', $val) ? $val : idf_escape($val)) // TODO MS SQL uses []
+				$return[] = (preg_match($function, $val) ? $val : idf_escape($val))
 					. (isset($_GET["desc"][$key])
 						? " DESC" . (DIALECT == "pgsql" && ($fields[$val]["null"] ?? null) ? " NULLS LAST" : "")
 						: ""
@@ -926,10 +962,6 @@ class Admin extends Origin
 			return $value; // TODO SQL injection
 		}
 
-		if (isset($field["full_type"])) {
-			$this->admin->detectJson($field["full_type"], $value, false);
-		}
-
 		$name = $field["field"];
 		$return = q($value);
 		if (preg_match('~^(now|getdate|uuid)$~', $function)) {
@@ -945,7 +977,8 @@ class Admin extends Origin
 		} elseif (preg_match('~^(md5|sha1|password|encrypt)$~', $function)) {
 			$return = "$function($return)";
 		} elseif ($field["type"] == "boolean" && DIALECT == "elastic") {
-			$return = $return == "0" ? "false" : "true";
+			// The checkbox sends 1 or 0, the text comes from a search or from the inline edit.
+			$return = preg_match('~^(0|false)$~i', $value) ? "false" : "true";
 		}
 
 		return unconvert_field($field, $return);
@@ -1007,10 +1040,20 @@ class Admin extends Origin
 			// Applies to all formats including the ones added by plugins.
 			header("Content-Type: application/x-gzip");
 
-			ob_start(function (string $string): string {
-				// ob_start() callback receives an optional parameter $phase but gzencode() accepts optional parameter $level
-				return gzencode($string);
-			}, 1e6);
+			if (function_exists('deflate_init')) {
+				// A single gzip stream is readable also by decoders that read only the first member, e.g. gzdecode().
+				$context = deflate_init(ZLIB_ENCODING_GZIP);
+
+				ob_start(function (string $string, int $phase) use ($context): string {
+					return deflate_add($context, $string, ($phase & PHP_OUTPUT_HANDLER_END ? ZLIB_FINISH : ZLIB_NO_FLUSH));
+				}, 1e6);
+			} else {
+				// Each chunk is compressed into a separate gzip member, PHP < 7.0.
+				ob_start(function (string $string): string {
+					// ob_start() callback receives an optional parameter $phase but gzencode() accepts optional parameter $level
+					return gzencode($string);
+				}, 1e6);
+			}
 		}
 	}
 
@@ -1125,14 +1168,16 @@ class Admin extends Origin
 								continue;
 							}
 
-							$field = $fields[$key];
+							// A column with a function, e.g. MAX(id), is not a field of the table, so its type is not known.
+							$field = $fields[$key] ?? null;
 							$row[$key] = ($val === null ? "NULL"
 								: ($val === false ? 0
+								: (!$field ? (is_utf8($val) ? q($val) : Driver::get()->quoteBinary($val))
 								: unconvert_field($field, preg_match(number_type(), $field["type"]) && !preg_match('~\[~', $field["full_type"]) && is_numeric($val)
 									? $val
 									: (!is_blob($field) || is_utf8($val) ? q($val) : Driver::get()->quoteBinary($val))
 								)
-							));
+							)));
 						}
 
 						$s = ($max_packet ? "\n" : " ") . "(" . implode(",\t", $row) . ")";

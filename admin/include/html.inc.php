@@ -124,7 +124,7 @@ function icon(string $id, ?string $class = null): string
 {
 	$id = h($id);
 
-	return "<svg class='icon ic-$id $class'><use href='" . link_files("icons.svg", ["images/icons.svg"]) . "#$id'/></svg>";
+	return "<svg class='icon ic-$id $class'><use href='" . h(link_files("icons.svg", ["images/icons.svg"])) . "#$id'/></svg>";
 }
 
 /** Generate HTML checkbox
@@ -138,7 +138,7 @@ function icon(string $id, ?string $class = null): string
 * @return string
 */
 function checkbox($name, $value, $checked, $label = "", $onclick = "", $class = "", $labelled_by = "") {
-	$return = "<input type='checkbox' name='$name' value='" . h($value) . "'"
+	$return = "<input type='checkbox' name='" . h($name) . "' value='" . h($value) . "'"
 		. ($checked ? " checked" : "")
 		. ($labelled_by ? " aria-labelledby='$labelled_by'" : "")
 		. ">"
@@ -332,6 +332,9 @@ function hidden_fields_get(): void
 	if (sid()) {
 		echo input_hidden(session_name(), session_id());
 	}
+	if ($_GET["ext"]) {
+		echo input_hidden("ext", $_GET["ext"]);
+	}
 	if (SERVER !== null) {
 		echo input_hidden(DRIVER, SERVER);
 	}
@@ -415,8 +418,10 @@ function input($field, $value, $function, bool $autofocus = false): void {
 		$function = null;
 	}
 
-	if (in_array($field["type"], Driver::get()->getUserTypes())) {
-		$enums = type_values($types[$field["type"]]);
+	// Fields of a schemaless table created in edit.inc.php have no type.
+	$type_id = Driver::get()->getUserTypeId($field["type"] ?? "");
+	if ($type_id) {
+		$enums = type_values($type_id);
 		if ($enums) {
 			$field["type"] = "enum";
 			$field["length"] = $enums;
@@ -495,7 +500,7 @@ function input($field, $value, $function, bool $autofocus = false): void {
 		}
 		// type='date' and type='time' display localized value which may be confusing, type='datetime' uses 'T' as date and time separator
 		echo "<input class='input'"
-			. ((!$has_function || $function === "") && preg_match('~(?<!o)int(?!er)~', $field["type"]) && !preg_match('~\[]~', $field["full_type"]) ? " type='number'" : "")
+			. ((!$has_function || $function === "") && preg_match('~^' . int_type() . '$~', $field["type"]) && !preg_match('~\[]~', $field["full_type"]) ? " type='number'" : "")
 			. ($function != "now" ? " value='" . h($value) . "'" : " data-last-value='" . h($value) . "'")
 			. ($maxlength ? " data-maxlength='$maxlength'" : "")
 			. (preg_match('~char|binary~', $field["type"]) && $maxlength > 20 ? " size='44'" : "")
@@ -572,6 +577,11 @@ function process_input($field) {
 		return $value;
 	}
 
+	// Compact formatted JSON values. Values in search conditions are kept as they are.
+	if ($function != "SQL" && isset($field["full_type"])) {
+		Admin::get()->detectJson($field["full_type"], $value, false);
+	}
+
 	return Admin::get()->processFieldInput($field, $value, $function);
 }
 
@@ -626,7 +636,7 @@ function search_tables(): void
  */
 function help_script(string $text, bool $side = false): string
 {
-	return script("initHelpFor(qsl('select, input'), '" . h($text) . "', $side);", "");
+	return script("initHelpFor(qsl('select, input'), '" . js_escape($text) . "', $side);", "");
 }
 
 /**

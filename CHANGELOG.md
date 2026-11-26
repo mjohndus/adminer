@@ -1,30 +1,127 @@
 Changelog
 =========
 
-AdminNeo 5.8.1
---------------
+AdminNeo 5.9.1 (2026-11-16)
+---------------------------
+
+### Changes
+
+- Permanent login: Set after a successful login only, expire on the server after 30 days
+
+### Bugfixes
+
+- Login: Fix connecting to privileged ports via special characters in the server (GHSA-v65x-fj5j-4m4g)
+- Login: Fix bypassing the checks of an empty username and password via a NUL byte
+- Select: Reject the SQL operator sent without a proof of the same origin (GHSA-8g9x-wx4c-x88j)
+- Select: Fix SQL injection via the values searched by IN and NOT IN (GHSA-r6wc-chqc-5wq3)
+- Select: Fix HTML injection via the keys of search conditions (GHSA-h6gv-2whh-8c86)
+- Select: Fix HTML injection via the name of a fulltext index (GHSA-qc3x-52c6-p5ff)
+- Select: Fix fatal error on malformed search conditions in the URL
+- Table structure: Fix HTML injection via a column name in the partition definition (GHSA-4f2v-6gqh-mrrr)
+- Create table: Fix HTML injection via the name of a column type in the help popup (GHSA-379j-gvff-q6mw)
+- Edit: Fix open redirect via the referrer after saving or deleting a record (GHSA-q9rj-wgm8-fg59)
+- Export: Fix fatal error in SQL export of a select with function columns (regression from 5.0.0)
+- Fix HTML injection via the request path in the links to static files
+- Fix fatal error on the server, username or database sent as an array in the URL
+- Fix fatal error on the parameters of two drivers in the URL
+- EditorNeo: Fix XSS via the request path in the autocomplete of a foreign key (GHSA-fr24-68fv-4whc)
+- MySQL: Run queries with the SQL operator in the read-only mode (GHSA-8g9x-wx4c-x88j)
+- MySQL: Fix SQL injection via the name of a geometry column (GHSA-2rwm-w499-38rq)
+- MySQL: Fix export and insert of geometry values, keep their SRID as the `SRID=4326;` prefix of a value
+- PostgreSQL, MS SQL: Fix empty export of a select ordered by a column with a function (regression from 5.7.0)
+- MS SQL: Fix logging in with an empty username and any password (GHSA-w8j4-8pww-wm83)
+- SQLite: Fix creating a database file with a disallowed extension via a file: URI (GHSA-r6xv-mvwg-hfrw, GHSA-2gwx-67mg-hfr3)
+- ClickHouse: Fix injecting HTTP query parameters via the database name (GHSA-gj7f-g8j2-wxxr)
+- ClickHouse: Fix SQL injection via a backslash in the name of a column (GHSA-4xh5-8hm7-7829)
+- ClickHouse: Fix logging in to an account without a password by any password if `defaultPasswordHash` is set (GHSA-h9x9-p972-28q9)
+- ClickHouse: Run queries with the SQL operator in the read-only mode (CSRF)
+- ClickHouse: Fix ordering by a column with an aggregate function
+- MongoDB: Fix updating and deleting other documents via a crafted `_id` or AND, OR in a searched value (GHSA-rxw7-qqf5-2pv8)
+- MongoDB: Fix fatal error when logging in with a password and an empty username
+- Elasticsearch: Fix editing and deleting another document via special characters in an `_id`
+- Elasticsearch: Fix searching and inline editing of the false value in boolean fields (regression from 5.0.0)
+- OtpLoginPlugin: Fix bypassing the OTP code by permanent login (GHSA-xwpg-q47q-pg26)
+- FileUploadPlugin: Disallow uploading SVG files by default to prevent XSS (GHSA-rfx6-xxqx-wfgw)
+- SlugifyEditPlugin: Fix XSS via the name of a slug column (GHSA-cwvq-x3wg-574h)
+- ClaudeSqlPlugin, GeminiSqlPlugin, OpenWebUiPlugin: Fix using the API key without login (GHSA-cjvx-f3xp-vg55)
+- JsonDumpPlugin: Fix invalid JSON in export of binary values, export them as a hex number like `0xff00`
+
+AdminNeo 5.9 (2026-11-01)
+-------------------------
 
 ### Changes
 
 - Add MarkdownDumpPlugin - export of database structure and data to Markdown format
+- Add ClaudeSqlPlugin - AI prompt in SQL command generating the queries with Anthropic Claude
 - Table structure: Show generated columns in SQL syntax
+- Table structure: Copy table structure to clipboard in a selected export format
 - Unify import and export icons
 - Export: Disable structure and data options for formats that do not support them
+- Export: Compress gzip output into a single stream instead of concatenated chunks
+- Navigation: Move the focus between the tables filter and the tables list by arrow keys
+- Alter view, routine and type: Use a transaction instead of a temporary object in PostgreSQL, SQLite, MS SQL (by @vrana)
+- Compiler: Compress translations with the English translation as a dictionary to reduce size (by @vrana)
+- MySQL: Show warnings count of each query in SQL command
+- PostgreSQL: Support range types (by @vrana)
+- PostgreSQL: Show composite, domain and range types next to enums (by @vrana)
+- PostgreSQL: Alter and rename user defined types (by @vrana)
+- PostgreSQL: Add values to an enum type without re-creating it (by @vrana)
+- PostgreSQL: Export all user defined types (by @vrana)
+- Elasticsearch: The driver is no longer beta, it works with Elasticsearch 7, 8 and 9 (by @vrana)
 
 ### Bugfixes
 
+- Select: Disallow modifying data by the SQL operator (CSRF) (by @vrana)
 - Select: Align titles of numeric columns to the right
+- Select: Fix error with an empty limit (regression from 5.3.0)
+- Select: Do not search in integer and decimal columns for dates and other values that are not numbers
+- Select: Compare numbers searched by IN with text and other non-numeric columns as strings
+- Select: Fix searching by IN for decimal and negative numbers
+- Select: Do not reformat JSON values in search conditions
+- Select: Do not search in date and timestamp columns for invalid dates or dates followed by other text
+- Select: Report an unknown column in search instead of a fatal error (by @vrana, regression from 4.9.2)
 - Export: Fix gzip compression for formats added by plugins
 - Edit: Fix JavaScript error for blob fields with file upload
+- Edit: Do not save invalid JSON values as null with enabled jsonValuesAutoFormat
+- Editor: Compact JSON values on saving with enabled jsonValuesAutoFormat like in AdminNeo
+- SQL command: Show error of a later query in a batch
+- SQL command: Rollback an unfinished transaction so that it doesn't break the following queries (by @vrana)
 - Fix parse error of the compiled file in PHP 5 (regression from 5.6.0)
 - Alter table: Fix toggling of column comments (regression from 5.8.0)
+- Alter routine: Fix altering a routine with a name longer than 42 characters (by @vrana)
 - MySQL: Fix lost charset introducers and parameters starting with "_" in routine definitions (issue #197)
+- MySQL: Fix exhausted memory in export of big tables (issue #211, regression from 5.1.0)
+- MySQL: Fix displaying multiple results of SQL command with the PDO extension
+- MySQL: Fix length of routine parameters with unsigned or zerofill, support MySQL < 8 again (by @vrana, regression from 5.5.0)
+- MySQL: Fix error on searching in all columns of a table with bit columns
 - PostgreSQL, MS SQL: Fix foreign key statements printed into non-SQL export formats
 - PostgreSQL: Fix missing check constraints in export of all schemas
 - PostgreSQL: Do not mark identity columns as Auto increment
+- PostgreSQL: Fix editing values of user defined enums containing an apostrophe or a backslash
+- PostgreSQL: Fix exporting enum values containing an apostrophe
+- PostgreSQL: Fix editing and deleting all rows sharing the value of a partial index (regression from 5.5.0)
+- PostgreSQL: Fix errors on searching in all columns of uuid, network, time, array and other types
+- PostgreSQL: Fix searching by regular expression in non-text columns
+- PostgreSQL: Fix searching by IN in bit and money columns
+- Elasticsearch: Fix searching data in all tables (regression from 5.1.0)
+- Elasticsearch: Fix searching text in all columns of an index with long, short or byte fields
+- Elasticsearch: Fix searching in all columns with the must operators
+- Elasticsearch: Search values with accented letters also in keyword fields
 - MS SQL: Fix reading and editing of varchar(max) and similar columns
 - MS SQL: Read complete view definitions from the selected schema (by @kabachello)
+- MS SQL, Oracle: Fix transactions, e.g. a failed import or renaming a view
+- SQLite: Disallow ATTACH and VACUUM INTO prefixed by BOM (by @vrana, GHSA-ggh8-3chg-48w7)
+- SQLite: Disallow ATTACH and VACUUM INTO prefixed by a semicolon (GHSA-q5vv-mh5m-fxvm)
+- SQLite: Disallow ATTACH and VACUUM INTO in export of SQL command (GHSA-66c7-5wxm-rfgj)
+- SQLite: Deny writing files by an authorizer (PHP 8.0+, PDO PHP 8.5+) (by @vrana)
+- SQLite: Skip empty queries in SQL command instead of reporting an error
 - SQLite: Fix reading of generated columns defined on one line or without GENERATED ALWAYS keywords
+- MongoDB, SimpleDB: Show a message after creating a table (regression from 5.8.0)
+- PDO: Fix fatal error on a database error without an error number (regression from 5.1.0)
+- TableLoginPlugin: Restrict sending database credentials only to allowed server (GHSA-rgjx-wcgv-pw7g)
+- GeminiSqlPlugin: Fix JavaScript syntax error in older browsers
+
+(Ported relevant changes from Adminer 6.0.0 • part 4)
 
 AdminNeo 5.8.0 (2026-09-15)
 ---------------------------

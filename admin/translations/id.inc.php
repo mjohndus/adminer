@@ -49,6 +49,7 @@ return [
 	'Session support must be enabled.' => 'Dukungan sesi harus aktif.',
 	'Session expired, please login again.' => 'Sesi habis, silakan masuk lagi.',
 	'%s version: %s through PHP extension %s' => 'Versi %s: %s dengan ekstensi PHP %s',
+	'%s requires at least %s.' => '%s memerlukan setidaknya %s.', // e.g. 'AdminNeo requires at least Elasticsearch 7.' // by Claude Fable 5.1
 
 	// Settings
 	'Language' => 'Bahasa',
@@ -126,6 +127,7 @@ return [
 	'save' => 'simpan',
 	'Format' => 'Format',
 	'Data' => 'Data',
+	'Copy as <span>%s</span>' => 'Salin sebagai <span>%s</span>', // by Claude Fable 5.1
 
 	// Databases
 	'Database' => 'Basis data',
@@ -306,6 +308,7 @@ return [
 	'Create type' => 'Buat jenis',
 	'Type has been dropped.' => 'Jenis berhasil dihapus.',
 	'Type has been created.' => 'Jenis berhasil dibuat.',
+	'Type has been altered.' => 'Jenis berhasil diubah.', // by Claude Opus 5
 	'Alter type' => 'Ubah jenis',
 
 	// Triggers
@@ -383,6 +386,7 @@ return [
 	'Lists' => 'Daftar',
 	'Network' => 'Jaringan',
 	'Geometry' => 'Geometri',
+	'Ranges' => 'Rentang', // by Claude Fable 5.1
 	'Relations' => 'Relasi',
 
 	// Editor - data values

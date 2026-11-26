@@ -49,6 +49,7 @@ return [
 	'Session support must be enabled.' => 'Istuntotuki on oltava päällä.',
 	'Session expired, please login again.' => 'Istunto vanhentunut, kirjaudu uudelleen.',
 	'%s version: %s through PHP extension %s' => '%s versio: %s PHP-laajennuksella %s',
+	'%s requires at least %s.' => '%s vaatii vähintään %s.', // e.g. 'AdminNeo requires at least Elasticsearch 7.' // by Claude Fable 5.1
 
 	// Settings
 	'Language' => 'Kieli',
@@ -135,6 +136,7 @@ return [
 	'save' => 'tallenna',
 	'Format' => 'Muoto',
 	'Data' => 'Data',
+	'Copy as <span>%s</span>' => 'Kopioi muodossa <span>%s</span>', // by Claude Fable 5.1
 
 	// Databases
 	'Database' => 'Tietokanta',
@@ -315,6 +317,7 @@ return [
 	'Create type' => 'Luo tyyppi',
 	'Type has been dropped.' => 'Tyyppi poistettiin.',
 	'Type has been created.' => 'Tyyppi luotiin.',
+	'Type has been altered.' => 'Tyyppiä muutettiin.', // by Claude Opus 5
 	'Alter type' => 'Muuta tyyppiä',
 
 	// Triggers
@@ -398,6 +401,7 @@ return [
 	'Lists' => 'Luettelot',
 	'Network' => 'Verkko',
 	'Geometry' => 'Geometria',
+	'Ranges' => 'Välit', // by Claude Fable 5.1
 	'Relations' => 'Suhteet',
 
 	// Editor - data values

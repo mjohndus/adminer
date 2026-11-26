@@ -49,6 +49,7 @@ return [
 	'Session support must be enabled.' => 'Cần phải bật session.',
 	'Session expired, please login again.' => 'Phiên làm việc đã hết, hãy đăng nhập lại.',
 	'%s version: %s through PHP extension %s' => 'Phiên bản %s: %s (PHP extension: %s)',
+	'%s requires at least %s.' => '%s yêu cầu ít nhất %s.', // e.g. 'AdminNeo requires at least Elasticsearch 7.' // by Claude Fable 5.1
 
 	// Settings
 	'Language' => 'Ngôn ngữ',
@@ -126,6 +127,7 @@ return [
 	'save' => 'lưu',
 	'Format' => 'Định dạng',
 	'Data' => 'Dữ liệu',
+	'Copy as <span>%s</span>' => 'Sao chép dưới dạng <span>%s</span>', // by Claude Fable 5.1
 
 	// Databases
 	'Database' => 'Cơ sở dữ liệu',
@@ -306,6 +308,7 @@ return [
 	'Create type' => 'Tạo kiểu',
 	'Type has been dropped.' => 'Đã xoá kiểu.',
 	'Type has been created.' => 'Đã tạo kiểu.',
+	'Type has been altered.' => 'Đã sửa kiểu.', // by Claude Opus 5
 	'Alter type' => 'Sửa kiểu dữ liệu',
 
 	// Triggers
@@ -383,6 +386,7 @@ return [
 	'Lists' => 'Danh sách',
 	'Network' => 'Mạng',
 	'Geometry' => 'Toạ độ',
+	'Ranges' => 'Khoảng', // by Claude Fable 5.1
 	'Relations' => 'Quan hệ',
 
 	// Editor - data values

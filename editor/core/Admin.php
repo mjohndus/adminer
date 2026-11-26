@@ -14,7 +14,7 @@ class Admin extends Origin
 	public function getServiceTitle(): string
 	{
 		return "<a href='" . h(HOME_URL) . "'><svg role='img' class='logo' width='130' height='28'><desc>EditorNeo</desc>" .
-			"<use href='" . link_files("logo.svg", ["images/logo.svg"]) . "#logo'/></svg></a>";
+			"<use href='" . h(link_files("logo.svg", ["images/logo.svg"])) . "#logo'/></svg></a>";
 	}
 
 	public function getDatabase(): ?string
@@ -326,6 +326,14 @@ class Admin extends Origin
 
 	public function processSelectionSearch(array $fields, array $indexes): array
 	{
+		if (isset($_GET["where"])) {
+			// Malformed conditions are removed here also for the code that reads them later. Enum values are sent as a list.
+			$enumColumns = array_keys(array_filter($fields, function ($field) {
+				return $field["type"] == "enum";
+			}));
+			$_GET["where"] = validate_search_conditions($_GET["where"], $enumColumns);
+		}
+
 		$return = [];
 
 		foreach ((array)$_GET["where"] as $key => $where) {
@@ -336,12 +344,12 @@ class Admin extends Origin
 			if (($key >= 0 && $col != "") || $val != "") {
 				$conds = [];
 
-				foreach (($col != "" ? [$col => $fields[$col]] : $fields) as $name => $field) {
+				foreach (($col != "" ? [$col => $fields[$col] ?? []] : $fields) as $name => $field) {
 					if ($col != "" || is_numeric($val) || !preg_match(number_type(), $field["type"])) {
 						$name = idf_escape($name);
 
 						if ($col != "" && $field["type"] == "enum") {
-							$conds[] = (in_array(0, $val) ? "$name IS NULL OR " : "") . "$name IN (" . implode(", ", array_map('AdminNeo\q', $val)) . ")";
+							$conds[] = (in_array(0, (array)$val) ? "$name IS NULL OR " : "") . "$name IN (" . implode(", ", array_map('AdminNeo\q', (array)$val)) . ")";
 						} else {
 							$text_type = preg_match('~char|text|enum|set~', $field["type"]);
 							$value = $this->admin->processFieldInput($field, (!$op && $text_type && preg_match('~^[^%]+$~', $val) ? "%$val%" : $val));
@@ -443,7 +451,7 @@ class Admin extends Origin
 					. "<input value='" . h($options) . "' class='input jsonly'>"
 					. "<div></div>"
 					. script("
-						qsl('input').oninput = partial(whisper, '" . ME . "script=complete&source=" . urlencode($table) . "&field=" . urlencode($field["field"]) . "&value=');
+						qsl('input').oninput = partial(whisper, '" . js_escape(ME) . "script=complete&source=" . urlencode($table) . "&field=" . urlencode($field["field"]) . "&value=');
 						qsl('div').onclick = whisperClick;
 					", "");
 			}

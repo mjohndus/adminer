@@ -10,7 +10,8 @@ namespace AdminNeo;
 
 Drivers::add("mssql", "MS SQL", ["SQLSRV", "PDO_SQLSRV", "PDO_DBLIB"]);
 
-if (isset($_GET["mssql"])) {
+// Only one driver can be active.
+if (isset($_GET["mssql"]) && !defined("AdminNeo\DRIVER")) {
 	define("AdminNeo\DRIVER", "mssql");
 	define("AdminNeo\DIALECT", "mssql");
 
@@ -24,6 +25,9 @@ if (isset($_GET["mssql"])) {
 
 			/** @var resource|false */
 			protected $multiResult;
+
+			/** @var bool */
+			private $transaction = false;
 
 			public function getDefaultServerName(): string
 			{
@@ -134,7 +138,53 @@ if (isset($_GET["mssql"])) {
 
 			public function nextResult(): bool
 			{
-				return $this->multiResult && sqlsrv_next_result($this->multiResult);
+				if (!$this->multiResult) {
+					return false;
+				}
+
+				// Returns false on error and null after the last result.
+				$next = sqlsrv_next_result($this->multiResult);
+				if ($next === false) {
+					$this->resolveError();
+				}
+
+				return $next !== null;
+			}
+
+			public function begin(): bool
+			{
+				// BEGIN TRANSACTION sent as a separate query is rolled back at the end of its batch under MARS enabled by default.
+				$this->transaction = sqlsrv_begin_transaction($this->connection);
+				if (!$this->transaction) {
+					$this->resolveError();
+				}
+
+				return $this->transaction;
+			}
+
+			public function commit(): bool
+			{
+				// The API refuses to commit a transaction not started by it.
+				if ($this->transaction && !sqlsrv_commit($this->connection)) {
+					$this->resolveError();
+					return false;
+				}
+
+				$this->transaction = false;
+
+				return true;
+			}
+
+			public function rollback(): bool
+			{
+				if ($this->transaction && !sqlsrv_rollback($this->connection)) {
+					$this->resolveError();
+					return false;
+				}
+
+				$this->transaction = false;
+
+				return true;
 			}
 		}
 
@@ -300,6 +350,23 @@ if (isset($_GET["mssql"])) {
 
 					return $result;
 				}
+
+				public function begin(): bool
+				{
+					// PDO_DBLIB crashes in commit() and rollBack() if an error ended the transaction on the server, e.g. a failed SET IDENTITY_INSERT.
+					// It doesn't use MARS, so BEGIN TRANSACTION sent as a separate query is kept.
+					return (bool)$this->query("BEGIN TRANSACTION");
+				}
+
+				public function commit(): bool
+				{
+					return (bool)$this->query("COMMIT");
+				}
+
+				public function rollback(): bool
+				{
+					return (bool)$this->query("IF @@TRANCOUNT > 0 ROLLBACK");
+				}
 			}
 		}
 
@@ -424,9 +491,11 @@ if (isset($_GET["mssql"])) {
 			return "0x" . bin2hex($string);
 		}
 
-		public function begin()
-        {
-			return queries("BEGIN TRANSACTION");
+		public function begin(): bool
+		{
+			remember_query("BEGIN TRANSACTION");
+
+			return $this->connection->begin();
 		}
 
 		public function tableHelp(string $name, bool $isView = false): ?string
@@ -450,6 +519,12 @@ if (isset($_GET["mssql"])) {
 	function create_driver(Connection $connection): Driver
 	{
 		return MsSqlDriver::create($connection, Admin::get());
+	}
+
+	function is_server_host_valid(string $hostPath): bool
+	{
+		// Host with an optional named instance: host[\instance]
+		return preg_match('~^([^\\\\]+)(\\\\[-\w$]+)?$~Du', $hostPath, $match) && is_host_valid($match[1]);
 	}
 
 	/**
@@ -478,6 +553,13 @@ if (isset($_GET["mssql"])) {
 		$credentials = Admin::get()->getCredentials();
 		if ($credentials[0] == "") {
 			$credentials[0] = "localhost:1433";
+		}
+
+		// An empty username means the integrated authentication with the identity of the web server and the password is ignored.
+		// It is treated as a database without a password, so the default password has to be verified.
+		if ($credentials[1] == "" && $credentials[2] != "" && Admin::get()->verifyDefaultPassword($credentials[2]) !== true) {
+			$error = lang('Invalid server or credentials.');
+			return null;
 		}
 
 		if (!$connection->open($credentials[0], $credentials[1], $credentials[2])) {
@@ -676,9 +758,9 @@ WHERE OBJECT_NAME(i.object_id) = " . q($table)
 		return (bool)queries("DROP DATABASE " . implode(", ", array_map('AdminNeo\idf_escape', $databases)));
 	}
 
-	function rename_database(string $name, string $collation): bool
+	function rename_database(string $name, ?string $collation): bool
 	{
-		if (preg_match('~^[a-z0-9_]+$~i', $collation)) {
+		if ($collation && preg_match('~^[a-z0-9_]+$~i', $collation)) {
 			queries("ALTER DATABASE " . idf_escape(DB) . " COLLATE $collation");
 		}
 		queries("ALTER DATABASE " . idf_escape(DB) . " MODIFY NAME = " . idf_escape($name));
@@ -985,6 +1067,6 @@ WHERE sys1.xtype = 'TR' AND sys2.name = " . q($table)
 
 	function support(string $feature): bool
 	{
-		return preg_match('~^(check|comment|columns|database|drop_col|dump|fast_status|indexes|descidx|scheme|sql|table|trigger|view|view_trigger)$~', $feature); // TODO routine|
+		return preg_match('~^(check|comment|columns|database|drop_col|dump|fast_status|indexes|descidx|scheme|sql|table|transaction_ddl|trigger|view|view_trigger)$~', $feature); // TODO routine|
 	}
 }

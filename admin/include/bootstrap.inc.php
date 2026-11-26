@@ -23,6 +23,14 @@ if ($filter || ini_get("filter.default_flags")) {
 	}
 }
 
+// Parameters used in every request have to be strings, an array sent instead of them is rejected.
+foreach (["file", "ext", "username", "db", "ns"] as $key) {
+	if (isset($_GET[$key]) && !is_string($_GET[$key])) {
+		http_response_code(400);
+		exit;
+	}
+}
+
 if (function_exists("mb_internal_encoding")) {
 	mb_internal_encoding("8bit");
 }
@@ -143,13 +151,19 @@ if (!defined("AdminNeo\DRIVER")) {
 	define("AdminNeo\DIALECT", null);
 }
 
+// A server sent as an array is rejected like the other parameters used in every request.
+if (DRIVER && !is_string($_GET[DRIVER])) {
+	http_response_code(400);
+	exit;
+}
+
 define("AdminNeo\SERVER", DRIVER ? $_GET[DRIVER] : null); // read from pgsql=localhost
 define("AdminNeo\DB", $_GET["db"] ?? ""); // for the sake of speed and size
 define("AdminNeo\BASE_URL", preg_replace('~\?.*~', '', relative_uri()));
 define("AdminNeo\ME", BASE_URL . '?'
 	. (sid() ? session_name() . "=" . urlencode(session_id()) . '&' : '')
-	. (SERVER !== null ? DRIVER . "=" . urlencode(SERVER) . '&' : '')
 	. ($_GET["ext"] ? "ext=" . urlencode($_GET["ext"]) . '&' : '')
+	. (SERVER !== null ? DRIVER . "=" . urlencode(SERVER) . '&' : '')
 	. (isset($_GET["username"]) ? "username=" . urlencode($_GET["username"]) . '&' : '')
 	. (DB != "" ? 'db=' . urlencode(DB) . '&' . (isset($_GET["ns"]) ? "ns=" . urlencode($_GET["ns"]) . "&" : "") : '')
 );

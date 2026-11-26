@@ -4,7 +4,8 @@ namespace AdminNeo;
 
 Drivers::add("simpledb", "SimpleDB", ["SimpleXML + allow_url_fopen"]);
 
-if (isset($_GET["simpledb"])) {
+// Only one driver can be active.
+if (isset($_GET["simpledb"]) && !defined("AdminNeo\DRIVER")) {
 	define("AdminNeo\DRIVER", "simpledb");
 	define("AdminNeo\DIALECT", "simpledb");
 
@@ -346,7 +347,7 @@ if (isset($_GET["simpledb"])) {
 
 	function is_server_host_valid(string $hostPath): bool
 	{
-		return strpos(rtrim($hostPath, '/'), '/') === false;
+		return is_host_valid(rtrim($hostPath, '/'));
 	}
 
 	function connect(bool $primary = false, ?string &$error = null): ?Connection
@@ -502,7 +503,14 @@ if (isset($_GET["simpledb"])) {
 
 	function alter_table(string $table, string $name, array $fields, array $foreign, ?string $comment, string $engine, string $collation, string $auto_increment, ?array $partitioning): bool
 	{
-		return $table == "" && sdb_request('CreateDomain', ['DomainName' => $name]);
+		if ($table != "") {
+			return false;
+		}
+
+		// Function queries() would execute the request as a select, the driver supports SQL.
+		remember_query("CreateDomain " . json_encode(['DomainName' => $name]));
+
+		return (bool)sdb_request('CreateDomain', ['DomainName' => $name]);
 	}
 
 	function drop_tables(array $tables): bool

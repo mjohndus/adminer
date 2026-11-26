@@ -17,6 +17,11 @@ if ($_COOKIE["neo_permanent"]) {
  */
 function validate_server_input(array &$permanent): void
 {
+	// The key of a configured server is not a host, the server itself comes from the configuration.
+	if (Admin::get()->getConfig()->getServer(SERVER)) {
+		return;
+	}
+
 	// Remove socket. E.g:
 	// :/var/www/mysql.sock
 	// 127.0.0.1:/var/www/mysql.sock
@@ -25,6 +30,11 @@ function validate_server_input(array &$permanent): void
 	$server = preg_replace('~:/[-\w.][-\w.:/]*$~D', "", SERVER);
 	if ($server == "") {
 		return;
+	}
+
+	// Reject control characters and whitespaces, parse_url() replaces them with an underscore.
+	if (preg_match('~[[:cntrl:][:space:]]~', $server)) {
+		auth_error($permanent);
 	}
 
 	// Add dummy https scheme for correct parsing.
@@ -62,16 +72,34 @@ function validate_server_input(array &$permanent): void
 	}
 }
 
+/**
+ * Rejects NUL bytes in the username and password.
+ *
+ * Database extensions read them as C strings, which end at the first NUL byte. A username or password starting with
+ * a NUL byte would be empty for them, but not for the checks done before connecting.
+ *
+ * @throws Exception
+ */
+function validate_credentials_input(array &$permanent): void
+{
+	$password = get_password();
+
+	if (strpos($_GET["username"], "\0") !== false || (is_string($password) && strpos($password, "\0") !== false)) {
+		auth_error($permanent);
+	}
+}
+
 if (!function_exists('AdminNeo\is_server_host_valid')) {
 	/**
 	 * Validates server host+path.
 	 *
 	 * Every driver can validate URL host and path by its own rules. Path is forbidden by default, HTTP-based drivers
-	 * allow only '/' as path and Oracle driver validates path according to the EasyConnect URL format.
+	 * allow only '/' as path, Oracle driver validates path according to the EasyConnect URL format and MS SQL driver
+	 * allows a named instance. The host itself has to be always checked by is_host_valid().
 	 */
 	function is_server_host_valid(string $hostPath): bool
 	{
-		return strpos($hostPath, '/') === false;
+		return is_host_valid($hostPath);
 	}
 }
 
@@ -221,14 +249,10 @@ if ($auth) {
 	$db = $server_obj ? $server_obj->getDatabase() : ($auth["db"] ?? "");
 
 	save_login($driver, $server, $username, $password, $db);
+	unset($_SESSION["permanent"][$driver][$server][$username]);
 
-	if ($auth["permanent"]) {
-		$key = implode("-", array_map("base64_encode", [$driver, $server, $username, $db]));
-		$private = Admin::get()->getPrivateKey(true);
-		$encrypted_password = $private ? encrypt_string($password, $private) : false;
-		$permanent[$key] = "$key:" . base64_encode($encrypted_password ?: "");
-		cookie("neo_permanent", implode(" ", $permanent));
-	}
+	// Permanent login is issued after successful authentication.
+	$_SESSION["permanent_request"] = $auth["permanent"] ? permanent_key($driver, $server, $username, $db) : null;
 
 	if (count($_POST) == 1 // 1 - auth
 		|| DRIVER != $driver
@@ -240,7 +264,7 @@ if ($auth) {
 	}
 
 } elseif ($_POST["logout"] && (!$_SESSION["token"] || verify_token())) {
-	foreach (["pwds", "db", "dbs", "queries"] as $key) {
+	foreach (["pwds", "db", "dbs", "queries", "permanent"] as $key) {
 		set_session($key, null);
 	}
 	unset_permanent($permanent);
@@ -253,10 +277,70 @@ if ($auth) {
 	foreach ($permanent as $key => $val) {
 		list(, $cipher) = explode(":", $val);
 		list($driver, $server, $username, $db) = array_map("base64_decode", explode("-", $key));
-		$password = $private ? decrypt_string(base64_decode($cipher), $private) : false;
+		$password = $private ? decrypt_permanent(base64_decode($cipher), $private) : false;
 
 		save_login($driver, $server, $username, $password, $db);
+
+		// Mark the login as restored from a valid permanent login.
+		if ($password !== false) {
+			$_SESSION["permanent"][$driver][$server][$username] = true;
+		}
 	}
+}
+
+function permanent_key(string $driver, string $server, string $username, string $db): string
+{
+	return implode("-", array_map("base64_encode", [$driver, $server, $username, $db]));
+}
+
+/**
+ * Encrypts the password for permanent login together with its expiration time.
+ *
+ * The plain text is never empty, so the encrypted data can't be forged even for an empty password.
+ *
+ * @return string|false Encrypted binary data or false.
+ */
+function encrypt_permanent(string $password, string $private)
+{
+	// 2592000 = 30 days, the lifetime of the cookie.
+	return encrypt_string((time() + 2592000) . ":$password", $private);
+}
+
+/**
+ * Decrypts the password for permanent login.
+ *
+ * @return string|false Password or false if the data is invalid or expired.
+ */
+function decrypt_permanent(string $data, string $private)
+{
+	$plaintext = decrypt_string($data, $private);
+
+	if ($plaintext === false || !preg_match('~^(\d+):(.*)$~Ds', $plaintext, $matches) || $matches[1] < time()) {
+		return false;
+	}
+
+	return $matches[2];
+}
+
+/**
+ * Sets permanent login requested in the login form.
+ *
+ * @throws Exception
+ */
+function issue_permanent(array &$permanent): void
+{
+	// The requested key ends with a database that may differ from the current one.
+	$key = $_SESSION["permanent_request"] ?? "";
+	if (!$key || strpos($key, permanent_key(DRIVER, SERVER, $_GET["username"], "")) !== 0) {
+		return;
+	}
+
+	unset($_SESSION["permanent_request"]);
+
+	$private = Admin::get()->getPrivateKey(true);
+	$encrypted_password = $private ? encrypt_permanent(get_password(), $private) : false;
+	$permanent[$key] = "$key:" . base64_encode($encrypted_password ?: "");
+	cookie("neo_permanent", implode(" ", $permanent));
 }
 
 function unset_permanent(array &$permanent): void
@@ -360,12 +444,14 @@ if (!isset($_GET["username"]) || get_password() === null) {
 }
 
 validate_server_input($permanent);
+validate_credentials_input($permanent);
 check_invalid_login($permanent);
 
 Admin::get()->getConfig()->applyServer(SERVER);
 
 $connection = connect_to_db($permanent);
 authenticate($permanent);
+issue_permanent($permanent);
 create_driver($connection);
 
 if ($_POST["logout"] && $_SESSION["token"] && !verify_token()) {
@@ -405,3 +491,6 @@ if ($_POST) {
 
 	Admin::get()->addError($error);
 }
+
+// The user is logged in and the POST data are verified from now on.
+is_authenticated(true);

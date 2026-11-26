@@ -9,7 +9,8 @@ use stdClass;
 
 Drivers::add("mysql", "MySQL", ["MySQLi", "PDO_MySQL"]);
 
-if (isset($_GET["mysql"])) {
+// Only one driver can be active.
+if (isset($_GET["mysql"]) && !defined("AdminNeo\DRIVER")) {
 	define("AdminNeo\DRIVER", "mysql");
 	define("AdminNeo\DIALECT", "sql");
 
@@ -21,6 +22,9 @@ if (isset($_GET["mysql"])) {
 		{
 			/** @var mysqli */
 			private $mysqli;
+
+			/** @var bool The session was switched to read-only transactions. */
+			private $readOnly = false;
 
 			protected function __construct()
 			{
@@ -117,7 +121,15 @@ if (isset($_GET["mysql"])) {
 
 			public function query(string $query, bool $unbuffered = false)
 			{
-				$result = $this->mysqli->query($query);
+				if ($this->untrusted && !$this->readOnly) {
+					// All following queries run in read-only transactions, which don't allow modifying data. Multiple commands are not allowed by mysqli.
+					$this->readOnly = (bool)$this->mysqli->query("SET SESSION TRANSACTION READ ONLY");
+					if (!$this->readOnly) {
+						return false;
+					}
+				}
+
+				$result = $this->mysqli->query($query, ($unbuffered ? MYSQLI_USE_RESULT : MYSQLI_STORE_RESULT));
 
 				return is_object($result) ? new MySqlResult($result) : $result;
 			}
@@ -125,6 +137,11 @@ if (isset($_GET["mysql"])) {
 			public function getQueryInfo(): ?string
 			{
 				return $this->mysqli->info;
+			}
+
+			public function getWarningsCount(): int
+			{
+				return $this->mysqli->warning_count;
 			}
 
 			public function multiQuery(string $query): bool
@@ -142,9 +159,15 @@ if (isset($_GET["mysql"])) {
 				return new MySqlResult($result);
 			}
 
+			public function hasMoreResults(): bool
+			{
+				return $this->mysqli->more_results();
+			}
+
 			public function nextResult(): bool
 			{
-				return $this->mysqli->more_results() && $this->mysqli->next_result();
+				// The server stops executing the queries after an error, more_results() then returns false.
+				return $this->mysqli->more_results() && ($this->mysqli->next_result() || $this->mysqli->errno);
 			}
 		}
 
@@ -186,6 +209,9 @@ if (isset($_GET["mysql"])) {
 
 		class MySqlConnection extends PdoConnection
 		{
+			/** @var bool The session was switched to read-only transactions. */
+			private $readOnly = false;
+
 			public function getDefaultServerName(): string
 			{
 				return "localhost";
@@ -197,6 +223,11 @@ if (isset($_GET["mysql"])) {
 				$dsn = "mysql:charset=utf8" . ($host != "" ? ";host=$host" : "") . ($port ? (is_numeric($port) ? ";port=" : ";unix_socket=") . $port : "");
 
 				$options = [PDO::MYSQL_ATTR_LOCAL_INFILE => false];
+
+				// The attribute can be set only when connecting and it is available since PHP 5.5.21 and 5.6.5.
+				if (isset($_GET["select"]) && defined('\PDO::MYSQL_ATTR_MULTI_STATEMENTS')) {
+					$options[PDO::MYSQL_ATTR_MULTI_STATEMENTS] = false; // Connection::isUntrusted() is not known here yet.
+				}
 
 				$key = Admin::get()->getConfig()->getSslKey();
 				if ($key) {
@@ -242,6 +273,14 @@ if (isset($_GET["mysql"])) {
 
 			public function query(string $query, bool $unbuffered = false)
 			{
+				if ($this->untrusted && !$this->readOnly) {
+					// All following queries run in read-only transactions, which don't allow modifying data.
+					$this->readOnly = (bool)parent::query("SET SESSION TRANSACTION READ ONLY");
+					if (!$this->readOnly) {
+						return false;
+					}
+				}
+
 				$this->pdo->setAttribute(PDO::MYSQL_ATTR_USE_BUFFERED_QUERY, !$unbuffered);
 
 				return parent::query($query, $unbuffered);
@@ -444,6 +483,14 @@ if (isset($_GET["mysql"])) {
 			);
 		}
 
+		public function isSearchable(array $where, array $field): bool
+		{
+			// Bit columns are compared with a binary literal, e.g. b'101', other values would cause an error. IN compares them with numbers.
+			return $field["type"] != "bit"
+				|| preg_match('~IN$|NULL$|^(FIND_IN_SET|SQL)$~', $where["op"])
+				|| ($where["op"] != "LIKE %%" && preg_match('~^[01]+$~', $where["val"]));
+		}
+
 		public function warnings(): ?string
         {
 			$result = $this->connection->query("SHOW WARNINGS");
@@ -528,6 +575,11 @@ if (isset($_GET["mysql"])) {
 				$c_style = (strpos($sql_mode, 'NO_BACKSLASH_ESCAPES') === false);
 			}
 			return $c_style;
+		}
+
+		public function lineComment(): string
+		{
+			return "#|-- "; // MySQL requires a space after --.
 		}
 
 		public function engines(): array
@@ -758,6 +810,18 @@ WHERE TABLE_SCHEMA = DATABASE() " . ($name != "" ? "AND TABLE_NAME = " . q($name
 	}
 
 	/**
+	 * Parses type declaration.
+	 *
+	 * @return array{string, string, string} [type, length, unsigned]
+	 */
+	function parse_type(string $full_type): array
+	{
+		preg_match('~^([^( ]+)(?:\((.+)\))?( unsigned)?( zerofill)?$~', $full_type, $matches);
+
+		return [$matches[1], $matches[2] ?? "", ltrim(($matches[3] ?? "") . ($matches[4] ?? ""))];
+	}
+
+	/**
 	 * Returns information about fields.
 	 *
 	 * @return array{field:string, full_type:string, type:string, length:int, unsigned:string, default:string,
@@ -781,11 +845,11 @@ WHERE TABLE_SCHEMA = DATABASE() " . ($name != "" ? "AND TABLE_NAME = " . q($name
 
 			// https://mariadb.com/kb/en/library/show-columns/, https://github.com/vrana/adminer/pull/359#pullrequestreview-276677186
 			preg_match('~^(VIRTUAL|PERSISTENT|STORED)~', $extra, $generated);
-			preg_match('~^([^( ]+)(?:\((.+)\))?( unsigned)?( zerofill)?$~', $type, $type_matches);
+			list($type_name, $length, $unsigned) = parse_type($type);
 
 			$default = $maria && $row["COLUMN_DEFAULT"] == "NULL" ? null : $row["COLUMN_DEFAULT"];
 			if ($default !== null) {
-				$is_text = preg_match('~(text|json)~', $type_matches[1]);
+				$is_text = preg_match('~(text|json)~', $type_name);
 
 				// MariaDB: texts are escaped with slashes, chars with double apostrophe.
 				// MySQL: default value a'b of text column is stored as _utf8mb4\'a\\\'b\'.
@@ -799,7 +863,7 @@ WHERE TABLE_SCHEMA = DATABASE() " . ($name != "" ? "AND TABLE_NAME = " . q($name
 				}
 
 				// MySQL: Convert binary default value.
-				if (!$maria && preg_match('~binary~', $type_matches[1]) && preg_match('~^0x(\w*)$~', $default, $matches)) {
+				if (!$maria && preg_match('~binary~', $type_name) && preg_match('~^0x(\w*)$~', $default, $matches)) {
 					$default = pack("H*", $matches[1]);
 				}
 			}
@@ -815,18 +879,20 @@ WHERE TABLE_SCHEMA = DATABASE() " . ($name != "" ? "AND TABLE_NAME = " . q($name
 			$return[$field] = [
 				"field" => $field,
 				"full_type" => $type,
-				"type" => $type_matches[1],
-				"length" => $type_matches[2],
-				"unsigned" => ltrim($type_matches[3] . $type_matches[4]),
+				"type" => $type_name,
+				"length" => $length,
+				"unsigned" => $unsigned,
 				"default" => ($generated ? $generated_expression : $default),
 				"null" => ($row["IS_NULLABLE"] == "YES"),
 				"auto_increment" => ($extra == "auto_increment"),
-				"on_update" => (preg_match('~\bon update (\w+)~i', $extra, $type_matches) ? $type_matches[1] : ""), // TODO available since MySQL 5.1.23
+				"on_update" => (preg_match('~\bon update (\w+)~i', $extra, $matches) ? $matches[1] : ""), // TODO available since MySQL 5.1.23
 				"collation" => $row["COLLATION_NAME"],
 				"privileges" => array_flip(explode(",", $row["PRIVILEGES"])) + ["where" => 1, "order" => 1],
 				"comment" => $row["COLUMN_COMMENT"],
 				"primary" => ($row["COLUMN_KEY"] == "PRI"),
 				"generated" => ($generated[1] == "PERSISTENT" ? "STORED" : $generated[1]),
+				// SRID required by a geometry column, available since MySQL 8.
+				"srid" => $row["SRS_ID"] ?? null,
 			];
 		}
 		return $return;
@@ -993,7 +1059,7 @@ ORDER BY ORDINAL_POSITION";
 	 *
 	 * @param string $name New name.
 	 */
-	function rename_database(string $name, string $collation): bool
+	function rename_database(string $name, ?string $collation): bool
 	{
 		$return = false;
 		if (create_database($name, $collation)) {
@@ -1275,18 +1341,27 @@ ORDER BY ORDINAL_POSITION";
 			return [];
 		}
 
-		$fields = get_rows("SELECT
-	PARAMETER_NAME field,
-	DATA_TYPE type,
-	REGEXP_REPLACE(DTD_IDENTIFIER, '^[^(]+\\\\(?|\\\\)$', '') length,
-	REGEXP_REPLACE(DTD_IDENTIFIER, '^[^ ]+ ', '') `unsigned`,
-	1 `null`,
-	DTD_IDENTIFIER full_type,
-	" . ($type == "FUNCTION" ? "''" : "PARAMETER_MODE") . " `inout`,
-	CHARACTER_SET_NAME collation
+		$rows = get_rows("SELECT PARAMETER_NAME, DTD_IDENTIFIER, PARAMETER_MODE, CHARACTER_SET_NAME
 FROM information_schema.PARAMETERS
 WHERE SPECIFIC_SCHEMA = DATABASE() AND ROUTINE_TYPE = '$type' AND SPECIFIC_NAME = " . q($name) . "
 ORDER BY ORDINAL_POSITION");
+
+		$fields = [];
+		foreach ($rows as $row) {
+			$full_type = $row["DTD_IDENTIFIER"];
+			list($type_name, $length, $unsigned) = parse_type($full_type);
+
+			$fields[] = [
+				"field" => $row["PARAMETER_NAME"],
+				"type" => $type_name,
+				"length" => $length,
+				"unsigned" => $unsigned,
+				"null" => true,
+				"full_type" => $full_type,
+				"inout" => ($type == "FUNCTION" ? "" : $row["PARAMETER_MODE"]), // FUNCTION parameters are always IN
+				"collation" => $row["CHARACTER_SET_NAME"],
+			];
+		}
 
 		$return = Connection::get()->query("SELECT
 	ROUTINE_COMMENT comment,
@@ -1501,7 +1576,11 @@ WHERE ROUTINE_SCHEMA = DATABASE() AND ROUTINE_TYPE = '$type' AND ROUTINE_NAME = 
 			return (Connection::get()->isMariaDB() ? "VEC_ToText" : "VECTOR_TO_STRING") . "(" . idf_escape($field["field"]) . ")";
 		}
 		if (preg_match("~geometry|point|linestring|polygon~", $field["type"])) {
-			return (Connection::get()->isMinVersion("8") ? "ST_" : "") . "AsWKT(" . idf_escape($field["field"]) . ")";
+			// Non-zero SRID is prepended to the value like in EWKT, so that unconvert_field() doesn't need the stored value.
+			$prefix = (Connection::get()->isMinVersion("8") ? "ST_" : "");
+			$column = idf_escape($field["field"]);
+
+			return "CONCAT(IF($prefix" . "SRID($column), CONCAT('SRID=', $prefix" . "SRID($column), ';'), ''), $prefix" . "AsWKT($column))";
 		}
 
 		return null;
@@ -1524,8 +1603,14 @@ WHERE ROUTINE_SCHEMA = DATABASE() AND ROUTINE_TYPE = '$type' AND ROUTINE_NAME = 
 			$return = (Connection::get()->isMariaDB() ? "VEC_FromText" : "STRING_TO_VECTOR") . "($return)";
 		}
 		if (preg_match("~geometry|point|linestring|polygon~", $field["type"])) {
-			$prefix = (Connection::get()->isMinVersion("8") ? "ST_" : "");
-			$return = $prefix . "GeomFromText($return, $prefix" . "SRID($field[field]))";
+			// SRID can't be taken from the column, its reference is evaluated to the default value in INSERT.
+			$srid = $field["srid"] ?? 0;
+			if (preg_match("~^'SRID=(\\d+);~i", $return, $match)) {
+				$srid = $match[1];
+				$return = "'" . substr($return, strlen($match[0]));
+			}
+
+			$return = (Connection::get()->isMinVersion("8") ? "ST_" : "") . "GeomFromText($return, $srid)";
 		}
 
 		return $return;
@@ -1535,7 +1620,7 @@ WHERE ROUTINE_SCHEMA = DATABASE() AND ROUTINE_TYPE = '$type' AND ROUTINE_NAME = 
 	 * Checks whether a feature is supported.
 	 *
 	 * @param literal-string $feature check|comment|copy|database|descidx|drop_col|dump|event|fast_status|indexes|kill|materializedview|
-	 * privileges|move_col|procedure|processlist|routine|scheme|sequence|status|table|trigger|type|variables|view|view_trigger
+	 * privileges|move_col|procedure|processlist|routine|scheme|sequence|status|table|transaction_ddl|trigger|type|variables|view|view_trigger
 	 */
 	function support(string $feature): bool
 	{

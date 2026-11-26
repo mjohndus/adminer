@@ -40,6 +40,18 @@ $where = Admin::get()->processSelectionSearch($fields, $indexes);
 $order = Admin::get()->processSelectionOrder($fields, $indexes);
 $limit = Admin::get()->processSelectionLimit();
 
+// Select expressions with aliases, used by the queries of both the page and the export.
+$aliased_select = $select;
+if (DIALECT == "pgsql" || DIALECT == "mssql" || DIALECT == "clickhouse") {
+	// Alias functions so that e.g. COUNT(DISTINCT a) and COUNT(*) don't collapse into a single 'count' column in fetchAssoc().
+	// ClickHouse names the column MAX(id) on its own, but the result can be ordered by that name only if it is an alias.
+	foreach ((array)$_GET["columns"] as $key => $val) {
+		if (isset($aliased_select[$key]) && $val["fun"]) {
+			$aliased_select[$key] .= " AS " . idf_escape(apply_sql_function($val["fun"], ($val["col"] != "" ? $val["col"] : "*")));
+		}
+	}
+}
+
 if ($_GET["modify"] && !Admin::get()->isDataEditAllowed()) {
 	redirect(ME . "select=" . urlencode($TABLE));
 }
@@ -51,7 +63,7 @@ if ($_GET["val"] && is_ajax()) {
 		$select = [$as ?: idf_escape(key($row))];
 		$where[] = where_check($unique_idf, $fields);
 		$return = Driver::get()->select($TABLE, $select, $where, $select);
-		if ($return) {
+		if (is_object($return)) { // A query returning no result set can succeed, e.g. a multi-statement query in PostgreSQL.
 			echo first($return->fetchRow());
 		}
 	}
@@ -96,7 +108,7 @@ if ($_POST) {
 
 		dump_headers($TABLE);
 		Admin::get()->dumpTable($TABLE, "");
-		$from = ($select ? implode(", ", $select) : "*")
+		$from = ($select ? implode(", ", $aliased_select) : "*")
 			. convert_fields($columns, $fields, $select)
 			. "\nFROM " . table($TABLE);
 		$group_by = ($group && $is_group ? "\nGROUP BY " . implode(", ", $group) : "") . ($order ? "\nORDER BY " . implode(", ", $order) : "");
@@ -189,6 +201,9 @@ if ($_POST) {
 				$set = [];
 				foreach ($row as $key => $val) {
 					$key = bracket_escape($key, true);
+					if (isset($fields[$key]["full_type"])) {
+						Admin::get()->detectJson($fields[$key]["full_type"], $val, false);
+					}
 					$set[idf_escape($key)] = (preg_match('~char|text~', $fields[$key]["type"]) || $val != "" ? Admin::get()->processFieldInput($fields[$key], $val) : "NULL");
 				}
 				$success = (bool)Driver::get()->update(
@@ -264,7 +279,7 @@ if (isset($rights["insert"]) || !support("table")) {
 Admin::get()->printTableMenu($table_status, $insert_params);
 
 if (!$columns && support("table")) {
-	echo "<p class='error'>" . lang('Unable to select the table') . ($fields ? "." : ": " . error()) . "\n";
+	echo "<p class='error'>" . lang('Unable to select the table') . ($fields || error() == "" ? "." : ": " . error()) . "\n";
 } else {
 	echo "<form id='form' action=''>\n";
 	echo "<div hidden>";
@@ -288,16 +303,26 @@ if (!$columns && support("table")) {
 	Admin::get()->printSelectionAction($indexes);
 	echo "</div>\n</form>\n";
 
+	foreach ((array)$_GET["where"] as $val) {
+		// The SQL operator passes the value to the database unescaped, GET is not protected by the CSRF token.
+		if ($val["op"] == "SQL" && !is_same_origin()) {
+			echo "<p class='error'>" . lang('Invalid CSRF token. Send the form again.') . " " .
+				lang('If you did not send this request from AdminNeo then close this page.') . "\n";
+			page_footer();
+			exit;
+		}
+	}
+
 	$page = $_GET["page"] ?? null;
 	if ($page == "last") {
 		$found_rows = Connection::get()->getValue(count_rows($TABLE, $where, $is_group, $group));
-		$page = (int)floor(max(0, intval($found_rows) - 1) / $limit);
+		$page = $limit ? (int)floor(max(0, intval($found_rows) - 1) / $limit) : 0;
 	} else {
 		$found_rows = false;
 		$page = (int)$page;
 	}
 
-	$select2 = $select;
+	$select2 = $aliased_select;
 	$group2 = $group;
 	if (!$select2) {
 		$select2[] = "*";
@@ -312,14 +337,6 @@ if (!$columns && support("table")) {
 			$select2[$key] = "$as AS $val";
 		}
 	}
-	if (DIALECT == "pgsql" || DIALECT == "mssql") {
-		// Alias functions so that e.g. COUNT(DISTINCT a) and COUNT(*) don't collapse into a single 'count' column in fetchAssoc().
-		foreach ((array)$_GET["columns"] as $key => $val) {
-			if (isset($select2[$key]) && $val["fun"]) {
-				$select2[$key] .= " AS " . idf_escape(apply_sql_function($val["fun"], ($val["col"] != "" ? $val["col"] : "*")));
-			}
-		}
-	}
 	if (!$is_group && $unselected) {
 		foreach ($unselected as $key => $val) {
 			$select2[] = idf_escape($key);
@@ -330,8 +347,8 @@ if (!$columns && support("table")) {
 	}
 	$result = Driver::get()->select($TABLE, $select2, $where, $group2, $order, $limit, $page, true);
 
-	if (!$result) {
-		echo "<p class='error'>" . error() . "\n";
+	if (!is_object($result)) { // A query returning no result set can succeed, e.g. a multi-statement query in PostgreSQL.
+		echo "<p class='error'>" . (error() ?: lang('Unknown error.')) . "\n";
 	} else {
 		if (DIALECT == "mssql" && $page) {
 			$result->seek($limit * $page);
@@ -599,7 +616,7 @@ if (!$columns && support("table")) {
 					}
 				}
 
-				$pagination = ($limit !== null && ($found_rows === false || $found_rows > $limit || $page));
+				$pagination = ($limit && ($found_rows === false || $found_rows > $limit || $page));
 				if ($pagination) {
 					if (($found_rows === false ? count($rows) + 1 : $found_rows - $page * $limit) > $limit) {
 						echo '<p class="links">',

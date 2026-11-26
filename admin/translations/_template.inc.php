@@ -49,6 +49,7 @@ return [
 	'Session support must be enabled.' => 'Xx.',
 	'Session expired, please login again.' => 'Xx.',
 	'%s version: %s through PHP extension %s' => '%s xx: %s xx %s',
+	'%s requires at least %s.' => '%s xx %s.', // e.g. 'AdminNeo requires at least Elasticsearch 7.'
 
 	// Settings
 	'Language' => 'Xx',
@@ -126,6 +127,7 @@ return [
 	'save' => 'xx',
 	'Format' => 'Xx',
 	'Data' => 'Xx',
+	'Copy as <span>%s</span>' => 'Xx <span>%s</span>',
 
 	// Databases
 	'Database' => 'Xx',
@@ -306,6 +308,7 @@ return [
 	'Create type' => 'Xx',
 	'Type has been dropped.' => 'Xx.',
 	'Type has been created.' => 'Xx.',
+	'Type has been altered.' => 'Xx.',
 	'Alter type' => 'Xx',
 
 	// Triggers
@@ -383,6 +386,7 @@ return [
 	'Lists' => 'Xx',
 	'Network' => 'Xx',
 	'Geometry' => 'Xx',
+	'Ranges' => 'Xx',
 	'Relations' => 'Xx',
 
 	// Editor - data values

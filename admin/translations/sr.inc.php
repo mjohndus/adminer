@@ -53,6 +53,7 @@ return [
 	'Session support must be enabled.' => 'Морате омогућити подршку за сесије.',
 	'Session expired, please login again.' => 'Ваша сесија је истекла, пријавите се поново.',
 	'%s version: %s through PHP extension %s' => '%s верзија: %s помоћу PHP додатка је %s',
+	'%s requires at least %s.' => '%s захтева најмање %s.', // e.g. 'AdminNeo requires at least Elasticsearch 7.' // by Claude Fable 5.1
 
 	// Settings
 	'Language' => 'Језик',
@@ -146,6 +147,7 @@ return [
 	'save' => 'сачувај',
 	'Format' => 'Формат',
 	'Data' => 'Податци',
+	'Copy as <span>%s</span>' => 'Копирај као <span>%s</span>', // by Claude Fable 5.1
 
 	// Databases
 	'Database' => 'База података',
@@ -330,6 +332,7 @@ return [
 	'Create type' => 'Дефиниши тип',
 	'Type has been dropped.' => 'Тип је избрисан.',
 	'Type has been created.' => 'тип је креиран.',
+	'Type has been altered.' => 'Тип је измењен.', // by Claude Opus 5
 	'Alter type' => 'Уреди тип',
 
 	// Triggers
@@ -419,6 +422,7 @@ return [
 	'Lists' => 'Листе',
 	'Network' => 'Мрежа',
 	'Geometry' => 'Геометрија',
+	'Ranges' => 'Опсези', // by Claude Fable 5.1
 	'Relations' => 'Односи',
 
 	// Editor - data values

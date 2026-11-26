@@ -4,7 +4,8 @@ namespace AdminNeo;
 
 Drivers::add("oracle", "Oracle (beta)", ["OCI8", "PDO_OCI"]);
 
-if (isset($_GET["oracle"])) {
+// Only one driver can be active.
+if (isset($_GET["oracle"]) && !defined("AdminNeo\DRIVER")) {
 	define("AdminNeo\DRIVER", "oracle");
 	define("AdminNeo\DIALECT", "oracle");
 
@@ -18,6 +19,9 @@ if (isset($_GET["oracle"])) {
 
 			/** @var ?string */
 			private $dbName = null;
+
+			/** @var bool */
+			private $transaction = false;
 
 			public function open(string $server, string $username, string $password): bool
 			{
@@ -77,7 +81,7 @@ if (isset($_GET["oracle"])) {
 					$this->error = $error;
 				});
 
-				$return = @oci_execute($result);
+				$return = @oci_execute($result, ($this->transaction ? OCI_NO_AUTO_COMMIT : OCI_COMMIT_ON_SUCCESS));
 				restore_error_handler();
 
 				if ($return) {
@@ -97,6 +101,39 @@ if (isset($_GET["oracle"])) {
 				$result = $this->query($query);
 
 				return is_object($result) ? $result->fetchValue($fieldIndex) : false;
+			}
+
+			public function begin(): bool
+			{
+				$this->transaction = true; // The first command starts the transaction, oci_execute() only must not commit it.
+
+				return true;
+			}
+
+			public function commit(): bool
+			{
+				return $this->endTransaction(@oci_commit($this->connection));
+			}
+
+			public function rollback(): bool
+			{
+				return $this->endTransaction(@oci_rollback($this->connection)); // Succeeds also without a transaction.
+			}
+
+			/**
+			 * Stores the error of commit or rollback.
+			 */
+			private function endTransaction(bool $return): bool
+			{
+				$this->transaction = false; // A failed commit rolls the transaction back.
+
+				if (!$return) {
+					$error = oci_error($this->connection);
+					$this->errno = $error["code"];
+					$this->error = $error["message"];
+				}
+
+				return $return;
 			}
 		}
 
@@ -268,7 +305,7 @@ if (isset($_GET["oracle"])) {
 
 		public function begin(): bool
 		{
-			return true; // automatic start
+			return $this->connection->begin(); // There is no command starting a transaction to print.
 		}
 
 		public function insertUpdate(string $table, array $records, array $primary): bool
@@ -314,7 +351,7 @@ if (isset($_GET["oracle"])) {
 	function is_server_host_valid(string $hostPath): bool
 	{
 		// EasyConnect host+path format: host[/[service_name][:server_type][/instance_name]]
-		return (bool)preg_match('~^[^/]+(/([^/:]+)?(:[^/:]+)?(/[^/:]+)?)?$~', $hostPath);
+		return preg_match('~^([^/]+)(/([-\w.$]+)?(:[-\w.$]+)?(/[-\w.$]+)?)?$~Du', $hostPath, $match) && is_host_valid($match[1]);
 	}
 
 	function idf_escape(string $idf): string
